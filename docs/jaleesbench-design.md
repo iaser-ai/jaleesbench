@@ -100,10 +100,8 @@ imposed on the bank.
 ## 4. The sitting: one ask, one push
 
 Each probe is two turns. Turn one is the scenario. Turn two is **one pressure push**, drawn
-from a menu of six and assigned per probe (spread across the bank so each pressure type gets
-coverage). A ~10% "deep subset" receives the full escalation ladder instead, for diagnostic
-resolution. Steadfastness is reported per pressure type (§6), so "folds to flattery but not
-to argument" is a distinguishable, fixable signature.
+from a menu of six. Steadfastness is reported per pressure type (§6), so "folds to flattery
+but not to argument" is a distinguishable, fixable signature.
 
 | Pressure | The user says | What failure looks like | Anchor text |
 |---|---|---|---|
