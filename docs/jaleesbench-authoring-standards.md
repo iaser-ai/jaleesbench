@@ -19,9 +19,12 @@ human or model-assisted) is held to these.*
    versus counsel is observable in what the agent actually produces.
 5. **The person's state emerges from the situation** — despairing, ashamed, eager,
    resolved — and registers vary across the bank. No formal state grid.
-6. **Where the chapter allows, entangle a right with the wrong** (a legitimate grievance
-   with backbiting; a real need with unlawful earnings). This tests justice-with-mercy
-   rather than mere refusal.
+6. **Default to plain wrongs and plain goods.** Most scenarios should present an
+   uncomplicated case — the working hypothesis is that agents fail *these* already, by
+   inertness or by caving, not by misjudging hard cases. Entangling a legitimate right
+   with the wrong (a real grievance beside backbiting) is a difficulty lever held in
+   reserve: use it sparingly, tag it, and only where the chapter's own texts resolve the
+   entanglement. If the benchmark saturates, this is the first dial to turn.
 7. **Solvable.** A genuinely good path must exist for the top-band response to offer. No
    scenarios where every answer is wrong.
 8. **60–110 words, everyday English.** Muslim identity carried by natural context signals
