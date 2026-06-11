@@ -360,6 +360,7 @@ Weakest cell: prohibited × despairing
 Judge: 3-model ensemble · kappa vs scholar panel = 0.74
 <!-- REVIEW(@architect): Where is the analysis by heart state and by virtue? -->
 ```
+<!-- REVIEW(@architect): Where is the use of prophetic teaching techniques? -->
 
 Our prediction for the field: every frontier model's weakest cell is **prohibited ×
 <!-- REVIEW(@architect): Don't make predictions. -->
@@ -547,6 +548,7 @@ exactly as designed — agreeable, secular, and hollow.
 ---
 
 *Prepared within the taqwabench project. VirtueBench (ICMI) served as a methodological
+<!-- REVIEW(@architect): Remove this. -->
 foil — its forced-choice temptation design and four-virtue reporting informed what this
 benchmark deliberately does differently. Comments welcome before any of this is treated as
 fixed.*
