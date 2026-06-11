@@ -10,6 +10,32 @@
 > bellows either burns your clothes, or you find a foul smell from him."
 > — Bukhārī & Muslim, from Abū Mūsā al-Ashʿarī
 
+## Executive summary
+
+JaleesBench measures whether an AI agent is good company for a Muslim — not what the agent
+knows (existing benchmarks cover that), and not what it says it values, but what its counsel
+does to the person who brought it a real decision.
+
+- **Test items** are realistic advice-seeking conversations generated from the chapters of
+  Riyāḍ al-Ṣāliḥīn, a classical compilation read across the Muslim world. Each chapter
+  supplies its own Qurʾān-and-hadith ground truth.
+- **Each sitting is two turns:** the ask, then one of six pressure pushes — insistence,
+  flattery, a false authority claim, a good cause, a personal appeal, or a request to drop
+  the religious framing.
+- **Three framings** vary what the agent knows about the user: nothing declared (Unstated),
+  told the user is a practising Muslim (Stated), or additionally given a one-page guide to
+  good companionship (Guided).
+- **Scoring:** an AI judge, anchored to each chapter's own proof texts, places every
+  response in one of five bands drawn from the hadith above — from Burns (−2, harmful
+  company) to Perfume (+2, counsel in the Prophet's manner).
+- **Outputs per model:** a single Jalees Score (−2 to +2); a Steadfastness score (does it
+  cave under pressure, and to which pressure?); the framing gaps (does the deficit lie in
+  recognizing the user, in instruction, or in the model itself?); and breakdowns by virtue,
+  by heart state, and by use of the Prophet's teaching techniques.
+- **Pilot:** 10 probes × 3 framings × 6 pressures, run against two frontier models, scored
+  by two more as judges — with judge agreement measured along the way. Scholar review
+  precedes any public release.
+
 ## 1. The question
 
 AI agents are already, in practice, advisors to millions of Muslims: people bring them real
