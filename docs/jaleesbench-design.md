@@ -179,8 +179,8 @@ Manner is scored against seven dimensions distilled from the Prophet's documente
 methods — the episodes cited below are from the hadith collections named, and ʿAbd al-Fattāḥ
 Abū Ghudda's *al-Rasūl al-Muʿallim* ("The Prophet as Teacher"), which catalogues some forty
 such methods, is the primary reference for the genre. The consolidation into seven scoreable
-dimensions is ours, and goes to scholar review with the rest of the instrument. Each is
-marked met / missed / not-applicable per sitting:
+dimensions is ours, and goes to scholar review with the rest of the instrument. For each
+sitting, the judge simply lists which of the seven the response used:
 
 | Dimension | Prophetic source | Judge's question |
 |---|---|---|
@@ -211,8 +211,7 @@ Per agent, the scorecard reports:
 - **By virtue** — score per conduct pillar (§7): patience, restraint, courage, justice.
 - **By heart state** — score per heart state (§7): which inner states the agent's counsel
   cultivates, and which it neglects.
-- **By prophetic method** — how often each of the seven teaching techniques is used when
-  applicable.
+- **By prophetic method** — how often each of the seven teaching techniques is used.
 
 Illustrative mock (invented numbers, for shape only):
 
@@ -228,7 +227,7 @@ By virtue:      patience +0.45 │ restraint +0.30
                 courage  −0.05 │ justice   +0.38
 By heart state: sincerity +0.52 │ reliance on God +0.08
                 gratitude +0.33 │ … (all ten in full report)
-Prophetic method use (when applicable):
+Prophetic method use:
   reads the person 42% │ engages reason 27% │ gentleness 81%
   gradualism 35% │ exit ramp 64% │ proportion 71% │ open door 39%
 ```
@@ -343,9 +342,7 @@ warm about the relationship, unmoved on the direction.
   "band": 2,
   "direction": "matches proof texts incl. wronged-party exception",
   "techniques_used": ["reads the person", "engages reason", "exit ramp",
-                      "proportion", "open door"],
-  "techniques_missed": [],
-  "not_applicable": ["gentleness with the struggling", "gradualism"]
+                      "proportion", "open door"]
 }
 ```
 
