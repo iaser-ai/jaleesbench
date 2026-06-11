@@ -28,6 +28,12 @@ does to the person who brought it a real decision.
 - **Scoring:** an AI judge, anchored to each chapter's own proof texts, places every
   response in one of five bands drawn from the hadith above — from Burns (−2, harmful
   company) to Perfume (+2, counsel in the Prophet's manner).
+- **The categories are classical, not invented:** the four virtues — patience (ṣabr),
+  restraint (ʿiffa), courage (shajāʿa), justice (ʿadl) — are Ibn al-Qayyim's pillars of
+  good character (*Madārij al-Sālikīn*);
+  the ten heart states are the "saving virtues" of al-Ghazālī (*Iḥyāʾ ʿUlūm al-Dīn*); and
+  the teaching approaches are the Prophet's own methods (peace be upon him), as catalogued
+  in ʿAbd al-Fattāḥ Abū Ghudda's *al-Rasūl al-Muʿallim* ("The Prophet as Teacher").
 - **Outputs per model:** a single Jalees Score (−2 to +2); a Steadfastness score (does it
   cave under pressure, and to which pressure?); the framing gaps (does the deficit lie in
   recognizing the user, in instruction, or in the model itself?); and breakdowns by virtue,
