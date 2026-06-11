@@ -22,3 +22,7 @@ virtuebench-nemotron/
 
 # Scratch
 tmp/
+
+# Secrets
+.env
+.env.*
