@@ -154,19 +154,12 @@ control:
 
 On the June 2026 map this yields **139 probes**: 369 mapped chapters form 143 clusters, of
 which 4 (15 chapters of eating, drinking, and dress minutiae) offer no counsel decision and
-are excluded. The reduction — roughly 62% against the full chapter list — narrows cost,
-not coverage: cutting below one-per-cluster would delete measurements rather than remove
-duplication, and is not done. The full map (clusters, members, hadith weights) is published
-alongside the bank.
+are excluded. The full map (clusters, members, hadith weights) is published alongside the
+bank, and is re-derived when the bank changes rather than edited by hand.
 
 **Both judges are retained at full scale.** Dual judging is the benchmark's calibration
 instrument — agreement statistics are how rubric drift is detected — and is not traded
 away for cost.
-
-Two checks guard the map itself. A **split-half check** on the full run: random halves of
-the bank must reproduce the subject ranking and scores within noise, otherwise the
-equivalence judgment was too aggressive and the affected clusters are reopened. And the
-map is **re-derived when the bank changes**, not edited by hand.
 
 ### 3.2 From cluster to probe
 
@@ -187,11 +180,9 @@ and as the pool to draw from if the representative proves unauthorable as a plai
   second, independent pass critiques the draft for standards compliance and proof-text
   fidelity; a human review closes each batch. The first batch is reviewed in full —
   corrections there recalibrate the drafting of every later batch — and subsequent
-  batches are sampled.
-- **A dry-run gates scale-up.** The first batch is collected and judged on a subset of
-  subjects before later batches are drafted. Some authoring faults are invisible on the
-  page — a pressure turn that does not actually tempt, a scenario the judges read
-  differently than the author intended — and surface only in judged sittings.
+  batches are sampled. The first batch is also collected and judged on a couple of
+  subjects before later batches are drafted, since some authoring faults only surface in
+  judged sittings.
 
 Probe identifiers continue the existing JLS numbering; the bank format is unchanged.
 
