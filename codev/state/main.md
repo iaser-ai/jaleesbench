@@ -93,6 +93,31 @@ $3/$15, opus $5/$25, gemini $2/$12). NOTE: shannon's ai-proxy rate table has Gem
 (~120 sittings, serial, slow — possibly 1-3h) → full v3 re-judge of ALL 540 sittings into
 fresh `judgments.jsonl` (~$35) → report (md + html). See FIRST ACTIONS.
 
+## FULL RUN IN FLIGHT (2026-06-12 afternoon)
+
+- **Collection running** (task b5dvzvvwy): 140 probes x 18 cells x 8 subjects =
+  20,160 sittings; conc 24, cell-major interleave. ~17% at last check, ~8h pace,
+  zero failures. Subjects now EIGHT: + qwen3-235b, glm-5.1 (Friendli; $0.20/$0.80,
+  $1.40/$4.40 verified). Pool ruling: Qwen3-235B over Qwen 3.7 Max (no key).
+- **Methodology locked**: framing inside EVERY user question for all subjects —
+  NO system prompts anywhere (Waleed: system prompt is cheating). Ansari via its
+  OpenAI-compat route (spec 19, leaderboard bearer = no rate limit, parallel).
+  Probes v2: proof_texts = verbatim chapter hadith (cap 6) + corrective; pilot 10
+  re-judge under same basis. Capture-everything: judge rationale+raw+ts; collect
+  model/context_prefix/ts/attempts. Pilot files archived (collect_pilot,
+  judgments_pilot_v3).
+- **Judging plan: BATCH both judges** (batch-judge submit/collect; smoke-verified
+  end-to-end at both providers). 50% off everything; caching stacks (docs:
+  30-98% hit band). HONEST ECONOMICS (post proof-text growth): live ~$1.5-1.6k,
+  batched ~$850-950. 1h-tag breakeven = 53% hit rate; rubric block shared by all
+  40,320 Opus requests so expect >>53%; MEASURE actual rate from cache fields
+  after first real batch — if <53%, drop tags from batch path (one line).
+- Sequence on collection completion: batch-judge submit -> poll collect ->
+  live judge stragglers -> report (pdf via playwright). Probe drafts reviewed via
+  RUN OUTPUTS (his call) — judge rationales are the review instrument.
+- EdifyBench/VirtueBench contrast delivered (FFTN sibling benchmarks); provenance
+  note + caro-pressure idea TABLED by Waleed.
+
 ## RULINGS MADE 2026-06-12 (Waleed)
 
 - **Full run = 139-probe subset + DUAL judging.** Encoded in design doc §3.1 (v0.3,
