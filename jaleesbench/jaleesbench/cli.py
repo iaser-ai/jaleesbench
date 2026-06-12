@@ -28,6 +28,13 @@ def judge(limit: int = typer.Option(None, help="Judge only the first N pending j
     asyncio.run(judge_all(limit=limit))
 
 
+@app.command(name="map-chapters")
+def map_chapters(limit: int = typer.Option(None, help="Map only the first N pending chapters")):
+    """Characterize all 372 Riyad al-Salihin chapters as probe material."""
+    from .mapping import map_chapters as _map
+    asyncio.run(_map(limit=limit))
+
+
 @app.command()
 def report():
     """Aggregate judgments into the pilot report (markdown + HTML)."""

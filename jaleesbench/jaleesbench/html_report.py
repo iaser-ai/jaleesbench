@@ -6,7 +6,7 @@ from collections import defaultdict
 from itertools import combinations
 
 from .collect import RESULTS, load_probes
-from .score import PRICES, mean
+from .score import PRICES, cites, mean
 
 PRESSURES = ["secularize", "insistence", "false_authority", "good_cause",
              "flattery", "personal_appeal"]
@@ -28,6 +28,8 @@ th{background:#f0f5f1}
          font-size:.92rem;margin:.8rem 0}
 .commentary{background:#fdf6ec;border-left:4px solid #b8860b;padding:.7rem 1rem;
             font-size:.95rem;margin:.8rem 0}
+.commentary p{margin:.45rem 0}
+.commentary p:first-child{margin-top:0}.commentary p:last-child{margin-bottom:0}
 .pos{color:#1a6840;font-weight:600}.neg{color:#a02020;font-weight:600}
 .neut{color:#666}
 .bar{display:inline-block;height:.7rem;vertical-align:middle;border-radius:2px}
@@ -77,8 +79,12 @@ def build_html() -> None:
         return mean(vals)
 
     def comm(key):
+        # Blank lines in commentary.json values become paragraph breaks.
         if key in commentary:
-            return f"<div class='commentary'><b>Commentary.</b> {commentary[key]}</div>"
+            paras = [p.strip() for p in commentary[key].split("\n\n") if p.strip()]
+            paras[0] = f"<b>Commentary.</b> {paras[0]}"
+            body = "".join(f"<p>{p}</p>" for p in paras)
+            return f"<div class='commentary'>{body}</div>"
         return ""
 
     H = []
@@ -217,15 +223,47 @@ def build_html() -> None:
         H.append("</table>")
     H.append(comm("techniques"))
 
+    # Source citation
+    H.append("<h2>6 · Source citation</h2>")
+    H.append("<div class='explain'>Share of sittings in which the agent's responses "
+             "cite the Qur'an (a surah by name, a chapter:verse reference, or a "
+             "named verse) or hadith (a named collection, \"agreed upon\", or a "
+             "quoted prophetic saying). Detected by transparent text patterns over "
+             "the transcripts, not by the judges; bare mentions of the words "
+             "Qur'an/hadith without a reference do not count.</div>")
+    cit = defaultdict(lambda: [0, 0, 0, 0])  # (subject, framing) -> [q, h, both, n]
+    for s_ in sittings:
+        q = h = False
+        for t in s_["turns"]:
+            if t["role"] == "assistant":
+                q_, h_ = cites(t["content"])
+                q, h = q or q_, h or h_
+        k = (s_["subject"], s_["framing"])
+        cit[k][0] += q
+        cit[k][1] += h
+        cit[k][2] += q and h
+        cit[k][3] += 1
+    for s in subjects:
+        H.append(f"<h3>{s}</h3><table><tr><th>Framing</th><th>Qur'an</th>"
+                 "<th>Hadith</th><th>Both</th></tr>")
+        for f in FRAMINGS:
+            n = cit[(s, f)][3]
+            if n == 0:
+                continue
+            H.append(f"<tr><td>{f}</td>"
+                     + "".join(pc(cit[(s, f)][i] / n) for i in range(3)) + "</tr>")
+        H.append("</table>")
+    H.append(comm("citations"))
+
     # Subject commentaries
-    H.append("<h2>6 · Subject findings</h2>")
+    H.append("<h2>7 · Subject findings</h2>")
     for s in subjects:
         H.append(f"<h3>{s}</h3>")
         H.append(comm(f"subject:{s}") or
                  "<div class='commentary'><i>Commentary pending.</i></div>")
 
     # Judge agreement
-    H.append("<h2>7 · Judge agreement</h2>")
+    H.append("<h2>8 · Judge agreement</h2>")
     H.append("<div class='explain'>The pilot's gating question: can two different "
              "frontier models, given only the band definitions and each chapter's proof "
              "texts, score consistently? Exact agreement is the same band; within-one "
@@ -236,7 +274,7 @@ def build_html() -> None:
     H.append(comm("judges"))
 
     # Cost
-    H.append("<h2>8 · Cost</h2>")
+    H.append("<h2>9 · Cost</h2>")
     H.append("<table><tr><th>Stage</th><th>Model</th><th>Tokens in</th>"
              "<th>Tokens out</th><th>Cost</th></tr>")
     total = 0.0
@@ -264,12 +302,14 @@ def build_html() -> None:
                  f"<td>{to:,}</td><td>${c:.2f}</td></tr>")
     H.append(f"<tr><td><b>total</b></td><td></td><td></td><td></td>"
              f"<td><b>${total:.2f}</b></td></tr></table>")
-    H.append("<p class='meta'>Prices per Mtok, verified 2026-06-11: gpt-5.5 $5/$30 · "
+    H.append("<p class='meta'>Prices per Mtok, verified 2026-06-11 "
+             "(gemini-3.5-flash 2026-06-12): gpt-5.5 $5/$30 · "
              "claude-sonnet-4-6 $3/$15 · claude-opus-4-8 $5/$25 · "
-             "gemini-3.1-pro-preview $2/$12 · ansari free.</p>")
+             "gemini-3.1-pro-preview $2/$12 · gemini-3.5-flash $1.50/$9 · "
+             "ansari free.</p>")
 
     # Exhibits
-    H.append("<h2>9 · Exhibits</h2>")
+    H.append("<h2>10 · Exhibits</h2>")
     H.append("<div class='explain'>Worst-scoring sitting per subject (Unstated framing), "
              "excerpted. Full transcripts in <code>results/collect.jsonl</code>.</div>")
     srec = {(r["subject"], r["probe_id"], r["pressure"], r["framing"]): r for r in sittings}
@@ -295,7 +335,7 @@ def build_html() -> None:
     H.append(comm("exhibits"))
 
     # Caveats
-    H.append("<h2>10 · Methodology caveats</h2><ul>")
+    H.append("<h2>11 · Methodology caveats</h2><ul>")
     H.append("<li>Single run per cell — no confidence intervals yet; treat small "
              "per-cell differences as noise.</li>")
     H.append("<li>Ansari's API is stateless and rejects system roles: its turn-2 "

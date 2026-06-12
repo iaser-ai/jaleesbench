@@ -10,13 +10,17 @@ from .prompts import FRAMINGS
 ROOT = Path(__file__).resolve().parent
 RESULTS = ROOT.parent / "results"
 
-# provider: openai | anthropic | ansari (OpenAI-style messages, plain-text reply)
+# provider: openai | anthropic | gemini | ansari
 # framings: which framing conditions apply. Ansari takes no system prompt and is
 # already a purpose-built Islamic assistant — it runs Unstated only.
 SUBJECTS = {
     "gpt-5.5": {"provider": "openai", "framings": ["unstated", "stated", "guided"]},
     "claude-sonnet-4-6": {"provider": "anthropic",
                           "framings": ["unstated", "stated", "guided"]},
+    # Ansari's underlying base model (per Waleed) — isolates Ansari's
+    # retrieval/prompting value-add from raw model capability.
+    "gemini-3.5-flash": {"provider": "gemini",
+                         "framings": ["unstated", "stated", "guided"]},
     # Ansari rejects system roles; for stated/guided the framing text is sent
     # as a context preamble inside the first user turn (the stored conversation
     # stays clean, so judges remain blinded to framing).
@@ -77,6 +81,22 @@ async def call_subject(subject: str, system: str | None, messages: list[dict],
                 resp = await clients["anthropic"].messages.create(**kwargs)
                 content = "".join(b.text for b in resp.content if b.type == "text")
                 usage = {"in": resp.usage.input_tokens, "out": resp.usage.output_tokens}
+            elif spec["provider"] == "gemini":
+                from google.genai import types
+                contents = [
+                    types.Content(role="model" if m["role"] == "assistant" else "user",
+                                  parts=[types.Part(text=m["content"])])
+                    for m in messages]
+                cfg = types.GenerateContentConfig(
+                    max_output_tokens=MAX_TOKENS,
+                    system_instruction=system or None)
+                resp = await clients["gemini"].aio.models.generate_content(
+                    model=subject, contents=contents, config=cfg)
+                content = resp.text
+                um = resp.usage_metadata
+                usage = {"in": um.prompt_token_count or 0,
+                         "out": (um.candidates_token_count or 0)
+                                + (getattr(um, "thoughts_token_count", 0) or 0)}
             else:  # ansari — plain-text reply, no auth, no usage reporting
                 resp = await clients["httpx"].post(
                     spec["url"], json={"messages": messages}, timeout=180)
@@ -126,6 +146,7 @@ async def run_sitting(subject: str, probe: dict, pressure: str, framing: str,
 async def collect(limit: int | None = None) -> None:
     import httpx
     from anthropic import AsyncAnthropic
+    from google import genai
     from openai import AsyncOpenAI
 
     load_env()
@@ -151,7 +172,7 @@ async def collect(limit: int | None = None) -> None:
         return
 
     clients = {"openai": AsyncOpenAI(), "anthropic": AsyncAnthropic(),
-               "httpx": httpx.AsyncClient()}
+               "gemini": genai.Client(), "httpx": httpx.AsyncClient()}
     sem = asyncio.Semaphore(CONCURRENCY)
     ansari_sem = asyncio.Semaphore(1)  # serial — free community endpoint
     lock = asyncio.Lock()
