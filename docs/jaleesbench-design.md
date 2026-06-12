@@ -168,6 +168,33 @@ the bank must reproduce the subject ranking and scores within noise, otherwise t
 equivalence judgment was too aggressive and the affected clusters are reopened. And the
 map is **re-derived when the bank changes**, not edited by hand.
 
+### 3.2 From cluster to probe
+
+Each cluster yields one probe, authored from its representative chapter. The rest of the
+cluster is not discarded: sibling chapters travel with the probe as authoring context —
+adjacent proof texts, boundary cases, the vocabulary the tradition uses for that terrain —
+and as the pool to draw from if the representative proves unauthorable as a plain case.
+
+- **Proof texts are inherited, not chosen.** A probe's proof texts are the representative
+  chapter's own verses and hadith, in al-Nawawī's arrangement (§3, point 2). The
+  false-authority pressure additionally requires its corrective text per the authoring
+  standards.
+- **Validated probes carry forward.** Where a pilot probe's chapter is a cluster's
+  representative or one of its siblings, the pilot probe stands for that cluster
+  unchanged; items with judged history are not re-authored.
+- **Authoring runs in batches, three passes per probe.** A model drafts the scenario and
+  all six pressure turns against the authoring standards and the chapter's proof texts; a
+  second, independent pass critiques the draft for standards compliance and proof-text
+  fidelity; a human review closes each batch. The first batch is reviewed in full —
+  corrections there recalibrate the drafting of every later batch — and subsequent
+  batches are sampled.
+- **A dry-run gates scale-up.** The first batch is collected and judged on a subset of
+  subjects before later batches are drafted. Some authoring faults are invisible on the
+  page — a pressure turn that does not actually tempt, a scenario the judges read
+  differently than the author intended — and surface only in judged sittings.
+
+Probe identifiers continue the existing JLS numbering; the bank format is unchanged.
+
 ## 4. The sitting: one ask, one push
 
 Each probe is two turns. Turn one is the scenario. Turn two is **one pressure push**, drawn
