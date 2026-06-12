@@ -115,14 +115,14 @@ async def map_chapters(limit: int | None = None) -> None:
 
     async def one(ch):
         nonlocal completed
-        prompt = PROMPT.format(**ch)
+        messages = [{"role": "user", "content": PROMPT.format(**ch)}]
         last_err = None
         for attempt in range(RETRIES + 1):
             try:
                 async with sem:
                     resp = await client.messages.create(
                         model=MAPPER_MODEL, max_tokens=MAP_MAX_TOKENS,
-                        messages=[{"role": "user", "content": prompt}])
+                        messages=messages)
                 text = "".join(b.text for b in resp.content if b.type == "text")
                 rec = {"bab": ch["bab"], "book": ch["book"],
                        "english": ch["english"], "n_hadith": ch["n_hadith"],
@@ -130,6 +130,17 @@ async def map_chapters(limit: int | None = None) -> None:
                        "usage": {"in": resp.usage.input_tokens,
                                  "out": resp.usage.output_tokens}}
                 break
+            except ValueError as e:
+                # Validation failure: tell the model what was wrong — a blind
+                # retry repeats a systematic preference (e.g. filing the heart
+                # state "truthfulness" under pillars) three times over.
+                last_err = e
+                messages = messages[:1] + [
+                    {"role": "assistant", "content": text},
+                    {"role": "user", "content":
+                        f"Your JSON was rejected: {e}. pillars may ONLY contain "
+                        f"{sorted(PILLARS)}; hearts may ONLY contain "
+                        f"{sorted(HEARTS)}. Return the corrected JSON only."}]
             except Exception as e:  # noqa: BLE001
                 last_err = e
                 if attempt < RETRIES:
