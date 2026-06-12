@@ -302,11 +302,11 @@ def build_html() -> None:
                  f"<td>{to:,}</td><td>${c:.2f}</td></tr>")
     H.append(f"<tr><td><b>total</b></td><td></td><td></td><td></td>"
              f"<td><b>${total:.2f}</b></td></tr></table>")
-    H.append("<p class='meta'>Prices per Mtok, verified 2026-06-11 "
-             "(gemini-3.5-flash 2026-06-12): gpt-5.5 $5/$30 · "
-             "claude-sonnet-4-6 $3/$15 · claude-opus-4-8 $5/$25 · "
+    H.append("<p class='meta'>Prices per Mtok, verified 2026-06-11/12: "
+             "gpt-5.5 $5/$30 · claude-sonnet-4-6 $3/$15 · claude-opus-4-8 $5/$25 · "
              "gemini-3.1-pro-preview $2/$12 · gemini-3.5-flash $1.50/$9 · "
-             "ansari free.</p>")
+             "gemma-4-31b (Friendli) $0.14/$0.40 · nemotron-3-ultra (Blackbox) "
+             "$0.37/$1.08 · ansari free.</p>")
 
     # Exhibits
     H.append("<h2>10 · Exhibits</h2>")

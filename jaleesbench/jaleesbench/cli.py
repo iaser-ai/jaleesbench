@@ -35,6 +35,13 @@ def map_chapters(limit: int = typer.Option(None, help="Map only the first N pend
     asyncio.run(_map(limit=limit))
 
 
+@app.command(name="select-probes")
+def select_probes(limit: int = typer.Option(None, help="Select only the first N pending clusters")):
+    """Pick one representative bab per probe-worthy cluster."""
+    from .mapping import select_probes as _select
+    asyncio.run(_select(limit=limit))
+
+
 @app.command()
 def report():
     """Aggregate judgments into the pilot report (markdown + HTML)."""

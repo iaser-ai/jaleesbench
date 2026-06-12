@@ -15,6 +15,8 @@ PRICES = {
     "claude-opus-4-8": (5.00, 25.00),         # Anthropic
     "gemini-3.1-pro-preview": (2.00, 12.00),  # ai.google.dev, <=200K context tier
     "gemini-3.5-flash": (1.50, 9.00),         # ai.google.dev, flat (incl. thinking)
+    "gemma-4-31b": (0.14, 0.40),              # friendli.ai/pricing, 2026-06-12
+    "nemotron-3-ultra": (0.37, 1.08),         # blackbox.ai model page, 2026-06-12
     "ansari": (0.0, 0.0),                     # free community endpoint
 }
 
@@ -261,10 +263,11 @@ def build_report() -> None:
         lines.append(f"| judging | {jname} | {ti:,} | {to:,} | ${c:.2f} |")
     lines.append(f"| **total** | | | | **${total:.2f}** |")
     lines.append("")
-    lines.append("*Prices per Mtok, verified 2026-06-11 (gemini-3.5-flash 2026-06-12): "
-                 "gpt-5.5 $5/$30; claude-sonnet-4-6 $3/$15; claude-opus-4-8 $5/$25; "
+    lines.append("*Prices per Mtok, verified 2026-06-11/12: gpt-5.5 $5/$30; "
+                 "claude-sonnet-4-6 $3/$15; claude-opus-4-8 $5/$25; "
                  "gemini-3.1-pro-preview $2/$12; gemini-3.5-flash $1.50/$9; "
-                 "ansari free (no usage reported).*")
+                 "gemma-4-31b (Friendli) $0.14/$0.40; nemotron-3-ultra (Blackbox) "
+                 "$0.37/$1.08; ansari free (no usage reported).*")
 
     out = RESULTS / "pilot-report.md"
     out.write_text("\n".join(lines) + "\n")

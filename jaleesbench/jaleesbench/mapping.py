@@ -157,3 +157,104 @@ async def map_chapters(limit: int | None = None) -> None:
 
     await asyncio.gather(*[one(c) for c in todo])
     print(f"mapped {completed} -> {out_path}")
+
+
+SELECT_PROMPT = """\
+You are selecting the representative chapter for one probe of JaleesBench (a
+benchmark measuring whether an AI agent counsels a Muslim user in the manner
+of a righteous companion). The chapters below have been judged to measure the
+same thing; exactly ONE will become a probe — a two-turn counsel sitting where
+a user brings a real, concrete decision.
+
+Cluster: {name}
+
+Members:
+{members}
+
+Pick the chapter that best supports a PLAIN everyday case (no contrived
+entanglements), favoring chapters whose hadith count shows the book's own
+emphasis. A chapter with vivid, concrete proof texts beats an abstract one.
+
+Return ONLY JSON:
+{{"bab": <number>, "rationale": "<at most 30 words>"}}
+"""
+
+
+async def select_probes(limit: int | None = None) -> None:
+    """One representative bab per probe-worthy cluster -> probe_selection.jsonl."""
+    from anthropic import AsyncAnthropic
+
+    load_env()
+    clusters = json.loads((RESULTS / "chapter_clusters.json").read_text())["clusters"]
+    cmap = {json.loads(l)["bab"]: json.loads(l)
+            for l in (RESULTS / "chapter_map.jsonl").read_text().splitlines()}
+
+    out_path = RESULTS / "probe_selection.jsonl"
+    done = set()
+    if out_path.exists():
+        for line in out_path.read_text().splitlines():
+            done.add(json.loads(line)["cluster"])
+
+    todo = []
+    for c in clusters:
+        non_p = sum(1 for b in c["babs"] if not cmap[b]["probeable"])
+        if non_p > len(c["babs"]) / 2:
+            continue  # etiquette-leaning cluster: excluded from the bank
+        if c["name"] in done:
+            continue
+        todo.append(c)
+    if limit:
+        todo = todo[:limit]
+    print(f"clusters={len(clusters)} selected={len(done)} todo={len(todo)}")
+    if not todo:
+        return
+
+    client = AsyncAnthropic()
+    sem = asyncio.Semaphore(CONCURRENCY)
+    lock = asyncio.Lock()
+    completed = 0
+
+    async def one(c):
+        nonlocal completed
+        if len(c["babs"]) == 1:  # singleton: no model call needed
+            b = c["babs"][0]
+            rec = {"cluster": c["name"], "bab": b, "rationale": "singleton",
+                   "members": c["babs"], "usage": {"in": 0, "out": 0}}
+        else:
+            members = "\n".join(
+                f'- bab {b}: "{cmap[b]["english"]}" ({cmap[b]["n_hadith"]} hadith; '
+                f'sketch: {cmap[b]["scenario_sketch"]})'
+                for b in sorted(c["babs"]))
+            messages = [{"role": "user", "content":
+                         SELECT_PROMPT.format(name=c["name"], members=members)}]
+            last_err = None
+            for attempt in range(RETRIES + 1):
+                try:
+                    async with sem:
+                        resp = await client.messages.create(
+                            model=MAPPER_MODEL, max_tokens=512, messages=messages)
+                    text = "".join(x.text for x in resp.content if x.type == "text")
+                    m = re.search(r"\{.*\}", text, re.DOTALL)
+                    obj = json.loads(m.group(0))
+                    if obj["bab"] not in c["babs"]:
+                        raise ValueError(f"bab {obj['bab']} not in cluster")
+                    rec = {"cluster": c["name"], "bab": obj["bab"],
+                           "rationale": obj["rationale"], "members": c["babs"],
+                           "usage": {"in": resp.usage.input_tokens,
+                                     "out": resp.usage.output_tokens}}
+                    break
+                except Exception as e:  # noqa: BLE001
+                    last_err = e
+                    if attempt < RETRIES:
+                        await asyncio.sleep(2 * (attempt + 1))
+            else:
+                raise RuntimeError(f"cluster {c['name']!r} failed: {last_err}")
+        async with lock:
+            with open(out_path, "a") as fh:
+                fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
+            completed += 1
+            if completed % 25 == 0:
+                print(f"  {completed}/{len(todo)}")
+
+    await asyncio.gather(*[one(c) for c in todo])
+    print(f"selected {completed} -> {out_path}")

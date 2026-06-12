@@ -21,6 +21,15 @@ SUBJECTS = {
     # retrieval/prompting value-add from raw model capability.
     "gemini-3.5-flash": {"provider": "gemini",
                          "framings": ["unstated", "stated", "guided"]},
+    # Friendli serverless (key in cluesmith/shannon/.env).
+    "gemma-4-31b": {"provider": "friendli", "model": "google/gemma-4-31B-it",
+                    "framings": ["unstated", "stated", "guided"]},
+    # Blackbox (key in cluesmith/shannon/.env). Reasoning model: hidden
+    # reasoning pass bills as completion tokens; ample MAX_TOKENS required
+    # or content arrives null (finish_reason=length mid-reasoning).
+    "nemotron-3-ultra": {"provider": "blackbox",
+                         "model": "blackboxai/nvidia/nemotron-3-ultra",
+                         "framings": ["unstated", "stated", "guided"]},
     # Ansari rejects system roles; for stated/guided the framing text is sent
     # as a context preamble inside the first user turn (the stored conversation
     # stays clean, so judges remain blinded to framing).
@@ -36,9 +45,11 @@ RETRIES = 2
 
 
 def load_env() -> None:
-    """Load keys from taqwabench/.env and the iaser Gemini env. Fail fast if missing."""
+    """Load keys from taqwabench/.env, the iaser Gemini env, and shannon
+    (Friendli + Blackbox). Fail fast if missing."""
     for env_path in [ROOT.parent.parent / ".env",
-                     Path("/Users/mwk/Development/iaser/tazkiya/.env")]:
+                     Path("/Users/mwk/Development/iaser/tazkiya/.env"),
+                     Path("/Users/mwk/Development/cluesmith/shannon/.env")]:
         if not env_path.exists():
             raise FileNotFoundError(f"env file missing: {env_path}")
         for line in env_path.read_text().splitlines():
@@ -46,7 +57,8 @@ def load_env() -> None:
             if line and not line.startswith("#") and "=" in line:
                 k, _, v = line.partition("=")
                 os.environ.setdefault(k.strip(), v.strip())
-    for key in ["ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY"]:
+    for key in ["ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY",
+                "FRIENDLI_API_KEY", "BLACKBOX_API_KEY"]:
         if not os.environ.get(key):
             raise RuntimeError(f"{key} not set after loading env files")
 
@@ -68,10 +80,16 @@ async def call_subject(subject: str, system: str | None, messages: list[dict],
     last_err = None
     for attempt in range(retries + 1):
         try:
-            if spec["provider"] == "openai":
+            if spec["provider"] in ("openai", "friendli", "blackbox"):
                 msgs = ([{"role": "system", "content": system}] if system else []) + messages
-                resp = await clients["openai"].chat.completions.create(
-                    model=subject, messages=msgs, max_completion_tokens=MAX_TOKENS)
+                kwargs = {"model": spec.get("model", subject), "messages": msgs}
+                # gpt-5.5 requires the newer param name; Friendli/Blackbox
+                # take the classic one.
+                if spec["provider"] == "openai":
+                    kwargs["max_completion_tokens"] = MAX_TOKENS
+                else:
+                    kwargs["max_tokens"] = MAX_TOKENS
+                resp = await clients[spec["provider"]].chat.completions.create(**kwargs)
                 content = resp.choices[0].message.content
                 usage = {"in": resp.usage.prompt_tokens, "out": resp.usage.completion_tokens}
             elif spec["provider"] == "anthropic":
@@ -172,7 +190,13 @@ async def collect(limit: int | None = None) -> None:
         return
 
     clients = {"openai": AsyncOpenAI(), "anthropic": AsyncAnthropic(),
-               "gemini": genai.Client(), "httpx": httpx.AsyncClient()}
+               "gemini": genai.Client(), "httpx": httpx.AsyncClient(),
+               "friendli": AsyncOpenAI(
+                   base_url="https://api.friendli.ai/serverless/v1",
+                   api_key=os.environ["FRIENDLI_API_KEY"]),
+               "blackbox": AsyncOpenAI(
+                   base_url="https://api.blackbox.ai/v1",
+                   api_key=os.environ["BLACKBOX_API_KEY"])}
     sem = asyncio.Semaphore(CONCURRENCY)
     ansari_sem = asyncio.Semaphore(1)  # serial — free community endpoint
     lock = asyncio.Lock()
