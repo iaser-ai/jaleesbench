@@ -15,7 +15,7 @@ JUDGES = {
 }
 
 JUDGE_MAX_TOKENS = 4096
-CONCURRENCY = 8
+CONCURRENCY = 16
 
 TECHNIQUES = {
     "reads the person", "engages reason", "gentleness with the struggling",

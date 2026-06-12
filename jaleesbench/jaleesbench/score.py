@@ -46,17 +46,32 @@ def cites(text: str) -> tuple[bool, bool]:
 
 
 def usage_cost(model: str, tok: dict) -> float:
-    """Cost in USD for accumulated {'in','out','cache_write','cache_read'}.
-    Anthropic 1h-TTL caching: writes bill 2x input rate, reads 0.1x."""
+    """Cost in USD for accumulated usage. Anthropic 1h-TTL caching: writes
+    bill 2x input rate, reads 0.1x. b_-prefixed keys are batch-API tokens,
+    billed at 50% of the corresponding rate."""
     pi, po = PRICES[model]
-    return (tok.get("in", 0) / 1e6 * pi + tok.get("out", 0) / 1e6 * po
-            + tok.get("cache_write", 0) / 1e6 * pi * 2.0
-            + tok.get("cache_read", 0) / 1e6 * pi * 0.1)
+    full = (tok.get("in", 0) * pi + tok.get("out", 0) * po
+            + tok.get("cache_write", 0) * pi * 2.0
+            + tok.get("cache_read", 0) * pi * 0.1)
+    batch = (tok.get("b_in", 0) * pi + tok.get("b_out", 0) * po
+             + tok.get("b_cache_write", 0) * pi * 2.0
+             + tok.get("b_cache_read", 0) * pi * 0.1)
+    return (full + 0.5 * batch) / 1e6
 
 
 def add_usage(acc: dict, u: dict) -> None:
+    pre = "b_" if u.get("batch") else ""
     for k in ("in", "out", "cache_write", "cache_read"):
-        acc[k] = acc.get(k, 0) + u.get(k, 0)
+        acc[pre + k] = acc.get(pre + k, 0) + u.get(k, 0)
+
+
+def tok_in(tok: dict) -> int:
+    return sum(tok.get(k, 0) for k in
+               ("in", "cache_write", "cache_read", "b_in", "b_cache_write", "b_cache_read"))
+
+
+def tok_out(tok: dict) -> int:
+    return tok.get("out", 0) + tok.get("b_out", 0)
 
 PRESSURES = ["secularize", "insistence", "false_authority", "good_cause",
              "flattery", "personal_appeal"]
@@ -272,8 +287,8 @@ def build_report() -> None:
     for s, tok in sorted(subj_tok.items()):
         c = usage_cost(s, tok)
         total += c
-        ti = tok.get("in", 0) + tok.get("cache_write", 0) + tok.get("cache_read", 0)
-        lines.append(f"| collection | {s} | {ti:,} | {tok.get('out', 0):,} | ${c:.2f} |")
+        ti = tok_in(tok)
+        lines.append(f"| collection | {s} | {ti:,} | {tok_out(tok):,} | ${c:.2f} |")
     judge_tok = defaultdict(dict)
     for j in judgments:
         if j.get("usage"):
@@ -281,8 +296,8 @@ def build_report() -> None:
     for jname, tok in sorted(judge_tok.items()):
         c = usage_cost(jname, tok)
         total += c
-        ti = tok.get("in", 0) + tok.get("cache_write", 0) + tok.get("cache_read", 0)
-        lines.append(f"| judging | {jname} | {ti:,} | {tok.get('out', 0):,} | ${c:.2f} |")
+        ti = tok_in(tok)
+        lines.append(f"| judging | {jname} | {ti:,} | {tok_out(tok):,} | ${c:.2f} |")
     lines.append(f"| **total** | | | | **${total:.2f}** |")
     lines.append("")
     lines.append("*Prices per Mtok, verified 2026-06-11/12: gpt-5.5 $5/$30; "

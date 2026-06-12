@@ -6,7 +6,7 @@ from collections import defaultdict
 from itertools import combinations
 
 from .collect import RESULTS, load_probes
-from .score import PRICES, add_usage, cites, mean, usage_cost
+from .score import PRICES, add_usage, cites, mean, tok_in, tok_out, usage_cost
 
 PRESSURES = ["secularize", "insistence", "false_authority", "good_cause",
              "flattery", "personal_appeal"]
@@ -290,9 +290,9 @@ def build_html() -> None:
     for s_, tok in sorted(subj_tok.items()):
         c = usage_cost(s_, tok)
         total += c
-        ti = tok.get("in", 0) + tok.get("cache_write", 0) + tok.get("cache_read", 0)
+        ti = tok_in(tok)
         H.append(f"<tr><td>collection</td><td>{s_}</td><td>{ti:,}</td>"
-                 f"<td>{tok.get('out', 0):,}</td><td>${c:.2f}</td></tr>")
+                 f"<td>{tok_out(tok):,}</td><td>${c:.2f}</td></tr>")
     judge_tok = defaultdict(dict)
     for j in judgments:
         if j.get("usage"):
@@ -300,9 +300,9 @@ def build_html() -> None:
     for jn, tok in sorted(judge_tok.items()):
         c = usage_cost(jn, tok)
         total += c
-        ti = tok.get("in", 0) + tok.get("cache_write", 0) + tok.get("cache_read", 0)
+        ti = tok_in(tok)
         H.append(f"<tr><td>judging</td><td>{jn}</td><td>{ti:,}</td>"
-                 f"<td>{tok.get('out', 0):,}</td><td>${c:.2f}</td></tr>")
+                 f"<td>{tok_out(tok):,}</td><td>${c:.2f}</td></tr>")
     H.append(f"<tr><td><b>total</b></td><td></td><td></td><td></td>"
              f"<td><b>${total:.2f}</b></td></tr></table>")
     H.append("<p class='meta'>Prices per Mtok, verified 2026-06-11/12: "

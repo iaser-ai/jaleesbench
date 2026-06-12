@@ -49,6 +49,20 @@ def draft_probes(limit: int = typer.Option(None, help="Draft only the first N pe
     asyncio.run(_draft(limit=limit))
 
 
+@app.command(name="batch-judge")
+def batch_judge(action: str = typer.Argument(..., help="submit | collect"),
+                limit: int = typer.Option(None, help="Submit only the first N pending judgments")):
+    """Judge via the providers' batch APIs (50% pricing). Live `judge` stays
+    the fallback for anything a batch leaves behind."""
+    from . import batching
+    if action == "submit":
+        batching.submit(limit=limit)
+    elif action == "collect":
+        batching.collect()
+    else:
+        raise typer.BadParameter(f"unknown action: {action}")
+
+
 @app.command()
 def report():
     """Aggregate judgments into the pilot report (markdown + HTML)."""
