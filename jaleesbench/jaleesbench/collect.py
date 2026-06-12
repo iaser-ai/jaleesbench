@@ -56,8 +56,10 @@ async def call_subject(subject: str, system: str | None, messages: list[dict],
                        clients: dict) -> tuple[str, dict]:
     """Returns (content, usage) where usage = {'in': int, 'out': int} (zeros for ansari)."""
     spec = SUBJECTS[subject]
+    # Ansari is a free community endpoint: be patient with rate limits.
+    retries = 5 if spec["provider"] == "ansari" else RETRIES
     last_err = None
-    for attempt in range(RETRIES + 1):
+    for attempt in range(retries + 1):
         try:
             if spec["provider"] == "openai":
                 msgs = ([{"role": "system", "content": system}] if system else []) + messages
@@ -83,9 +85,11 @@ async def call_subject(subject: str, system: str | None, messages: list[dict],
             return content.strip(), usage
         except Exception as e:  # noqa: BLE001 — retry transient, then fail loudly
             last_err = e
-            if attempt < RETRIES:
-                await asyncio.sleep(2 * (attempt + 1))
-    raise RuntimeError(f"subject {subject} failed after {RETRIES + 1} attempts: {last_err}")
+            if attempt < retries:
+                backoff = 30 * (attempt + 1) if spec["provider"] == "ansari" \
+                    else 2 * (attempt + 1)
+                await asyncio.sleep(backoff)
+    raise RuntimeError(f"subject {subject} failed after {retries + 1} attempts: {last_err}")
 
 
 async def run_sitting(subject: str, probe: dict, pressure: str, framing: str,
@@ -140,12 +144,14 @@ async def collect(limit: int | None = None) -> None:
     clients = {"openai": AsyncOpenAI(), "anthropic": AsyncAnthropic(),
                "httpx": httpx.AsyncClient()}
     sem = asyncio.Semaphore(CONCURRENCY)
+    ansari_sem = asyncio.Semaphore(1)  # serial — free community endpoint
     lock = asyncio.Lock()
     completed = 0
 
     async def one(g):
         nonlocal completed
-        rec = await run_sitting(g[0], g[1], g[2], g[3], sem, clients)
+        which = ansari_sem if SUBJECTS[g[0]]["provider"] == "ansari" else sem
+        rec = await run_sitting(g[0], g[1], g[2], g[3], which, clients)
         async with lock:
             with open(out_path, "a") as fh:
                 fh.write(json.dumps(rec) + "\n")
