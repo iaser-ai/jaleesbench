@@ -27,6 +27,7 @@ tmp/
 .env
 .env.*
 jaleesbench/.venv/
-jaleesbench/results/
+jaleesbench/results/*
+!jaleesbench/results/commentary.json
 __pycache__/
 *.egg-info/
