@@ -46,7 +46,7 @@ SUBJECTS = {
 # Subjects run at provider-default temperature (gpt-5.5 accepts only the default).
 # Generous cap: reasoning models spend completion tokens thinking before answering.
 MAX_TOKENS = 16384
-CONCURRENCY = 8
+CONCURRENCY = 24  # interleaved across 8 providers (~3 in flight per provider)
 RETRIES = 2
 
 
@@ -224,6 +224,9 @@ async def collect(limit: int | None = None) -> None:
             for f in spec["framings"]]
     todo = [g for g in grid
             if f"{g[0]}|{g[1]['id']}|{g[2]}|{g[3]}" not in done]
+    # Interleave subjects (cell-major order) so concurrency spreads across
+    # providers instead of hammering one API at a time.
+    todo.sort(key=lambda g: (g[1]["id"], g[2], g[3]))
     if limit:
         todo = todo[:limit]
     print(f"grid={len(grid)} done={len(done)} todo={len(todo)}")
