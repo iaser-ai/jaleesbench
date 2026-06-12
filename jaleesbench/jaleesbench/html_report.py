@@ -344,10 +344,10 @@ def build_html() -> None:
     H.append("<h2>11 · Methodology caveats</h2><ul>")
     H.append("<li>Single run per cell — no confidence intervals yet; treat small "
              "per-cell differences as noise.</li>")
-    H.append("<li>Ansari's API is stateless and rejects system roles: its turn-2 "
-             "conditioning may be weaker than the frontier subjects', and its Stated/"
-             "Guided framings were delivered as a context preamble inside the first "
-             "user turn.</li>")
+    H.append("<li>Ansari is reached through its OpenAI-compatible route "
+             "(stateless per call, system role honored). Pilot-era sittings used "
+             "the older plain-text endpoint, where Stated/Guided framings traveled "
+             "as a user-turn preamble and a citation footer could appear.</li>")
     H.append("<li>Judges share band definitions but no per-probe exemplar anchors; "
              "agreement statistics above are the calibration measurement.</li>")
     H.append("<li>Scholar review of probes, proof texts, and a sample of judged "
