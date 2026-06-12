@@ -93,26 +93,39 @@ $3/$15, opus $5/$25, gemini $2/$12). NOTE: shannon's ai-proxy rate table has Gem
 (~120 sittings, serial, slow — possibly 1-3h) → full v3 re-judge of ALL 540 sittings into
 fresh `judgments.jsonl` (~$35) → report (md + html). See FIRST ACTIONS.
 
-## NEXT WORK
+## RULINGS MADE 2026-06-12 (Waleed)
 
-1. **ACTIVE DISCUSSION (2026-06-12): scaling design.** Waleed is considering the FULL
-   372-chapter bank (one probe per Riyāḍ al-Ṣāliḥīn chapter), possibly SINGLE judge.
-   Cost estimates given (from pilot actuals): full bank 1 run/cell ≈ $448 collect +
-   $763 single-Opus judging ≈ $1.2k; 3 runs/cell ≈ $3.6k; second judge +$744;
-   dual-judge 10% sample +$75. He says ansari speed is fine / can self-host it
-   (it's his project — self-hosting moves underlying model spend to our keys, no
-   longer free). He asked: is there a SUBSET of the 372 giving almost the same
-   results — overlaps between chapters, how to decide? (Answer given: stratify by
-   the bench's own taxonomies — pillar × heart state × terrain; chapters collapse
-   into far fewer measurement cells; pilot evidence = the 4 prohibition probes give
-   near-identical subject orderings; validate subset by split-half ranking
-   stability. Await his ruling on bank size + judge count.)
-2. Pending Waleed decisions: bank size / subset strategy; 1 vs 2 judges; 3 runs/cell
-   for CIs; scholar review path; whether to flip taqwabench repo public; fixing
-   shannon's Gemini rate (their table has Gemini 3.1 at 2.5-pro prices — stale).
-3. Waleed has not yet reviewed `docs/jaleesbench-guide.md` (load-bearing artifact).
-4. Judge-calibration next lever: exemplar anchors for grief register (JLS-005 still
-   52% exact agreement).
+- **Full run = 139-probe subset + DUAL judging.** Encoded in design doc §3.1 (v0.3,
+  commit b3091d7). One probe per probe-worthy measurement cluster; representative
+  bab by hadith weight + plain case; split-half check; map re-derived not hand-edited.
+- **gemini-3.5-flash added as 4th subject** (it's Ansari's base model — he said
+  "GPT-3.5 Flash", verified actual id via API + AskUserQuestion). Pilot v3.1 result:
+  flash −0.10 unstated vs ansari +1.45 = +1.55-band Ansari-layer value-add, the
+  pilot's largest contrast. Flash: worst steadfastness (−0.31, caves to insistence
+  −1.05/personal appeal −0.75), JLS-006 −1.92, guided ceiling +1.75 < frontier.
+- **Source-citation metric** (his ask) is §6 of both reports: regex over transcripts
+  (surah/verse, collections, prophet-said; bare mentions don't count). Ansari 80%
+  hadith unstated vs 2/18/20% others; ansari citation DROPS guided (80→62%) — same
+  guide-interference pattern as its score. Flash steepest stated jump (20→85%).
+- Pilot totals now: 720 sittings, 2,880 judgments, $75.18, agreement steady 73/88%.
+- Chapter map artifacts: results/chapter_map.jsonl ($3.42), chapter_clusters.json,
+  docs/jaleesbench-chapter-map.md (143 clusters: 54 singletons, median 2, max 25
+  "small voluntary devotions"; 4 etiquette-leaning excluded → 139).
+
+## NEXT WORK (full-run prep, in rough order)
+
+1. Pick the 139 representative babs (hadith weight + plain-case; mechanical, can
+   start anytime). 3 verse-only babs still title-pending (70, 126, 202 — shamela
+   403s; fill during authoring if their clusters need them).
+2. Waleed reviews `docs/jaleesbench-guide.md` (STILL pending; blocks Guided framing
+   at scale — if it changes post-run, guided cells need recollecting).
+3. Exemplar anchors for grief/register judging (JLS-005-type cells still 52% exact;
+   at 139 probes several register clusters will exist).
+4. Author 139 probes × 6 pressure turns + corrective texts (standard #12) + proof
+   texts. THE critical path. Batch + review.
+5. Decide runs/cell (1 vs 3). Full-run cost w/ dual judges: ≈$263 collect +
+   ≈$760 judge ≈ $1,025/run; ×3 ≈ $3.1k. Ansari self-host option open (his project).
+6. Still pending: scholar review path; taqwabench repo public?; shannon Gemini rate.
 
 ## Repos & infra
 
