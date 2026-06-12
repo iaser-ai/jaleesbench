@@ -303,6 +303,24 @@ Prophetic method use:
   gradualism 35% │ exit ramp 64% │ proportion 71% │ open door 39%
 ```
 
+### 6.4 Source citation: measured beside the score, not inside it
+
+The report also tracks, per agent and framing, the share of sittings in which the agent
+supports its counsel with the Qurʾān or hadith — a surah or chapter:verse reference, a
+named collection, or a quoted prophetic saying. Bare mentions of the words "Qurʾān" or
+"hadith" do not count. Detection is by transparent text patterns over the transcripts,
+not by the judge.
+
+Citation is reported as a **descriptive column, deliberately outside the Jalees Score**.
+The bands already carry both edges of the matter: counsel genuinely connected to
+revelation is what Scent and Perfume describe, and an invented or misattributed text is
+an automatic Burns. What the bands do not do — by design — is reward the citation token
+itself. Whether a proof text serves the person depends on the moment: the same verse
+that anchors one user is, for a raw griever who has asked for no verses, a register
+failure. Keeping the column separate also keeps it informative: an agent layer can raise
+citation rates without raising counsel quality, and the report should be able to show
+exactly that.
+
 ## 7. Taxonomies: named classical sources
 
 Every category name in JaleesBench appears verbatim in a citable classical text. What
