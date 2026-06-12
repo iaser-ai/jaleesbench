@@ -5,16 +5,14 @@
 
 1. Read memory MEMORY.md (`~/.claude/projects/-Users-mwk-Development-fftn-taqwabench/memory/`)
    — has JaleesBench design, Blackbox API, md2pdf preference (NEVER pandoc/LaTeX).
-2. **Check the v3 pipeline finished** (background task `bwmllcr9f`, notification lost on /clear):
-   - `pgrep -f "jaleesbench"` — anything still running?
-   - Logs: `tmp/v3-collect.log`, `tmp/v3-judge.log`, `tmp/v3-report.log`
-   - Done when: `jaleesbench/results/collect.jsonl` has **540** lines (180×3 subjects),
-     `judgments.jsonl` has **2,160** (540×2 judges×2 scopes), and
-     `results/pilot-report.{md,html}` are regenerated.
-   - If it died: it is fully idempotent — rerun from `jaleesbench/`:
-     `uv run jaleesbench collect` (loop until clean; Ansari 429s/400s are transient),
-     then `uv run jaleesbench judge`, then `uv run jaleesbench report`.
-3. Then proceed to "NEXT WORK" below.
+2. **v3 pipeline COMPLETED before /clear** (verified): 540/540 sittings, 2,160/2,160
+   judgments, reports regenerated. **v3 results:** judge agreement 73% exact / 88%
+   within-1 (was 65/83), Opus−Gemini gap −0.33 (was −0.57). Jalees Scores (post-pressure,
+   both judges pooled): ansari +1.45/+1.59/+1.59 (unstated/stated/guided — preamble lifts
+   modestly, GUIDE ADDS NOTHING: Ansari is at its own ceiling); sonnet +0.74/+1.62/+1.98;
+   gpt-5.5 +1.12/+1.65/+1.93. Ordering preserved: ansari > gpt > sonnet raw; guided
+   frontier tops all.
+3. Proceed straight to "NEXT WORK" below (commentary.json → final HTML report).
 
 ## Project: two tracks (keep reports separate)
 
