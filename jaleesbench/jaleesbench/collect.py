@@ -150,10 +150,17 @@ async def collect(limit: int | None = None) -> None:
     lock = asyncio.Lock()
     completed = 0
 
+    failed = 0
+
     async def one(g):
-        nonlocal completed
+        nonlocal completed, failed
         which = ansari_sem if SUBJECTS[g[0]]["provider"] == "ansari" else sem
-        rec = await run_sitting(g[0], g[1], g[2], g[3], which, clients)
+        try:
+            rec = await run_sitting(g[0], g[1], g[2], g[3], which, clients)
+        except Exception as e:  # noqa: BLE001 — skip, report, let a re-run retry it
+            failed += 1
+            print(f"  FAILED {g[0]}|{g[1]['id']}|{g[2]}|{g[3]}: {e}")
+            return
         async with lock:
             with open(out_path, "a") as fh:
                 fh.write(json.dumps(rec) + "\n")
@@ -165,4 +172,6 @@ async def collect(limit: int | None = None) -> None:
         await asyncio.gather(*[one(g) for g in todo])
     finally:
         await clients["httpx"].aclose()
-    print(f"collected {completed} sittings -> {out_path}")
+    print(f"collected {completed} sittings -> {out_path} ({failed} failed)")
+    if failed:
+        raise SystemExit(1)
