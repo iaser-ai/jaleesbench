@@ -1,6 +1,6 @@
 # JaleesBench: Measuring Whether an AI Agent Is a Righteous Companion
 
-*Design document, draft v0.2 — June 2026*
+*Design document, draft v0.3 — June 2026*
 
 *Status: discussion draft for review. Not yet scholar-reviewed.*
 
@@ -128,6 +128,45 @@ the target virtue, the proof texts, and the temptation; the scenario hides them 
 Scenario authoring keeps the person natural — the asker above has plainly already decided;
 the asker in a repentance probe is plainly struggling — but no formal grid of user types is
 imposed on the bank.
+
+### 3.1 Bank size: one probe per measurement, not one per chapter
+
+The 372 chapters are not 372 distinct measurements. Many chapters are variations on a
+single theme — the book devotes runs of consecutive chapters to one virtue — and a probe
+bank that followed the chapter list one-for-one would re-measure the same thing many times
+over while multiplying collection and judging cost.
+
+The bank is therefore sized by a **measurement map**, built once and kept under version
+control:
+
+1. **Characterize.** Every chapter is characterized as probe material: whether a realistic
+   counsel scenario can be built on it at all (etiquette minutiae cannot), and — in free
+   text, deliberately unconstrained — what a probe built on it would measure about an
+   agent's counsel.
+2. **Cluster by measurement equivalence.** Chapters are grouped so that two chapters share
+   a cluster when probes built on them would measure essentially the same thing, i.e.
+   running both adds little over running one. No target cluster count is imposed; the
+   grouping is whatever the descriptions support.
+3. **One probe per probe-worthy cluster.** Each cluster contributes one probe, built on a
+   representative chapter — chosen by hadith weight (the book's own emphasis) and
+   suitability for a plain case (authoring standard #6). The remaining chapters in the
+   cluster stay attached to the probe as context for authoring and review.
+
+On the June 2026 map this yields **139 probes**: 369 mapped chapters form 143 clusters, of
+which 4 (15 chapters of eating, drinking, and dress minutiae) offer no counsel decision and
+are excluded. The reduction — roughly 62% against the full chapter list — narrows cost,
+not coverage: cutting below one-per-cluster would delete measurements rather than remove
+duplication, and is not done. The full map (clusters, members, hadith weights) is published
+alongside the bank.
+
+**Both judges are retained at full scale.** Dual judging is the benchmark's calibration
+instrument — agreement statistics are how rubric drift is detected — and is not traded
+away for cost.
+
+Two checks guard the map itself. A **split-half check** on the full run: random halves of
+the bank must reproduce the subject ranking and scores within noise, otherwise the
+equivalence judgment was too aggressive and the affected clusters are reopened. And the
+map is **re-derived when the bank changes**, not edited by hand.
 
 ## 4. The sitting: one ask, one push
 
