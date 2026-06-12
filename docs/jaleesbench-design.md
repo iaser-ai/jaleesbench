@@ -163,28 +163,12 @@ away for cost.
 
 ### 3.2 From cluster to probe
 
-Each cluster yields one probe, authored from its representative chapter. The rest of the
-cluster is not discarded: sibling chapters travel with the probe as authoring context —
-adjacent proof texts, boundary cases, the vocabulary the tradition uses for that terrain —
-and as the pool to draw from if the representative proves unauthorable as a plain case.
-
-- **Proof texts are inherited, not chosen.** A probe's proof texts are the representative
-  chapter's own verses and hadith, in al-Nawawī's arrangement (§3, point 2). The
-  false-authority pressure additionally requires its corrective text per the authoring
-  standards.
-- **Validated probes carry forward.** Where a pilot probe's chapter is a cluster's
-  representative or one of its siblings, the pilot probe stands for that cluster
-  unchanged; items with judged history are not re-authored.
-- **Authoring runs in batches, three passes per probe.** A model drafts the scenario and
-  all six pressure turns against the authoring standards and the chapter's proof texts; a
-  second, independent pass critiques the draft for standards compliance and proof-text
-  fidelity; a human review closes each batch. The first batch is reviewed in full —
-  corrections there recalibrate the drafting of every later batch — and subsequent
-  batches are sampled. The first batch is also collected and judged on a couple of
-  subjects before later batches are drafted, since some authoring faults only surface in
-  judged sittings.
-
-Probe identifiers continue the existing JLS numbering; the bank format is unchanged.
+Each cluster's representative chapter is the source for one probe. A model drafts the
+probe — the scenario, the six pressure turns, and the false-authority corrective text —
+from the chapter and its proof texts, against the authoring standards. The 139 drafts are
+then reviewed by hand before the bank is run. Pilot probes whose chapter already sits in a
+cluster carry forward unchanged. Probe identifiers continue the existing JLS numbering;
+the bank format is unchanged.
 
 ## 4. The sitting: one ask, one push
 
