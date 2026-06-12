@@ -35,11 +35,12 @@ SUBJECTS = {
     "nemotron-3-ultra": {"provider": "blackbox",
                          "model": "blackboxai/nvidia/nemotron-3-ultra",
                          "framings": ["unstated", "stated", "guided"]},
-    # Ansari rejects system roles; for stated/guided the framing text is sent
-    # as a context preamble inside the first user turn (the stored conversation
-    # stays clean, so judges remain blinded to framing).
-    "ansari": {"provider": "ansari", "framings": ["unstated", "stated", "guided"],
-               "url": "https://api-35.ansari.chat/api/v2/mcp-complete"},
+    # Ansari via its OpenAI-compatible route (ansari-multisage spec 19):
+    # drives the real facilitator pipeline, accepts the system role, reports
+    # usage, no marketing footer, and the leaderboard bearer bypasses the
+    # rate limiter — so collection runs parallel, not serial.
+    "ansari": {"provider": "ansari", "model": "ansari",
+               "framings": ["unstated", "stated", "guided"]},
 }
 
 # Subjects run at provider-default temperature (gpt-5.5 accepts only the default).
@@ -54,7 +55,8 @@ def load_env() -> None:
     (Friendli + Blackbox). Fail fast if missing."""
     for env_path in [ROOT.parent.parent / ".env",
                      Path("/Users/mwk/Development/iaser/tazkiya/.env"),
-                     Path("/Users/mwk/Development/cluesmith/shannon/.env")]:
+                     Path("/Users/mwk/Development/cluesmith/shannon/.env"),
+                     Path("/Users/mwk/Development/cluesmith/ansari4/ansari-multisage/.env")]:
         if not env_path.exists():
             raise FileNotFoundError(f"env file missing: {env_path}")
         for line in env_path.read_text().splitlines():
@@ -63,7 +65,7 @@ def load_env() -> None:
                 k, _, v = line.partition("=")
                 os.environ.setdefault(k.strip(), v.strip())
     for key in ["ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY",
-                "FRIENDLI_API_KEY", "BLACKBOX_API_KEY"]:
+                "FRIENDLI_API_KEY", "BLACKBOX_API_KEY", "LEADERBOARD_API_KEY"]:
         if not os.environ.get(key):
             raise RuntimeError(f"{key} not set after loading env files")
 
@@ -85,10 +87,10 @@ async def call_subject(subject: str, system: str | None, messages: list[dict],
     last_err = None
     for attempt in range(retries + 1):
         try:
-            if spec["provider"] in ("openai", "friendli", "blackbox"):
+            if spec["provider"] in ("openai", "friendli", "blackbox", "ansari"):
                 msgs = ([{"role": "system", "content": system}] if system else []) + messages
                 kwargs = {"model": spec.get("model", subject), "messages": msgs}
-                # gpt-5.5 requires the newer param name; Friendli/Blackbox
+                # gpt-5.5 requires the newer param name; the others
                 # take the classic one.
                 if spec["provider"] == "openai":
                     kwargs["max_completion_tokens"] = MAX_TOKENS
@@ -120,14 +122,8 @@ async def call_subject(subject: str, system: str | None, messages: list[dict],
                 usage = {"in": um.prompt_token_count or 0,
                          "out": (um.candidates_token_count or 0)
                                 + (getattr(um, "thoughts_token_count", 0) or 0)}
-            else:  # ansari — plain-text reply, no auth, no usage reporting
-                resp = await clients["httpx"].post(
-                    spec["url"], json={"messages": messages}, timeout=180)
-                if resp.status_code != 200:
-                    raise RuntimeError(
-                        f"ansari HTTP {resp.status_code}: {resp.text[:300]}")
-                content = resp.text
-                usage = {"in": 0, "out": 0}
+            else:
+                raise RuntimeError(f"unknown provider: {spec['provider']}")
             if not content or not content.strip():
                 raise RuntimeError("empty response content")
             return content.strip(), usage
@@ -143,12 +139,8 @@ async def call_subject(subject: str, system: str | None, messages: list[dict],
 async def run_sitting(subject: str, probe: dict, pressure: str, framing: str,
                       sem: asyncio.Semaphore, clients: dict) -> dict:
     system = FRAMINGS[framing]
-    turn1_sent = probe["turn1"]
-    if system and SUBJECTS[subject]["provider"] == "ansari":
-        # No system role supported — fold framing into the first user turn.
-        turn1_sent = f"[Context for this conversation: {system}]\n\n{probe['turn1']}"
     async with sem:
-        msgs = [{"role": "user", "content": turn1_sent}]
+        msgs = [{"role": "user", "content": probe["turn1"]}]
         reply1, usage1 = await call_subject(subject, system, msgs, clients)
         msgs = msgs + [{"role": "assistant", "content": reply1},
                        {"role": "user", "content": probe["pressure_turns"][pressure]}]
@@ -201,9 +193,12 @@ async def collect(limit: int | None = None) -> None:
                    api_key=os.environ["FRIENDLI_API_KEY"]),
                "blackbox": AsyncOpenAI(
                    base_url="https://api.blackbox.ai/v1",
-                   api_key=os.environ["BLACKBOX_API_KEY"])}
+                   api_key=os.environ["BLACKBOX_API_KEY"]),
+               "ansari": AsyncOpenAI(
+                   base_url="https://api-35.ansari.chat/api/v1",
+                   api_key=os.environ["LEADERBOARD_API_KEY"],
+                   timeout=300)}
     sem = asyncio.Semaphore(CONCURRENCY)
-    ansari_sem = asyncio.Semaphore(1)  # serial — free community endpoint
     lock = asyncio.Lock()
     completed = 0
 
@@ -211,9 +206,8 @@ async def collect(limit: int | None = None) -> None:
 
     async def one(g):
         nonlocal completed, failed
-        which = ansari_sem if SUBJECTS[g[0]]["provider"] == "ansari" else sem
         try:
-            rec = await run_sitting(g[0], g[1], g[2], g[3], which, clients)
+            rec = await run_sitting(g[0], g[1], g[2], g[3], sem, clients)
         except Exception as e:  # noqa: BLE001 — skip, report, let a re-run retry it
             failed += 1
             print(f"  FAILED {g[0]}|{g[1]['id']}|{g[2]}|{g[3]}: {e}")
