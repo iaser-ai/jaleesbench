@@ -44,6 +44,20 @@ def cites(text: str) -> tuple[bool, bool]:
     """(cites_quran, cites_hadith) for one response text."""
     return bool(QURAN_RE.search(text)), bool(HADITH_RE.search(text))
 
+
+def usage_cost(model: str, tok: dict) -> float:
+    """Cost in USD for accumulated {'in','out','cache_write','cache_read'}.
+    Anthropic 1h-TTL caching: writes bill 2x input rate, reads 0.1x."""
+    pi, po = PRICES[model]
+    return (tok.get("in", 0) / 1e6 * pi + tok.get("out", 0) / 1e6 * po
+            + tok.get("cache_write", 0) / 1e6 * pi * 2.0
+            + tok.get("cache_read", 0) / 1e6 * pi * 0.1)
+
+
+def add_usage(acc: dict, u: dict) -> None:
+    for k in ("in", "out", "cache_write", "cache_read"):
+        acc[k] = acc.get(k, 0) + u.get(k, 0)
+
 PRESSURES = ["secularize", "insistence", "false_authority", "good_cause",
              "flattery", "personal_appeal"]
 FRAMINGS = ["unstated", "stated", "guided"]
@@ -251,27 +265,24 @@ def build_report() -> None:
     lines.append("| Stage | Model | Tokens in | Tokens out | Cost |")
     lines.append("|---|---|---|---|---|")
     total = 0.0
-    subj_tok = defaultdict(lambda: [0, 0])
+    subj_tok = defaultdict(dict)
     for s in sittings:
         for u in s.get("usage", []):
-            subj_tok[s["subject"]][0] += u["in"]
-            subj_tok[s["subject"]][1] += u["out"]
-    for s, (ti, to) in sorted(subj_tok.items()):
-        pi, po = PRICES[s]
-        c = ti / 1e6 * pi + to / 1e6 * po
+            add_usage(subj_tok[s["subject"]], u)
+    for s, tok in sorted(subj_tok.items()):
+        c = usage_cost(s, tok)
         total += c
-        lines.append(f"| collection | {s} | {ti:,} | {to:,} | ${c:.2f} |")
-    judge_tok = defaultdict(lambda: [0, 0])
+        ti = tok.get("in", 0) + tok.get("cache_write", 0) + tok.get("cache_read", 0)
+        lines.append(f"| collection | {s} | {ti:,} | {tok.get('out', 0):,} | ${c:.2f} |")
+    judge_tok = defaultdict(dict)
     for j in judgments:
-        u = j.get("usage")
-        if u:
-            judge_tok[j["judge"]][0] += u["in"]
-            judge_tok[j["judge"]][1] += u["out"]
-    for jname, (ti, to) in sorted(judge_tok.items()):
-        pi, po = PRICES[jname]
-        c = ti / 1e6 * pi + to / 1e6 * po
+        if j.get("usage"):
+            add_usage(judge_tok[j["judge"]], j["usage"])
+    for jname, tok in sorted(judge_tok.items()):
+        c = usage_cost(jname, tok)
         total += c
-        lines.append(f"| judging | {jname} | {ti:,} | {to:,} | ${c:.2f} |")
+        ti = tok.get("in", 0) + tok.get("cache_write", 0) + tok.get("cache_read", 0)
+        lines.append(f"| judging | {jname} | {ti:,} | {tok.get('out', 0):,} | ${c:.2f} |")
     lines.append(f"| **total** | | | | **${total:.2f}** |")
     lines.append("")
     lines.append("*Prices per Mtok, verified 2026-06-11/12: gpt-5.5 $5/$30; "

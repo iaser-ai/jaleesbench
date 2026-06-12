@@ -78,17 +78,33 @@ def sitting_key(r: dict) -> str:
     return f"{r['subject']}|{r['probe_id']}|{r['pressure']}|{r['framing']}"
 
 
-async def call_subject(subject: str, system: str | None, messages: list[dict],
-                       clients: dict) -> tuple[str, dict]:
-    """Returns (content, usage) where usage = {'in': int, 'out': int} (zeros for ansari)."""
+def ctx_block(ctx: str) -> str:
+    return f"[Context for this conversation: {ctx}]"
+
+
+async def call_subject(subject: str, ctx: str | None, messages: list[dict],
+                       clients: dict) -> tuple[str, dict, int]:
+    """Returns (content, usage, attempts).
+
+    ctx is the framing text. It is included at the top of EVERY user message,
+    never as a system prompt — no subject gets a privileged channel (Waleed's
+    ruling 2026-06-12: a real user cannot set a system prompt). `messages`
+    holds the clean probe turns; the fold happens here, per provider.
+    """
     spec = SUBJECTS[subject]
     # Ansari is a free community endpoint: be patient with rate limits.
     retries = 5 if spec["provider"] == "ansari" else RETRIES
+
+    def folded(m: dict) -> dict:
+        if m["role"] != "user" or not ctx:
+            return m
+        return {"role": "user", "content": f"{ctx_block(ctx)}\n\n{m['content']}"}
+
     last_err = None
     for attempt in range(retries + 1):
         try:
             if spec["provider"] in ("openai", "friendli", "blackbox", "ansari"):
-                msgs = ([{"role": "system", "content": system}] if system else []) + messages
+                msgs = [folded(m) for m in messages]
                 kwargs = {"model": spec.get("model", subject), "messages": msgs}
                 # gpt-5.5 requires the newer param name; the others
                 # take the classic one.
@@ -100,21 +116,42 @@ async def call_subject(subject: str, system: str | None, messages: list[dict],
                 content = resp.choices[0].message.content
                 usage = {"in": resp.usage.prompt_tokens, "out": resp.usage.completion_tokens}
             elif spec["provider"] == "anthropic":
-                kwargs = {"model": subject, "messages": messages, "max_tokens": MAX_TOKENS}
-                if system:
-                    kwargs["system"] = system
-                resp = await clients["anthropic"].messages.create(**kwargs)
+                # Prompt caching: the framing block (shared by every sitting of
+                # this framing) is a 1h breakpoint; the first user question is
+                # a default-TTL breakpoint so the turn-2 call rereads turn 1
+                # from cache.
+                amsgs = []
+                first_user = True
+                for m in messages:
+                    if m["role"] != "user":
+                        amsgs.append(m)
+                        continue
+                    blocks = []
+                    if ctx:
+                        b = {"type": "text", "text": ctx_block(ctx)}
+                        if first_user:
+                            b["cache_control"] = {"type": "ephemeral", "ttl": "1h"}
+                        blocks.append(b)
+                    q = {"type": "text", "text": m["content"]}
+                    if first_user:
+                        q["cache_control"] = {"type": "ephemeral"}
+                    blocks.append(q)
+                    amsgs.append({"role": "user", "content": blocks})
+                    first_user = False
+                resp = await clients["anthropic"].messages.create(
+                    model=subject, messages=amsgs, max_tokens=MAX_TOKENS)
                 content = "".join(b.text for b in resp.content if b.type == "text")
-                usage = {"in": resp.usage.input_tokens, "out": resp.usage.output_tokens}
+                u = resp.usage
+                usage = {"in": u.input_tokens, "out": u.output_tokens,
+                         "cache_write": getattr(u, "cache_creation_input_tokens", 0) or 0,
+                         "cache_read": getattr(u, "cache_read_input_tokens", 0) or 0}
             elif spec["provider"] == "gemini":
                 from google.genai import types
                 contents = [
                     types.Content(role="model" if m["role"] == "assistant" else "user",
-                                  parts=[types.Part(text=m["content"])])
+                                  parts=[types.Part(text=folded(m)["content"])])
                     for m in messages]
-                cfg = types.GenerateContentConfig(
-                    max_output_tokens=MAX_TOKENS,
-                    system_instruction=system or None)
+                cfg = types.GenerateContentConfig(max_output_tokens=MAX_TOKENS)
                 resp = await clients["gemini"].aio.models.generate_content(
                     model=subject, contents=contents, config=cfg)
                 content = resp.text
@@ -126,7 +163,7 @@ async def call_subject(subject: str, system: str | None, messages: list[dict],
                 raise RuntimeError(f"unknown provider: {spec['provider']}")
             if not content or not content.strip():
                 raise RuntimeError("empty response content")
-            return content.strip(), usage
+            return content.strip(), usage, attempt + 1
         except Exception as e:  # noqa: BLE001 — retry transient, then fail loudly
             last_err = e
             if attempt < retries:
@@ -138,16 +175,23 @@ async def call_subject(subject: str, system: str | None, messages: list[dict],
 
 async def run_sitting(subject: str, probe: dict, pressure: str, framing: str,
                       sem: asyncio.Semaphore, clients: dict) -> dict:
-    system = FRAMINGS[framing]
+    from datetime import datetime, timezone
+    ctx = FRAMINGS[framing]
     async with sem:
         msgs = [{"role": "user", "content": probe["turn1"]}]
-        reply1, usage1 = await call_subject(subject, system, msgs, clients)
+        reply1, usage1, att1 = await call_subject(subject, ctx, msgs, clients)
         msgs = msgs + [{"role": "assistant", "content": reply1},
                        {"role": "user", "content": probe["pressure_turns"][pressure]}]
-        reply2, usage2 = await call_subject(subject, system, msgs, clients)
+        reply2, usage2, att2 = await call_subject(subject, ctx, msgs, clients)
+    # turns stay clean (probe text only): judges remain blinded to framing.
+    # context_prefix + model + ts + attempts reconstruct the exact request.
     return {
         "subject": subject, "probe_id": probe["id"], "pressure": pressure,
         "framing": framing,
+        "model": SUBJECTS[subject].get("model", subject),
+        "context_prefix": ctx_block(ctx) if ctx else None,
+        "ts": datetime.now(timezone.utc).isoformat(),
+        "attempts": [att1, att2],
         "usage": [usage1, usage2],
         "turns": [
             {"role": "user", "content": probe["turn1"]},

@@ -3,10 +3,11 @@
 import asyncio
 import json
 import re
+from datetime import datetime, timezone
 from pathlib import Path
 
 from .collect import RESULTS, RETRIES, load_env, load_probes
-from .prompts import judge_user_message, render_conversation
+from .prompts import judge_blocks, render_conversation
 
 JUDGES = {
     "claude-opus-4-8": "anthropic",
@@ -34,24 +35,42 @@ def parse_judgment(text: str) -> dict:
     unknown = [t for t in techniques if t not in TECHNIQUES]
     if unknown:
         raise ValueError(f"unknown techniques: {unknown}")
+    rationale = obj.get("rationale", "")
+    if not isinstance(rationale, str) or not rationale.strip():
+        raise ValueError("missing rationale")
     return {"band": band, "direction": obj.get("direction", ""),
-            "techniques_used": techniques}
+            "rationale": rationale, "techniques_used": techniques,
+            "raw": text}
 
 
-async def call_judge(judge: str, prompt: str, clients: dict) -> dict:
+async def call_judge(judge: str, parts: tuple[str, str, str], clients: dict) -> dict:
+    """parts = (static rubric, per-probe proofs, conversation+spec).
+    Anthropic: rubric and proofs are cache breakpoints (1h) — the rubric is
+    shared by every judgment, the proofs by all of one probe's judgments.
+    Gemini caches prefixes implicitly."""
     provider = JUDGES[judge]
     last_err = None
     for attempt in range(RETRIES + 1):
         try:
             if provider == "anthropic":
+                content = [
+                    {"type": "text", "text": parts[0],
+                     "cache_control": {"type": "ephemeral", "ttl": "1h"}},
+                    {"type": "text", "text": parts[1],
+                     "cache_control": {"type": "ephemeral", "ttl": "1h"}},
+                    {"type": "text", "text": parts[2]},
+                ]
                 resp = await clients["anthropic"].messages.create(
                     model=judge, max_tokens=JUDGE_MAX_TOKENS,
-                    messages=[{"role": "user", "content": prompt}])
+                    messages=[{"role": "user", "content": content}])
                 text = "".join(b.text for b in resp.content if b.type == "text")
-                usage = {"in": resp.usage.input_tokens, "out": resp.usage.output_tokens}
+                u = resp.usage
+                usage = {"in": u.input_tokens, "out": u.output_tokens,
+                         "cache_write": getattr(u, "cache_creation_input_tokens", 0) or 0,
+                         "cache_read": getattr(u, "cache_read_input_tokens", 0) or 0}
             else:
                 resp = await clients["gemini"].aio.models.generate_content(
-                    model=judge, contents=prompt)
+                    model=judge, contents="\n\n".join(parts))
                 text = resp.text
                 um = resp.usage_metadata
                 usage = {"in": um.prompt_token_count or 0,
@@ -115,14 +134,13 @@ async def judge_all(limit: int | None = None) -> None:
         s, skey, judge, scope = job
         probe = probes[s["probe_id"]]
         turns = s["turns"][:2] if scope == "turn1" else s["turns"]
-        # v3: boundary + deliverable-classification rules are now standard.
-        prompt = judge_user_message(probe["proof_texts"], render_conversation(turns),
-                                    v2=True)
+        parts = judge_blocks(probe["proof_texts"], render_conversation(turns))
         async with sem:
-            verdict = await call_judge(judge, prompt, clients)
+            verdict = await call_judge(judge, parts, clients)
         rec = {"sitting_key": skey, "subject": s["subject"], "probe_id": s["probe_id"],
                "pressure": s["pressure"], "framing": s["framing"],
-               "judge": judge, "scope": scope, **verdict}
+               "judge": judge, "scope": scope,
+               "ts": datetime.now(timezone.utc).isoformat(), **verdict}
         async with lock:
             with open(out_path, "a") as fh:
                 fh.write(json.dumps(rec) + "\n")
@@ -184,10 +202,10 @@ async def rejudge_disagreements(limit: int | None = None) -> None:
         subject, probe_id, pressure, framing, scope = key
         s = sittings[(subject, probe_id, pressure, framing)]
         turns = s["turns"][:2] if scope == "turn1" else s["turns"]
-        prompt = judge_user_message(probes[probe_id]["proof_texts"],
-                                    render_conversation(turns), v2=True)
+        parts = judge_blocks(probes[probe_id]["proof_texts"],
+                             render_conversation(turns))
         async with sem:
-            verdict = await call_judge(judge, prompt, clients)
+            verdict = await call_judge(judge, parts, clients)
         rec = {"sitting_key": skey, "subject": subject, "probe_id": probe_id,
                "pressure": pressure, "framing": framing,
                "judge": judge, "scope": scope, **verdict}

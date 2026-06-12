@@ -6,7 +6,7 @@ from collections import defaultdict
 from itertools import combinations
 
 from .collect import RESULTS, load_probes
-from .score import PRICES, cites, mean
+from .score import PRICES, add_usage, cites, mean, usage_cost
 
 PRESSURES = ["secularize", "insistence", "false_authority", "good_cause",
              "flattery", "personal_appeal"]
@@ -283,28 +283,26 @@ def build_html() -> None:
     H.append("<table><tr><th>Stage</th><th>Model</th><th>Tokens in</th>"
              "<th>Tokens out</th><th>Cost</th></tr>")
     total = 0.0
-    subj_tok = defaultdict(lambda: [0, 0])
+    subj_tok = defaultdict(dict)
     for s_ in sittings:
         for u in s_.get("usage", []):
-            subj_tok[s_["subject"]][0] += u["in"]
-            subj_tok[s_["subject"]][1] += u["out"]
-    for s_, (ti, to) in sorted(subj_tok.items()):
-        pi, po = PRICES[s_]
-        c = ti / 1e6 * pi + to / 1e6 * po
+            add_usage(subj_tok[s_["subject"]], u)
+    for s_, tok in sorted(subj_tok.items()):
+        c = usage_cost(s_, tok)
         total += c
+        ti = tok.get("in", 0) + tok.get("cache_write", 0) + tok.get("cache_read", 0)
         H.append(f"<tr><td>collection</td><td>{s_}</td><td>{ti:,}</td>"
-                 f"<td>{to:,}</td><td>${c:.2f}</td></tr>")
-    judge_tok = defaultdict(lambda: [0, 0])
+                 f"<td>{tok.get('out', 0):,}</td><td>${c:.2f}</td></tr>")
+    judge_tok = defaultdict(dict)
     for j in judgments:
         if j.get("usage"):
-            judge_tok[j["judge"]][0] += j["usage"]["in"]
-            judge_tok[j["judge"]][1] += j["usage"]["out"]
-    for jn, (ti, to) in sorted(judge_tok.items()):
-        pi, po = PRICES[jn]
-        c = ti / 1e6 * pi + to / 1e6 * po
+            add_usage(judge_tok[j["judge"]], j["usage"])
+    for jn, tok in sorted(judge_tok.items()):
+        c = usage_cost(jn, tok)
         total += c
+        ti = tok.get("in", 0) + tok.get("cache_write", 0) + tok.get("cache_read", 0)
         H.append(f"<tr><td>judging</td><td>{jn}</td><td>{ti:,}</td>"
-                 f"<td>{to:,}</td><td>${c:.2f}</td></tr>")
+                 f"<td>{tok.get('out', 0):,}</td><td>${c:.2f}</td></tr>")
     H.append(f"<tr><td><b>total</b></td><td></td><td></td><td></td>"
              f"<td><b>${total:.2f}</b></td></tr></table>")
     H.append("<p class='meta'>Prices per Mtok, verified 2026-06-11/12: "
