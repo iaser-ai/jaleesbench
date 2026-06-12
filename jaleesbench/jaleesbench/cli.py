@@ -30,10 +30,19 @@ def judge(limit: int = typer.Option(None, help="Judge only the first N pending j
 
 @app.command()
 def report():
-    """Aggregate judgments into the pilot report skeleton."""
+    """Aggregate judgments into the pilot report (markdown + HTML)."""
+    from .html_report import build_html
     from .score import build_report
     build_report()
+    build_html()
 
 
 if __name__ == "__main__":
     app()
+
+
+@app.command()
+def rejudge(limit: int = typer.Option(None, help="Cap the number of v2 judgments")):
+    """Re-judge >=2-band disagreement cells with the v2 boundary-rules prompt."""
+    from .judge import rejudge_disagreements
+    asyncio.run(rejudge_disagreements(limit=limit))

@@ -115,7 +115,9 @@ async def judge_all(limit: int | None = None) -> None:
         s, skey, judge, scope = job
         probe = probes[s["probe_id"]]
         turns = s["turns"][:2] if scope == "turn1" else s["turns"]
-        prompt = judge_user_message(probe["proof_texts"], render_conversation(turns))
+        # v3: boundary + deliverable-classification rules are now standard.
+        prompt = judge_user_message(probe["proof_texts"], render_conversation(turns),
+                                    v2=True)
         async with sem:
             verdict = await call_judge(judge, prompt, clients)
         rec = {"sitting_key": skey, "subject": s["subject"], "probe_id": s["probe_id"],
@@ -130,3 +132,71 @@ async def judge_all(limit: int | None = None) -> None:
 
     await asyncio.gather(*[one(j) for j in jobs])
     print(f"judged {completed} -> {out_path}")
+
+
+async def rejudge_disagreements(limit: int | None = None) -> None:
+    """Re-judge cells where the two judges disagreed by >=2 bands, using the
+    v2 boundary-rules prompt. Writes judgments_v2.jsonl (idempotent)."""
+    from anthropic import AsyncAnthropic
+    from google import genai
+
+    load_env()
+    judgments = [json.loads(l) for l in (RESULTS / "judgments.jsonl").read_text().splitlines()]
+    by = {}
+    for j in judgments:
+        by.setdefault((j["subject"], j["probe_id"], j["pressure"], j["framing"], j["scope"]), {})[j["judge"]] = j["band"]
+    targets = [k for k, v in by.items()
+               if len(v) == 2 and abs(max(v.values()) - min(v.values())) >= 2]
+    print(f"disagreement cells (>=2 bands): {len(targets)}")
+
+    sittings = {}
+    for l in (RESULTS / "collect.jsonl").read_text().splitlines():
+        s = json.loads(l)
+        sittings[(s["subject"], s["probe_id"], s["pressure"], s["framing"])] = s
+    probes = {p["id"]: p for p in load_probes()["probes"]}
+
+    out_path = RESULTS / "judgments_v2.jsonl"
+    done = set()
+    if out_path.exists():
+        for line in out_path.read_text().splitlines():
+            done.add(judgment_key(json.loads(line)))
+
+    jobs = []
+    for key in targets:
+        skey = "|".join(key[:4])
+        for judge in JUDGES:
+            if f"{skey}|{judge}|{key[4]}" not in done:
+                jobs.append((key, skey, judge))
+    if limit:
+        jobs = jobs[:limit]
+    print(f"v2 judgments todo: {len(jobs)}")
+    if not jobs:
+        return
+
+    clients = {"anthropic": AsyncAnthropic(), "gemini": genai.Client()}
+    sem = asyncio.Semaphore(CONCURRENCY)
+    lock = asyncio.Lock()
+    completed = 0
+
+    async def one(job):
+        nonlocal completed
+        key, skey, judge = job
+        subject, probe_id, pressure, framing, scope = key
+        s = sittings[(subject, probe_id, pressure, framing)]
+        turns = s["turns"][:2] if scope == "turn1" else s["turns"]
+        prompt = judge_user_message(probes[probe_id]["proof_texts"],
+                                    render_conversation(turns), v2=True)
+        async with sem:
+            verdict = await call_judge(judge, prompt, clients)
+        rec = {"sitting_key": skey, "subject": subject, "probe_id": probe_id,
+               "pressure": pressure, "framing": framing,
+               "judge": judge, "scope": scope, **verdict}
+        async with lock:
+            with open(out_path, "a") as fh:
+                fh.write(json.dumps(rec) + "\n")
+            completed += 1
+            if completed % 50 == 0:
+                print(f"  {completed}/{len(jobs)}")
+
+    await asyncio.gather(*[one(j) for j in jobs])
+    print(f"v2 judged {completed} -> {out_path}")
