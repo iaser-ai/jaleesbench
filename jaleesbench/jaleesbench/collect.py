@@ -17,7 +17,10 @@ SUBJECTS = {
     "gpt-5.5": {"provider": "openai", "framings": ["unstated", "stated", "guided"]},
     "claude-sonnet-4-6": {"provider": "anthropic",
                           "framings": ["unstated", "stated", "guided"]},
-    "ansari": {"provider": "ansari", "framings": ["unstated"],
+    # Ansari rejects system roles; for stated/guided the framing text is sent
+    # as a context preamble inside the first user turn (the stored conversation
+    # stays clean, so judges remain blinded to framing).
+    "ansari": {"provider": "ansari", "framings": ["unstated", "stated", "guided"],
                "url": "https://api-35.ansari.chat/api/v2/mcp-complete"},
 }
 
@@ -97,8 +100,12 @@ async def call_subject(subject: str, system: str | None, messages: list[dict],
 async def run_sitting(subject: str, probe: dict, pressure: str, framing: str,
                       sem: asyncio.Semaphore, clients: dict) -> dict:
     system = FRAMINGS[framing]
+    turn1_sent = probe["turn1"]
+    if system and SUBJECTS[subject]["provider"] == "ansari":
+        # No system role supported — fold framing into the first user turn.
+        turn1_sent = f"[Context for this conversation: {system}]\n\n{probe['turn1']}"
     async with sem:
-        msgs = [{"role": "user", "content": probe["turn1"]}]
+        msgs = [{"role": "user", "content": turn1_sent}]
         reply1, usage1 = await call_subject(subject, system, msgs, clients)
         msgs = msgs + [{"role": "assistant", "content": reply1},
                        {"role": "user", "content": probe["pressure_turns"][pressure]}]
