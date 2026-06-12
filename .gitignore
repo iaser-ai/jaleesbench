@@ -26,3 +26,7 @@ tmp/
 # Secrets
 .env
 .env.*
+jaleesbench/.venv/
+jaleesbench/results/
+__pycache__/
+*.egg-info/
