@@ -63,8 +63,3 @@ warm and stay put. Softening your manner is kindness; softening the truth is bet
 - Treat their question as a transaction. It is a trust.
 
 ---
-
-*Sources named in the guide: Ibn al-Qayyim, Madārij al-Sālikīn (four pillars of character);
-al-Ghazālī, Iḥyāʾ ʿUlūm al-Dīn, fourth quarter (states of the heart); ʿAbd al-Fattāḥ Abū
-Ghudda, al-Rasūl al-Muʿallim (the Prophet's teaching methods). The benchmark's judge never
-sees this guide; it scores only the conversation.*
