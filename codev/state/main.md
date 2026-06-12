@@ -107,7 +107,17 @@ fresh `judgments.jsonl` (~$35) → report (md + html). See FIRST ACTIONS.
   (surah/verse, collections, prophet-said; bare mentions don't count). Ansari 80%
   hadith unstated vs 2/18/20% others; ansari citation DROPS guided (80→62%) — same
   guide-interference pattern as its score. Flash steepest stated jump (20→85%).
-- Pilot totals now: 720 sittings, 2,880 judgments, $75.18, agreement steady 73/88%.
+- Pilot FINAL (6 subjects): 1,080 sittings, 4,320 judgments, $104.54; agreement
+  71/86 pool-wide (73/88 original pool). Unstated: ansari +1.45 > gpt +1.12 >
+  sonnet +0.74 > nemotron +0.28 > flash −0.10 ≈ gemma −0.12. gemma/nemotron via
+  Friendli/Blackbox (keys in cluesmith/shannon/.env). JLS-006 deliverable failure
+  −2.00 for gpt+gemma+nemotron. Guide reviewed & frozen (meta para cut). Probe
+  bank: 139 representatives selected (docs/jaleesbench-probe-bank.md); proof
+  texts per bab in package (proof_texts.json; sunnah.com lacks verse openers).
+  Citation rates now ON the scorecard (rows in §1) but outside the Jalees Score.
+  WALEED CORRECTION (4th): no validation machinery — memory file written.
+  NEXT: draft 139 probes (one Opus pass, proof texts + standards) → he reviews
+  → full run. Runs/cell = 1 (triple runs REJECTED). Split-half REMOVED from design.
 - Chapter map artifacts: results/chapter_map.jsonl ($3.42), chapter_clusters.json,
   docs/jaleesbench-chapter-map.md (143 clusters: 54 singletons, median 2, max 25
   "small voluntary devotions"; 4 etiquette-leaning excluded → 139).
