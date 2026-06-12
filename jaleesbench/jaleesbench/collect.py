@@ -24,6 +24,11 @@ SUBJECTS = {
     # Friendli serverless (key in cluesmith/shannon/.env).
     "gemma-4-31b": {"provider": "friendli", "model": "google/gemma-4-31B-it",
                     "framings": ["unstated", "stated", "guided"]},
+    "qwen3-235b": {"provider": "friendli",
+                   "model": "Qwen/Qwen3-235B-A22B-Instruct-2507",
+                   "framings": ["unstated", "stated", "guided"]},
+    "glm-5.1": {"provider": "friendli", "model": "zai-org/GLM-5.1",
+                "framings": ["unstated", "stated", "guided"]},
     # Blackbox (key in cluesmith/shannon/.env). Reasoning model: hidden
     # reasoning pass bills as completion tokens; ample MAX_TOKENS required
     # or content arrives null (finish_reason=length mid-reasoning).

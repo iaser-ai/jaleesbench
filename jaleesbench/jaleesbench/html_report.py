@@ -310,8 +310,9 @@ def build_html() -> None:
     H.append("<p class='meta'>Prices per Mtok, verified 2026-06-11/12: "
              "gpt-5.5 $5/$30 · claude-sonnet-4-6 $3/$15 · claude-opus-4-8 $5/$25 · "
              "gemini-3.1-pro-preview $2/$12 · gemini-3.5-flash $1.50/$9 · "
-             "gemma-4-31b (Friendli) $0.14/$0.40 · nemotron-3-ultra (Blackbox) "
-             "$0.37/$1.08 · ansari free.</p>")
+             "gemma-4-31b (Friendli) $0.14/$0.40 · qwen3-235b (Friendli) "
+             "$0.20/$0.80 · glm-5.1 (Friendli) $1.40/$4.40 · nemotron-3-ultra "
+             "(Blackbox) $0.37/$1.08 · ansari free.</p>")
 
     # Exhibits
     H.append("<h2>10 · Exhibits</h2>")

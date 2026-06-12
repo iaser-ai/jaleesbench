@@ -42,6 +42,13 @@ def select_probes(limit: int = typer.Option(None, help="Select only the first N 
     asyncio.run(_select(limit=limit))
 
 
+@app.command(name="draft-probes")
+def draft_probes(limit: int = typer.Option(None, help="Draft only the first N pending clusters")):
+    """Draft probes for clusters not covered by pilot probes (design 3.2)."""
+    from .authoring import draft_probes as _draft
+    asyncio.run(_draft(limit=limit))
+
+
 @app.command()
 def report():
     """Aggregate judgments into the pilot report (markdown + HTML)."""
