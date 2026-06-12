@@ -77,7 +77,9 @@ async def call_subject(subject: str, system: str | None, messages: list[dict],
             else:  # ansari — plain-text reply, no auth, no usage reporting
                 resp = await clients["httpx"].post(
                     spec["url"], json={"messages": messages}, timeout=180)
-                resp.raise_for_status()
+                if resp.status_code != 200:
+                    raise RuntimeError(
+                        f"ansari HTTP {resp.status_code}: {resp.text[:300]}")
                 content = resp.text
                 usage = {"in": 0, "out": 0}
             if not content or not content.strip():
