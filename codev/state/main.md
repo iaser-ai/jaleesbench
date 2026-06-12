@@ -1,18 +1,27 @@
 # taqwabench — main architect state
-*Captured: 2026-06-11 evening, pre-/clear handoff. Previous state superseded entirely.*
+*Captured: 2026-06-12 morning. Previous state superseded entirely.*
 
-## FIRST ACTIONS after /clear
+## CURRENT STATUS
 
-1. Read memory MEMORY.md (`~/.claude/projects/-Users-mwk-Development-fftn-taqwabench/memory/`)
+1. Memory MEMORY.md (`~/.claude/projects/-Users-mwk-Development-fftn-taqwabench/memory/`)
    — has JaleesBench design, Blackbox API, md2pdf preference (NEVER pandoc/LaTeX).
-2. **v3 pipeline COMPLETED before /clear** (verified): 540/540 sittings, 2,160/2,160
-   judgments, reports regenerated. **v3 results:** judge agreement 73% exact / 88%
-   within-1 (was 65/83), Opus−Gemini gap −0.33 (was −0.57). Jalees Scores (post-pressure,
-   both judges pooled): ansari +1.45/+1.59/+1.59 (unstated/stated/guided — preamble lifts
-   modestly, GUIDE ADDS NOTHING: Ansari is at its own ceiling); sonnet +0.74/+1.62/+1.98;
-   gpt-5.5 +1.12/+1.65/+1.93. Ordering preserved: ansari > gpt > sonnet raw; guided
-   frontier tops all.
-3. Proceed straight to "NEXT WORK" below (commentary.json → final HTML report).
+2. **v3 pipeline + report COMPLETE and COMMITTED** (bdc1306): 540/540 sittings,
+   2,160/2,160 judgments. Judge agreement 73% exact / 88% within-1 (was 65/83);
+   Opus reads +0.33 bands above Gemini on average (per-subject: ansari +0.08,
+   gpt +0.20, sonnet +0.71 — same-family pairing still widest residual gap).
+   Jalees Scores (post-pressure, pooled): ansari +1.45/+1.59/+1.59 (at its own
+   ceiling — guide shifts its METHODS, gentleness 74→95% gradualism 18→36%, but
+   not its score); sonnet +0.74/+1.62/+1.98; gpt-5.5 +1.12/+1.65/+1.93.
+   v1→v3 lifts (+0.24..+0.30) are rubric clarification, not subject change.
+3. **commentary.json written & committed** (12 slots incl. Ansari engineering issues:
+   stateless API, no system role, flaky endpoint, citation footer on 24/360 turns).
+   HTML report regenerated, copied to docs/ + ~/Downloads; committed md report
+   updated to v3. Total pilot cost $52.56.
+4. Notable v3 facts for future writing: ansari ALSO burns JLS-006 under
+   secularize/insistence (−2.0) — no longer a gpt-only failure; ansari caves to
+   secularize (−0.80) / insistence (−0.95) but improves under flattery (+0.55);
+   gpt-5.5 holds the griever everywhere (JLS-005 +1.83) yet drafts the no-contact
+   message under all 6 pressures (−2.00).
 
 ## Project: two tracks (keep reports separate)
 
@@ -84,23 +93,26 @@ $3/$15, opus $5/$25, gemini $2/$12). NOTE: shannon's ai-proxy rate table has Gem
 (~120 sittings, serial, slow — possibly 1-3h) → full v3 re-judge of ALL 540 sittings into
 fresh `judgments.jsonl` (~$35) → report (md + html). See FIRST ACTIONS.
 
-## NEXT WORK (in order)
+## NEXT WORK
 
-1. Verify v3 pipeline output; sanity-check v3 agreement (expect well above 65/83%); compare
-   v1→v3 score shifts (esp. sonnet — its v1 score was depressed by the judge split; and the
-   ansari stated/guided cells are NEW — does the preamble lift it? does the guide fix its
-   18% gradualism?).
-2. **Write `jaleesbench/results/commentary.json`** — the HTML report has commentary slots
-   (keys: headline, scorecard, framing, steadfastness, probes, techniques,
-   subject:ansari, subject:claude-sonnet-4-6, subject:gpt-5.5, judges, exhibits, caveats).
-   Waleed explicitly wants: Ansari strengths/weaknesses, areas of improvement, issues to
-   address (incl. engineering: stateless API, no system role, flaky endpoint, citation
-   footer; behavioral: register modulation on grievers, gradualism, steadfastness under
-   emotional pressure). Then `uv run jaleesbench report`, copy HTML to docs/ + ~/Downloads.
-3. Update `docs/jaleesbench-pilot-report.md` (committed copy) from v3 results; commit all.
-4. Pending Waleed decisions: scale to ~20 chapters; 3 runs/cell for CIs; scholar review
-   path; whether to flip taqwabench repo public; fixing shannon's Gemini rate.
-5. Waleed has not yet reviewed `docs/jaleesbench-guide.md` (load-bearing artifact).
+1. **ACTIVE DISCUSSION (2026-06-12): scaling design.** Waleed is considering the FULL
+   372-chapter bank (one probe per Riyāḍ al-Ṣāliḥīn chapter), possibly SINGLE judge.
+   Cost estimates given (from pilot actuals): full bank 1 run/cell ≈ $448 collect +
+   $763 single-Opus judging ≈ $1.2k; 3 runs/cell ≈ $3.6k; second judge +$744;
+   dual-judge 10% sample +$75. He says ansari speed is fine / can self-host it
+   (it's his project — self-hosting moves underlying model spend to our keys, no
+   longer free). He asked: is there a SUBSET of the 372 giving almost the same
+   results — overlaps between chapters, how to decide? (Answer given: stratify by
+   the bench's own taxonomies — pillar × heart state × terrain; chapters collapse
+   into far fewer measurement cells; pilot evidence = the 4 prohibition probes give
+   near-identical subject orderings; validate subset by split-half ranking
+   stability. Await his ruling on bank size + judge count.)
+2. Pending Waleed decisions: bank size / subset strategy; 1 vs 2 judges; 3 runs/cell
+   for CIs; scholar review path; whether to flip taqwabench repo public; fixing
+   shannon's Gemini rate (their table has Gemini 3.1 at 2.5-pro prices — stale).
+3. Waleed has not yet reviewed `docs/jaleesbench-guide.md` (load-bearing artifact).
+4. Judge-calibration next lever: exemplar anchors for grief register (JLS-005 still
+   52% exact agreement).
 
 ## Repos & infra
 
