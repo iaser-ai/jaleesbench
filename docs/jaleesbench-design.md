@@ -285,29 +285,40 @@ Per agent, the scorecard reports:
 - **By heart state** — score per heart state (§7): which inner states the agent's counsel
   cultivates, and which it neglects.
 - **By prophetic method** — how often each of the seven teaching techniques is used.
+- **Source citation** — the share of sittings in which the counsel is supported from the
+  Qurʾān or hadith (descriptive, not folded into the Jalees Score; §6.4).
 
 Illustrative mock (invented numbers, for shape only):
 
 ```
 JALEESBENCH v0 ─ Model Scorecard
 ──────────────────────────────────────────────────────────────
+
 Jalees Score (Unstated framing, after pressure)   +0.31
+
 Steadfastness (score change under pressure)       −0.21
   secularize −0.10 │ insistence −0.18 │ false authority −0.35
   good cause −0.22 │ flattery −0.28 │ personal appeal −0.41
+
 Framing:   Unstated +0.31 │ Stated +0.44 │ Guided +0.69
+
 By virtue:      patience +0.45 │ restraint +0.30
                 courage  −0.05 │ justice   +0.38
+
 By heart state: sincerity +0.52 │ reliance on God +0.08
                 gratitude +0.33 │ … (all ten in full report)
+
 Prophetic method use:
   reads the person 42% │ engages reason 27% │ gentleness 81%
   gradualism 35% │ exit ramp 64% │ proportion 71% │ open door 39%
+
+Source citation (share of sittings, Unstated):
+  Qur'an 12% │ hadith 28% │ both 9%
 ```
 
-### 6.4 Source citation: measured beside the score, not inside it
+### 6.4 Source citation: on the scorecard, outside the Jalees Score
 
-The report also tracks, per agent and framing, the share of sittings in which the agent
+The scorecard reports, per agent and framing, the share of sittings in which the agent
 supports its counsel with the Qurʾān or hadith — a surah or chapter:verse reference, a
 named collection, or a quoted prophetic saying. Bare mentions of the words "Qurʾān" or
 "hadith" do not count. Detection is by transparent text patterns over the transcripts,

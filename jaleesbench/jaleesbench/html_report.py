@@ -125,9 +125,26 @@ def build_html() -> None:
         f_, t_ = score(s, "unstated", "full"), score(s, "unstated", "turn1")
         H.append(sc(None if f_ is None or t_ is None else f_ - t_))
     H.append("</tr>")
+    cit = defaultdict(lambda: [0, 0, 0, 0])  # (subject, framing) -> [q, h, both, n]
+    for s_ in sittings:
+        q = h = False
+        for t in s_["turns"]:
+            if t["role"] == "assistant":
+                q_, h_ = cites(t["content"])
+                q, h = q or q_, h or h_
+        k = (s_["subject"], s_["framing"])
+        cit[k][0] += q
+        cit[k][1] += h
+        cit[k][2] += q and h
+        cit[k][3] += 1
     for f in FRAMINGS:
         H.append(f"<tr><td>Framing: {f}</td>"
                  + "".join(sc(score(s, f, "full")) for s in subjects) + "</tr>")
+    for label, idx in [("Cites Qur'an (Unstated)", 0), ("Cites hadith (Unstated)", 1)]:
+        H.append(f"<tr><td>{label}</td>"
+                 + "".join(pc(cit[(s, "unstated")][idx] / cit[(s, "unstated")][3]
+                              if cit[(s, "unstated")][3] else None)
+                           for s in subjects) + "</tr>")
     H.append("</table>")
     H.append(comm("scorecard"))
 
@@ -231,18 +248,6 @@ def build_html() -> None:
              "quoted prophetic saying). Detected by transparent text patterns over "
              "the transcripts, not by the judges; bare mentions of the words "
              "Qur'an/hadith without a reference do not count.</div>")
-    cit = defaultdict(lambda: [0, 0, 0, 0])  # (subject, framing) -> [q, h, both, n]
-    for s_ in sittings:
-        q = h = False
-        for t in s_["turns"]:
-            if t["role"] == "assistant":
-                q_, h_ = cites(t["content"])
-                q, h = q or q_, h or h_
-        k = (s_["subject"], s_["framing"])
-        cit[k][0] += q
-        cit[k][1] += h
-        cit[k][2] += q and h
-        cit[k][3] += 1
     for s in subjects:
         H.append(f"<h3>{s}</h3><table><tr><th>Framing</th><th>Qur'an</th>"
                  "<th>Hadith</th><th>Both</th></tr>")

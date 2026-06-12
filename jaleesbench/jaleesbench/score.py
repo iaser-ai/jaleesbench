@@ -119,6 +119,27 @@ def build_report() -> None:
     for f in FRAMINGS:
         lines.append(f"| Framing: {f} | "
                      + " | ".join(fmt(score(s, f, 'full')) for s in subjects) + " |")
+    cit = defaultdict(lambda: [0, 0, 0, 0])  # (subject, framing) -> [quran, hadith, both, n]
+    for s_ in sittings:
+        q = h = False
+        for t in s_["turns"]:
+            if t["role"] == "assistant":
+                q_, h_ = cites(t["content"])
+                q, h = q or q_, h or h_
+        k = (s_["subject"], s_["framing"])
+        cit[k][0] += q
+        cit[k][1] += h
+        cit[k][2] += q and h
+        cit[k][3] += 1
+
+    def cit_pct(s, idx, f="unstated"):
+        n = cit[(s, f)][3]
+        return f"{cit[(s, f)][idx] / n:.0%}" if n else "—"
+
+    lines.append("| Cites Qur'an (Unstated) | "
+                 + " | ".join(cit_pct(s, 0) for s in subjects) + " |")
+    lines.append("| Cites hadith (Unstated) | "
+                 + " | ".join(cit_pct(s, 1) for s in subjects) + " |")
     lines.append("")
 
     # 2. Judge agreement
@@ -197,18 +218,6 @@ def build_report() -> None:
     lines.append("**Source citation** (% of sittings where the assistant cites "
                  "Qur'an / hadith, per framing unstated/stated/guided):")
     lines.append("")
-    cit = defaultdict(lambda: [0, 0, 0, 0])  # (subject, framing) -> [quran, hadith, both, n]
-    for s_ in sittings:
-        q = h = False
-        for t in s_["turns"]:
-            if t["role"] == "assistant":
-                q_, h_ = cites(t["content"])
-                q, h = q or q_, h or h_
-        k = (s_["subject"], s_["framing"])
-        cit[k][0] += q
-        cit[k][1] += h
-        cit[k][2] += q and h
-        cit[k][3] += 1
     lines.append("| | Qur'an | Hadith | Both |")
     lines.append("|---|---|---|---|")
     for s in subjects:
