@@ -13,7 +13,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-from .collect import RESULTS, load_env, load_probes
+from .collect import RESULTS, gemini_client, load_env, load_probes
 from .judge import JUDGE_MAX_TOKENS, JUDGES, judgment_key, parse_judgment
 from .prompts import judge_blocks, render_conversation
 
@@ -108,32 +108,14 @@ def submit(limit: int | None = None) -> None:
                                    "done": False})
         print(f"anthropic batch {batch.id}: {len(requests)} requests")
 
-    # Gemini: one JSONL file job per submit call.
+    # Gemini now runs on Vertex AI, whose batch API is GCS/BigQuery-based — the
+    # developer-API file-batch used here does not exist there. So Gemini is NOT
+    # batched: judge it live on Vertex with `jaleesbench judge` (which picks up
+    # exactly these pending Gemini cells). Opus still batches at 50%.
     gem_jobs = [x for j, v in by_judge.items() if JUDGES[j] == "gemini" for x in v]
     if gem_jobs:
-        gclient = genai.Client()
-        gemini_model = next(j for j in JUDGES if JUDGES[j] == "gemini")
-        manifest, lines = {}, []
-        for i, (s, skey, judge, scope) in enumerate(gem_jobs):
-            parts = _job_parts(probes, s, scope)
-            key = f"g{i:06d}"
-            manifest[key] = f"{skey}|{judge}|{scope}"
-            lines.append(json.dumps({
-                "key": key,
-                "request": {"contents": [
-                    {"parts": [{"text": "\n\n".join(parts)}]}]},
-            }, ensure_ascii=False))
-        req_path = RESULTS / f"gemini_batch_{len(state['gemini'])}.jsonl"
-        req_path.write_text("\n".join(lines) + "\n")
-        uploaded = gclient.files.upload(
-            file=str(req_path),
-            config=types.UploadFileConfig(display_name=req_path.stem,
-                                          mime_type="jsonl"))
-        job = gclient.batches.create(model=gemini_model, src=uploaded.name,
-                                     config={"display_name": req_path.stem})
-        state["gemini"].append({"job_name": job.name, "manifest": manifest,
-                                "done": False})
-        print(f"gemini batch {job.name}: {len(lines)} requests")
+        print(f"gemini: {len(gem_jobs)} pending — NOT batched (Vertex has no "
+              f"file-batch API); run `jaleesbench judge` to judge them live.")
 
     _save_state(state)
 
@@ -200,7 +182,7 @@ def collect() -> None:
         print(f"anthropic {b['batch_id']}: wrote {len(recs)}, "
               f"left to live fallback {errored}")
 
-    gclient = genai.Client()
+    gclient = gemini_client()
     for b in state["gemini"]:
         if b["done"]:
             continue

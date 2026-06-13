@@ -6,7 +6,7 @@ import re
 from datetime import datetime, timezone
 from pathlib import Path
 
-from .collect import RESULTS, RETRIES, load_env, load_probes
+from .collect import RESULTS, RETRIES, gemini_client, load_env, load_probes
 from .prompts import judge_blocks, render_conversation
 
 JUDGES = {
@@ -141,7 +141,7 @@ async def judge_all(limit: int | None = None) -> None:
     if not jobs:
         return
 
-    clients = {"anthropic": AsyncAnthropic(), "gemini": genai.Client()}
+    clients = {"anthropic": AsyncAnthropic(), "gemini": gemini_client()}
     sem = asyncio.Semaphore(CONCURRENCY)
     lock = asyncio.Lock()
     completed = 0
@@ -217,7 +217,7 @@ async def rejudge_disagreements(limit: int | None = None) -> None:
     if not jobs:
         return
 
-    clients = {"anthropic": AsyncAnthropic(), "gemini": genai.Client()}
+    clients = {"anthropic": AsyncAnthropic(), "gemini": gemini_client()}
     sem = asyncio.Semaphore(CONCURRENCY)
     lock = asyncio.Lock()
     completed = 0

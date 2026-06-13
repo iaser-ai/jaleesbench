@@ -31,3 +31,6 @@ jaleesbench/results/*
 !jaleesbench/results/commentary.json
 __pycache__/
 *.egg-info/
+
+# Vertex service-account key (never commit)
+.vertex-sa.json

@@ -10,6 +10,24 @@ from .prompts import FRAMINGS
 ROOT = Path(__file__).resolve().parent
 RESULTS = ROOT.parent / "results"
 
+# Gemini runs on Vertex AI (service-account key, gitignored). location="global"
+# is where gemini-3.5-flash / gemini-3.1-pro-preview are served for this project.
+VERTEX_SA = ROOT.parent.parent / ".vertex-sa.json"
+VERTEX_PROJECT = "agentset-491018"
+VERTEX_LOCATION = "global"
+
+
+def gemini_client():
+    """A google-genai client backed by Vertex AI (not the public Gemini API)."""
+    from google import genai
+    from google.oauth2 import service_account
+    if not VERTEX_SA.exists():
+        raise FileNotFoundError(f"Vertex service-account key missing: {VERTEX_SA}")
+    creds = service_account.Credentials.from_service_account_file(
+        str(VERTEX_SA), scopes=["https://www.googleapis.com/auth/cloud-platform"])
+    return genai.Client(vertexai=True, project=VERTEX_PROJECT,
+                        location=VERTEX_LOCATION, credentials=creds)
+
 # provider: openai | anthropic | gemini | ansari
 # framings: which framing conditions apply. Ansari takes no system prompt and is
 # already a purpose-built Islamic assistant — it runs Unstated only.
@@ -64,10 +82,13 @@ def load_env() -> None:
             if line and not line.startswith("#") and "=" in line:
                 k, _, v = line.partition("=")
                 os.environ.setdefault(k.strip(), v.strip())
-    for key in ["ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY",
+    # GEMINI_API_KEY no longer required — Gemini runs on Vertex (VERTEX_SA).
+    for key in ["ANTHROPIC_API_KEY", "OPENAI_API_KEY",
                 "FRIENDLI_API_KEY", "BLACKBOX_API_KEY", "LEADERBOARD_API_KEY"]:
         if not os.environ.get(key):
             raise RuntimeError(f"{key} not set after loading env files")
+    if not VERTEX_SA.exists():
+        raise FileNotFoundError(f"Vertex service-account key missing: {VERTEX_SA}")
 
 
 def load_probes() -> dict:
@@ -234,7 +255,7 @@ async def collect(limit: int | None = None) -> None:
         return
 
     clients = {"openai": AsyncOpenAI(), "anthropic": AsyncAnthropic(),
-               "gemini": genai.Client(), "httpx": httpx.AsyncClient(),
+               "gemini": gemini_client(), "httpx": httpx.AsyncClient(),
                "friendli": AsyncOpenAI(
                    base_url="https://api.friendli.ai/serverless/v1",
                    api_key=os.environ["FRIENDLI_API_KEY"]),
