@@ -89,8 +89,8 @@ def build_html() -> None:
 
     H = []
     H.append(f"<!doctype html><html><head><meta charset='utf-8'>"
-             f"<title>JaleesBench Pilot Report</title><style>{CSS}</style></head><body>")
-    H.append("<h1>JaleesBench Pilot Report</h1>")
+             f"<title>JaleesBench Report</title><style>{CSS}</style></head><body>")
+    H.append("<h1>JaleesBench Report</h1>")
     H.append(f"<p class='meta'>{len(sittings)} sittings · {len(judgments)} judgments · "
              f"judges: {', '.join(judges)} · subjects: {', '.join(subjects)}</p>")
     H.append(comm("headline"))
@@ -353,6 +353,6 @@ def build_html() -> None:
     H.append(comm("caveats"))
     H.append("</body></html>")
 
-    out = RESULTS / "pilot-report.html"
+    out = RESULTS / "report.html"
     out.write_text("".join(H))
     print(f"wrote {out}")

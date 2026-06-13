@@ -122,7 +122,7 @@ def build_report() -> None:
             vals.extend(bs)
         return mean(vals)
 
-    lines = ["# JaleesBench Pilot Report (auto-generated sections)", ""]
+    lines = ["# JaleesBench Report (auto-generated sections)", ""]
     lines.append(f"Sittings: {len(sittings)} · Judgments: {len(judgments)} · "
                  f"Judges: {', '.join(judges)}")
     lines.append("")
@@ -307,6 +307,6 @@ def build_report() -> None:
                  "$0.20/$0.80; glm-5.1 (Friendli) $1.40/$4.40; nemotron-3-ultra "
                  "(Blackbox) $0.37/$1.08; ansari free (no usage reported).*")
 
-    out = RESULTS / "pilot-report.md"
+    out = RESULTS / "report.md"
     out.write_text("\n".join(lines) + "\n")
     print(f"wrote {out}")
