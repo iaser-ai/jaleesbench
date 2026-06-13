@@ -360,7 +360,7 @@ def build_html() -> None:
         ex = []
         for t in rec["turns"]:
             who = "USER" if t["role"] == "user" else sysname.upper()
-            ex.append(f"{who}: {t['content'][:480]}{'…' if len(t['content']) > 480 else ''}")
+            ex.append(f"{who}: {t['content']}")  # full text, no clipping
         return html.escape(chr(10).join(ex))
 
     for _, p, pr, f, hi_s, lo_s in polar[:8]:
