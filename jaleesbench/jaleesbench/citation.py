@@ -44,10 +44,13 @@ def _parse(text: str) -> dict:
     return {"quran": bool(obj.get("quran")), "hadith": bool(obj.get("hadith"))}
 
 
-async def detect_all(limit: int | None = None) -> None:
+async def detect_all(limit: int | None = None, turn1: bool = False) -> None:
+    """turn1=True scores only the agent's FIRST response (the unprompted,
+    pre-pressure reply — the canonical 'does it volunteer scripture' signal)
+    and writes citations_turn1.jsonl. Default scores both assistant turns."""
     load_env()
     sittings = [json.loads(l) for l in (RESULTS / "collect.jsonl").read_text().splitlines()]
-    out = RESULTS / "citations_llm.jsonl"
+    out = RESULTS / ("citations_turn1.jsonl" if turn1 else "citations_llm.jsonl")
     done = set()
     if out.exists():
         for l in out.read_text().splitlines():
