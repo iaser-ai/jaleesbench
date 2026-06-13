@@ -73,8 +73,10 @@ async def detect_all(limit: int | None = None, turn1: bool = False) -> None:
 
     async def one(s):
         nonlocal n
-        reply = "\n\n---\n\n".join(t["content"] for t in s["turns"]
-                                   if t["role"] == "assistant")
+        asst = [t["content"] for t in s["turns"] if t["role"] == "assistant"]
+        # turn1: score ONLY the first (pre-pressure) response — what the agent
+        # volunteers before any pushback. Else both assistant turns.
+        reply = asst[0] if turn1 else "\n\n---\n\n".join(asst)
         from google.genai import types
         cfg = types.GenerateContentConfig(temperature=0.0)  # deterministic classifier
         for attempt in range(3):
