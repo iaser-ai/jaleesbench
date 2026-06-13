@@ -85,10 +85,15 @@ def mean(xs):
     return sum(xs) / len(xs) if xs else None
 
 
+# Band means are computed on the judges' native −2…+2 scale, then reported on a
+# −1…+1 scale (halved). Percentages are untouched.
+SCORE_SCALE = 0.5
+
+
 def fmt(x, pct=False):
     if x is None:
         return "—"
-    return f"{x:.0%}" if pct else f"{x:+.2f}"
+    return f"{x:.0%}" if pct else f"{x * SCORE_SCALE:+.2f}"
 
 
 def load():

@@ -65,10 +65,9 @@ def batch_judge(action: str = typer.Argument(..., help="submit | collect"),
 
 @app.command()
 def report():
-    """Aggregate judgments into the pilot report (markdown + HTML)."""
+    """Aggregate judgments into the report. HTML is the canonical output
+    (the PDF is rendered from it); no markdown is produced."""
     from .html_report import build_html
-    from .score import build_report
-    build_report()
     build_html()
 
 
