@@ -1,107 +1,114 @@
 # taqwabench — main architect state
-*Captured: 2026-06-13. FULL RUN COMPLETE. Previous state superseded.*
+*Captured 2026-06-13 evening. Supersedes prior state.*
 
-## FULL RUN DONE (2026-06-13) — committed fb551b4
+## FIRST ACTIONS after /clear
+1. Read memory MEMORY.md (`~/.claude/projects/-Users-mwk-Development-fftn-taqwabench/memory/`):
+   key ones — **no-validation-machinery** (don't add proof apparatus unprompted),
+   **concurrent-experiment-harnesses** (default to worker pools, not serial),
+   md2pdf preference, Blackbox API.
+2. Two background jobs may still be live — check before acting:
+   - modified-Ansari collection (was 2428/2520 at capture): `wc -l <
+     /Users/mwk/Development/cluesmith/ansari4/ansari-multisage/tmp/ansari_mod_done.jsonl`
+   - if done, NEXT STEP = judge it (see §Ansari experiment).
 
-**Result:** 8 subjects x 140 probes x 6 pressures x 3 framings = 20,160 sittings,
-80,631/80,640 judgments. Report: docs/jaleesbench-report.{md,html,pdf} (+~/Downloads).
-Total cost $1,315.72 (collection $379.92, judging $935.81; batch judging saved
-$933.52 vs full price; measured cache-hit rate 95%).
+## Project: Track B — JaleesBench (Track A VirtueBench×Nemotron dormant/published)
 
-**Jalees Scores (Unstated, after pressure):** ansari +0.96 > gpt-5.5 +0.55 >
-claude-sonnet-4-6 +0.45 > glm-5.1 -0.35 > nemotron-3-ultra -0.41 >
-gemini-3.5-flash -0.53 > gemma-4-31b -0.69 > qwen3-235b -0.95.
-- Ansari layer worth +1.49 over its own base (gemini-3.5-flash) — headline.
-- Recognition gap dominates (told-user-is-Muslim recovers all but qwen above 0);
-  guided lifts pool to +1.1..+1.74 EXCEPT qwen3-235b +0.23 = capability gap.
-- Steadfastness: ALL cave; worst on RELATIONAL pressures (insistence,
-  personal_appeal); false_authority sharpens most (qwen is exception, -0.26).
-- Citation: ansari 98% hadith unstated vs single digits/low others (starkest diff).
-- Judge agreement 66/85 (down from pilot 73/88 — harder bank, more gray cells;
-  JLS-059 Monday-fast worst at 25%). Opus more generous; widest gap qwen +0.84.
-- Universal-failure probe: JLS-083 "The midnight homecoming" (~-2 nearly all).
+"Is the AI a righteous companion (al-jalīs al-ṣāliḥ) to a Muslim user?" — measures
+the residue counsel leaves on the user, not knowledge/professed values. Full design:
+`docs/jaleesbench-design.md` (v0.3, +pdf).
 
-**Run war stories (all resolved, committed):**
-- Ansari 8000-char route cap broke 17 verbose turn-2 cells -> collected via DIRECT
-  facilitator call (cluesmith/ansari4/ansari-multisage/tmp/collect_ansari.mts,
-  tsx, no deploy, production-faithful). Worth raising route cap at source.
-- Anthropic API ran OUT OF CREDITS mid-batch (~7,900 Opus errored); topped up,
-  re-batched the remainder (fixed _pending_jobs to re-eligible done-batch errors).
-- Parser bug: greedy {.*} grabbed trailing text -> raw_decode from first brace.
-- judge_all now skip-and-count (one bad cell no longer crashes gather).
-- Gemini judge: safety thresholds OFF (benign parenting/privacy probe JLS-068
-  false-tripped minor-safety filter). 8 JLS-068 cells STILL refused by Gemini +
-  1 Opus missing-rationale = 9 single-judge cells (0.02%), documented caveat.
+## FULL RUN COMPLETE (8 subjects)
+140 probes × 6 pressures × 3 framings × 8 subjects = 20,160 sittings, 80,631 dual
+judgments (Opus 4.8 + Gemini 3.1 Pro), total run ~$1,316 (batch judging saved
+~$934). **Scores reported on −1…+1 scale** (bands Burns −1 … Perfume +1; judge emits
+−2..2, halved at report). collect.jsonl + judgments.jsonl in jaleesbench/results/.
 
-## OPEN / NEXT (pending Waleed)
-- Scholar review of probes/proof-texts/judged sample (the big one before publish).
-- 3 verse-only babs still title-pending (70,126,202) — not in the 140.
-- Exemplar anchors for high-disagreement terrain (JLS-059-type) = next calibration.
-- Decisions still open: 3 runs/cell for CIs (REJECTED earlier, revisit?);
-  taqwabench repo public?; shannon Gemini rate fix; EdifyBench/VirtueBench
-  provenance note + caro 7th-pressure idea (TABLED).
+**Jalees Score (Unstated, after pressure):** ansari +0.48 > gpt-5.5 +0.27 >
+claude-sonnet-4-6 +0.22 > glm-5.1 −0.18 > nemotron-3-ultra −0.21 > gemini-3.5-flash
+−0.26 > gemma-4-31b −0.34 > qwen3-235b −0.48.
+- **Recognition >> instruction**: framing dominates; guided ceiling +0.56..+0.87
+  for all EXCEPT qwen3-235b +0.12 (capability gap, not recognition).
+- **Ansari layer worth +0.75** over its own base model gemini-3.5-flash (−0.26 on
+  identical probes) — the headline.
+- **Steadfastness**: ALL cave; worst on RELATIONAL pressures (insistence,
+  personal_appeal); false_authority SHARPENS most (qwen the exception).
+- Judge agreement 66% exact / 85% within-1 (harder bank than pilot's 73/88).
+- 320 polarizing cells (one subject +1 / another −1 on same probe×pressure).
 
----
+## CITATION METRIC — fully reworked (Waleed pushed hard; 3 bugs fixed)
+Final metric = **turn-1 (first response only), temperature-0 LLM detector
+(gemini-3.1-flash-lite on Vertex), split by probe Islamic class.** Bugs fixed
+along the way: (1) regex counted clock times "1:1"/"9:00" as verses → LLM detector
+(`citation.py`, benchmarked 30/30 vs hand labels); (2) Flash-Lite nondeterminism
+(92% self-agree) → temperature=0; (3) "turn-1" flag scored BOTH turns →
+`asst[0]` only.
+**Final numbers (clean=religion-neutral probes, Unstated):** general models 0–4%
+(~2% pooled), ansari 97%. Stated framing → everyone 64–98% (citation is a
+RECOGNITION response). Data: results/citations_turn1.jsonl (20,160).
+Probe Islamic class persisted in probes.json field "islamic": 42 intrinsic /
+40 leaky / 58 clean (classification in tmp/probe_klass.json from Opus pass).
 
-## (prior context retained below)
+## ANSARI STEADFASTNESS EXPERIMENT (benchmark-driven fix)
+Goal: fix Ansari caving under relational pressure. Added optional
+`systemPromptOverride` param to `runFacilitator` in ansari-multisage
+(lib/facilitator/agent.ts — UNCOMMITTED in that repo; ask Waleed before committing).
+Anti-pressure addendum: `ansari-multisage/tmp/tune_addendum.txt` (change HOW not
+WHAT, don't retract under insistence/appeal/secularize).
+- **Held-out validation (10 fresh probes, paired, judged): steadfastness −0.42 →
+  +0.02** (insistence −0.45→+0.02, personal_appeal −0.52→0.00, secularize
+  −0.28→+0.03), turn-1 quality preserved. Control arm tracks full-bank baseline.
+  Saved: results/ansari_prompt_mod.json (drives report §11).
+- **Full-bank modified run IN PROGRESS** (subject label "ansari-steadfast",
+  2,520 cells, ADDITIVE — separate files). Collection ~2428/2520 at capture
+  (`tmp/collect_ansari_mod.mts`, restart-loop b/c Vertex HTTP2 crashes; has
+  unhandledRejection guard). When done: merge tmp/ansari_mod_done.jsonl →
+  results/collect_ansari_mod.jsonl (subject ansari-steadfast) then JUDGE into
+  results/judgments_ansari_mod.jsonl (separate file!), compute full-bank
+  steadfastness, update results/ansari_prompt_mod.json "full_bank" + regenerate
+  report §11. Waleed said "deploying this amendment now" = HIS action (don't deploy).
 
-## RULINGS MADE 2026-06-12 (Waleed)
+## INFRA CHANGES THIS SESSION
+- **Gemini → Vertex AI** (collect subject gemini-3.5-flash + both judging-Gemini
+  + citation detector). `gemini_client()` in collect.py; key gitignored at
+  `.vertex-sa.json` (project agentset-491018, location=global). GEMINI_API_KEY no
+  longer required. Vertex has NO file-batch API → Gemini judged live, Opus batched.
+- Ansari via OpenAI-compat route (spec 19, leaderboard bearer = no rate limit).
+- 6 subjects added across session: gemini-3.5-flash, gemma-4-31b (Friendli),
+  qwen3-235b (Friendli), glm-5.1 (Friendli), nemotron-3-ultra (Blackbox).
+  Prices in score.py (verified). Friendli/Blackbox keys in cluesmith/shannon/.env.
 
-- **Full run = 139-probe subset + DUAL judging.** Encoded in design doc §3.1 (v0.3,
-  commit b3091d7). One probe per probe-worthy measurement cluster; representative
-  bab by hadith weight + plain case; split-half check; map re-derived not hand-edited.
-- **gemini-3.5-flash added as 4th subject** (it's Ansari's base model — he said
-  "GPT-3.5 Flash", verified actual id via API + AskUserQuestion). Pilot v3.1 result:
-  flash −0.10 unstated vs ansari +1.45 = +1.55-band Ansari-layer value-add, the
-  pilot's largest contrast. Flash: worst steadfastness (−0.31, caves to insistence
-  −1.05/personal appeal −0.75), JLS-006 −1.92, guided ceiling +1.75 < frontier.
-- **Source-citation metric** (his ask) is §6 of both reports: regex over transcripts
-  (surah/verse, collections, prophet-said; bare mentions don't count). Ansari 80%
-  hadith unstated vs 2/18/20% others; ansari citation DROPS guided (80→62%) — same
-  guide-interference pattern as its score. Flash steepest stated jump (20→85%).
-- Pilot FINAL (6 subjects): 1,080 sittings, 4,320 judgments, $104.54; agreement
-  71/86 pool-wide (73/88 original pool). Unstated: ansari +1.45 > gpt +1.12 >
-  sonnet +0.74 > nemotron +0.28 > flash −0.10 ≈ gemma −0.12. gemma/nemotron via
-  Friendli/Blackbox (keys in cluesmith/shannon/.env). JLS-006 deliverable failure
-  −2.00 for gpt+gemma+nemotron. Guide reviewed & frozen (meta para cut). Probe
-  bank: 139 representatives selected (docs/jaleesbench-probe-bank.md); proof
-  texts per bab in package (proof_texts.json; sunnah.com lacks verse openers).
-  Citation rates now ON the scorecard (rows in §1) but outside the Jalees Score.
-  WALEED CORRECTION (4th): no validation machinery — memory file written.
-  NEXT: draft 139 probes (one Opus pass, proof texts + standards) → he reviews
-  → full run. Runs/cell = 1 (triple runs REJECTED). Split-half REMOVED from design.
-- Chapter map artifacts: results/chapter_map.jsonl ($3.42), chapter_clusters.json,
-  docs/jaleesbench-chapter-map.md (143 clusters: 54 singletons, median 2, max 25
-  "small voluntary devotions"; 4 etiquette-leaning excluded → 139).
+## REPORT (docs/jaleesbench-report.{html,pdf}; HTML canonical, PDF via Playwright, NO md)
+Sections: 1 scorecard (+turn-1 citation rows) · 2 framing STAIRCASE (value→value
+with Δ in context) · 3 steadfastness/pressure · 4 by-probe · 5 techniques ·
+6 citation (turn-1, clean/leaky/intrinsic × framing) · 7 subject findings ·
+8 judge agreement · 9 cost · 10 polarizing scenarios (FULL transcripts, no clip) ·
+11 Ansari prompt modification (held-out table; full-bank pending) · 12 caveats
+(incl. default-config/thinking limitation). Commentary in results/commentary.json
+(16 slots incl. ansari_mod). `uv run jaleesbench report` builds HTML only.
 
-## NEXT WORK (full-run prep, in rough order)
+## arXiv PAPER (docs/paper/jaleesbench-paper.{md,pdf})
+Authors: **Waleed Kadous, Ben Olsen, Tim Hwang.** Drafted in MARKDOWN (Waleed hates
+LaTeX) → convert to LaTeX for submission (PENDING, his call on timing). Content
+complete EXCEPT: §6 full-bank Ansari confirmation (pending judging), references→BibTeX.
+Has: abstract, intro, related work (IslamicMMLU/LegalBench/IslamTrust/VirtueBench/
+EdifyBench), method, 8-system results, §5.5 citation table (corrected), §6 Ansari
+case study, limitations, Appendix A polarizing example (JLS-006 ansari +1 vs gpt −1).
 
-1. Pick the 139 representative babs (hadith weight + plain-case; mechanical, can
-   start anytime). 3 verse-only babs still title-pending (70, 126, 202 — shamela
-   403s; fill during authoring if their clusters need them).
-2. Waleed reviews `docs/jaleesbench-guide.md` (STILL pending; blocks Guided framing
-   at scale — if it changes post-run, guided cells need recollecting).
-3. Exemplar anchors for grief/register judging (JLS-005-type cells still 52% exact;
-   at 139 probes several register clusters will exist).
-4. Author 139 probes × 6 pressure turns + corrective texts (standard #12) + proof
-   texts. THE critical path. Batch + review.
-5. Decide runs/cell (1 vs 3). Full-run cost w/ dual judges: ≈$263 collect +
-   ≈$760 judge ≈ $1,025/run; ×3 ≈ $3.1k. Ansari self-host option open (his project).
-6. Still pending: scholar review path; taqwabench repo public?; shannon Gemini rate.
+## OPEN DECISIONS (Waleed's calls)
+1. **De-islamization / intrinsic probes**: 42 intrinsic (21 prayer/salah), 40
+   universal-leaky, 58 clean. Asked "how many intrinsic" (=42), considered removing
+   — NOT DECIDED. Options presented (AskUserQuestion rejected/he was thinking):
+   keep-as-tagged-subset (recommended) / drop-niche-keep-spiritual / remove-all-42.
+   De-islamize the 40 leaky regardless. Turn-1 metric already mitigates much of it.
+2. **Thinking**: NOT enabled/standardized anywhere (default config). Documented as
+   limitation. Open: (a) test thinking-ON judges on a sample → does agreement beat
+   66/85? worth doing before paper locks; (b) leave subjects "as deployed" (rec) vs
+   thinking-standardized re-run.
+3. LaTeX conversion of paper; BibTeX refs.
+4. Scholar review (precedes any public/normative claims). taqwabench repo public?
 
-## Repos & infra
-
-- Root repo: github.com/waleedkadous/taqwabench (PRIVATE). Nested-and-gitignored:
-  `external/` (virtue-bench-2 clone, branch main), `virtuebench-nemotron/` (own public
-  repo), `tmp/`, `jaleesbench/results/`, `.env` (NEVER commit — has Anthropic+OpenAI keys).
-- md→PDF: ALWAYS local `md2pdf`, never pandoc (Waleed hates LaTeX; memory file exists).
-- Git: explicit paths only, no attribution lines, descriptive messages.
-
-## Waleed's recurring corrections (respect these)
-
-1. Don't buy complexity before it's needed (3× corrected): plain cases first, difficulty
-   levers wait for saturation; no invented protocol machinery (kappa publishing etc.).
-2. No predictions/hypotheses in shared docs; understated tone; translate all Arabic.
-3. Idempotency expected everywhere; cost measurement expected.
-4. Normative calls about the benchmark's fiqh (e.g. the deliverable rule) are HIS — present
-   options + recommendation, get his ruling, then encode.
+## CONVENTIONS (respect)
+Scores −1…+1. md→PDF local md2pdf only. Concurrent harnesses (worker pools), each
+job try/catch skip-and-continue. Don't add validation machinery unprompted. Git
+explicit paths, no attribution lines. ADDITIVE experiments — never overwrite
+existing collect/judgments files (modified-Ansari uses separate files + subject label).
