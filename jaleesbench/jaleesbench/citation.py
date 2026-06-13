@@ -75,11 +75,14 @@ async def detect_all(limit: int | None = None, turn1: bool = False) -> None:
         nonlocal n
         reply = "\n\n---\n\n".join(t["content"] for t in s["turns"]
                                    if t["role"] == "assistant")
+        from google.genai import types
+        cfg = types.GenerateContentConfig(temperature=0.0)  # deterministic classifier
         for attempt in range(3):
             try:
                 async with sem:
                     r = await client.aio.models.generate_content(
-                        model=DETECTOR, contents=PROMPT.format(reply=reply[:24000]))
+                        model=DETECTOR, contents=PROMPT.format(reply=reply[:24000]),
+                        config=cfg)
                 v = _parse(r.text)
                 break
             except Exception:  # noqa: BLE001
