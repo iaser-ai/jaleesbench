@@ -101,16 +101,18 @@ We measure how often a system supports its counsel with a specific Qurʾān or h
 
 | System | not Islamic at all | names Islam | intrinsically Islamic |
 |---|---|---|---|
-| Ansari | 99% | 100% | 99% |
-| Qwen3-235B | 17% | 45% | 60% |
-| Gemini 3.5 Flash | 13% | 42% | 57% |
-| GLM-5.1 | 12% | 43% | 60% |
-| Nemotron-3-Ultra | 10% | 30% | 32% |
-| GPT-5.5 | 8% | 19% | 44% |
-| Claude Sonnet 4.6 | 8% | 18% | 22% |
-| Gemma-4-31B | 3% | 18% | 26% |
+| Ansari | 97% | 96% | 96% |
+| GPT-5.5 | 3% | 12% | 42% |
+| GLM-5.1 | 3% | 35% | 55% |
+| Qwen3-235B | 3% | 33% | 49% |
+| Gemini 3.5 Flash | 4% | 30% | 48% |
+| Claude Sonnet 4.6 | 1% | 6% | 20% |
+| Nemotron-3-Ultra | 0% | 16% | 20% |
+| Gemma-4-31B | 0% | 11% | 22% |
 
-Two findings. First, **on religion-neutral probes a Muslim-unaware general model rarely volunteers scripture** — 3–17%, ~10% pooled — while the domain assistant does so almost always (99%); citation rises monotonically with the religious explicitness of the scenario, because an intrinsically-Islamic dilemma reveals the user even when nothing is declared. Second, **citation is overwhelmingly a recognition response**: under the *Stated* framing (told the user is a practising Muslim) every general system jumps to 70–100% on the identical neutral probes. Ansari, which assumes a Muslim interlocutor, cites ~99% throughout. Citation is reported alongside the Jalees Score, not folded into it: a proof text serves the moment or it does not, and pressing verses on a user who asked for none is a register failure the bands already penalize.
+Two findings. First, **on religion-neutral probes a Muslim-unaware general model essentially never volunteers scripture in its first response** — 0–4%, ~2% pooled — while the domain assistant does so almost always (97%); the rate rises with the religious explicitness of the scenario, because an intrinsically-Islamic dilemma reveals the user even when nothing is declared. Second, **citation is overwhelmingly a recognition response**: under the *Stated* framing (told the user is a practising Muslim) every general system jumps to 64–98% on the identical neutral probes. Ansari, which assumes a Muslim interlocutor, cites ~97% throughout. Citation is reported alongside the Jalees Score, not folded into it: a proof text serves the moment or it does not, and pressing verses on a user who asked for none is a register failure the bands already penalize.
+
+*Detector note.* Citation detection went through three corrections, each prompted by a failed face-validity check: a regex that counted clock times ("1:1", "9:00") as verse references; a non-deterministic LLM grader (92% self-agreement across passes), fixed to temperature 0; and a turn-extraction bug that scored both turns, inflating the first-response rate with turn-2 rebuttals of the false-authority push. The numbers above are post-correction.
 
 ### 5.6 Judge agreement
 
@@ -130,7 +132,7 @@ This closes the loop a benchmark should: a measured weakness, a targeted fix, a 
 
 ## 7. Limitations
 
-Single run per cell (no confidence intervals). Judges share band definitions and proof texts but no per-probe exemplar anchors; the 66/85 agreement is the calibration measurement. The *Unstated* framing is only meaningful for universal probes, since intrinsically-Islamic scenarios reveal the user's religion regardless. The probe bank, proof-text selection, and a sample of judged sittings have not yet undergone formal scholar review, which precedes any normative claims. The steadfastness addendum was tuned against three named pressures and should be checked for regressions on the others at full scale.
+Single run per cell (no confidence intervals). Every system and both judges ran at **default configuration** — thinking/reasoning was not enabled or standardized, so reasoning-by-default models effectively reasoned while others did not; this matches deployment but does not isolate reasoning as a variable. Judges share band definitions and proof texts but no per-probe exemplar anchors; the 66/85 agreement is the calibration measurement. The *Unstated* framing is only meaningful for universal probes, since intrinsically-Islamic scenarios reveal the user's religion regardless. The probe bank, proof-text selection, and a sample of judged sittings have not yet undergone formal scholar review, which precedes any normative claims. The steadfastness addendum was tuned against three named pressures and should be checked for regressions on the others at full scale.
 
 ## 8. Conclusion
 

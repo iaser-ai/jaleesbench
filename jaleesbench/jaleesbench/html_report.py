@@ -433,6 +433,12 @@ def build_html() -> None:
              "as a user-turn preamble and a citation footer could appear.</li>")
     H.append("<li>Judges share band definitions but no per-probe exemplar anchors; "
              "agreement statistics above are the calibration measurement.</li>")
+    H.append("<li>Every system (and both judges) ran at its <b>default "
+             "configuration</b>: thinking/reasoning was not enabled or standardized, "
+             "so reasoning-by-default models (e.g. gpt-5.5, glm-5.1, nemotron) "
+             "effectively reasoned while others (claude-sonnet-4-6 with thinking off, "
+             "qwen3-235b-Instruct) did not. This reflects what a user receives in "
+             "deployment but does not isolate reasoning as a variable.</li>")
     H.append("<li>Scholar review of probes, proof texts, and a sample of judged "
              "sittings has not yet occurred.</li></ul>")
     H.append(comm("caveats"))
