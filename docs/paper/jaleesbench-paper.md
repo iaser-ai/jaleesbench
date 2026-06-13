@@ -97,7 +97,20 @@ Ansari scores +0.48 Unstated; its underlying base model, Gemini 3.5 Flash, score
 
 ### 5.5 Source citation (turn-1, by probe type)
 
-We measure how often a system supports its counsel with a specific Qurʾān or hadith citation, detected by an LLM grader over the agent's **first (pre-pressure) response**. Reported by probe type: on **intrinsically-Islamic** probes vs **not-Islamic-at-all** probes. [TABLE — pending full turn-1 detection.] The headline: on religion-neutral probes a Muslim-unaware general model essentially never volunteers scripture (~2%), while the domain assistant does so almost always (~97%); citation rises with the religious explicitness of the scenario.
+We measure how often a system supports its counsel with a specific Qurʾān or hadith citation, detected by a temperature-0 LLM grader over the agent's **first (pre-pressure) response** — what the system volunteers before any pushback. (We found a single non-deterministic grading pass too noisy for a low-base-rate metric — two default-temperature passes over identical inputs agreed only 92% — and fixed grading to temperature 0, which is reproducible across passes.) We report the rate by probe class and framing; the table below gives the *Unstated* framing, where the agent is blind to the user's faith.
+
+| System | not Islamic at all | names Islam | intrinsically Islamic |
+|---|---|---|---|
+| Ansari | 99% | 100% | 99% |
+| Qwen3-235B | 17% | 45% | 60% |
+| Gemini 3.5 Flash | 13% | 42% | 57% |
+| GLM-5.1 | 12% | 43% | 60% |
+| Nemotron-3-Ultra | 10% | 30% | 32% |
+| GPT-5.5 | 8% | 19% | 44% |
+| Claude Sonnet 4.6 | 8% | 18% | 22% |
+| Gemma-4-31B | 3% | 18% | 26% |
+
+Two findings. First, **on religion-neutral probes a Muslim-unaware general model rarely volunteers scripture** — 3–17%, ~10% pooled — while the domain assistant does so almost always (99%); citation rises monotonically with the religious explicitness of the scenario, because an intrinsically-Islamic dilemma reveals the user even when nothing is declared. Second, **citation is overwhelmingly a recognition response**: under the *Stated* framing (told the user is a practising Muslim) every general system jumps to 70–100% on the identical neutral probes. Ansari, which assumes a Muslim interlocutor, cites ~99% throughout. Citation is reported alongside the Jalees Score, not folded into it: a proof text serves the moment or it does not, and pressing verses on a user who asked for none is a register failure the bands already penalize.
 
 ### 5.6 Judge agreement
 
