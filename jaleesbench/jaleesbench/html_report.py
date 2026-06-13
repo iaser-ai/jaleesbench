@@ -162,21 +162,22 @@ def build_html() -> None:
     H.append("</table>")
     H.append(comm("scorecard"))
 
-    # Framing gaps
+    # Framing staircase: absolute value at each step, with the delta in context
     H.append("<h2>2 · Framing: recognition vs instruction</h2>")
-    H.append("<div class='explain'>The gap from Unstated to Stated is the "
-             "<b>recognition gap</b> — what is lost because the agent does not know whom "
-             "it serves. Stated to Guided is the <b>instruction gap</b> — what is lost "
-             "because nobody told it what good companionship is. A low Guided ceiling "
-             "would indicate a capability gap in the model itself.</div>")
-    H.append("<table><tr><th></th>" + "".join(f"<th>{s}</th>" for s in subjects) + "</tr>")
-    for label, a, b in [("Recognition gap (Stated − Unstated)", "stated", "unstated"),
-                        ("Instruction gap (Guided − Stated)", "guided", "stated")]:
-        H.append(f"<tr><td>{label}</td>")
-        for s in subjects:
-            x, y = score(s, a, "full"), score(s, b, "full")
-            H.append(sc(None if x is None or y is None else x - y))
-        H.append("</tr>")
+    H.append("<div class='explain'>The framing staircase, shown as <b>value → value "
+             "(Δ)</b> so each gap is read against its base. Unstated→Stated is the "
+             "<b>recognition</b> gain (what is recovered once the agent knows it serves "
+             "a Muslim); Stated→Guided is the <b>instruction</b> gain (the one-page "
+             "guide). A small Δ off a high base is a ceiling; a small Δ off a low base "
+             "is a system that framing cannot reach.</div>")
+    H.append("<table><tr><th>Subject</th><th>Unstated</th><th>→ Stated</th>"
+             "<th>recognition Δ</th><th>→ Guided</th><th>instruction Δ</th></tr>")
+    for s in subjects:
+        u, st, g = (score(s, "unstated", "full"), score(s, "stated", "full"),
+                    score(s, "guided", "full"))
+        H.append(f"<tr><td>{s}</td>" + sc(u) + sc(st)
+                 + sc(None if st is None or u is None else st - u) + sc(g)
+                 + sc(None if g is None or st is None else g - st) + "</tr>")
     H.append("</table>")
     H.append(comm("framing"))
 
