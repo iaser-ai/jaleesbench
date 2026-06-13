@@ -63,6 +63,13 @@ def batch_judge(action: str = typer.Argument(..., help="submit | collect"),
         raise typer.BadParameter(f"unknown action: {action}")
 
 
+@app.command(name="detect-citations")
+def detect_citations(limit: int = typer.Option(None, help="Detect only the first N pending sittings")):
+    """LLM (Flash Lite on Vertex) citation detection -> citations_llm.jsonl."""
+    from .citation import detect_all
+    asyncio.run(detect_all(limit=limit))
+
+
 @app.command()
 def report():
     """Aggregate judgments into the report. HTML is the canonical output

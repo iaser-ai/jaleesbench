@@ -29,13 +29,14 @@ PRICES = {
 QURAN_RE = re.compile(
     r"(?i)\bs[uū]rah?\b|\bsūrat\b"             # surah referenced by name
     r"|\bqur[’'ʾ]?[aā]n\W{0,3}\d"              # "Qur'an 39:53" / "Quran (2:286)"
-    r"|\b\d{1,3}\s*:\s*\d{1,3}\b"              # bare chapter:verse
-    r"|\b[aā]yah?\b|\bverse\s+\d")
+    r"|\b[aā]yah\b")                            # ayah (verse) — explicit term
+# NB: bare "\d:\d" was removed — it matched clock times ("1:1", "9:00") and
+# ratios far more than verses; real verse refs are caught via "Qur'an N" / surah.
 HADITH_RE = re.compile(
     r"(?i)\bbukh[aā]r[iī]\b|\bsah[iī]h\s+(al-)?muslim\b|\btirmidh[iī]\b"
     r"|\bab[uū]\s+d[aā]w[uū]d\b|\bnas[aā][’'ʾ]?[iī]\b|\bibn\s+m[aā]jah\b"
     r"|\bmuwa[tṭ]{1,2}a\b|\bmusnad\b|\briy[aā][dḍ]h?\s+al-[sṣ][aā]li[hḥ][iī]n\b"
-    r"|\bmuttafaq\b|\bagreed\s+upon\b|\bhad[iī]th\s+quds[iī]\b"
+    r"|\bmuttafaq\b|\bhad[iī]th\s+quds[iī]\b"   # "agreed upon" removed (plain English)
     r"|\bprophet\b[^.\n]{0,80}\b(said|says)\b"  # "the Prophet (pbuh) said …"
     r"|ﷺ")
 
