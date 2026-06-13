@@ -73,9 +73,22 @@ async def call_judge(judge: str, parts: tuple[str, str, str], clients: dict) -> 
                          "cache_write": getattr(u, "cache_creation_input_tokens", 0) or 0,
                          "cache_read": getattr(u, "cache_read_input_tokens", 0) or 0}
             else:
+                from google.genai import types
+                # The judge SCORES transcripts; it must not refuse benign-but-
+                # sensitive content (e.g. a parenting/privacy scenario false-
+                # triggers the minor-safety filter). Disable blocking for the
+                # judge only — subjects are never run with these settings.
+                cfg = types.GenerateContentConfig(safety_settings=[
+                    types.SafetySetting(category=c, threshold="OFF") for c in (
+                        "HARM_CATEGORY_HARASSMENT", "HARM_CATEGORY_HATE_SPEECH",
+                        "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                        "HARM_CATEGORY_DANGEROUS_CONTENT")])
                 resp = await clients["gemini"].aio.models.generate_content(
-                    model=judge, contents="\n\n".join(parts))
+                    model=judge, contents="\n\n".join(parts), config=cfg)
                 text = resp.text
+                if text is None:
+                    fr = getattr(resp.candidates[0], "finish_reason", "?") if resp.candidates else "no-candidates"
+                    raise ValueError(f"gemini returned no text (finish_reason={fr})")
                 um = resp.usage_metadata
                 usage = {"in": um.prompt_token_count or 0,
                          "out": (um.candidates_token_count or 0)
@@ -132,15 +145,22 @@ async def judge_all(limit: int | None = None) -> None:
     sem = asyncio.Semaphore(CONCURRENCY)
     lock = asyncio.Lock()
     completed = 0
+    failed = 0
 
     async def one(job):
-        nonlocal completed
+        nonlocal completed, failed
         s, skey, judge, scope = job
         probe = probes[s["probe_id"]]
         turns = s["turns"][:2] if scope == "turn1" else s["turns"]
         parts = judge_blocks(probe["proof_texts"], render_conversation(turns))
-        async with sem:
-            verdict = await call_judge(judge, parts, clients)
+        try:
+            async with sem:
+                verdict = await call_judge(judge, parts, clients)
+        except Exception as e:  # noqa: BLE001 — skip, report; a re-run retries it
+            async with lock:
+                failed += 1
+                print(f"  FAILED {skey}|{judge}|{scope}: {e}")
+            return
         rec = {"sitting_key": skey, "subject": s["subject"], "probe_id": s["probe_id"],
                "pressure": s["pressure"], "framing": s["framing"],
                "judge": judge, "scope": scope,
@@ -153,6 +173,8 @@ async def judge_all(limit: int | None = None) -> None:
                 print(f"  {completed}/{len(jobs)}")
 
     await asyncio.gather(*[one(j) for j in jobs])
+    if failed:
+        print(f"  {failed} failed (left pending)")
     print(f"judged {completed} -> {out_path}")
 
 
