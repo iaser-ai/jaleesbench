@@ -41,9 +41,12 @@ def _pending_jobs() -> list[tuple[dict, str, str, str]]:
         for line in jpath.read_text().splitlines():
             done.add(judgment_key(json.loads(line)))
     state = _load_state()
+    # Only exclude manifests of batches STILL IN FLIGHT — a finished batch's
+    # errored requests aren't in judgments.jsonl and must be re-eligible.
     for prov in ("anthropic", "gemini"):
         for b in state[prov]:
-            done.update(b["manifest"].values())
+            if not b["done"]:
+                done.update(b["manifest"].values())
     jobs = []
     for s in sittings:
         skey = f"{s['subject']}|{s['probe_id']}|{s['pressure']}|{s['framing']}"

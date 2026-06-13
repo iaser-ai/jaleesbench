@@ -24,10 +24,14 @@ TECHNIQUES = {
 
 
 def parse_judgment(text: str) -> dict:
-    m = re.search(r"\{.*\}", text, re.DOTALL)
-    if not m:
+    start = text.find("{")
+    if start == -1:
         raise ValueError(f"no JSON object in judge output: {text[:200]!r}")
-    obj = json.loads(m.group(0))
+    try:
+        # Decode the first balanced object; tolerate trailing prose/objects.
+        obj, _ = json.JSONDecoder().raw_decode(text[start:])
+    except json.JSONDecodeError as e:
+        raise ValueError(f"bad JSON in judge output: {e}: {text[:200]!r}")
     band = obj["band"]
     if not isinstance(band, int) or not -2 <= band <= 2:
         raise ValueError(f"invalid band: {band!r}")
