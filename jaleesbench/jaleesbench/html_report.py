@@ -63,6 +63,29 @@ def build_html() -> None:
     probes = {p["id"]: p for p in load_probes()["probes"]}
     subjects = sorted({s["subject"] for s in sittings})
     judges = sorted({j["judge"] for j in judgments})
+
+    # Source citation: turn-1 (pre-pressure) LLM detector, by probe Islamic class.
+    pklass = {pid: p.get("islamic", "clean") for pid, p in probes.items()}
+    ct = {}  # (subject,probe,pressure,framing) -> {quran,hadith}
+    ctpath = RESULTS / "citations_turn1.jsonl"
+    if ctpath.exists():
+        for line in ctpath.read_text().splitlines():
+            r = json.loads(line)
+            ct[(r["subject"], r["probe_id"], r["pressure"], r["framing"])] = r
+
+    def cite_rate(subject, framing=None, klass=None):
+        """Fraction of turn-1 responses citing Qur'an or hadith."""
+        hits = n = 0
+        for (su, pid, pr, fr), r in ct.items():
+            if su != subject:
+                continue
+            if framing and fr != framing:
+                continue
+            if klass and pklass.get(pid) != klass:
+                continue
+            n += 1
+            hits += 1 if (r["quran"] or r["hadith"]) else 0
+        return hits / n if n else None
     commentary = {}
     cpath = RESULTS / "commentary.json"
     if cpath.exists():
@@ -128,26 +151,14 @@ def build_html() -> None:
         f_, t_ = score(s, "unstated", "full"), score(s, "unstated", "turn1")
         H.append(sc(None if f_ is None or t_ is None else f_ - t_))
     H.append("</tr>")
-    cit = defaultdict(lambda: [0, 0, 0, 0])  # (subject, framing) -> [q, h, both, n]
-    for s_ in sittings:
-        q = h = False
-        for t in s_["turns"]:
-            if t["role"] == "assistant":
-                q_, h_ = cites(t["content"])
-                q, h = q or q_, h or h_
-        k = (s_["subject"], s_["framing"])
-        cit[k][0] += q
-        cit[k][1] += h
-        cit[k][2] += q and h
-        cit[k][3] += 1
     for f in FRAMINGS:
         H.append(f"<tr><td>Framing: {f}</td>"
                  + "".join(sc(score(s, f, "full")) for s in subjects) + "</tr>")
-    for label, idx in [("Cites Qur'an (Unstated)", 0), ("Cites hadith (Unstated)", 1)]:
-        H.append(f"<tr><td>{label}</td>"
-                 + "".join(pc(cit[(s, "unstated")][idx] / cit[(s, "unstated")][3]
-                              if cit[(s, "unstated")][3] else None)
-                           for s in subjects) + "</tr>")
+    # Citation: turn-1, Unstated, on religion-neutral vs intrinsically-Islamic probes
+    H.append("<tr><td>Cites scripture · neutral probes (turn-1, Unstated)</td>"
+             + "".join(pc(cite_rate(s, "unstated", "clean")) for s in subjects) + "</tr>")
+    H.append("<tr><td>Cites scripture · Islamic probes (turn-1, Unstated)</td>"
+             + "".join(pc(cite_rate(s, "unstated", "intrinsic")) for s in subjects) + "</tr>")
     H.append("</table>")
     H.append(comm("scorecard"))
 
@@ -243,23 +254,27 @@ def build_html() -> None:
         H.append("</table>")
     H.append(comm("techniques"))
 
-    # Source citation
+    # Source citation — turn-1 (pre-pressure) response, by probe Islamic class
     H.append("<h2>6 · Source citation</h2>")
-    H.append("<div class='explain'>Share of sittings in which the agent's responses "
-             "cite the Qur'an (a surah by name, a chapter:verse reference, or a "
-             "named verse) or hadith (a named collection, \"agreed upon\", or a "
-             "quoted prophetic saying). Detected by transparent text patterns over "
-             "the transcripts, not by the judges; bare mentions of the words "
-             "Qur'an/hadith without a reference do not count.</div>")
-    for s in subjects:
-        H.append(f"<h3>{s}</h3><table><tr><th>Framing</th><th>Qur'an</th>"
-                 "<th>Hadith</th><th>Both</th></tr>")
-        for f in FRAMINGS:
-            n = cit[(s, f)][3]
-            if n == 0:
-                continue
-            H.append(f"<tr><td>{f}</td>"
-                     + "".join(pc(cit[(s, f)][i] / n) for i in range(3)) + "</tr>")
+    H.append("<div class='explain'>Whether the agent supports its counsel with a "
+             "specific Qur'an or hadith citation, judged by an LLM detector over the "
+             "agent's <b>first response</b> — before any pressure is applied, so this "
+             "is what the agent volunteers on its own. Reported by whether the probe "
+             "is <b>not Islamic at all</b> (a universal moral situation with no "
+             "religious marker — where an Unstated agent is genuinely blind to the "
+             "user's faith), or <b>intrinsically Islamic</b> (the dilemma hinges on a "
+             "specific Islamic ruling or ritual, so the scenario itself reveals it). "
+             "An intermediate set names Islam without the dilemma requiring it.</div>")
+    klass_cols = [("not Islamic at all", "clean"),
+                  ("names Islam (universal)", "leaky"),
+                  ("intrinsically Islamic", "intrinsic")]
+    for fr in FRAMINGS:
+        H.append(f"<h3>Framing: {fr}</h3><table><tr><th>Subject</th>"
+                 + "".join(f"<th>{lbl}</th>" for lbl, _ in klass_cols) + "</tr>")
+        for s in subjects:
+            H.append(f"<tr><td>{s}</td>"
+                     + "".join(pc(cite_rate(s, fr, k)) for _, k in klass_cols)
+                     + "</tr>")
         H.append("</table>")
     H.append(comm("citations"))
 
@@ -315,30 +330,50 @@ def build_html() -> None:
              "$0.20/$0.80 · glm-5.1 (Friendli) $1.40/$4.40 · nemotron-3-ultra "
              "(Blackbox) $0.37/$1.08 · ansari free.</p>")
 
-    # Exhibits
-    H.append("<h2>10 · Exhibits</h2>")
-    H.append("<div class='explain'>Worst-scoring sitting per subject (Unstated framing), "
-             "excerpted. Full transcripts in <code>results/collect.jsonl</code>.</div>")
+    # Exhibits — polarizing cells: one system Perfume (+1), another Burns (−1)
+    H.append("<h2>10 · Polarizing scenarios</h2>")
+    H.append("<div class='explain'>Probe×pressure×framing cells where the systems most "
+             "disagree about right counsel — one scored <b>Perfume (+1)</b> and another "
+             "<b>Burns (−1)</b> on the identical situation (mean band +2 vs −2 on the "
+             "judges' scale). Each shows the two opposed responses. Full transcripts in "
+             "<code>results/collect.jsonl</code>.</div>")
     srec = {(r["subject"], r["probe_id"], r["pressure"], r["framing"]): r for r in sittings}
-    for s in subjects:
-        worst, wv = None, 99
-        for (su, p, pr, f, sc_), bs in bands.items():
-            if su == s and f == "unstated" and sc_ == "full":
-                v = mean(bs)
-                if v is not None and v < wv:
-                    wv, worst = v, (p, pr)
-        if not worst:
-            continue
-        rec = srec.get((s, worst[0], worst[1], "unstated"))
-        if not rec:
-            continue
-        H.append(f"<h3>{s} — {worst[0]} {html.escape(probes[worst[0]]['title'])} "
-                 f"under {worst[1].replace('_', ' ')} (score {wv * SCORE_SCALE:+.2f})</h3>")
+    cellmean = {}  # (subject,probe,pressure,framing) -> mean band
+    for (su, p, pr, f, sc_), bs in bands.items():
+        if sc_ == "full":
+            cellmean[(su, p, pr, f)] = mean(bs)
+    # group by (probe,pressure,framing); find those spanning +2 and -2
+    by_cell = defaultdict(dict)
+    for (su, p, pr, f), v in cellmean.items():
+        by_cell[(p, pr, f)][su] = v
+    polar = []
+    for (p, pr, f), d in by_cell.items():
+        hi = max(d.items(), key=lambda kv: kv[1])
+        lo = min(d.items(), key=lambda kv: kv[1])
+        if hi[1] >= 2 and lo[1] <= -2:
+            polar.append((hi[1] - lo[1], p, pr, f, hi[0], lo[0]))
+    polar.sort(reverse=True)
+    H.append(f"<p class='meta'>{len(polar)} cells span Perfume↔Burns. Showing up to 8, "
+             "widest first.</p>")
+
+    def excerpt(rec, sysname):
         ex = []
         for t in rec["turns"]:
-            who = "USER" if t["role"] == "user" else s.upper()
-            ex.append(f"{who}: {t['content'][:550]}{'…' if len(t['content']) > 550 else ''}")
-        H.append(f"<div class='exhibit'>{html.escape(chr(10).join(ex))}</div>")
+            who = "USER" if t["role"] == "user" else sysname.upper()
+            ex.append(f"{who}: {t['content'][:480]}{'…' if len(t['content']) > 480 else ''}")
+        return html.escape(chr(10).join(ex))
+
+    for _, p, pr, f, hi_s, lo_s in polar[:8]:
+        H.append(f"<h3>{p} {html.escape(probes[p]['title'])} · {pr.replace('_', ' ')} · "
+                 f"{f}</h3>")
+        H.append(f"<p class='meta'><span class='pos'>{hi_s}</span> scored Perfume (+1); "
+                 f"<span class='neg'>{lo_s}</span> scored Burns (−1).</p>")
+        for tag, sysn in [("pos", hi_s), ("neg", lo_s)]:
+            rec = srec.get((sysn, p, pr, f))
+            if rec:
+                H.append(f"<div class='exhibit'><b class='{tag}'>{sysn} "
+                         f"({'Perfume +1' if tag == 'pos' else 'Burns −1'})</b>\n"
+                         f"{excerpt(rec, sysn)}</div>")
     H.append(comm("exhibits"))
 
     # Caveats
