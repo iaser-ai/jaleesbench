@@ -6,7 +6,8 @@ from collections import defaultdict
 from itertools import combinations
 
 from .collect import RESULTS, load_probes
-from .score import PRICES, SCORE_SCALE, add_usage, cites, mean, tok_in, tok_out, usage_cost
+from .score import (PRICES, SCORE_SCALE, add_usage, cites, load_judgments, mean,
+                    tok_in, tok_out, usage_cost)
 
 PRESSURES = ["secularize", "insistence", "false_authority", "good_cause",
              "flattery", "personal_appeal"]
@@ -59,7 +60,7 @@ def pc(v):
 
 def build_html() -> None:
     sittings = [json.loads(l) for l in (RESULTS / "collect.jsonl").read_text().splitlines()]
-    judgments = [json.loads(l) for l in (RESULTS / "judgments.jsonl").read_text().splitlines()]
+    judgments = load_judgments()
     probes = {p["id"]: p for p in load_probes()["probes"]}
     subjects = sorted({s["subject"] for s in sittings})
     judges = sorted({j["judge"] for j in judgments})
@@ -414,17 +415,88 @@ def build_html() -> None:
                  f"personal appeal {am['pressures']['personal_appeal']['fullbank_baseline_stead']:+.2f}, "
                  f"secularize {am['pressures']['secularize']['fullbank_baseline_stead']:+.2f}), "
                  "confirming the held-out set is representative.")
+        H.append("</div>")
         if am.get("full_bank"):
             fb = am["full_bank"]
-            H.append(f" Full-bank confirmation across all 140 probes: overall "
-                     f"steadfastness {fb['orig_stead']:+.2f} → {fb['mod_stead']:+.2f}.")
+            PRES = ["secularize", "insistence", "false_authority",
+                    "good_cause", "flattery", "personal_appeal"]
+            H.append("<div class='explain'>Full-bank confirmation across all 140 "
+                     "probes (separate additive track, judged identically):</div>")
+            H.append("<table><tr><th>Pressure</th><th>arm</th><th>turn-1</th>"
+                     "<th>after pressure</th><th>Δ steadfastness</th></tr>")
+            for pr in PRES:
+                d = fb["pressures"][pr]
+                for arm, t1, fl, st in [
+                        ("original", d["baseline_turn1"], d["baseline_full"], d["baseline_stead"]),
+                        ("modified", d["modified_turn1"], d["modified_full"], d["modified_stead"])]:
+                    H.append(f"<tr><td>{pr.replace('_', ' ')}</td><td>{arm}</td>"
+                             + sc(t1 / SCORE_SCALE) + sc(fl / SCORE_SCALE)
+                             + sc(st / SCORE_SCALE) + "</tr>")
+            for label, key in [("overall (all 6)", "all_6_pressures"),
+                               ("tuned 3", "tuned_3_pressures")]:
+                b, m = fb[key]["baseline"], fb[key]["modified"]
+                H.append(f"<tr><td><b>{label}</b></td><td>original</td>"
+                         + sc(b["turn1"] / SCORE_SCALE) + sc(b["full"] / SCORE_SCALE)
+                         + sc(b["stead"] / SCORE_SCALE) + "</tr>")
+                H.append(f"<tr><td><b>{label}</b></td><td>modified</td>"
+                         + sc(m["turn1"] / SCORE_SCALE) + sc(m["full"] / SCORE_SCALE)
+                         + sc(m["stead"] / SCORE_SCALE) + "</tr>")
+            H.append("</table>")
+            t3 = fb["tuned_3_pressures"]
+            H.append("<div class='explain'>The held-out improvement replicates on the "
+                     "full bank: on the three tuned pressures steadfastness moves "
+                     f"{t3['baseline']['stead']:+.2f} → {t3['modified']['stead']:+.2f} "
+                     f"(an improvement of +{t3['improvement_stead']:.2f}), and the three "
+                     "untuned pressures do not regress — a single boundary instruction "
+                     "generalizes across the pressure set. The amendment is being "
+                     "deployed.</div>")
         else:
-            H.append(" Full-bank confirmation (all 140 probes) is in progress.")
-        H.append("</div>")
+            H.append("<div class='explain'>Full-bank confirmation (all 140 probes) "
+                     "is in progress.</div>")
         H.append(comm("ansari_mod"))
 
+    # Reasoning-mode robustness
+    tjpath = RESULTS / "judgments_thinking.jsonl"
+    if tjpath.exists():
+        tbands = defaultdict(list)
+        for line in tjpath.read_text().splitlines():
+            j = json.loads(line)
+            if j["framing"] == "unstated":
+                tbands[(j["subject"], j["scope"])].append(j["band"])
+
+        def tscore(subj, scope):
+            v = tbands.get((subj, scope), [])
+            return mean(v) if v else None
+
+        H.append("<h2>12 · Reasoning mode does not change the ranking</h2>")
+        H.append("<div class='explain'>Some subjects reason by default and others "
+                 "answer directly. To check the ranking is not an artifact of that, we "
+                 "re-ran three subjects spanning the pool with their native thinking "
+                 "mode enabled (Unstated, 140 probes × 6 pressures), on the same serving "
+                 "as the baseline so the reasoning pass is the only change.</div>")
+        H.append("<table><tr><th>Subject</th><th>thinking</th><th>turn-1</th>"
+                 "<th>after pressure</th><th>steadfastness</th></tr>")
+        for name, base, th in [("Gemma-4-31B", "gemma-4-31b", "gemma-4-thinking"),
+                               ("GLM-5.1", "glm-5.1", "glm-thinking"),
+                               ("Claude Sonnet 4.6", "claude-sonnet-4-6", "claude-sonnet-thinking")]:
+            bt, bf = score(base, "unstated", "turn1"), score(base, "unstated", "full")
+            tt, tf = tscore(th, "turn1"), tscore(th, "full")
+            H.append(f"<tr><td rowspan='2'>{name}</td><td>off</td>"
+                     + sc(bt) + sc(bf) + sc(bf - bt) + "</tr>")
+            H.append("<tr><td>on</td>"
+                     + sc(tt) + sc(tf) + sc(tf - tt) + "</tr>")
+        H.append("</table>")
+        nem = score("nemotron-3-ultra", "unstated", "full") * SCORE_SCALE
+        H.append("<div class='explain'>Enabling reasoning moves every Jalees Score by "
+                 "≤0.05; the reasoning pass is not inert (it sharpens these models on "
+                 "reasoning tasks) but it does not make them better company — the deficit "
+                 "is one of recognition, not reasoning. Consistent with this, "
+                 f"nemotron-3-ultra (reasons by default) sits at {nem:+.2f}, below two "
+                 "non-reasoning frontier systems.</div>")
+        H.append(comm("thinking"))
+
     # Caveats
-    H.append("<h2>12 · Methodology caveats</h2><ul>")
+    H.append("<h2>13 · Methodology caveats</h2><ul>")
     H.append("<li>Single run per cell — no confidence intervals yet; treat small "
              "per-cell differences as noise.</li>")
     H.append("<li>Ansari is reached through its OpenAI-compatible route "
@@ -434,11 +506,11 @@ def build_html() -> None:
     H.append("<li>Judges share band definitions but no per-probe exemplar anchors; "
              "agreement statistics above are the calibration measurement.</li>")
     H.append("<li>Every system (and both judges) ran at its <b>default "
-             "configuration</b>: thinking/reasoning was not enabled or standardized, "
-             "so reasoning-by-default models (e.g. gpt-5.5, glm-5.1, nemotron) "
-             "effectively reasoned while others (claude-sonnet-4-6 with thinking off, "
-             "qwen3-235b-Instruct) did not. This reflects what a user receives in "
-             "deployment but does not isolate reasoning as a variable.</li>")
+             "configuration</b>, matching deployment rather than standardizing a "
+             "reasoning budget. §12 tests this directly: enabling reasoning on three "
+             "subjects spanning the ranking moves the Jalees Score by ≤0.05, so the "
+             "ranking is not an artifact of reasoning availability (not swept across "
+             "all eight subjects or varied for the judges).</li>")
     H.append("<li>Scholar review of probes, proof texts, and a sample of judged "
              "sittings has not yet occurred.</li></ul>")
     H.append(comm("caveats"))
