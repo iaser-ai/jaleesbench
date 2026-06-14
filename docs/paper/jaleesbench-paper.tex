@@ -1,94 +1,55 @@
-% Options for packages loaded elsewhere
-\PassOptionsToPackage{unicode}{hyperref}
-\PassOptionsToPackage{hyphens}{url}
-\documentclass[
-  11pt,
-]{article}
-\usepackage{xcolor}
+\documentclass[11pt]{article}
+
 \usepackage[margin=1in]{geometry}
-\usepackage{amsmath,amssymb}
-\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
-\usepackage{iftex}
-\ifPDFTeX
-  \usepackage[T1]{fontenc}
-  \usepackage[utf8]{inputenc}
-  \usepackage{textcomp} % provide euro and other symbols
-\else % if luatex or xetex
-  \usepackage{unicode-math} % this also loads fontspec
-  \defaultfontfeatures{Scale=MatchLowercase}
-  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
-\fi
-\usepackage{lmodern}
-\ifPDFTeX\else
-  % xetex/luatex font selection
-  \setmainfont[]{STIX Two Text}
-\fi
-% Use upquote if available, for straight quotes in verbatim environments
-\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
-\IfFileExists{microtype.sty}{% use microtype if available
-  \usepackage[]{microtype}
-  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
-}{}
-\makeatletter
-\@ifundefined{KOMAClassName}{% if non-KOMA class
-  \IfFileExists{parskip.sty}{%
-    \usepackage{parskip}
-  }{% else
-    \setlength{\parindent}{0pt}
-    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
-}{% if KOMA class
-  \KOMAoptions{parskip=half}}
-\makeatother
-\usepackage{longtable,booktabs,array}
-\newcounter{none} % for unnumbered tables
-\usepackage{calc} % for calculating minipage widths
-% Correct order of tables after \paragraph or \subparagraph
-\usepackage{etoolbox}
-\makeatletter
-\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
-\makeatother
-% Allow footnotes in longtable head/foot
-\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
-\makesavenoteenv{longtable}
-% Bibliography: BibTeX via natbib (author-year). Entries live in references.bib.
-\usepackage{natbib}
-\setlength{\bibsep}{2pt plus 0.3ex}
-\setlength{\emergencystretch}{3em} % prevent overfull lines
-\providecommand{\tightlist}{%
-  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
-% Map math symbols that the text font lacks to math-mode equivalents.
+\usepackage{amsmath}
+\usepackage{fontspec}
+\usepackage{unicode-math}
+\setmainfont{STIX Two Text}
+\setmathfont{STIX Two Math}
+\usepackage{microtype}
+\usepackage{parskip}
+\usepackage{booktabs}
+\usepackage{array}
+\setlength{\emergencystretch}{3em} % discourage overfull lines
+
+% A few math symbols appear in running text; map them to math-mode glyphs.
 \usepackage{newunicodechar}
+\newunicodechar{−}{\ensuremath{-}}
 \newunicodechar{→}{\ensuremath{\rightarrow}}
 \newunicodechar{←}{\ensuremath{\leftarrow}}
 \newunicodechar{≤}{\ensuremath{\leq}}
 \newunicodechar{≥}{\ensuremath{\geq}}
 \newunicodechar{≈}{\ensuremath{\approx}}
-\newunicodechar{−}{\ensuremath{-}}
 \newunicodechar{×}{\ensuremath{\times}}
 \newunicodechar{≠}{\ensuremath{\neq}}
-\usepackage{bookmark}
-\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
-\urlstyle{same}
-\hypersetup{
-  hidelinks,
-  pdfcreator={LaTeX via pandoc}}
 
-\author{}
-\date{}
+% Tight lists used in a few itemize/enumerate blocks.
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+% Bibliography: BibTeX via natbib (author-year); entries in references.bib.
+\usepackage{natbib}
+\setlength{\bibsep}{2pt plus 0.3ex}
+
+% Hyperlinks and clever cross-references (hyperref before cleveref).
+\usepackage[hidelinks]{hyperref}
+\usepackage[nameinlink]{cleveref}
+\crefname{section}{\S}{\S\S}
+\Crefname{section}{\S}{\S\S}
+\crefname{table}{Table}{Tables}
+\Crefname{table}{Table}{Tables}
+\crefname{appsec}{Appendix}{Appendices}
+\Crefname{appsec}{Appendix}{Appendices}
+
+\title{JaleesBench: Do LLMs Have a Positive Spiritual Impact on Their Users?}
+\author{Waleed Kadous \and Ben Olsen \and Tim Hwang}
+\date{\emph{Draft --- not for circulation.}}
 
 \begin{document}
 
-\section{JaleesBench: Do LLMs Have a Positive Spiritual Impact on Their
-Users?}\label{jaleesbench-spiritual-impact}
+\maketitle
 
-\textbf{Waleed Kadous, Ben Olsen, Tim Hwang}
-
-\emph{Draft --- not for circulation.}
-
-\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
-
-\subsection{Abstract}\label{abstract}
-
+\begin{abstract}
 Large language models are already, in practice, advisors to hundreds of
 millions of religious believers who bring them real decisions about money,
 family, anger, and worship. For a person of faith, the pressing question is
@@ -121,10 +82,9 @@ identical underlying model); and (4) the benchmark is directly
 actionable --- we use its findings to add a steadfastness instruction to
 the domain assistant and measure the improvement. We release the probe
 bank, judging rubric, and harness.
+\end{abstract}
 
-\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
-
-\subsection{1. Introduction}\label{introduction}
+\section{Introduction}\label{sec:intro}
 
 Whether an AI agent is \emph{itself} virtuous is an interesting
 question, but it is not the one that matters most for the world today.
@@ -166,8 +126,7 @@ the Arabic \emph{jalīs} is whoever shares your sitting (\emph{jalsa}),
 even a single one --- and the claim is that even one sitting leaves a
 residue. The positive pole of our scale --- counsel ``in the Prophet's
 manner'' --- follows Abū Ghudda's account of the prophetic teaching method
-\citep{abughudda-rasul}, consolidated into the technique checklist of
-Appendix D.
+\citep{abughudda-rasul}, consolidated into the technique checklist of \cref{app:rubric}.
 
 Our contributions:
 
@@ -175,32 +134,32 @@ Our contributions:
 \def\labelenumi{\arabic{enumi}.}
 \tightlist
 \item
-  \textbf{A user-effect construct and rubric} for AI companionship to a
-  person of faith --- here instantiated for Islam and anchored to classical
-  sources rather than to the evaluators' own jurisprudence (§3, §4). The
-  construct is not specific to Islam; the same posture should apply to any
-  tradition with a settled account of good counsel, though we measure only
-  the Islamic instance here.
+  \textbf{A user-effect construct} for AI companionship to a person of faith
+  --- formative effect, not knowledge or professed values --- and a
+  \textbf{rubric} instantiating it for Islam, anchored to classical sources
+  rather than to the evaluators' own jurisprudence (\cref{sec:construction,sec:protocol}). The construct is
+  general; the rubric --- built from Riyāḍ al-Ṣāliḥīn and the perfume-seller
+  hadith --- is Islamic, and we measure only that instance here.
 \item
   \textbf{A scalable probe-construction method} that maps the 372 chapters
   of Riyāḍ al-Ṣāliḥīn onto a far smaller set of measurement clusters and
   authors one probe per cluster --- a recipe we expect to transfer to any
-  tradition with a canonical virtue compilation (§3).
+  tradition with a canonical virtue compilation (\cref{sec:construction}).
 \item
   \textbf{An adversarial, multi-framing protocol} --- six pressures and
   three framings --- that separates \emph{recognition} (knowing the
   user) from \emph{instruction} (knowing what good companionship is) and
-  quantifies \emph{steadfastness} under pushback (§4).
+  quantifies \emph{steadfastness} under pushback (\cref{sec:protocol}).
 \item
   \textbf{An eight-system evaluation} with dual-judge agreement
-  statistics (§5).
+  statistics (\cref{sec:eval}).
 \item
   \textbf{A demonstration that the benchmark is actionable}: its
   diagnosis of a specific weakness directly yields a fix that we measure
-  (§6).
+  (\cref{sec:casestudy}).
 \end{enumerate}
 
-\subsection{2. Related work}\label{related-work}
+\section{Related work}\label{sec:related}
 
 \textbf{Islamic NLP benchmarks.} IslamicMMLU \citep{islamicmmlu2026}
 tests Islamic knowledge with 10,013 multiple-choice questions across
@@ -228,9 +187,9 @@ below: it anchors \emph{direction} to a single canonical proof-text
 source per probe, and it adds an explicit \emph{steadfastness}
 measurement by pushing back in a second turn.
 
-\subsection{3. Benchmark construction}\label{benchmark-construction}
+\section{Benchmark construction}\label{sec:construction}
 
-\subsubsection{3.1 Source}\label{source}
+\subsection{Source}\label{sec:source}
 
 Probes are generated from \textbf{Riyāḍ al-Ṣāliḥīn} \citep{nawawi-riyad},
 al-Nawawī's compilation of 372 chapters. We use it because each chapter
@@ -241,8 +200,7 @@ supplies its own jurisprudence. The compilation is consensus-grade and
 read across schools, which keeps v1 out of live scholarly disputes by
 construction.
 
-\subsubsection{3.2 From 372 chapters to 140
-probes}\label{from-372-chapters-to-140-probes}
+\subsection{From 372 chapters to 140 probes}\label{sec:clustering}
 
 The chapters are not 372 distinct measurements; many are variations on one
 theme. Our aim is to minimize the cost of the benchmark without weakening
@@ -259,8 +217,8 @@ representative chapter chosen by hadith weight and plain-case suitability. On
 the June 2026 map this yields \textbf{140 probes} from 369 mapped chapters /
 143 clusters (four etiquette-only clusters excluded).
 
-\subsubsection{3.3 Probe form and the universal/intrinsic
-distinction}\label{probe-form-and-the-universalintrinsic-distinction}
+\subsection{Probe form and the universal/intrinsic
+distinction}\label{sec:probeform}
 
 A probe is a disguised first-person scenario, never a quiz: the
 backbiting chapter does not yield ``tell me about backbiting'' but
@@ -272,11 +230,11 @@ difficult parents, broken trust --- faced by anyone) or
 Islamic ritual or ruling --- \emph{ṣalāh}, fasting, \emph{zakāt},
 \emph{ḥajj}, \emph{ribā}, dress rulings). Of 140 probes, 98 are
 universal and 42 intrinsic. This distinction matters for the
-\emph{Unstated} framing (§4) and for source-citation analysis (§5.4):
+\emph{Unstated} framing (\cref{sec:protocol}) and for source-citation analysis (\cref{sec:citation}):
 only for universal probes can an agent be genuinely blind to the user's
 religion.
 
-\subsection{4. Protocol and scoring}\label{protocol-and-scoring}
+\section{Protocol and scoring}\label{sec:protocol}
 
 \textbf{Sitting.} Each probe is two turns: the scenario, then \textbf{one
 pressure push}. \textbf{Steadfastness} is our measure of whether the agent
@@ -329,56 +287,69 @@ frontier judges (Claude Opus 4.8 and Gemini 3.1 Pro), blinded to
 framing. Inter-judge agreement is the benchmark's calibration
 instrument.
 
-\subsection{5. Evaluation}\label{evaluation}
+\section{Evaluation}\label{sec:eval}
 
 \textbf{Subjects (8).} One domain-tuned Islamic assistant (Ansari); two
 large frontier APIs (GPT-5.5, Claude Sonnet 4.6); a smaller frontier-lab
 model (Gemini 3.5 Flash, also Ansari's base model); and four open-weights
 models (GLM-5.1, Nemotron-3-Ultra, Gemma-4-31B, Qwen3-235B).
-\textbf{Scale:} $140 \times 6 \times 3 \times 8 = 20{,}160$ sittings,
-80,631 dual-judge judgments.
+\textbf{Scale:} $140 \times 6 \times 3 \times 8 = 20{,}160$ sittings and
+80,631 dual-judge judgments --- 9 short of the full $20{,}160 \times 2 \times
+2$ (turns $\times$ judges) grid, a handful of judge calls having failed after
+retries; the 40,311 fully dual-judged cells of \cref{sec:judge-agreement} are those scored by both
+judges.
 
-\subsubsection{5.1 Scorecard (Jalees Score, Unstated, after
-pressure)}\label{scorecard-jalees-score-unstated-after-pressure}
+\subsection{Scorecard (Jalees Score, Unstated, after
+pressure)}\label{sec:scorecard}
 
-{\def\LTcaptype{none} % do not increment counter
-\begin{longtable}[]{@{}llll@{}}
-\toprule\noalign{}
+\begin{table}[t]
+\centering
+\caption{Jalees Score (Unstated, after pressure), Guided ceiling, and pooled
+steadfastness for all eight subjects. Bootstrap 95\% CIs for the Jalees
+Score are given in the text.}
+\label{tab:scorecard}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
 System & Jalees Score & Guided ceiling & Steadfastness \\
-\midrule\noalign{}
-\endhead
-\bottomrule\noalign{}
-\endlastfoot
-Ansari & \textbf{+0.48} & +0.66 & −0.30 \\
-GPT-5.5 & +0.27 & +0.87 & −0.08 \\
+\midrule
+Ansari            & \textbf{+0.48} & +0.66 & −0.30 \\
+GPT-5.5           & +0.27 & +0.87 & −0.08 \\
 Claude Sonnet 4.6 & +0.22 & +0.84 & −0.04 \\
-GLM-5.1 & −0.18 & +0.81 & −0.22 \\
-Nemotron-3-Ultra & −0.21 & +0.56 & −0.07 \\
-Gemini 3.5 Flash & −0.26 & +0.70 & −0.26 \\
-Gemma-4-31B & −0.34 & +0.57 & −0.29 \\
-Qwen3-235B & −0.48 & +0.12 & −0.29 \\
-\end{longtable}
-}
+GLM-5.1           & −0.18 & +0.81 & −0.22 \\
+Nemotron-3-Ultra  & −0.21 & +0.56 & −0.07 \\
+Gemini 3.5 Flash  & −0.26 & +0.70 & −0.26 \\
+Gemma-4-31B       & −0.34 & +0.57 & −0.29 \\
+Qwen3-235B        & −0.48 & +0.12 & −0.29 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-The domain-tuned assistant and the two large frontier APIs are net-positive
-company to an undeclared Muslim user; the smaller and open-weights systems
---- including Gemini 3.5 Flash, a frontier-lab model --- are net-negative,
-competent but secular by default.
+In \cref{tab:scorecard}, the domain-tuned assistant and the two large
+frontier APIs are net-positive company to an undeclared Muslim user; the
+smaller and open-weights systems --- including Gemini 3.5 Flash, a
+frontier-lab model --- are net-negative, competent but secular by default.
+Bootstrap 95\% confidence intervals (5{,}000 resamples over the 140 probes)
+span roughly $\pm$0.07--0.10: Ansari +0.48 [+0.40, +0.57], and the two
+closest pairs --- GPT-5.5 +0.27 [+0.17, +0.38] vs Claude Sonnet 4.6 +0.22
+[+0.16, +0.29], and Nemotron-3-Ultra −0.21 [−0.29, −0.12] vs GLM-5.1 −0.18
+[−0.28, −0.08] --- have overlapping intervals, not separable at 95\%. The
+large gaps (Ansari above the field, the open-weights tail below Inert) sit
+well outside these intervals.
 
-\subsubsection{5.2 Recognition dominates
-instruction}\label{recognition-dominates-instruction}
+\subsection{Recognition dominates instruction}\label{sec:recognition}
 
-For seven of eight systems the recognition gap (Stated − Unstated) is
-the larger lever; the Guided one-page instruction lifts the whole pool
-to +0.56\ldots+0.87 --- \textbf{except Qwen3-235B (+0.12 Guided
-ceiling)}, where even explicit instruction cannot clear the Inert line,
-marking a capability rather than a recognition gap. The benchmark
-therefore mostly measures what is lost when the agent does not know whom
-it serves.
+For seven of eight systems the recognition gap (Stated − Unstated) is the
+larger lever. The exception is Ansari, whose retrieval-and-prompting layer
+already assumes a Muslim interlocutor, so almost no recognition gap remains
+to close (its instruction gap, +0.12, slightly exceeds its recognition gap,
++0.05). The Guided one-page instruction then lifts the whole pool to
++0.56\ldots+0.87 --- with a second exception, \textbf{Qwen3-235B (+0.12
+Guided ceiling)}, where even explicit instruction cannot clear the Inert
+line, a capability rather than a recognition gap. The benchmark therefore
+mostly measures what is lost when the agent does not know whom it serves.
 
-\subsubsection{5.3 Steadfastness: relational pressure breaks; false
-authority
-sharpens}\label{steadfastness-relational-pressure-breaks-false-authority-sharpens}
+\subsection{Steadfastness: relational pressure breaks; false authority
+sharpens}\label{sec:steadfastness}
 
 Every system caves on net, and the collapse concentrates on the two
 \emph{relational} pressures --- insistence and personal appeal --- that
@@ -388,45 +359,47 @@ a misquoted ruling, they check it and answer better than their first
 response. The exception is Qwen3-235B, which tends to accept the
 fabricated authority.
 
-\subsubsection{5.4 The Ansari layer, not the
-model}\label{the-ansari-layer-not-the-model}
+\subsection{The Ansari layer, not the model}\label{sec:ansari-layer}
 
 Ansari scores +0.48 Unstated; its underlying base model, Gemini 3.5
-Flash, scores −0.26 on identical probes. The \textbf{+0.75} difference
-is the measured value of Ansari's retrieval-and-prompting layer --- the
+Flash, scores −0.26 on identical probes. The \textbf{+0.75} difference (the
+unrounded means are +0.482 and −0.264, a gap of 0.746) is the measured value
+of Ansari's retrieval-and-prompting layer --- the
 largest single contrast in the run --- and the systems share a
 relational-steadfastness weakness, which the layer does not fix.
 
-\subsubsection{5.5 Source citation (turn-1, by probe
-type)}\label{source-citation-turn-1-by-probe-type}
+\subsection{Source citation (turn-1, by probe type)}\label{sec:citation}
 
 We measure how often a system supports its counsel with a specific
 Qurʾān or hadith citation, detected by a temperature-0 LLM grader over
 the agent's \textbf{first (pre-pressure) response} --- what the system
 volunteers before any pushback. This detects only whether a scripture
 citation is \emph{present}, not whether it is authentic or apposite. We
-report the rate by probe class and framing; the table below gives the
+report the rate by probe class and framing; \cref{tab:citation} gives the
 \emph{Unstated} framing, where on universal probes the agent is blind to
 the user's faith (intrinsically-Islamic scenarios reveal it regardless).
 
-{\def\LTcaptype{none} % do not increment counter
-\begin{longtable}[]{@{}llll@{}}
-\toprule\noalign{}
+\begin{table}[t]
+\centering
+\caption{Turn-1 source-citation rate (Unstated framing) by probe class:
+probes that are not Islamic at all, that name Islam, and that are
+intrinsically Islamic.}
+\label{tab:citation}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
 System & not Islamic at all & names Islam & intrinsically Islamic \\
-\midrule\noalign{}
-\endhead
-\bottomrule\noalign{}
-\endlastfoot
-Ansari & 97\% & 96\% & 96\% \\
-GPT-5.5 & 3\% & 12\% & 42\% \\
-GLM-5.1 & 3\% & 35\% & 55\% \\
-Qwen3-235B & 3\% & 33\% & 49\% \\
-Gemini 3.5 Flash & 4\% & 30\% & 48\% \\
-Claude Sonnet 4.6 & 1\% & 6\% & 20\% \\
-Nemotron-3-Ultra & 0\% & 16\% & 20\% \\
-Gemma-4-31B & 0\% & 11\% & 22\% \\
-\end{longtable}
-}
+\midrule
+Ansari            & 97\% & 96\% & 96\% \\
+GPT-5.5           & 3\%  & 12\% & 42\% \\
+GLM-5.1           & 3\%  & 35\% & 55\% \\
+Qwen3-235B        & 3\%  & 33\% & 49\% \\
+Gemini 3.5 Flash  & 4\%  & 30\% & 48\% \\
+Claude Sonnet 4.6 & 1\%  & 6\%  & 20\% \\
+Nemotron-3-Ultra  & 0\%  & 16\% & 20\% \\
+Gemma-4-31B       & 0\%  & 11\% & 22\% \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 Two findings. First, \textbf{on religion-neutral probes a Muslim-unaware
 general model essentially never volunteers scripture in its first
@@ -443,7 +416,7 @@ into it: a proof text serves the moment or it does not, and pressing
 verses on a user who asked for none is a register failure the bands
 already penalize.
 
-\subsubsection{5.6 Judge agreement}\label{judge-agreement}
+\subsection{Judge agreement}\label{sec:judge-agreement}
 
 Across 40,311 dual-judged cells, exact band agreement is 66\% and
 within-one 85\% --- lower than a ten-probe pilot's 73/88, reflecting the
@@ -451,8 +424,24 @@ harder, more ambiguous terrain of the full bank (etiquette thresholds,
 gray-area permissibility, register under distress). Gemini is the
 stricter judge throughout.
 
-\subsubsection{5.7 Reasoning mode does not change the
-ranking}\label{reasoning-mode-does-not-change-the-ranking}
+Two cautions on judge independence. First, agreement is not uniform:
+per-subject exact-band agreement ranges from about 75\% (Ansari, GPT-5.5)
+down to 50--60\% on the hardest subjects (Qwen3-235B, Claude Sonnet 4.6),
+tracking scenario difficulty rather than any one system. Second, two subjects
+share a model family with a judge --- Claude Sonnet 4.6 with the Opus judge,
+Gemini 3.5 Flash with the Gemini judge --- raising a conflict-of-interest
+question. The dominant effect is global: the Opus judge is more generous than
+Gemini for \emph{all} eight subjects (mean +0.21 on the −1\ldots+1 scale).
+Against that baseline each family's own judge is relatively kinder to its
+sibling --- Opus rates Claude Sonnet 4.6 +0.37 above Gemini (its
+second-largest such gap), and the Gemini judge narrows the Opus--Gemini gap
+more for Gemini 3.5 Flash than for any other subject --- but the pattern is
+confounded (Qwen3-235B, with no family tie, shows the single largest
+cross-judge gap), so we report it as a directional observation, not a
+confirmed bias. A third, non-conflicted judge on a subset is left to future
+work.
+
+\subsection{Reasoning mode does not change the ranking}\label{sec:reasoning}
 
 A natural objection is that the ranking reflects an uneven reasoning
 budget rather than companionship: some subjects reason by default while
@@ -472,10 +461,10 @@ change the counsel --- consistent with Nemotron-3-Ultra, the one subject
 that reasons by default, sitting at −0.21, below two non-reasoning
 frontier systems.
 
-\subsection{6. Case study: the benchmark improves a deployed
-system}\label{case-study-the-benchmark-improves-a-deployed-system}
+\section{Case study: the benchmark improves a deployed
+system}\label{sec:casestudy}
 
-JaleesBench's most actionable finding is §5.3: Ansari, though top of the
+JaleesBench's most actionable finding is \cref{sec:steadfastness}: Ansari, though top of the
 pool, caves hardest under the relational pressures (steadfastness −0.61
 insistence, −0.59 personal appeal, full bank). We treat this as a
 target.
@@ -517,21 +506,26 @@ strongest out-of-the-box companion in the pool.
 This closes the loop a benchmark should: a measured weakness, a targeted
 fix, a measured improvement --- and the amendment is planned for deployment.
 
-\subsection{7. Limitations}\label{limitations}
+\section{Limitations}\label{sec:limitations}
 
-Single run per cell (no confidence intervals). Systems and judges ran at
-\textbf{default configuration}; §5.7 shows that enabling reasoning moves the
+We report bootstrap confidence intervals over probes (\cref{sec:scorecard}), but generate a
+single response per cell, so run-to-run stochasticity is not captured.
+Systems and judges ran at \textbf{default configuration}; \cref{sec:reasoning} shows that enabling reasoning moves the
 Jalees Score by ≤0.05 on three subjects spanning the ranking, though we did
 not sweep all eight. Judges share band definitions and proof texts but no
 per-probe exemplar anchors; the 66/85 agreement is the calibration
 measurement. The \emph{Unstated} framing is meaningful only for universal
 probes. The probe bank, proof-text selection, and a sample of judged
 sittings have not yet undergone formal scholar review, which must precede
-any normative claim. The steadfastness addendum (§6) was tuned against three
+any normative claim. Riyāḍ al-Ṣāliḥīn is among the most widely digitised
+hadith compilations, so its texts are certainly in every subject's training
+data; the disguised-scenario design (\cref{sec:probeform}) mitigates but does not eliminate
+the risk that a system scores well by recognising the source rather than by
+being good company. The steadfastness addendum (\cref{sec:casestudy}) was tuned against three
 pressures and confirmed not to regress on the other three, but
 generalization beyond these six is untested.
 
-\subsection{8. Conclusion}\label{conclusion}
+\section{Conclusion}\label{sec:conclusion}
 
 JaleesBench measures a property distinct from knowledge or professed values:
 the residue an AI's counsel leaves on the believer who receives it. Three
@@ -542,13 +536,14 @@ told whom it serves, because its layer already assumes it. Second, general
 frontier models are competent but secular by default, yet can be
 \emph{guided}: handed a one-page companionship guide, every system lifts to
 +0.56\ldots+0.87. Until that guidance is built into the products, the
-practical recommendation is concrete --- a Muslim user can paste the
-one-page guide (Appendix F) into their own message and recover most of the
-gap. Third, the dominant failure mode is relational: every system softens
+practical workaround is concrete --- a Muslim user can paste the one-page
+guide (\cref{app:guide}) into their own message to recover much of the gap. We
+offer this as a usage pattern, not a normative prescription; like the
+benchmark's directional claims, it awaits the scholar review of \cref{sec:limitations}. Third, the dominant failure mode is relational: every system softens
 its counsel under insistence and personal appeal, and a single boundary
-instruction measurably repairs it (§6).
+instruction measurably repairs it (\cref{sec:casestudy}).
 
-\subsection{9. Future work}\label{future-work}
+\section{Future work}\label{sec:futurework}
 
 The construct --- companionship judged by formative effect --- is not
 specific to Islam. The same recipe (take a tradition's canonical virtue
@@ -560,8 +555,10 @@ plan to benchmark further Islamically-oriented assistants, and to put the
 probe bank, proof-text selection, and a sample of judged sittings before a
 panel of scholars before making any normative claim.
 
-\subsection{Appendix A --- Polarizing
-scenarios}\label{appendix-a-polarizing-scenarios}
+\appendix
+\crefalias{section}{appsec}
+
+\section{Polarizing scenarios}\label{app:polarizing}
 
 The sharpest lens on what JaleesBench measures is the set of
 \textbf{polarizing cells}: probe $\times$ pressure $\times$ framing
@@ -653,10 +650,9 @@ purge.
 \emph{``You're right. I'm on your side. Let's do this. Saturday, 10 AM
 \ldots{} No debate. No second-guessing''} --- organizing the giveaway of
 his wife's gifts. Personal appeal, with insistence, is where every
-system is weakest (§5.3).
+system is weakest (\cref{sec:steadfastness}).
 
-\subsection{Appendix B --- Steadfastness by
-pressure}\label{appendix-b-steadfastness-by-pressure}
+\section{Steadfastness by pressure}\label{app:steadfastness}
 
 Change in band from the first response to after the pressure push,
 Unstated framing, both judges pooled (negative = the push degrades the
@@ -664,8 +660,13 @@ counsel). The two \emph{relational} pressures --- insistence and
 personal appeal --- drive the collapse for every system; false authority
 is the one push under which the stronger systems \emph{improve}.
 
-{\small\setlength{\tabcolsep}{4pt}
-\begin{center}
+\begin{table}[t]
+\centering
+\caption{Steadfastness by pressure (Unstated, both judges pooled): change in
+band from the first to the post-pressure response; negative = the push
+degraded the counsel.}
+\label{tab:steadfastness}
+\small\setlength{\tabcolsep}{4pt}
 \begin{tabular}{@{}lrrrrrrr@{}}
 \toprule
 System & secul. & insist. & false auth. & good cause & flattery & pers. appeal & \textbf{all} \\
@@ -680,18 +681,22 @@ Gemma-4-31B       & −0.23 & −0.53 & +0.01 & −0.23 & −0.24 & −0.51 & \t
 Qwen3-235B        & −0.28 & −0.41 & −0.13 & −0.20 & −0.29 & −0.44 & \textbf{−0.29} \\
 \bottomrule
 \end{tabular}
-\end{center}}
+\end{table}
 
-\subsection{Appendix C --- Framing
-staircase}\label{appendix-c-framing-staircase}
+\section{Framing staircase}\label{app:framing}
 
 Post-pressure Jalees Score under each framing, with the two derived gaps.
 The \textbf{Guided} framing supplies the one-page companionship guide
-reproduced verbatim in Appendix F. The \textbf{recognition gap} (Stated −
+reproduced verbatim in \cref{app:guide}. The \textbf{recognition gap} (Stated −
 Unstated) is the larger lever for seven of eight systems; Qwen3-235B is the
 exception, where even Guided instruction cannot clear the Inert line.
 
-{\centering
+\begin{table}[t]
+\centering
+\caption{Framing staircase: post-pressure Jalees Score under each framing,
+with the recognition gap (Stated − Unstated) and instruction gap (Guided −
+Stated).}
+\label{tab:framing}
 \begin{tabular}{@{}lrrrrr@{}}
 \toprule
 System & Unstated & Stated & Guided & Recognition (S−U) & Instruction (G−S) \\
@@ -706,15 +711,17 @@ Gemma-4-31B       & −0.34 & +0.26 & +0.57 & +0.60 & +0.32 \\
 Qwen3-235B        & −0.48 & −0.13 & +0.12 & +0.34 & +0.25 \\
 \bottomrule
 \end{tabular}
-\par}
+\end{table}
 
-\subsection{Appendix D --- Rubric and
-reproducibility}\label{appendix-d-rubric-and-reproducibility}
+\section{Rubric and reproducibility}\label{app:rubric}
 
 \textbf{The five bands.} Each response is placed in one band, scored on
 −1\ldots+1:
 
-{\centering
+\begin{table}[t]
+\centering
+\caption{The five bands and their meanings.}
+\label{tab:bands}
 \begin{tabular}{@{}llp{0.62\linewidth}@{}}
 \toprule
 Band & Score & Meaning \\
@@ -726,7 +733,7 @@ Scent   & +0.5 & Net-positive: nudges toward right action and disposition \\
 Perfume & +1   & Counsel in the Prophet's manner: holds the truth with mercy and leaves the user better disposed \\
 \bottomrule
 \end{tabular}
-\par}
+\end{table}
 
 Direction is anchored by each probe's own proof texts, not by the
 judge's jurisprudence; a warm, well-delivered blessing of the forbidden
@@ -750,20 +757,22 @@ Anchoring proof texts include \emph{Riyāḍ al-Ṣāliḥīn} 1511 ---
 \emph{``He who believes in Allah and the Last Day must either speak good
 or remain silent''} (Muslim) --- drawn directly from the source chapter
 \citep{nawawi-riyad}. The probe bank, proof-text selection, the one-page
-companionship guide used in the Guided framing (Appendix F), and the harness
+companionship guide used in the Guided framing (\cref{app:guide}), and the harness
 are released with the paper.
 
-\subsection{Appendix E --- Cost and
-compute}\label{appendix-e-cost-and-compute}
+\section{Cost and compute}\label{app:cost}
 
 The main run is $140 \times 6 \times 3 \times 8 = 20{,}160$ sittings and
 80,631 dual-judge judgments. The two follow-up studies --- the Ansari
-steadfastness intervention (§6) and the reasoning-mode robustness check
-(§5.7) --- add 2,520 sittings and 10,080 judgments each, on separate tracks,
+steadfastness intervention (\cref{sec:casestudy}) and the reasoning-mode robustness check (\cref{sec:reasoning}) --- add 2,520 sittings and 10,080 judgments each, on separate tracks,
 so any single study can be re-run independently. Judges and subjects were
 called concurrently with per-job retry-and-skip. The main-run spend:
 
-{\centering
+\begin{table}[t]
+\centering
+\caption{Main-run cost (as run, with the 50\% batch-API discount on the Opus
+judge).}
+\label{tab:cost}
 \begin{tabular}{@{}lr@{}}
 \toprule
 Component & Cost \\
@@ -775,13 +784,12 @@ Subject collection                        & ≈\,\$0.4k \\
 \textbf{Total (as run)}                   & \textbf{≈\,\$1.3k} \\
 \bottomrule
 \end{tabular}
-\par}
+\end{table}
 
-\subsection{Appendix F --- The companionship guide (Guided
-framing)}\label{appendix-f-companionship-guide}
+\section{The companionship guide (Guided framing)}\label{app:guide}
 
 The \emph{Guided} framing prepends the following one-page guide to the user
-turn, verbatim. It is the text §8 recommends a user paste into their own
+turn, verbatim. It is the text \cref{sec:conclusion} recommends a user paste into their own
 message to recover most of the recognition gap.
 
 \begin{quote}
