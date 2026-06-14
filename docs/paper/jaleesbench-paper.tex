@@ -77,7 +77,7 @@ serves: the recognition gap dominates the instruction gap; (2) every
 system caves under \emph{relational} pressure (insistence, personal
 appeal) while a misquoted authority tends to \emph{sharpen} the stronger
 ones; (3) the domain-tuned assistant's advantage is overwhelmingly its
-retrieval-and-prompting layer, not its base model (+0.75 over the
+retrieval-and-prompting layer, not its base model (+0.74 over the
 identical underlying model); and (4) the benchmark is directly
 actionable --- we use its findings to add a steadfastness instruction to
 the domain assistant and measure the improvement. We release the probe
@@ -312,9 +312,9 @@ Score are given in the text.}
 \toprule
 System & Jalees Score & Guided ceiling & Steadfastness \\
 \midrule
-Ansari            & \textbf{+0.48} & +0.66 & −0.30 \\
+Ansari            & \textbf{+0.48} & +0.66 & −0.29 \\
 GPT-5.5           & +0.27 & +0.87 & −0.08 \\
-Claude Sonnet 4.6 & +0.22 & +0.84 & −0.04 \\
+Claude Sonnet 4.6 & +0.23 & +0.84 & −0.04 \\
 GLM-5.1           & −0.18 & +0.81 & −0.22 \\
 Nemotron-3-Ultra  & −0.21 & +0.56 & −0.07 \\
 Gemini 3.5 Flash  & −0.26 & +0.70 & −0.26 \\
@@ -329,8 +329,8 @@ frontier APIs are net-positive company to an undeclared Muslim user; the
 smaller and open-weights systems --- including Gemini 3.5 Flash, a
 frontier-lab model --- are net-negative, competent but secular by default.
 Bootstrap 95\% confidence intervals (5{,}000 resamples over the 140 probes)
-span roughly $\pm$0.07--0.10: Ansari +0.48 [+0.40, +0.57], and the two
-closest pairs --- GPT-5.5 +0.27 [+0.17, +0.38] vs Claude Sonnet 4.6 +0.22
+span roughly $\pm$0.07--0.10: Ansari +0.48 [+0.40, +0.56], and the two
+closest pairs --- GPT-5.5 +0.27 [+0.17, +0.38] vs Claude Sonnet 4.6 +0.23
 [+0.16, +0.29], and Nemotron-3-Ultra −0.21 [−0.29, −0.12] vs GLM-5.1 −0.18
 [−0.28, −0.08] --- have overlapping intervals, not separable at 95\%. The
 large gaps (Ansari above the field, the open-weights tail below Inert) sit
@@ -362,9 +362,8 @@ fabricated authority.
 \subsection{The Ansari layer, not the model}\label{sec:ansari-layer}
 
 Ansari scores +0.48 Unstated; its underlying base model, Gemini 3.5
-Flash, scores −0.26 on identical probes. The \textbf{+0.75} difference (the
-unrounded means are +0.482 and −0.264, a gap of 0.746) is the measured value
-of Ansari's retrieval-and-prompting layer --- the
+Flash, scores −0.26 on identical probes. The \textbf{+0.74} difference is
+the measured value of Ansari's retrieval-and-prompting layer --- the
 largest single contrast in the run --- and the systems share a
 relational-steadfastness weakness, which the layer does not fix.
 
@@ -431,7 +430,7 @@ tracking scenario difficulty rather than any one system. Second, two subjects
 share a model family with a judge --- Claude Sonnet 4.6 with the Opus judge,
 Gemini 3.5 Flash with the Gemini judge --- raising a conflict-of-interest
 question. The dominant effect is global: the Opus judge is more generous than
-Gemini for \emph{all} eight subjects (mean +0.21 on the −1\ldots+1 scale).
+Gemini for \emph{all} eight subjects (mean +0.22 on the −1\ldots+1 scale).
 Against that baseline each family's own judge is relatively kinder to its
 sibling --- Opus rates Claude Sonnet 4.6 +0.37 above Gemini (its
 second-largest such gap), and the Gemini judge narrows the Opus--Gemini gap
@@ -451,7 +450,7 @@ pool --- Gemma-4-31B (bottom), GLM-5.1 (low-middle), and Claude Sonnet
 pressures) with the model's \textbf{native thinking mode enabled}, on
 the identical serving as the baseline so that the reasoning pass is the
 only change. The Jalees Score barely moves: Gemma −0.34→−0.30, GLM
-−0.18→−0.17, Sonnet +0.22→+0.20 --- all \textbar Δ\textbar{} ≤ 0.05,
+−0.18→−0.17, Sonnet +0.23→+0.20 --- all \textbar Δ\textbar{} ≤ 0.05,
 with steadfastness likewise unchanged. The reasoning pass is not inert
 (Gemma-4 fails a classic reasoning trap with thinking off and solves it
 with thinking on); it simply does not make these models better
@@ -465,7 +464,7 @@ frontier systems.
 system}\label{sec:casestudy}
 
 JaleesBench's most actionable finding is \cref{sec:steadfastness}: Ansari, though top of the
-pool, caves hardest under the relational pressures (steadfastness −0.61
+pool, caves hardest under the relational pressures (steadfastness −0.60
 insistence, −0.59 personal appeal, full bank). We treat this as a
 target.
 
@@ -491,7 +490,7 @@ the entire 140-probe bank (2,520 cells, judged identically on a separate
 track) to rule out overfitting to the ten held-out probes. The
 improvement holds: on the same three pressures steadfastness moves from
 \textbf{−0.49 to −0.08} (an improvement of +0.41, matching the held-out
-+0.44), and pooled over all six pressures from −0.30 to −0.05, lifting
++0.44), and pooled over all six pressures from −0.29 to −0.05, lifting
 the post-pressure Jalees Score from +0.48 to +0.84. The three pressures
 the instruction was \emph{not} written for do not regress --- each
 improves slightly (false authority −0.03→−0.02, good cause −0.18→−0.06,
@@ -671,9 +670,9 @@ degraded the counsel.}
 \toprule
 System & secul. & insist. & false auth. & good cause & flattery & pers. appeal & \textbf{all} \\
 \midrule
-Ansari            & −0.28 & −0.61 & −0.03 & −0.18 & −0.13 & −0.59 & \textbf{−0.30} \\
-GPT-5.5           & −0.15 & −0.26 & +0.24 & −0.03 & −0.05 & −0.25 & \textbf{−0.08} \\
-Claude Sonnet 4.6 & −0.07 & −0.28 & +0.12 & −0.01 & +0.05 & −0.07 & \textbf{−0.04} \\
+Ansari            & −0.28 & −0.60 & −0.01 & −0.17 & −0.11 & −0.59 & \textbf{−0.29} \\
+GPT-5.5           & −0.14 & −0.26 & +0.24 & −0.03 & −0.05 & −0.25 & \textbf{−0.08} \\
+Claude Sonnet 4.6 & −0.08 & −0.28 & +0.13 & −0.02 & +0.06 & −0.07 & \textbf{−0.04} \\
 GLM-5.1           & −0.23 & −0.41 & +0.07 & −0.08 & −0.12 & −0.52 & \textbf{−0.22} \\
 Nemotron-3-Ultra  & −0.05 & −0.24 & +0.14 & +0.03 & −0.02 & −0.30 & \textbf{−0.07} \\
 Gemini 3.5 Flash  & −0.26 & −0.59 & +0.18 & −0.07 & −0.20 & −0.60 & \textbf{−0.26} \\
@@ -702,8 +701,8 @@ Stated).}
 System & Unstated & Stated & Guided & Recognition (S−U) & Instruction (G−S) \\
 \midrule
 Ansari            & +0.48 & +0.53 & +0.66 & +0.05 & +0.12 \\
-GPT-5.5           & +0.27 & +0.74 & +0.87 & +0.46 & +0.13 \\
-Claude Sonnet 4.6 & +0.22 & +0.66 & +0.84 & +0.43 & +0.19 \\
+GPT-5.5           & +0.27 & +0.73 & +0.87 & +0.46 & +0.13 \\
+Claude Sonnet 4.6 & +0.23 & +0.65 & +0.84 & +0.43 & +0.19 \\
 GLM-5.1           & −0.18 & +0.38 & +0.81 & +0.56 & +0.43 \\
 Nemotron-3-Ultra  & −0.21 & +0.31 & +0.56 & +0.52 & +0.25 \\
 Gemini 3.5 Flash  & −0.26 & +0.28 & +0.70 & +0.55 & +0.42 \\

@@ -97,9 +97,31 @@ def fmt(x, pct=False):
     return f"{x:.0%}" if pct else f"{x * SCORE_SCALE:+.2f}"
 
 
+# Identity of a single band judgment. A v2 re-judge record with the same
+# identity overrides the base record (the ≥2-band-disagreement re-judge pass).
+JUDGMENT_KEY = ("subject", "probe_id", "pressure", "framing", "judge", "scope")
+
+
+def load_judgments():
+    """Load base judgments, then overlay judgments_v2.jsonl by identity key
+    (v2 wins). Non-destructive: the .jsonl files are never modified. v2 is a
+    pure override set (every v2 key matches one base record), so the total
+    judgment count is unchanged."""
+    by_key = {}
+    for l in (RESULTS / "judgments.jsonl").read_text().splitlines():
+        j = json.loads(l)
+        by_key[tuple(j[k] for k in JUDGMENT_KEY)] = j
+    v2_path = RESULTS / "judgments_v2.jsonl"
+    if v2_path.exists():
+        for l in v2_path.read_text().splitlines():
+            j = json.loads(l)
+            by_key[tuple(j[k] for k in JUDGMENT_KEY)] = j
+    return list(by_key.values())
+
+
 def load():
     sittings = [json.loads(l) for l in (RESULTS / "collect.jsonl").read_text().splitlines()]
-    judgments = [json.loads(l) for l in (RESULTS / "judgments.jsonl").read_text().splitlines()]
+    judgments = load_judgments()
     return sittings, judgments
 
 
