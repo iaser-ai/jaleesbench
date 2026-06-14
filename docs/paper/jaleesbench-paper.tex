@@ -294,10 +294,8 @@ large frontier APIs (GPT-5.5, Claude Sonnet 4.6); a smaller frontier-lab
 model (Gemini 3.5 Flash, also Ansari's base model); and four open-weights
 models (GLM-5.1, Nemotron-3-Ultra, Gemma-4-31B, Qwen3-235B).
 \textbf{Scale:} $140 \times 6 \times 3 \times 8 = 20{,}160$ sittings and
-80,631 dual-judge judgments --- 9 short of the full $20{,}160 \times 2 \times
-2$ (turns $\times$ judges) grid, a handful of judge calls having failed after
-retries; the 40,311 fully dual-judged cells of \cref{sec:judge-agreement} are those scored by both
-judges.
+80,640 dual-judge judgments --- the full $20{,}160 \times 2 \times 2$ (turns
+$\times$ judges) grid, every cell scored by both judges.
 
 \subsection{Scorecard (Jalees Score, Unstated, after
 pressure)}\label{sec:scorecard}
@@ -417,7 +415,7 @@ already penalize.
 
 \subsection{Judge agreement}\label{sec:judge-agreement}
 
-Across 40,311 dual-judged cells, exact band agreement is 66\% and
+Across 40,320 dual-judged cells, exact band agreement is 66\% and
 within-one 85\% --- lower than a ten-probe pilot's 73/88, reflecting the
 harder, more ambiguous terrain of the full bank (etiquette thresholds,
 gray-area permissibility, register under distress). Gemini is the
@@ -563,11 +561,11 @@ The sharpest lens on what JaleesBench measures is the set of
 \textbf{polarizing cells}: probe $\times$ pressure $\times$ framing
 combinations on which one system scored \textbf{Perfume (+1)} and another
 \textbf{Burns (−1)} --- maximal disagreement about right counsel on an
-identical situation. There are \textbf{320} such cells (of 2,520),
-distributed across all six pressures (flattery 70, false authority 58, good
-cause 56, insistence 46, personal appeal 46, secularize 44) and concentrated
-in the Unstated framing (153), where systems lack any cue to the user's
-faith.
+identical situation. There are \textbf{691} such cells (of 2,520),
+distributed across all six pressures (personal appeal 146, flattery 133,
+insistence 120, false authority 101, good cause 101, secularize 90) and
+concentrated in the Unstated framing (303), where systems lack any cue to the
+user's faith.
 
 \textbf{Worked example --- JLS-006 ``Going no-contact,'' false-authority
 pressure, Unstated.} A user wants to permanently cut off a chronically
@@ -673,7 +671,7 @@ System & secul. & insist. & false auth. & good cause & flattery & pers. appeal &
 Ansari            & −0.28 & −0.60 & −0.01 & −0.17 & −0.11 & −0.59 & \textbf{−0.29} \\
 GPT-5.5           & −0.14 & −0.26 & +0.24 & −0.03 & −0.05 & −0.25 & \textbf{−0.08} \\
 Claude Sonnet 4.6 & −0.08 & −0.28 & +0.13 & −0.02 & +0.06 & −0.07 & \textbf{−0.04} \\
-GLM-5.1           & −0.23 & −0.41 & +0.07 & −0.08 & −0.12 & −0.52 & \textbf{−0.22} \\
+GLM-5.1           & −0.23 & −0.41 & +0.07 & −0.08 & −0.12 & −0.51 & \textbf{−0.22} \\
 Nemotron-3-Ultra  & −0.05 & −0.24 & +0.14 & +0.03 & −0.02 & −0.30 & \textbf{−0.07} \\
 Gemini 3.5 Flash  & −0.26 & −0.59 & +0.18 & −0.07 & −0.20 & −0.60 & \textbf{−0.26} \\
 Gemma-4-31B       & −0.23 & −0.53 & +0.01 & −0.23 & −0.24 & −0.51 & \textbf{−0.29} \\
@@ -762,7 +760,7 @@ are released with the paper.
 \section{Cost and compute}\label{app:cost}
 
 The main run is $140 \times 6 \times 3 \times 8 = 20{,}160$ sittings and
-80,631 dual-judge judgments. The two follow-up studies --- the Ansari
+80,640 dual-judge judgments. The two follow-up studies --- the Ansari
 steadfastness intervention (\cref{sec:casestudy}) and the reasoning-mode robustness check (\cref{sec:reasoning}) --- add 2,520 sittings and 10,080 judgments each, on separate tracks,
 so any single study can be re-run independently. Judges and subjects were
 called concurrently with per-job retry-and-skip. The main-run spend:
