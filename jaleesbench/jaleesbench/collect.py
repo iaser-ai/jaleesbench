@@ -35,6 +35,10 @@ SUBJECTS = {
     "gpt-5.5": {"provider": "openai", "framings": ["unstated", "stated", "guided"]},
     "claude-sonnet-4-6": {"provider": "anthropic",
                           "framings": ["unstated", "stated", "guided"]},
+    # Opus 4.8 as a SUBJECT (also serves as a judge — self-judging conflict
+    # handled at the judging step).
+    "claude-opus-4-8": {"provider": "anthropic",
+                        "framings": ["unstated", "stated", "guided"]},
     # Ansari's underlying base model (per Waleed) — isolates Ansari's
     # retrieval/prompting value-add from raw model capability.
     "gemini-3.5-flash": {"provider": "gemini",
@@ -59,6 +63,17 @@ SUBJECTS = {
     # rate limiter — so collection runs parallel, not serial.
     "ansari": {"provider": "ansari", "model": "ansari",
                "framings": ["unstated", "stated", "guided"]},
+    # Thinking-mode arms (additive experiment — separate file collect_thinking.jsonl,
+    # Unstated only). enable_thinking runs on the SAME serving as each baseline, so the
+    # only difference is the reasoning pass. gemma/glm: Friendli chat_template_kwargs;
+    # sonnet: Anthropic adaptive thinking. The final answer lands in content/text and is
+    # what we save and judge; the reasoning trace is discarded (as for all subjects).
+    "gemma-4-thinking": {"provider": "friendli", "model": "google/gemma-4-31B-it",
+                         "thinking": True, "framings": ["unstated"]},
+    "glm-thinking": {"provider": "friendli", "model": "zai-org/GLM-5.1",
+                     "thinking": True, "framings": ["unstated"]},
+    "claude-sonnet-thinking": {"provider": "anthropic", "model": "claude-sonnet-4-6",
+                               "thinking": True, "framings": ["unstated"]},
 }
 
 # Subjects run at provider-default temperature (gpt-5.5 accepts only the default).
@@ -91,8 +106,8 @@ def load_env() -> None:
         raise FileNotFoundError(f"Vertex service-account key missing: {VERTEX_SA}")
 
 
-def load_probes() -> dict:
-    return json.loads((ROOT / "probes.json").read_text())
+def load_probes(path: str = "probes.json") -> dict:
+    return json.loads((ROOT / path).read_text())
 
 
 def sitting_key(r: dict) -> str:
@@ -133,6 +148,11 @@ async def call_subject(subject: str, ctx: str | None, messages: list[dict],
                     kwargs["max_completion_tokens"] = MAX_TOKENS
                 else:
                     kwargs["max_tokens"] = MAX_TOKENS
+                # Friendli thinking arms: turn on the gemma4/GLM reasoning pass.
+                # The final answer stays in message.content; reasoning goes to a
+                # separate `reasoning` field we don't read.
+                if spec.get("thinking") and spec["provider"] == "friendli":
+                    kwargs["extra_body"] = {"chat_template_kwargs": {"enable_thinking": True}}
                 resp = await clients[spec["provider"]].chat.completions.create(**kwargs)
                 content = resp.choices[0].message.content
                 usage = {"in": resp.usage.prompt_tokens, "out": resp.usage.completion_tokens}
@@ -159,8 +179,11 @@ async def call_subject(subject: str, ctx: str | None, messages: list[dict],
                     blocks.append(q)
                     amsgs.append({"role": "user", "content": blocks})
                     first_user = False
-                resp = await clients["anthropic"].messages.create(
-                    model=subject, messages=amsgs, max_tokens=MAX_TOKENS)
+                akw = {"model": spec.get("model", subject),
+                       "messages": amsgs, "max_tokens": MAX_TOKENS}
+                if spec.get("thinking"):
+                    akw["thinking"] = {"type": "adaptive"}
+                resp = await clients["anthropic"].messages.create(**akw)
                 content = "".join(b.text for b in resp.content if b.type == "text")
                 u = resp.usage
                 usage = {"in": u.input_tokens, "out": u.output_tokens,
@@ -195,9 +218,10 @@ async def call_subject(subject: str, ctx: str | None, messages: list[dict],
 
 
 async def run_sitting(subject: str, probe: dict, pressure: str, framing: str,
-                      sem: asyncio.Semaphore, clients: dict) -> dict:
+                      sem: asyncio.Semaphore, clients: dict,
+                      framings: dict | None = None) -> dict:
     from datetime import datetime, timezone
-    ctx = FRAMINGS[framing]
+    ctx = (framings or FRAMINGS)[framing]
     async with sem:
         msgs = [{"role": "user", "content": probe["turn1"]}]
         reply1, usage1, att1 = await call_subject(subject, ctx, msgs, clients)
@@ -223,7 +247,12 @@ async def run_sitting(subject: str, probe: dict, pressure: str, framing: str,
     }
 
 
-async def collect(limit: int | None = None) -> None:
+async def collect(limit: int | None = None,
+                  out_path: Path | None = None,
+                  subjects: set[str] | None = None,
+                  concurrency: int | None = None,
+                  probes_path: str = "probes.json",
+                  framings: dict | None = None) -> None:
     import httpx
     from anthropic import AsyncAnthropic
     from google import genai
@@ -231,15 +260,17 @@ async def collect(limit: int | None = None) -> None:
 
     load_env()
     RESULTS.mkdir(exist_ok=True)
-    out_path = RESULTS / "collect.jsonl"
+    if out_path is None:
+        out_path = RESULTS / "collect.jsonl"
     done: set[str] = set()
     if out_path.exists():
         for line in out_path.read_text().splitlines():
             done.add(sitting_key(json.loads(line)))
 
-    bank = load_probes()
+    bank = load_probes(probes_path)
     grid = [(s, p, pr, f)
             for s, spec in SUBJECTS.items()
+            if subjects is None or s in subjects
             for p in bank["probes"]
             for pr in bank["pressures"]
             for f in spec["framings"]]
@@ -266,7 +297,7 @@ async def collect(limit: int | None = None) -> None:
                    base_url="https://api-35.ansari.chat/api/v1",
                    api_key=os.environ["LEADERBOARD_API_KEY"],
                    timeout=300)}
-    sem = asyncio.Semaphore(CONCURRENCY)
+    sem = asyncio.Semaphore(concurrency or CONCURRENCY)
     lock = asyncio.Lock()
     completed = 0
 
@@ -275,7 +306,7 @@ async def collect(limit: int | None = None) -> None:
     async def one(g):
         nonlocal completed, failed
         try:
-            rec = await run_sitting(g[0], g[1], g[2], g[3], sem, clients)
+            rec = await run_sitting(g[0], g[1], g[2], g[3], sem, clients, framings)
         except Exception as e:  # noqa: BLE001 — skip, report, let a re-run retry it
             failed += 1
             print(f"  FAILED {g[0]}|{g[1]['id']}|{g[2]}|{g[3]}: {e}")

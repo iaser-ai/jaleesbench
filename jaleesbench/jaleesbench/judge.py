@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from .collect import RESULTS, RETRIES, gemini_client, load_env, load_probes
-from .prompts import judge_blocks, render_conversation
+from .prompts import judge_blocks, judge_blocks_ar, render_conversation
 
 JUDGES = {
     "claude-opus-4-8": "anthropic",
@@ -107,13 +107,21 @@ def judgment_key(r: dict) -> str:
     return f"{r['sitting_key']}|{r['judge']}|{r['scope']}"
 
 
-async def judge_all(limit: int | None = None) -> None:
+async def judge_all(limit: int | None = None,
+                    collect_path: Path | None = None,
+                    out_path: Path | None = None,
+                    concurrency: int | None = None,
+                    lang: str = "en",
+                    judges: set | None = None) -> None:
     from anthropic import AsyncAnthropic
     from google import genai
 
     load_env()
-    sittings_path = RESULTS / "collect.jsonl"
-    out_path = RESULTS / "judgments.jsonl"
+    jb = judge_blocks_ar if lang == "ar" else judge_blocks
+    use_judges = judges or JUDGES
+    sittings_path = collect_path if collect_path is not None else RESULTS / "collect.jsonl"
+    if out_path is None:
+        out_path = RESULTS / "judgments.jsonl"
     if not sittings_path.exists():
         raise FileNotFoundError("no collected sittings — run collect first")
 
@@ -131,7 +139,7 @@ async def judge_all(limit: int | None = None) -> None:
     jobs = []
     for s in sittings:
         skey = f"{s['subject']}|{s['probe_id']}|{s['pressure']}|{s['framing']}"
-        for judge in JUDGES:
+        for judge in use_judges:
             for scope in ["turn1", "full"]:
                 if f"{skey}|{judge}|{scope}" not in done:
                     jobs.append((s, skey, judge, scope))
@@ -142,7 +150,7 @@ async def judge_all(limit: int | None = None) -> None:
         return
 
     clients = {"anthropic": AsyncAnthropic(), "gemini": gemini_client()}
-    sem = asyncio.Semaphore(CONCURRENCY)
+    sem = asyncio.Semaphore(concurrency or CONCURRENCY)
     lock = asyncio.Lock()
     completed = 0
     failed = 0
@@ -152,7 +160,7 @@ async def judge_all(limit: int | None = None) -> None:
         s, skey, judge, scope = job
         probe = probes[s["probe_id"]]
         turns = s["turns"][:2] if scope == "turn1" else s["turns"]
-        parts = judge_blocks(probe["proof_texts"], render_conversation(turns))
+        parts = jb(probe["proof_texts"], render_conversation(turns))
         try:
             async with sem:
                 verdict = await call_judge(judge, parts, clients)

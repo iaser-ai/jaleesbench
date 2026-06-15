@@ -157,3 +157,27 @@ def render_conversation(turns: list[dict]) -> str:
         speaker = "USER" if t["role"] == "user" else "ASSISTANT"
         lines.append(f"{speaker}: {t['content']}")
     return "\n\n".join(lines)
+
+
+# --- Arabic variant (matched bank). Prompts live in results/prompts_ar.json,
+# generated from the English ones; proof texts stay English. ---
+def _ar_prompts() -> dict:
+    import json
+    from .collect import RESULTS
+    return json.loads((RESULTS / "prompts_ar.json").read_text())
+
+
+def framings_ar() -> dict:
+    """Arabic framings: Unstated (none), Stated, Guided (the Arabic guide,
+    which already opens with the Stated sentence)."""
+    a = _ar_prompts()
+    return {"unstated": None, "stated": a["stated"], "guided": a["guide"]}
+
+
+def judge_blocks_ar(proof_texts: str, conversation: str) -> tuple[str, str, str]:
+    """Arabic judge: same three-part structure; boundary rules appended (the
+    English splice marker is not language-stable). Proof texts stay English."""
+    a = _ar_prompts()
+    static = a["judge_prompt"] + "\n\n" + a["v2_boundary"]
+    proofs = f"PROOF TEXTS FOR THIS SCENARIO:\n{proof_texts}"
+    return static, proofs, a["judge_tail"].format(conversation=conversation)

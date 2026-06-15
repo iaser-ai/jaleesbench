@@ -15,32 +15,41 @@ from pathlib import Path
 
 from .collect import RESULTS, gemini_client, load_env, load_probes
 from .judge import JUDGE_MAX_TOKENS, JUDGES, judgment_key, parse_judgment
-from .prompts import judge_blocks, render_conversation
+from .prompts import judge_blocks, judge_blocks_ar, render_conversation
 
 STATE = RESULTS / "batch_state.json"
 ANTHROPIC_CHUNK = 10_000  # stay well under the 256MB batch cap
 
 
-def _load_state() -> dict:
-    if STATE.exists():
-        return json.loads(STATE.read_text())
+def _cfg(lang: str):
+    """(collect_path, judgments_path, state_path, judge_blocks_fn) per variant."""
+    if lang == "ar":
+        return (RESULTS / "collect_ar.jsonl", RESULTS / "judgments_ar.jsonl",
+                RESULTS / "batch_state_ar.json", judge_blocks_ar)
+    return (RESULTS / "collect.jsonl", RESULTS / "judgments.jsonl",
+            STATE, judge_blocks)
+
+
+def _load_state(state_path: Path = STATE) -> dict:
+    if state_path.exists():
+        return json.loads(state_path.read_text())
     return {"anthropic": [], "gemini": []}
 
 
-def _save_state(state: dict) -> None:
-    STATE.write_text(json.dumps(state, indent=1))
+def _save_state(state: dict, state_path: Path = STATE) -> None:
+    state_path.write_text(json.dumps(state, indent=1))
 
 
-def _pending_jobs() -> list[tuple[dict, str, str, str]]:
+def _pending_jobs(collect_path: Path, jpath: Path,
+                  state_path: Path) -> list[tuple[dict, str, str, str]]:
     """(sitting, skey, judge, scope) for every judgment not yet recorded
     and not already in a submitted batch manifest."""
-    sittings = [json.loads(l) for l in (RESULTS / "collect.jsonl").read_text().splitlines()]
+    sittings = [json.loads(l) for l in collect_path.read_text().splitlines()]
     done = set()
-    jpath = RESULTS / "judgments.jsonl"
     if jpath.exists():
         for line in jpath.read_text().splitlines():
             done.add(judgment_key(json.loads(line)))
-    state = _load_state()
+    state = _load_state(state_path)
     # Only exclude manifests of batches STILL IN FLIGHT — a finished batch's
     # errored requests aren't in judgments.jsonl and must be re-eligible.
     for prov in ("anthropic", "gemini"):
@@ -57,20 +66,20 @@ def _pending_jobs() -> list[tuple[dict, str, str, str]]:
     return jobs
 
 
-def _job_parts(probes: dict, s: dict, scope: str) -> tuple[str, str, str]:
+def _job_parts(probes: dict, s: dict, scope: str, jb=judge_blocks) -> tuple[str, str, str]:
     turns = s["turns"][:2] if scope == "turn1" else s["turns"]
-    return judge_blocks(probes[s["probe_id"]]["proof_texts"],
-                        render_conversation(turns))
+    return jb(probes[s["probe_id"]]["proof_texts"], render_conversation(turns))
 
 
-def submit(limit: int | None = None) -> None:
+def submit(limit: int | None = None, lang: str = "en") -> None:
     import anthropic
     from google import genai
     from google.genai import types
 
     load_env()
+    collect_path, jpath, state_path, jb = _cfg(lang)
     probes = {p["id"]: p for p in load_probes()["probes"]}
-    jobs = _pending_jobs()
+    jobs = _pending_jobs(collect_path, jpath, state_path)
     if limit:
         jobs = jobs[:limit]
     by_judge = {j: [x for x in jobs if x[2] == j] for j in JUDGES}
@@ -78,7 +87,7 @@ def submit(limit: int | None = None) -> None:
     if not jobs:
         print("nothing pending")
         return
-    state = _load_state()
+    state = _load_state(state_path)
 
     # Anthropic: chunked message batches with the same cached blocks as live.
     aclient = anthropic.Anthropic()
@@ -87,7 +96,7 @@ def submit(limit: int | None = None) -> None:
         chunk = opus_jobs[c0:c0 + ANTHROPIC_CHUNK]
         manifest, requests = {}, []
         for i, (s, skey, judge, scope) in enumerate(chunk):
-            parts = _job_parts(probes, s, scope)
+            parts = _job_parts(probes, s, scope, jb)
             cid = f"a{c0 + i:06d}"
             manifest[cid] = f"{skey}|{judge}|{scope}"
             requests.append({
@@ -117,12 +126,11 @@ def submit(limit: int | None = None) -> None:
         print(f"gemini: {len(gem_jobs)} pending — NOT batched (Vertex has no "
               f"file-batch API); run `jaleesbench judge` to judge them live.")
 
-    _save_state(state)
+    _save_state(state, state_path)
 
 
-def _write_recs(recs: list[dict]) -> None:
+def _write_recs(recs: list[dict], jpath: Path = RESULTS / "judgments.jsonl") -> None:
     done = set()
-    jpath = RESULTS / "judgments.jsonl"
     if jpath.exists():
         for line in jpath.read_text().splitlines():
             done.add(judgment_key(json.loads(line)))
@@ -140,12 +148,13 @@ def _rec_from(jobkey: str, verdict: dict) -> dict:
             "ts": datetime.now(timezone.utc).isoformat(), **verdict}
 
 
-def collect() -> None:
+def collect(lang: str = "en") -> None:
     import anthropic
     from google import genai
 
     load_env()
-    state = _load_state()
+    _, jpath, state_path, _ = _cfg(lang)
+    state = _load_state(state_path)
     open_batches = 0
 
     aclient = anthropic.Anthropic()
@@ -177,7 +186,7 @@ def collect() -> None:
                 "cache_read": getattr(u, "cache_read_input_tokens", 0) or 0,
                 "batch": True}
             recs.append(_rec_from(b["manifest"][result.custom_id], verdict))
-        _write_recs(recs)
+        _write_recs(recs, jpath)
         b["done"] = True
         print(f"anthropic {b['batch_id']}: wrote {len(recs)}, "
               f"left to live fallback {errored}")
@@ -218,12 +227,12 @@ def collect() -> None:
                        + (um.get("thoughtsTokenCount", 0) or 0),
                 "batch": True}
             recs.append(_rec_from(b["manifest"][obj["key"]], verdict))
-        _write_recs(recs)
+        _write_recs(recs, jpath)
         b["done"] = True
         print(f"gemini {b['job_name']}: wrote {len(recs)}, "
               f"left to live fallback {errored}")
 
-    _save_state(state)
+    _save_state(state, state_path)
     if open_batches:
         print(f"{open_batches} batch(es) still processing")
     else:
