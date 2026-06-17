@@ -44,3 +44,15 @@ override (resolution tier 2) pointing the implement-phase checks at uv, e.g.
   - build → a real check or no-op (Python has no compile step; "build" needs an
     architect decision — `uv build --directory jaleesbench`? drop it?).
 Waiting for guidance before re-running `porch check 1` / `porch done 1`.
+
+## UNBLOCKED + PR ready — 2026-06-17
+Architect added project-local `codev/protocols/air/protocol.json` on main
+(implement check → `uv run --directory jaleesbench pytest -q`; build dropped;
+e2e no-op). Merged origin/main into builder/air-1 (clean, single new file).
+protocol.json kept OUT of PR scope (already on main).
+
+- `porch check 1` → tests ✓. `porch done 1` → advanced to PR phase.
+- Pushed branch; opened **PR #2** (review in the body, per AIR — no review file).
+- PR-phase checks: `pr_exists` ✓, `e2e_tests` ✓ (no-op).
+- `porch done 1` → `porch gate 1` → **WAITING on `pr` gate (human approval)**.
+  Not calling `porch approve` (human-only). Notified architect.
