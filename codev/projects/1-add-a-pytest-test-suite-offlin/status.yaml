@@ -1,7 +1,7 @@
 id: '1'
 title: add-a-pytest-test-suite-offlin
 protocol: air
-phase: pr
+phase: verified
 plan_phases: []
 current_plan_phase: null
 gates:
@@ -13,5 +13,5 @@ iteration: 1
 build_complete: false
 history: []
 started_at: '2026-06-17T20:36:48.443Z'
-updated_at: '2026-06-17T23:05:59.023Z'
+updated_at: '2026-06-17T23:06:06.923Z'
 pr_ready_for_human: false
