@@ -6,6 +6,8 @@ import os
 from pathlib import Path
 
 from .prompts import FRAMINGS
+from .providers import (anthropic_complete, gemini_complete, make_clients,
+                        openai_complete)
 
 ROOT = Path(__file__).resolve().parent
 RESULTS = ROOT.parent / "results"
@@ -149,24 +151,18 @@ async def call_subject(subject: str, ctx: str | None, messages: list[dict],
     last_err = None
     for attempt in range(retries + 1):
         try:
-            if spec["provider"] in ("openai", "friendli", "blackbox", "ansari"):
+            provider = spec["provider"]
+            model = spec.get("model", subject)
+            if provider in ("openai", "friendli", "blackbox", "ansari"):
                 msgs = [folded(m) for m in messages]
-                kwargs = {"model": spec.get("model", subject), "messages": msgs}
-                # gpt-5.5 requires the newer param name; the others
-                # take the classic one.
-                if spec["provider"] == "openai":
-                    kwargs["max_completion_tokens"] = MAX_TOKENS
-                else:
-                    kwargs["max_tokens"] = MAX_TOKENS
-                # Friendli thinking arms: turn on the gemma4/GLM reasoning pass.
-                # The final answer stays in message.content; reasoning goes to a
-                # separate `reasoning` field we don't read.
-                if spec.get("thinking") and spec["provider"] == "friendli":
-                    kwargs["extra_body"] = {"chat_template_kwargs": {"enable_thinking": True}}
-                resp = await clients[spec["provider"]].chat.completions.create(**kwargs)
-                content = resp.choices[0].message.content
-                usage = {"in": resp.usage.prompt_tokens, "out": resp.usage.completion_tokens}
-            elif spec["provider"] == "anthropic":
+                # Friendli thinking arms turn on the gemma4/GLM reasoning pass;
+                # the final answer still arrives in message.content.
+                extra = ({"chat_template_kwargs": {"enable_thinking": True}}
+                         if spec.get("thinking") and provider == "friendli" else None)
+                content, usage = await openai_complete(
+                    clients[provider], model, msgs, MAX_TOKENS,
+                    completion_param=(provider == "openai"), extra_body=extra)
+            elif provider == "anthropic":
                 # Prompt caching: the framing block (shared by every sitting of
                 # this framing) is a 1h breakpoint; the first user question is
                 # a default-TTL breakpoint so the turn-2 call rereads turn 1
@@ -189,32 +185,19 @@ async def call_subject(subject: str, ctx: str | None, messages: list[dict],
                     blocks.append(q)
                     amsgs.append({"role": "user", "content": blocks})
                     first_user = False
-                akw = {"model": spec.get("model", subject),
-                       "messages": amsgs, "max_tokens": MAX_TOKENS}
-                if spec.get("thinking"):
-                    akw["thinking"] = {"type": "adaptive"}
-                resp = await clients["anthropic"].messages.create(**akw)
-                content = "".join(b.text for b in resp.content if b.type == "text")
-                u = resp.usage
-                usage = {"in": u.input_tokens, "out": u.output_tokens,
-                         "cache_write": getattr(u, "cache_creation_input_tokens", 0) or 0,
-                         "cache_read": getattr(u, "cache_read_input_tokens", 0) or 0}
+                content, usage = await anthropic_complete(
+                    clients["anthropic"], model, amsgs, MAX_TOKENS,
+                    thinking=bool(spec.get("thinking")))
             elif spec["provider"] == "gemini":
                 from google.genai import types
                 contents = [
                     types.Content(role="model" if m["role"] == "assistant" else "user",
                                   parts=[types.Part(text=folded(m)["content"])])
                     for m in messages]
-                cfg = types.GenerateContentConfig(max_output_tokens=MAX_TOKENS)
-                resp = await clients["gemini"].aio.models.generate_content(
-                    model=subject, contents=contents, config=cfg)
-                content = resp.text
-                um = resp.usage_metadata
-                usage = {"in": um.prompt_token_count or 0,
-                         "out": (um.candidates_token_count or 0)
-                                + (getattr(um, "thoughts_token_count", 0) or 0)}
+                content, usage = await gemini_complete(
+                    clients["gemini"], model, contents, max_tokens=MAX_TOKENS)
             else:
-                raise RuntimeError(f"unknown provider: {spec['provider']}")
+                raise RuntimeError(f"unknown provider: {provider}")
             if not content or not content.strip():
                 raise RuntimeError("empty response content")
             return content.strip(), usage, attempt + 1
@@ -263,11 +246,6 @@ async def collect(limit: int | None = None,
                   concurrency: int | None = None,
                   probes_path: str = "probes.json",
                   framings: dict | None = None) -> None:
-    import httpx
-    from anthropic import AsyncAnthropic
-    from google import genai
-    from openai import AsyncOpenAI
-
     load_env()
     RESULTS.mkdir(exist_ok=True)
     if out_path is None:
@@ -295,18 +273,7 @@ async def collect(limit: int | None = None,
     if not todo:
         return
 
-    clients = {"openai": AsyncOpenAI(), "anthropic": AsyncAnthropic(),
-               "gemini": gemini_client(), "httpx": httpx.AsyncClient(),
-               "friendli": AsyncOpenAI(
-                   base_url="https://api.friendli.ai/serverless/v1",
-                   api_key=os.environ["FRIENDLI_API_KEY"]),
-               "blackbox": AsyncOpenAI(
-                   base_url="https://api.blackbox.ai/v1",
-                   api_key=os.environ["BLACKBOX_API_KEY"]),
-               "ansari": AsyncOpenAI(
-                   base_url="https://api-35.ansari.chat/api/v1",
-                   api_key=os.environ["LEADERBOARD_API_KEY"],
-                   timeout=300)}
+    clients = make_clients()
     sem = asyncio.Semaphore(concurrency or CONCURRENCY)
     lock = asyncio.Lock()
     completed = 0

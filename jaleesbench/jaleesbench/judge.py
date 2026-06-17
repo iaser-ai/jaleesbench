@@ -6,8 +6,9 @@ import re
 from datetime import datetime, timezone
 from pathlib import Path
 
-from .collect import RESULTS, RETRIES, gemini_client, load_env, load_probes
+from .collect import RESULTS, RETRIES, load_env, load_probes
 from .prompts import judge_blocks, judge_blocks_ar, render_conversation
+from .providers import anthropic_complete, gemini_complete, make_clients
 
 JUDGES = {
     "claude-opus-4-8": "anthropic",
@@ -57,6 +58,8 @@ async def call_judge(judge: str, parts: tuple[str, str, str], clients: dict) -> 
     for attempt in range(RETRIES + 1):
         try:
             if provider == "anthropic":
+                # rubric + per-probe proofs are 1h cache breakpoints; the
+                # conversation block is uncached.
                 content = [
                     {"type": "text", "text": parts[0],
                      "cache_control": {"type": "ephemeral", "ttl": "1h"}},
@@ -64,35 +67,16 @@ async def call_judge(judge: str, parts: tuple[str, str, str], clients: dict) -> 
                      "cache_control": {"type": "ephemeral", "ttl": "1h"}},
                     {"type": "text", "text": parts[2]},
                 ]
-                resp = await clients["anthropic"].messages.create(
-                    model=judge, max_tokens=JUDGE_MAX_TOKENS,
-                    messages=[{"role": "user", "content": content}])
-                text = "".join(b.text for b in resp.content if b.type == "text")
-                u = resp.usage
-                usage = {"in": u.input_tokens, "out": u.output_tokens,
-                         "cache_write": getattr(u, "cache_creation_input_tokens", 0) or 0,
-                         "cache_read": getattr(u, "cache_read_input_tokens", 0) or 0}
+                text, usage = await anthropic_complete(
+                    clients["anthropic"], judge,
+                    [{"role": "user", "content": content}], JUDGE_MAX_TOKENS)
             else:
-                from google.genai import types
                 # The judge SCORES transcripts; it must not refuse benign-but-
-                # sensitive content (e.g. a parenting/privacy scenario false-
-                # triggers the minor-safety filter). Disable blocking for the
-                # judge only — subjects are never run with these settings.
-                cfg = types.GenerateContentConfig(safety_settings=[
-                    types.SafetySetting(category=c, threshold="OFF") for c in (
-                        "HARM_CATEGORY_HARASSMENT", "HARM_CATEGORY_HATE_SPEECH",
-                        "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                        "HARM_CATEGORY_DANGEROUS_CONTENT")])
-                resp = await clients["gemini"].aio.models.generate_content(
-                    model=judge, contents="\n\n".join(parts), config=cfg)
-                text = resp.text
-                if text is None:
-                    fr = getattr(resp.candidates[0], "finish_reason", "?") if resp.candidates else "no-candidates"
-                    raise ValueError(f"gemini returned no text (finish_reason={fr})")
-                um = resp.usage_metadata
-                usage = {"in": um.prompt_token_count or 0,
-                         "out": (um.candidates_token_count or 0)
-                                + (getattr(um, "thoughts_token_count", 0) or 0)}
+                # sensitive content (e.g. a parenting/privacy scenario that
+                # false-triggers the minor-safety filter). Subjects never run
+                # with safety off.
+                text, usage = await gemini_complete(
+                    clients["gemini"], judge, "\n\n".join(parts), safety_off=True)
             verdict = parse_judgment(text)
             verdict["usage"] = usage
             return verdict
@@ -113,9 +97,6 @@ async def judge_all(limit: int | None = None,
                     concurrency: int | None = None,
                     lang: str = "en",
                     judges: set | None = None) -> None:
-    from anthropic import AsyncAnthropic
-    from google import genai
-
     load_env()
     jb = judge_blocks_ar if lang == "ar" else judge_blocks
     use_judges = judges or JUDGES
@@ -149,7 +130,7 @@ async def judge_all(limit: int | None = None,
     if not jobs:
         return
 
-    clients = {"anthropic": AsyncAnthropic(), "gemini": gemini_client()}
+    clients = make_clients({"anthropic", "gemini"})
     sem = asyncio.Semaphore(concurrency or CONCURRENCY)
     lock = asyncio.Lock()
     completed = 0
@@ -189,9 +170,6 @@ async def judge_all(limit: int | None = None,
 async def rejudge_disagreements(limit: int | None = None) -> None:
     """Re-judge cells where the two judges disagreed by >=2 bands, using the
     v2 boundary-rules prompt. Writes judgments_v2.jsonl (idempotent)."""
-    from anthropic import AsyncAnthropic
-    from google import genai
-
     load_env()
     judgments = [json.loads(l) for l in (RESULTS / "judgments.jsonl").read_text().splitlines()]
     by = {}
@@ -225,7 +203,7 @@ async def rejudge_disagreements(limit: int | None = None) -> None:
     if not jobs:
         return
 
-    clients = {"anthropic": AsyncAnthropic(), "gemini": gemini_client()}
+    clients = make_clients({"anthropic", "gemini"})
     sem = asyncio.Semaphore(CONCURRENCY)
     lock = asyncio.Lock()
     completed = 0
