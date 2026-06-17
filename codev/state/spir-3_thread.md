@@ -47,3 +47,23 @@ relative asset paths; `web/` at repo root; ~10–30MB export size; scope added t
 URL. Consultation Log §10 records each. Next: commit reviewed spec, `porch next`,
 then expect spec-approval gate → STOP + notify architect (gate is the user's
 call, never auto-approve).
+
+### spec-approval feedback (architect) — de-bake the solution; NOT approved
+Reached spec-approval gate (porch gate 3), notified architect. Architect did NOT
+approve: §3 over-baked the SOLUTION. Requester asked for a tech RECOMMENDATION and
+is OPEN to alternatives — TS/Vite/React/Pages/no-backend/shards were NOT their
+decision. (New memory exists: "dont-bake-my-recommendations".)
+Revised:
+- §3 now = FIXED REQUIREMENTS ONLY (public+zero-install; URL deep links; side-by-
+  side 2-model + both judges' verdicts; read-only/no harness change; English now;
+  §5 data-contract generality; −1…+1 band fidelity) + environmental facts.
+- §4 now weighs 4 genuine OPEN decisions (A presentation, B hosting, C data layout,
+  D export mechanism) on merit, each a *reasoned recommendation* (no pre-stamped
+  REJECTED; backend kept on the table). Summary recommendation in §4.E.
+- App location → apps/jaleesbrowser/ (architect inline note; name flagged as
+  suggestion given contract producer-neutrality).
+- ALL substantive review fixes retained (§5 contract, §5.6, --results-path, band
+  color, scope-in-URL, responsive/RTL/a11y).
+- §9 crit 5 generalized off hard-Pages; §5.7/§7 reference recommendations not bakes.
+Gate still pending (WAITING FOR HUMAN APPROVAL). Commit + re-notify architect; do
+NOT porch approve.

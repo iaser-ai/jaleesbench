@@ -31,7 +31,7 @@ in the URL so any cell is a shareable deep link.
 | Access | Aggregate report + gitignored 190 MB jsonl | Public web app, no install |
 | Granularity | Per-subject / per-probe summary tables | Any single cell: 2 models side by side |
 | Sharing | "open the html" | URL deep-link to an exact comparison |
-| Hosting | Local file | GitHub Pages on the public repo |
+| Delivery | Local file, team-only | Public, zero-install — anyone with the link (hosting: §4) |
 | Scope | English + Arabic + experiments | **English only** (per issue) |
 
 ## 2. Stakeholders
@@ -46,96 +46,131 @@ in the URL so any cell is a shareable deep link.
 
 ## 3. Constraints
 
-### 3.1 Baked Decisions (from the issue + architect; treat as fixed)
+This section lists only what is **genuinely fixed** — the requester's actual
+requirements and hard facts of the environment. The *how* (framework, hosting,
+data layout, export mechanism) is **not** decided here; those are weighed as open
+options in §4 with a recommendation the requester/architect can accept or redirect.
 
-From the **issue body** (recommended approach, confirmed):
+### 3.1 Fixed requirements (the requester's actual asks — treat as fixed)
 
-1. **Read-only over exported JSON.** The viewer never touches harness data; do not
-   modify `collect.jsonl` / `judgments.jsonl` / `judgments_v2.jsonl`.
-2. **No backend.** Public, free, static hosting on **GitHub Pages** on this repo
-   (`iaser-ai/jaleesbench`, already public).
-3. **A TypeScript app** that builds to a **static bundle** (satisfies "a TS
-   application" + "static hosting", no server). Recommended: **Vite + React + TS**.
-4. **A Python data-export step** that reuses the loaders in `score.py` /
-   `html_report.py` (including the `judgments_v2` overlay and the band→−1…+1
-   rescale) and writes `index.json` + one JSON shard per probe, loaded on demand.
-5. **App in a top-level dir** (`web/`); export is a **reproducible CLI step**.
-6. **Bands map to −1…+1** per the existing `score.py` convention (SCORE_SCALE=0.5).
-7. **English results only for now**; Arabic excluded until its judging run
-   completes. (Arabic must not be hard-excluded by design — see §5.)
+1. **Public + zero-install.** Anyone with the link can access and explore the results
+   — no install, login, or account. (The *issue* names GitHub Pages as a recommended
+   host; the requirement is "public + free + no backend to run"; the host itself is a
+   §4 recommendation.)
+2. **URL-shareable deep links.** The full selection — chosen question, the two compared
+   models, the pressure, the framing (and the verdict scope) — is encoded in the URL,
+   so every view is a shareable deep link.
+3. **Side-by-side two-model comparison.** For a chosen question + pressure + framing,
+   show **two** models' answers side by side — the full two-turn conversation
+   (question → response → pressure turn → response) for each — together with **both
+   judges' verdicts** for each side (band on the −1…+1 scale + rationale).
+4. **Read-only, no harness change.** The browser is read-only over the existing,
+   already-produced results. It must not modify `collect.jsonl` / `judgments.jsonl` /
+   `judgments_v2.jsonl`, and adds no new collection/judging/scoring behavior.
+5. **English results for now.** Scope is the English result set; Arabic is excluded
+   until its judging run completes — but must **not** be hard-excluded by design (the
+   data contract, §5, supports adding it later as another dataset).
+6. **Data-contract generality (architect KEY requirement — a fixed requirement).** The
+   viewer must be driven by a **documented, versioned data contract** (the exported
+   index + per-item schema), with JaleesBench as the **first producer**. It must be
+   able to render any results JSON conforming to that format or a derivative, and
+   (future) let a user load their own JSON. **Keep it simple:** build the clean
+   data-contract seam and ship JaleesBench-first; do **not** over-engineer a fully
+   generic schema engine, but do **not** bake JaleesBench specifics (band names,
+   "pressure"/"framing", probe fields) into the UI or the types. Detailed in §5.
+7. **Band scale fidelity.** Bands are reported on the **−1…+1** scale per the existing
+   `score.py` convention (native −2…+2 × `SCORE_SCALE` 0.5) — a data-fidelity
+   requirement so the browser agrees with the report/paper.
 
-From the **architect** (KEY SPEC REQUIREMENT, baked):
+### 3.2 Fixed environmental facts (not solution choices)
 
-8. **Data-contract-driven, not JaleesBench-hardcoded.** The viewer must be driven
-   by a documented, versioned **data contract** (the exported index + per-probe
-   schema), with JaleesBench as the **first producer** of that format. The viewer
-   must be able to render any results JSON conforming to the JaleesBench format or a
-   derivative, and (future) let a user load their own JSON. **Keep it simple:** build
-   the clean data-contract seam and ship JaleesBench-first; do **not** over-engineer
-   a fully generic schema engine before it's needed, but do **not** bake JaleesBench
-   specifics (band names, "pressure"/"framing", probe fields) into the UI or the TS
-   types. This is detailed in §5 and reviewed at spec-approval.
-
-### 3.2 Other constraints
-
-- **Repository hygiene** (project CLAUDE.md): never `git add -A`/`.`; commit
-  messages `[Spec 3] …`; scores reported on −1…+1; no attribution lines.
 - **Raw data is gitignored and lives in the main checkout** (`jaleesbench/results/`),
-  not in the builder worktree. The export must accept a **`--results-path`** (default:
-  the package's `results/`) so it can be pointed at the real data. The existing
-  loaders in `score.py`/`collect.py` are currently bound to the module-level
-  `RESULTS` constant; the **small refactor to thread a results path through `load()`
-  / `load_judgments()` / `load_probes()` is in scope** for this work.
-- **`web/` lives at the repository root** (alongside `jaleesbench/`), not inside the
-  Python package. The GitHub Actions workflow builds from `web/`.
-- **Subject set:** the export reads `collect.jsonl`, which contains exactly the **8
-  main subjects**. The 3 thinking-mode arms live in a separate file
-  (`collect_thinking.jsonl`) and the ansari-steadfast / Arabic arms in their own files;
-  all are out of scope. The export derives its subject list from the data present
-  rather than a hardcoded list.
-- **No new harness behavior**: this spec adds a viewer + an export command; it does
-  not change collection, judging, or scoring.
+  not in the builder worktree, and is large (190 MB `collect.jsonl`). Whatever
+  data-preparation step is chosen (see §4 Decision D) must therefore read raw results
+  from a **configurable path** (CI cannot regenerate from the raw data — see §7 C1).
+- **Subject set:** the English result set (`collect.jsonl`) contains exactly the **8
+  main subjects**. The 3 thinking-mode arms (`collect_thinking.jsonl`), the
+  ansari-steadfast arm, and the Arabic set live in separate files and are out of
+  scope. The data step should derive its subject list from the data present rather
+  than a hardcoded list.
+- **Repository hygiene** (project CLAUDE.md): never `git add -A`/`.`; commit messages
+  `[Spec 3] …`; scores reported on −1…+1; no attribution lines.
 
 ## 4. Solution Exploration
 
-### 4.1 Chosen approach: Vite + React + TS static app + Python export (RECOMMENDED)
+Four genuine choices remain open: (A) the presentation layer, (B) hosting/delivery,
+(C) the data layout, and (D) the data-preparation mechanism. The requester asked for
+a *recommendation* and is explicitly open to alternatives, so each is weighed on merit
+below and a recommendation given — **not** a decided fact. The data contract (§5) is
+independent of all four and is a requirement either way.
 
-- **Export (Python CLI):** `jaleesbench export-web` reads the results via the
-  existing `score.py` loaders (`load()`, `load_judgments()` with the v2 overlay,
-  `load_probes()`), applies the −1…+1 band rescale, and writes a **contract-shaped**
-  dataset: a small `index.json` (catalog) + one shard per probe. Output goes to a
-  directory the viewer serves as static assets.
-- **Viewer (TS app):** a Vite + React + TypeScript SPA. On load it fetches
-  `index.json` to populate the pickers (question, two subjects, one selector per
-  condition axis). On selection it lazy-fetches the relevant per-probe shard, locates
-  the two cells, and renders the two transcripts + the judge verdicts side by side.
-  The full selection lives in the URL query string (deep-linkable).
-- **Hosting:** GitHub Pages via a GitHub Actions workflow that builds `web/` and
-  deploys. Vite `base` set to `/jaleesbench/` (project Pages path).
+### 4.A Presentation layer
 
-**Pros:** satisfies every baked decision; clean separation (Python owns data, TS
-owns presentation); the contract seam is a natural artifact of the export. **Cons:**
-adds a Node/TS toolchain to a Python repo; exported data must be committed (see §7
-Open Questions, resolved recommendation: commit the slimmed export, keep raw
-ignored).
+| Option | Notes |
+|---|---|
+| **A1. TypeScript SPA** (e.g. Vite + React; or Svelte/Solid/vanilla TS) building to a static bundle | Client-side selection, URL-state, lazy shard loading all live naturally in the browser. Matches "a TypeScript application." |
+| A2. Static-site generator (Astro / Eleventy / Hugo) pre-rendering pages | Would have to pre-render every (probe × subject-pair × pressure × framing) view — ≈ 140 × C(8,2)=28 × 6 × 3 ≈ **70k pages** — to keep URLs shareable, a poor fit for a selection-driven UI. |
+| A3. Hand-rolled static HTML + vanilla JS | Lightest toolchain, but reimplements routing/state/typing the requester explicitly wanted in TypeScript. |
 
-### 4.2 Alternative A: server-rendered / API backend — REJECTED
+**Recommendation: A1, a TypeScript SPA.** The interaction is inherently dynamic
+(pick-and-compare with deep links and on-demand detail), which is exactly what a small
+SPA does well and what an SSG fights. Within A1, **React + Vite** is the most
+conventional, lowest-risk stack and the recommendation, but the choice is not load-
+bearing: Svelte/Solid would satisfy the contract equally since §5 is framework-
+agnostic. *(Trade-off acknowledged: this adds a Node/TS toolchain to a
+Python repo — but the requester asked for a TS app, and the toolchain is dev-only.)*
 
-A small backend (FastAPI) serving query results would avoid shipping JSON. Rejected:
-violates "no backend / free static hosting" (baked decision 2) and adds ops burden.
+### 4.B Hosting / delivery
 
-### 4.3 Alternative B: single monolithic JSON — REJECTED
+| Option | Notes |
+|---|---|
+| **B1. Fully static, no backend, GitHub Pages** (this repo is already public) | Data committed as JSON, served as static assets. Zero infra, free, durable. |
+| B2. Static hosting elsewhere (Netlify / Vercel / Cloudflare Pages) | Functionally equivalent to B1; adds an external account/integration. |
+| B3. Small backend / API (e.g. FastAPI) querying the raw data server-side | Avoids shipping JSON and could serve the full raw set, but adds hosting cost, uptime, and ops burden. |
 
-Export everything into one `data.json`. Rejected: the full English set is large; a
-single file makes initial load heavy and defeats the "loaded on demand so initial
-load stays small" requirement. Per-probe shards keep the index tiny.
+**Recommendation: B1, fully static on GitHub Pages.** The data is modest
+(~10–30 MB slimmed, lazy-loaded), read-only, and changes rarely — a backend buys
+nothing here and adds an always-on dependency a public artifact shouldn't need.
+GitHub Pages is chosen over other static hosts only for proximity (same public repo,
+no extra accounts). **A backend stays genuinely on the table** and would be the right
+call *if* the data outgrew comfortable static limits or needed server-side compute —
+neither holds today.
 
-### 4.4 Alternative C: plain static HTML generator (no TS app) — REJECTED
+### 4.C Data layout
 
-Extend `html_report.py` to emit a static comparison page per cell. Rejected: does not
-satisfy "a TypeScript application", and pre-rendering every (probe × subject-pair ×
-pressure × framing) cell is a combinatorial explosion; client-side selection is far
-simpler and is what makes URL-state sharing natural.
+| Option | Notes |
+|---|---|
+| **C1. Small `index.json` + one shard per probe**, lazy-loaded | Tiny initial load (just the catalog); detail fetched per selected question — matches the "pick a question" flow. |
+| C2. Single monolithic `data.json` | Simplest to produce, but forces a large initial download, defeating "initial load stays small." |
+| C3. Other groupings (per-subject, per-condition) | No grouping matches the access pattern as cleanly as per-probe (the user picks one question at a time). |
+
+**Recommendation: C1, per-probe shards + a small index.** It is the layout that keeps
+initial load small while serving exactly the slice a selection needs. (Shard-internal
+encoding and an optional prompt-dedup optimization are plan-level — §7 I2/I5.)
+
+### 4.D Data-preparation mechanism
+
+| Option | Notes |
+|---|---|
+| **D1. Python CLI reusing the existing loaders** (`score.py` / `collect.py`) | `load()`, `load_judgments()` (with the `judgments_v2` overlay), `load_probes()`, and the −1…+1 rescale already exist and are battle-tested. |
+| D2. Standalone script re-deriving the joins/overlay/rescale | Duplicates subtle logic (v2 identity-key overlay, rescale) — a second source of truth that can drift from the report. |
+
+**Recommendation: D1, a Python CLI subcommand** (e.g. `jaleesbench export-web`)
+reusing the loaders, accepting a configurable **`--results-path`** (default: the
+package `results/`) so it can read the gitignored data in the main checkout. A small
+refactor to thread a results path through `load()` / `load_judgments()` /
+`load_probes()` (currently bound to the module-level `RESULTS`) is needed and in scope.
+
+### 4.E Recommended approach (summary — a recommendation, not a decision)
+
+A **TypeScript SPA** (React + Vite recommended) building to a **static bundle**,
+hosted **fully static on GitHub Pages**, fed by a **Python `export-web` CLI** that
+emits a contract-shaped (`§5`) `index.json` + **per-probe shards** (committed in
+slimmed form; raw data stays gitignored). The app lives at **`apps/jaleesbrowser/`**
+(per architect direction; the name is a suggestion and could be more generic given
+the contract's producer-neutrality). The requester/architect can accept this or
+redirect any of Decisions A–D without disturbing the data contract (§5) or the fixed
+requirements (§3).
 
 ## 5. Data Contract & Extensibility (KEY SECTION — architect requirement)
 
@@ -230,7 +265,7 @@ a plan decision.
 
 ### 5.4 JaleesBench-first, others later
 
-JaleesBench is the only producer now, via the `export-web` CLI (§4.1). The contract
+JaleesBench is the only producer now, via the recommended `export-web` CLI (§4.D). The contract
 is designed so that (a) the Arabic set, once judged, is **another dataset in the same
 format** (new `index.json`, `language: "ar"`), and (b) **a future "load your own
 JSON" affordance** (point the viewer at any conforming `index.json`) is a small
@@ -265,10 +300,12 @@ contract-conforming JSON**, all such content is treated as **untrusted**:
 ### 5.7 Asset paths
 
 All data and JS/CSS assets are referenced by **paths relative to the deployed app
-root**, so the same build works under GitHub Pages' `/jaleesbench/` base and under a
-local dev server at `/` (and any future custom domain). Shard paths in `index.shards`
-are relative to `index.json`. Vite `base` is configurable; the app must not hardcode
-an absolute `/jaleesbench/` prefix in fetch calls.
+root**, so the same build works under a project-path base (e.g. the recommended
+GitHub Pages base `/jaleesbrowser/` or `/jaleesbench/`) and under a local dev server
+at `/` (and any future custom domain or host). Shard paths in `index.shards` are
+relative to `index.json`. The base path is build-configurable (e.g. Vite `base`); the
+app must not hardcode an absolute project-path prefix in fetch calls. This keeps the
+hosting decision (§4.B) from leaking into the code.
 
 ## 6. Detailed behavior (the viewer UX)
 
@@ -310,21 +347,24 @@ an absolute `/jaleesbench/` prefix in fetch calls.
 
 **Critical (resolve before/at spec-approval):**
 
-- **C1 — Commit the exported data?** GitHub Pages serves committed files, and CI
-  cannot regenerate the export (it needs the 190 MB+ gitignored raw results). The
-  slimmed, English-only export (transcripts + verdicts only, dropping `usage`/`raw`/
-  `attempts`/`context_prefix`) is far smaller than the raw set — **estimated ~10–30 MB
-  total** across 140 shards (the assistant responses and rationales dominate; shared
-  prompt text is small). **Recommendation:** commit the exported `index.json` +
-  per-probe shards under `web/` (e.g. `web/public/data/`), keep raw results
-  gitignored. Confirm the actual size and acceptable repo-size impact at review.
-- **C2 — Deployment mechanism.** GitHub Actions building `web/` and deploying to
-  Pages (recommended) vs a `gh-pages` branch. Recommendation: Actions workflow.
+- **C1 — Commit the exported data?** (Applies if the static-hosting recommendation,
+  §4.B, is accepted.) Static hosting serves committed files, and CI cannot regenerate
+  the export (it needs the 190 MB+ gitignored raw results). The slimmed, English-only
+  export (transcripts + verdicts only, dropping `usage`/`raw`/`attempts`/
+  `context_prefix`) is far smaller than the raw set — **estimated ~10–30 MB total**
+  across 140 shards (assistant responses and rationales dominate; shared prompt text is
+  small). **Recommendation:** commit the exported `index.json` + per-probe shards under
+  the app's static-assets dir (e.g. `apps/jaleesbrowser/public/data/`), keep raw
+  results gitignored. Confirm the actual size and acceptable repo-size impact at review.
+- **C2 — Deployment mechanism.** (Applies under §4.B static + GitHub Pages.) GitHub
+  Actions building the app and deploying to Pages (recommended) vs a `gh-pages` branch.
+  Recommendation: Actions workflow that builds the committed app + data (it does not
+  regenerate the export).
 
 **Important (affects design, can be settled in the plan):**
 
 - **I1 — Band scale in the contract:** emit bands on the display scale (−1…+1, per
-  baked decision 6) — recommended — and rely on the export to do the ×0.5. The
+  fixed requirement §3.1.7) — recommended — and rely on the export to do the ×0.5. The
   contract's `bands` ladder declares the display values.
 - **I2 — Shard cell encoding:** flat list vs nested map keyed by subject/conditions
   (plan decision; both satisfy the contract).
@@ -368,8 +408,11 @@ an absolute `/jaleesbench/` prefix in fetch calls.
    defaulting to the post-pressure scope, tolerant of a missing rationale.
 4. The full selection is encoded in the URL; pasting that URL reproduces the exact
    view (shareable deep link).
-5. The app builds to a static bundle and is deployable to GitHub Pages under
-   `/jaleesbench/` with no backend.
+5. The result is publicly accessible with zero install and no backend to run. Under
+   the recommended approach (§4.B) this means the app builds to a static bundle
+   deployable to free static hosting (recommended target: GitHub Pages at the project
+   path). If the requester redirects to a different host/backend (§4.B), this criterion
+   adjusts to that decision while keeping "public + zero-install."
 6. The viewer's types/components contain **no** JaleesBench-specific strings for
    axes, bands, or item metadata — all such values come from the data (verifiable by
    inspection / a reviewer).
@@ -435,7 +478,8 @@ convergent, concrete, and have been incorporated:
   success criterion 11.
 - **Asset/base path** (Gemini): added §5.7 — relative asset paths, configurable Vite
   `base`, so dev (`/`) and Pages (`/jaleesbench/`) both work.
-- **`web/` placement** (Claude): §3.2 fixes `web/` at the repository root.
+- **App placement** (Claude): set at the repository root (later refined to
+  `apps/jaleesbrowser/` per architect spec-approval feedback below).
 - **Data-size estimate** (Claude): §7 C1 now estimates ~10–30 MB for the slimmed
   export.
 - **Shard prompt de-duplication** (Gemini): captured as optional optimization §7 I5;
@@ -446,4 +490,28 @@ convergent, concrete, and have been incorporated:
 - **Scope in URL** (Claude): §6 adds `scope` to the URL state so every view —
   including the verdict scope — is deep-linkable.
 
-*(A second consultation and/or human feedback at spec-approval will be logged here.)*
+### Spec-approval feedback (architect) — de-bake the solution
+
+The architect did **not** approve iteration 1: §3 over-baked the *solution*. The
+requester asked for a tech *recommendation* and is open to alternatives — TypeScript /
+Vite / React / GitHub Pages / no-backend / per-probe shards were **not** decided by
+them. Revised accordingly:
+
+- **§3 now lists only fixed requirements** — the requester's actual asks (public +
+  zero-install; URL deep links; side-by-side two-model comparison with both judges'
+  verdicts; read-only / no harness change; English for now; the §5 data-contract
+  generality; −1…+1 band fidelity) plus hard environmental facts (gitignored raw data,
+  8-subject set, repo hygiene). The framework, hosting, data layout, and export
+  mechanism were **removed from "fixed."**
+- **§4 now weighs four genuine open decisions** — (A) presentation layer, (B) hosting/
+  delivery, (C) data layout, (D) data-prep mechanism — on merit, each with a *reasoned
+  recommendation* the requester/architect can accept or redirect. No option is
+  pre-stamped REJECTED; the backend option (4.B B3) is explicitly kept on the table.
+- **App location** set to `apps/jaleesbrowser/` per the architect's inline note (name
+  flagged as a suggestion given the contract's producer-neutrality).
+- **All substantive review fixes retained** — §5 data contract, §5.6 untrusted-text /
+  fail-soft, `--results-path`, band color, scope-in-URL, responsive/RTL/a11y — these
+  were not relaxed.
+
+*(A second consultation and/or further human feedback at spec-approval will be logged
+here.)*
