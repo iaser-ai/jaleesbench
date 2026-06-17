@@ -1,0 +1,17 @@
+id: '1'
+title: add-a-pytest-test-suite-offlin
+protocol: air
+phase: verified
+plan_phases: []
+current_plan_phase: null
+gates:
+  pr:
+    status: approved
+    requested_at: '2026-06-17T20:51:19.827Z'
+    approved_at: '2026-06-17T23:05:59.022Z'
+iteration: 1
+build_complete: false
+history: []
+started_at: '2026-06-17T20:36:48.443Z'
+updated_at: '2026-06-17T23:06:06.923Z'
+pr_ready_for_human: false
