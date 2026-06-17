@@ -1,4 +1,4 @@
-# taqwabench - AI Agent Instructions
+# JaleesBench - AI Agent Instructions
 
 > **Note**: This file follows the [AGENTS.md standard](https://agents.md/) for cross-tool compatibility with Cursor, GitHub Copilot, and other AI coding assistants. A Claude Code-specific version is maintained in `CLAUDE.md`.
 

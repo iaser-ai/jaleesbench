@@ -84,7 +84,7 @@ RETRIES = 2
 
 
 def load_env() -> None:
-    """Load keys from taqwabench/.env, the iaser Gemini env, and shannon
+    """Load keys from the repo-root .env, the iaser Gemini env, and shannon
     (Friendli + Blackbox). Fail fast if missing."""
     for env_path in [ROOT.parent.parent / ".env",
                      Path("/Users/mwk/Development/iaser/tazkiya/.env"),

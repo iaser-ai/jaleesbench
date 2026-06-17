@@ -1,4 +1,4 @@
-# taqwabench - Claude Code Instructions
+# JaleesBench - Claude Code Instructions
 
 ## Project Overview
 
