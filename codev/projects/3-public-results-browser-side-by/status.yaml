@@ -1,7 +1,7 @@
 id: '3'
 title: public-results-browser-side-by
 protocol: spir
-phase: specify
+phase: plan
 plan_phases: []
 current_plan_phase: null
 gates:
@@ -16,7 +16,7 @@ gates:
   verify-approval:
     status: pending
 iteration: 1
-build_complete: true
+build_complete: false
 history: []
 started_at: '2026-06-17T23:15:34.666Z'
-updated_at: '2026-06-17T23:58:17.024Z'
+updated_at: '2026-06-17T23:58:22.362Z'
