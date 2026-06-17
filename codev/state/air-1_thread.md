@@ -27,3 +27,20 @@ data or `results/`); monkeypatch `prompts._ar_prompts`; fake clients capture cal
 - No canonical data or `results/` touched: tests monkeypatch `collect.DATA` /
   `score.RESULTS` to tmp dirs and `prompts._ar_prompts` to a canned dict.
 - No production logic changed beyond pyproject dev deps + pytest config.
+
+## BLOCKED (porch check mismatch) — 2026-06-17
+Committed as `54b6dbf`. `porch check 1` FAILS because AIR's skeleton
+`protocol.json` implement-phase checks are hardwired to npm:
+  - build → `npm run build`
+  - tests → `npm test -- --exclude='**/e2e/**'`
+This repo is Python/uv — no npm. These checks can never pass here. Not a flaky
+test and not a defect in my work; the suite itself is green (`uv run pytest` →
+45 passed from `jaleesbench/`).
+
+Per role: not editing status.yaml, not bypassing/skipping checks. Escalated to
+architect. Recommended fix: project-local `codev/protocols/air/protocol.json`
+override (resolution tier 2) pointing the implement-phase checks at uv, e.g.
+  - tests → `uv run --directory jaleesbench pytest -q`
+  - build → a real check or no-op (Python has no compile step; "build" needs an
+    architect decision — `uv build --directory jaleesbench`? drop it?).
+Waiting for guidance before re-running `porch check 1` / `porch done 1`.
