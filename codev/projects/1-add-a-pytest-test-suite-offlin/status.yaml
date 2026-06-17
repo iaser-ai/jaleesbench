@@ -1,0 +1,14 @@
+id: '1'
+title: add-a-pytest-test-suite-offlin
+protocol: air
+phase: implement
+plan_phases: []
+current_plan_phase: null
+gates:
+  pr:
+    status: pending
+iteration: 1
+build_complete: false
+history: []
+started_at: '2026-06-17T20:36:48.443Z'
+updated_at: '2026-06-17T20:36:48.444Z'
