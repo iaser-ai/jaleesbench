@@ -36,3 +36,14 @@ UI/types. Captured as a "Data Contract & Extensibility" section in the spec
 
 Next: write spec, commit, `porch done 3`, then STOP at spec-approval gate +
 notify architect.
+
+### Spec drafted + 3-way review done
+Spec committed (c2adf66). `porch done 3` → verification; ran 3-way consult.
+Verdicts: **Gemini COMMENT · Codex REQUEST_CHANGES · Claude APPROVE** — all
+strong, convergent asks. Incorporated all: §5.6 untrusted-content + fail-soft
+load errors; `--results-path` + loader refactor in scope; band `color` in
+contract; same-subject allowed; responsive + RTL-from-language + a11y; §5.7
+relative asset paths; `web/` at repo root; ~10–30MB export size; scope added to
+URL. Consultation Log §10 records each. Next: commit reviewed spec, `porch next`,
+then expect spec-approval gate → STOP + notify architect (gate is the user's
+call, never auto-approve).

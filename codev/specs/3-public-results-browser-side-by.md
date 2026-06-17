@@ -81,7 +81,18 @@ From the **architect** (KEY SPEC REQUIREMENT, baked):
 - **Repository hygiene** (project CLAUDE.md): never `git add -A`/`.`; commit
   messages `[Spec 3] …`; scores reported on −1…+1; no attribution lines.
 - **Raw data is gitignored and lives in the main checkout** (`jaleesbench/results/`),
-  not in the builder worktree. The export reads from a configurable results path.
+  not in the builder worktree. The export must accept a **`--results-path`** (default:
+  the package's `results/`) so it can be pointed at the real data. The existing
+  loaders in `score.py`/`collect.py` are currently bound to the module-level
+  `RESULTS` constant; the **small refactor to thread a results path through `load()`
+  / `load_judgments()` / `load_probes()` is in scope** for this work.
+- **`web/` lives at the repository root** (alongside `jaleesbench/`), not inside the
+  Python package. The GitHub Actions workflow builds from `web/`.
+- **Subject set:** the export reads `collect.jsonl`, which contains exactly the **8
+  main subjects**. The 3 thinking-mode arms live in a separate file
+  (`collect_thinking.jsonl`) and the ansari-steadfast / Arabic arms in their own files;
+  all are out of scope. The export derives its subject list from the data present
+  rather than a hardcoded list.
 - **No new harness behavior**: this spec adds a viewer + an export command; it does
   not change collection, judging, or scoring.
 
@@ -150,12 +161,18 @@ Declares the dataset and everything the pickers need:
 
 - `contractVersion` — string (e.g. `"1.0"`); the viewer checks the major version.
 - `producer` — `{ name, version }` (e.g. `{ "name": "jaleesbench", "version": "…" }`).
-- `dataset` — display metadata: `{ title, description, language }`.
+- `dataset` — display metadata: `{ title, description, language }`. `language` is a
+  BCP-47-ish tag (e.g. `"en"`, `"ar"`); the viewer sets text direction (LTR/RTL) from
+  it so a future Arabic dataset lays out correctly with no code change.
 - `bands` — the **ordered band ladder** on the display scale, e.g.
-  `[{ value: -1, label: "Burns" }, { value: -0.5, label: "Sparks" },
-  { value: 0, label: "Inert" }, { value: 0.5, label: "Scent" },
-  { value: 1, label: "Perfume" }]`. The viewer renders/colors bands purely from this
-  list. (Optional per-band `description` for tooltips.)
+  `[{ value: -1, label: "Burns", color: "#a02020" }, { value: -0.5, label: "Sparks" },
+  { value: 0, label: "Inert", color: "#666" }, { value: 0.5, label: "Scent" },
+  { value: 1, label: "Perfume", color: "#1a6840" }]`. The viewer renders/colors bands
+  **purely from this list** — each band may carry an optional `color` (the producer
+  supplies the palette, keeping the UI generic). When `color` is absent, the viewer
+  derives a neutral positional ramp from each band's ordinal position, so styling
+  never requires JaleesBench-specific code. (Optional per-band `description` for
+  tooltips.) Band labels carry the meaning so color is never the sole differentiator.
 - `subjects` — `[{ id, label }]`: the comparable models. The two model pickers are
   populated from this.
 - `conditionAxes` — **the generic seam for pressure + framing.** An **ordered list of
@@ -228,6 +245,31 @@ unknown fields (forward-compatible). The contract is documented in-repo (a short
 `web/CONTRACT.md` or equivalent, finalized in the plan) so future producers have a
 spec to target. Breaking shape changes bump MAJOR.
 
+### 5.6 Cross-cutting: untrusted content & load-failure robustness
+
+Because the viewer renders **model-authored text** (transcripts, judge summaries and
+rationales, item context) and is intended to eventually load **arbitrary
+contract-conforming JSON**, all such content is treated as **untrusted**:
+
+- **Render model/producer text as escaped plain text.** No raw-HTML injection. React's
+  default text rendering (which escapes) satisfies this; `dangerouslySetInnerHTML` is
+  prohibited for any producer-sourced field. If a later iteration wants markdown
+  rendering, it MUST run through a sanitizer (e.g. DOMPurify) with HTML disabled —
+  but MVP renders plain text, preserving line breaks via CSS, not markup.
+- **Fail soft on bad data assets**, with a visible, non-crashing error state for each:
+  (a) `index.json` fetch failure or malformed JSON; (b) incompatible
+  `contractVersion` MAJOR (show "unsupported data version"); (c) a missing or
+  malformed per-item shard; (d) a referenced subject/judge/axis value absent from the
+  data. None of these may throw an unhandled runtime error that blanks the page.
+
+### 5.7 Asset paths
+
+All data and JS/CSS assets are referenced by **paths relative to the deployed app
+root**, so the same build works under GitHub Pages' `/jaleesbench/` base and under a
+local dev server at `/` (and any future custom domain). Shard paths in `index.shards`
+are relative to `index.json`. Vite `base` is configurable; the app must not hardcode
+an absolute `/jaleesbench/` prefix in fetch calls.
+
 ## 6. Detailed behavior (the viewer UX)
 
 - **Pickers:** question (searchable by id/title across 140 probes), Model A, Model B,
@@ -244,14 +286,25 @@ spec to target. Breaking shape changes bump MAJOR.
   turn-1 verdict. Tolerate a missing rationale (v2 overlay).
 - **Band legend:** a small legend rendering the band ladder (Burns…Perfume) from
   `index.bands` so the colors/labels are explained.
+- **Same subject on both sides:** permitted (renders two identical columns); the
+  pickers do not hard-block it. Default state picks two *different* subjects.
 - **URL state (shareable deep link):** the full selection is encoded in the query
-  string — `item`, `a` (subjectA), `b` (subjectB), and one param per condition axis
-  key (`pressure`, `framing`). Reading the params is generic (iterate
-  `conditionAxes`). Changing any picker updates the URL (history replace); loading a
-  URL restores the exact view. Example:
-  `…/jaleesbench/?item=JLS-001&a=ansari&b=qwen3-235b&pressure=insistence&framing=unstated`.
-- **Empty/edge states:** missing cell → "no data"; unknown URL values → fall back to
-  defaults without crashing.
+  string — `item`, `a` (subjectA), `b` (subjectB), one param per condition axis key
+  (`pressure`, `framing`), and `scope` (the verdict scope, default the contract's
+  default). Encoding/decoding the axis params is generic (iterate `conditionAxes`).
+  Changing any picker updates the URL (history replace); loading a URL restores the
+  exact view — **every view, including the scope choice, is a shareable deep link.**
+  Example:
+  `…/jaleesbench/?item=JLS-001&a=ansari&b=qwen3-235b&pressure=insistence&framing=unstated&scope=full`.
+- **Responsive layout:** desktop shows the two columns side by side; on narrow
+  (mobile) viewports the comparison falls back to a stacked or tabbed view so it
+  remains usable (SHOULD).
+- **Content safety & a11y:** all transcript/verdict text is rendered as escaped plain
+  text (see §5.6); band meaning is conveyed by label (not color alone), and pickers
+  are keyboard-navigable.
+- **Empty/edge states:** missing cell → "no data for this combination"; unknown URL
+  values (bad probe id, unknown subject/axis value, unsupported version) → fall back
+  to defaults / show a clear error without crashing (see §5.6).
 
 ## 7. Open Questions
 
@@ -259,10 +312,12 @@ spec to target. Breaking shape changes bump MAJOR.
 
 - **C1 — Commit the exported data?** GitHub Pages serves committed files, and CI
   cannot regenerate the export (it needs the 190 MB+ gitignored raw results). The
-  slimmed, English-only export (transcripts + verdicts only, no usage/raw fields) is
-  far smaller than the raw set. **Recommendation:** commit the exported
-  `index.json` + per-probe shards under `web/` (e.g. `web/public/data/`), keep raw
-  results gitignored. Confirm acceptable repo-size impact at review.
+  slimmed, English-only export (transcripts + verdicts only, dropping `usage`/`raw`/
+  `attempts`/`context_prefix`) is far smaller than the raw set — **estimated ~10–30 MB
+  total** across 140 shards (the assistant responses and rationales dominate; shared
+  prompt text is small). **Recommendation:** commit the exported `index.json` +
+  per-probe shards under `web/` (e.g. `web/public/data/`), keep raw results
+  gitignored. Confirm the actual size and acceptable repo-size impact at review.
 - **C2 — Deployment mechanism.** GitHub Actions building `web/` and deploying to
   Pages (recommended) vs a `gh-pages` branch. Recommendation: Actions workflow.
 
@@ -273,6 +328,12 @@ spec to target. Breaking shape changes bump MAJOR.
   contract's `bands` ladder declares the display values.
 - **I2 — Shard cell encoding:** flat list vs nested map keyed by subject/conditions
   (plan decision; both satisfy the contract).
+- **I5 — Shard prompt de-duplication (optimization, optional):** within a probe the
+  turn-1 question is identical across all cells and each pressure turn is identical
+  across subjects/framings. The canonical contract keeps the full transcript per cell
+  (simplest for the viewer); an optional shard-root shared-prompt table the viewer
+  rehydrates is a possible size optimization. Default: inline full transcripts unless
+  measured size (C1) warrants the optimization.
 - **I3 — Show both scopes or just `full`?** Default `full`, expose `turn1` as a
   secondary view (recommended).
 - **I4 — Search/scale of question picker** (140 items): simple searchable
@@ -315,16 +376,24 @@ spec to target. Breaking shape changes bump MAJOR.
 
 **Functional (SHOULD):**
 
-7. Missing cells and malformed/absent URL params fail soft (no crash).
-8. A band legend explains the Burns…Perfume ladder from the data.
+7. Missing cells, malformed/absent URL params, and bad data assets (unreachable or
+   malformed `index.json`/shard, unsupported `contractVersion` MAJOR) fail soft with a
+   visible, non-crashing error state (§5.6).
+8. A band legend explains the Burns…Perfume ladder from the data (colors from
+   `index.bands`, with a positional fallback when `color` is absent).
 9. A short in-repo contract doc (`CONTRACT.md`) describes the format for future
    producers.
+10. The export accepts `--results-path`, defaulting to the package `results/` dir.
+11. Responsive fallback (stacked/tabbed) on narrow viewports; band meaning conveyed by
+    label, not color alone; pickers keyboard-navigable.
 
 **Non-functional:**
 
-10. Initial load fetches only `index.json` (small); per-probe detail is lazy-loaded.
-11. Export is deterministic and re-runnable (idempotent output for the same input).
-12. No secrets, no large raw `.jsonl`, no `.vertex-sa.json` committed.
+12. Initial load fetches only `index.json` (small); per-probe detail is lazy-loaded.
+13. Export is deterministic and re-runnable (idempotent output for the same input).
+14. No secrets, no large raw `.jsonl`, no `.vertex-sa.json` committed.
+15. **Security:** all producer/model-authored text is rendered escaped/plain; no
+    `dangerouslySetInnerHTML` on producer data (§5.6).
 
 **Test scenarios:**
 
@@ -334,8 +403,47 @@ spec to target. Breaking shape changes bump MAJOR.
 - A cell known to be polarizing (e.g. JLS-006 ansari +1 vs a Burns side) renders both
   transcripts and opposed bands.
 - A v2-overlaid judgment (no `rationale`) renders without error.
+- A malformed/absent shard and an unsupported `contractVersion` each render a
+  fail-soft error state, not a blank page.
+- Producer text containing HTML/markdown (e.g. `<script>` or `**bold**`) renders as
+  literal escaped text, not executed/interpreted.
 
 ## 10. Consultation Log
 
-*(To be populated by the 3-way consultation that porch runs after this draft, and by
-human feedback at spec-approval.)*
+### Iteration 1 — 3-way spec review (gemini / codex / claude)
+
+**Verdicts:** Gemini COMMENT · Codex REQUEST_CHANGES · Claude APPROVE. All three rated
+the spec strong/feasible with a well-designed data contract; the changes were
+convergent, concrete, and have been incorporated:
+
+- **Security / untrusted content** (Codex + Gemini): added §5.6 — render all
+  model/producer text as escaped plain text, prohibit `dangerouslySetInnerHTML` on
+  producer data, sanitize if rich rendering is ever added. Added success criterion 15
+  and a test scenario.
+- **Load-failure robustness** (Codex + Gemini): added §5.6 fail-soft requirements for
+  bad `index.json`/shard fetch, malformed JSON, and incompatible `contractVersion`;
+  folded into success criterion 7 and test scenarios.
+- **Configurable results path** (Codex): §3.2 now mandates `--results-path` and
+  explicitly puts the small loader refactor (threading a path through
+  `load`/`load_judgments`/`load_probes`) in scope; success criterion 10.
+- **Band color in the contract** (Gemini): §5.2 `bands` entries carry an optional
+  `color`, with a positional fallback — keeps the UI generic yet colored.
+- **Same subject on both sides** (Codex): §6 — permitted, not blocked; default picks
+  two different subjects.
+- **Mobile responsive + RTL-from-`language` + a11y** (Gemini + Claude): §6 responsive
+  fallback (SHOULD), §5.2/§6 set text direction from `dataset.language`, a11y nods;
+  success criterion 11.
+- **Asset/base path** (Gemini): added §5.7 — relative asset paths, configurable Vite
+  `base`, so dev (`/`) and Pages (`/jaleesbench/`) both work.
+- **`web/` placement** (Claude): §3.2 fixes `web/` at the repository root.
+- **Data-size estimate** (Claude): §7 C1 now estimates ~10–30 MB for the slimmed
+  export.
+- **Shard prompt de-duplication** (Gemini): captured as optional optimization §7 I5;
+  canonical contract keeps full transcripts per cell for viewer simplicity.
+- **Subject set / experimental arms** (Claude + Codex): §3.2 clarifies the export
+  reads `collect.jsonl` (8 main subjects); thinking/steadfast/Arabic arms are separate
+  files and out of scope.
+- **Scope in URL** (Claude): §6 adds `scope` to the URL state so every view —
+  including the verdict scope — is deep-linkable.
+
+*(A second consultation and/or human feedback at spec-approval will be logged here.)*
