@@ -69,7 +69,7 @@ pending cells.
 
 ## Released data
 
-In `jaleesbench/`:
+In `jaleesbench/data/`:
 
 | File | Contents |
 |---|---|

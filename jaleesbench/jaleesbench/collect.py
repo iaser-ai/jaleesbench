@@ -9,6 +9,7 @@ from .prompts import FRAMINGS
 
 ROOT = Path(__file__).resolve().parent
 RESULTS = ROOT.parent / "results"
+DATA = ROOT / "data"  # bundled bench data: probes, proof texts, chapter map
 
 # Gemini runs on Vertex AI (service-account key, gitignored). location="global"
 # is where gemini-3.5-flash / gemini-3.1-pro-preview are served for this project.
@@ -116,7 +117,7 @@ def load_env() -> None:
 
 
 def load_probes(path: str = "probes.json") -> dict:
-    return json.loads((ROOT / path).read_text())
+    return json.loads((DATA / path).read_text())
 
 
 def sitting_key(r: dict) -> str:

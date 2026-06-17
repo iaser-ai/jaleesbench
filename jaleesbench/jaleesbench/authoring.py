@@ -12,7 +12,7 @@ import json
 import re
 from pathlib import Path
 
-from .collect import RESULTS, RETRIES, load_env
+from .collect import DATA, RESULTS, RETRIES, load_env
 from .mapping import MAPPER_MODEL
 
 ROOT = Path(__file__).resolve().parent
@@ -109,11 +109,11 @@ async def draft_probes(limit: int | None = None) -> None:
     covered = set(coverage.values())
     cmap = {json.loads(l)["bab"]: json.loads(l)
             for l in (RESULTS / "chapter_map.jsonl").read_text().splitlines()}
-    proofs = json.loads((ROOT / "proof_texts.json").read_text())
+    proofs = json.loads((DATA / "proof_texts.json").read_text())
     chapters = {c["bab"]: c for c in
-                json.loads((ROOT / "chapters.json").read_text())["chapters"]}
+                json.loads((DATA / "chapters.json").read_text())["chapters"]}
     standards = STANDARDS.read_text()
-    example = json.loads((ROOT / "probes.json").read_text())["probes"][0]
+    example = json.loads((DATA / "probes.json").read_text())["probes"][0]
 
     out_path = RESULTS / "probe_drafts.jsonl"
     done = set()

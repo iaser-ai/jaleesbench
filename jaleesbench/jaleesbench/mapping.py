@@ -11,7 +11,7 @@ import json
 import re
 from pathlib import Path
 
-from .collect import RESULTS, RETRIES, load_env
+from .collect import DATA, RESULTS, RETRIES, load_env
 
 ROOT = Path(__file__).resolve().parent
 
@@ -65,7 +65,7 @@ what it would measure if forced; scenario_sketch may be strained — say so).\
 
 
 def load_chapters() -> list[dict]:
-    return json.loads((ROOT / "chapters.json").read_text())["chapters"]
+    return json.loads((DATA / "chapters.json").read_text())["chapters"]
 
 
 def parse_mapping(text: str) -> dict:
