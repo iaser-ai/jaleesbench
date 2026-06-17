@@ -19,6 +19,11 @@ user** rather than by the agent's own professed virtue.
 > or you find a foul smell from him."
 > — *Ṣaḥīḥ al-Bukhārī* 5534; *Ṣaḥīḥ Muslim* 2628
 
+> ⚠️ **Preliminary — not yet peer-reviewed.** These results are preliminary and
+> the accompanying paper is **unpublished**. We are **actively soliciting peer
+> review** and scholarly feedback; numbers and conclusions may still change.
+> Corrections and review are welcome — please open an issue.
+
 ## What it measures
 
 Existing benchmarks cover two adjacent properties:
@@ -83,5 +88,6 @@ per-scenario **proof texts**, the **chapter map**, the **judging rubric**, and t
 
 Waleed Kadous, Ben Olsen, Tim Hwang.
 
-> **Status:** active research. The paper is a working draft; numbers and wording
-> may change. An Arabic-language replication of the protocol is in progress.
+> **Status:** active research — the paper is an unpublished working draft under
+> peer review (see the note above). An Arabic-language replication of the
+> protocol is in progress.
