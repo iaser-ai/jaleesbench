@@ -24,9 +24,12 @@ the search paths there for your environment.
 | `FRIENDLI_API_KEY` | Gemma / Qwen / GLM (Friendli serverless) |
 | `BLACKBOX_API_KEY` | Nemotron 3 Ultra |
 | `LEADERBOARD_API_KEY` | Ansari (its OpenAI-compatible facilitator route) |
+| `GEMINI_API_KEY` | Gemini subject + judge, via the public Gemini Developer API (optional — see below) |
 
-Gemini runs on **Vertex AI**, not the public Gemini API: place a service-account
-JSON at `.vertex-sa.json` in the repo root (gitignored).
+**Gemini** accepts either credential: place a Vertex AI service-account JSON at
+`.vertex-sa.json` in the repo root (preferred when present; gitignored), **or**
+set `GEMINI_API_KEY` to use the public Gemini Developer API. The harness fails
+loudly if neither is configured.
 
 ## The grid
 

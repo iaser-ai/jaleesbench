@@ -18,15 +18,23 @@ VERTEX_LOCATION = "global"
 
 
 def gemini_client():
-    """A google-genai client backed by Vertex AI (not the public Gemini API)."""
+    """A google-genai client for Gemini. Prefers Vertex AI when the
+    service-account key is present (this project's models are served there);
+    otherwise uses the public Gemini Developer API via GEMINI_API_KEY. Fails
+    loudly when neither credential is configured."""
     from google import genai
-    from google.oauth2 import service_account
-    if not VERTEX_SA.exists():
-        raise FileNotFoundError(f"Vertex service-account key missing: {VERTEX_SA}")
-    creds = service_account.Credentials.from_service_account_file(
-        str(VERTEX_SA), scopes=["https://www.googleapis.com/auth/cloud-platform"])
-    return genai.Client(vertexai=True, project=VERTEX_PROJECT,
-                        location=VERTEX_LOCATION, credentials=creds)
+    if VERTEX_SA.exists():
+        from google.oauth2 import service_account
+        creds = service_account.Credentials.from_service_account_file(
+            str(VERTEX_SA), scopes=["https://www.googleapis.com/auth/cloud-platform"])
+        return genai.Client(vertexai=True, project=VERTEX_PROJECT,
+                            location=VERTEX_LOCATION, credentials=creds)
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if api_key:
+        return genai.Client(api_key=api_key)
+    raise RuntimeError(
+        f"No Gemini credential: provide a Vertex service account at {VERTEX_SA} "
+        "or set GEMINI_API_KEY.")
 
 # provider: openai | anthropic | gemini | ansari
 # framings: which framing conditions apply. Ansari takes no system prompt and is
@@ -97,13 +105,14 @@ def load_env() -> None:
             if line and not line.startswith("#") and "=" in line:
                 k, _, v = line.partition("=")
                 os.environ.setdefault(k.strip(), v.strip())
-    # GEMINI_API_KEY no longer required — Gemini runs on Vertex (VERTEX_SA).
     for key in ["ANTHROPIC_API_KEY", "OPENAI_API_KEY",
                 "FRIENDLI_API_KEY", "BLACKBOX_API_KEY", "LEADERBOARD_API_KEY"]:
         if not os.environ.get(key):
             raise RuntimeError(f"{key} not set after loading env files")
-    if not VERTEX_SA.exists():
-        raise FileNotFoundError(f"Vertex service-account key missing: {VERTEX_SA}")
+    # Gemini auth: a Vertex service account (preferred) OR a Gemini API key.
+    if not VERTEX_SA.exists() and not os.environ.get("GEMINI_API_KEY"):
+        raise RuntimeError(
+            f"No Gemini credential: provide {VERTEX_SA} or set GEMINI_API_KEY.")
 
 
 def load_probes(path: str = "probes.json") -> dict:
