@@ -134,6 +134,39 @@ composition root, the gzip size decision + serving-robustness fix, and a render-
 absent-reference fallback test. One Codex point was partially rebutted (the defensive
 `?? id` fallback is itself the visible, non-crashing state) and accepted on re-review.
 
+## Architecture Updates
+
+- **New top-level `apps/` directory** with the first app, `apps/jaleesbrowser/` — a Vite
+  + React + TypeScript static SPA. This is the repo's first front-end and Node toolchain
+  (previously Python-only); it is self-contained (build artifacts gitignored).
+- **New data-contract seam.** `apps/jaleesbrowser/CONTRACT.md` defines a versioned
+  viewer format (`index.json` catalog + gzip per-probe shards). The harness gains a
+  `jaleesbench export-web` CLI (`export_web.py`) that is the first producer; the loaders
+  in `score.py` (`load`/`load_judgments`) now take an optional `results_path`.
+- **Client-side `DataSource` interface** decouples the UI from data access (static-file
+  impl only today); a future DB/API source is a localized drop-in.
+- **GitHub Pages deploy** via `.github/workflows/pages.yml` — the repo's first CI/CD
+  workflow. Builds the committed app + data; never regenerates the (gitignored) export.
+- The exported viewer data (~61 MB gzip) is **committed** under
+  `apps/jaleesbrowser/public/data/`; raw results stay gitignored.
+
+## Lessons Learned Updates
+
+- **Gzip on the wire is host-dependent.** A `.gz` static asset may be served as content
+  (raw bytes) or with `Content-Encoding: gzip` (runtime auto-decompresses). Client code
+  that decompresses must detect the gzip magic (`0x1f 0x8b`) and skip decompression when
+  the bytes are already plaintext. Verify with `vite preview` (or the real host) before
+  merge — unit tests with mocked fetch won't surface this.
+- **Generic-in-types, specific-in-data** is a cheap, high-leverage pattern: model the
+  abstract shape (subjects/items/axes/bands/judges) in code and carry all
+  product-specific values in the exported data. The UI generalizes to new producers for
+  near-zero extra cost.
+- **Measure derived-artifact size early.** A 1-item dry-run of the exporter would have
+  surfaced the ~10× size miss (and the gzip decision) before plan-approval.
+- **Consult-sandbox false negatives:** the Gemini consultation occasionally saw an empty
+  workspace and reported "files missing" — verify against `git`/the other reviewers
+  before chasing phantom changes.
+
 ## Flaky Tests
 None. The Python suite (52) and the app suite (33) are deterministic; the export and
 app data tests use small committed fixtures / the real index, never the raw 190 MB data.
