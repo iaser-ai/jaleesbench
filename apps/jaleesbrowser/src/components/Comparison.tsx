@@ -15,6 +15,10 @@ import { Verdicts } from "./Verdicts";
  *     after it, and the verdict AFTER the pressure (post scope) appears after the
  *     pressure exchange.
  * A missing cell renders a fail-soft "no data" state on its side.
+ *
+ * When `selection.b` is "" (none), the right column is dropped entirely and the
+ * view collapses to a single model (model A): one response, one verdict column
+ * per stage — the two judges still sit side by side within it.
  */
 export function Comparison({
   index,
@@ -30,8 +34,12 @@ export function Comparison({
     [index.conditionAxes],
   );
   const cells = useMemo(() => indexCells(shard, axisKeys), [shard, axisKeys]);
+  // selection.b === "" → no second model: single-column view.
+  const single = selection.b === "";
   const cellA = cells.get(cellKey(selection.a, selection.conditions, axisKeys));
-  const cellB = cells.get(cellKey(selection.b, selection.conditions, axisKeys));
+  const cellB = single
+    ? undefined
+    : cells.get(cellKey(selection.b, selection.conditions, axisKeys));
   const labelA = subjectLabel(index, selection.a);
   const labelB = subjectLabel(index, selection.b);
   const maxTurns = Math.max(
@@ -62,13 +70,15 @@ export function Comparison({
               <p className="no-data">No data.</p>
             )}
           </div>
-          <div className="column-verdicts">
-            {cellB ? (
-              <Verdicts index={index} cell={cellB} scope={scope.id} />
-            ) : (
-              <p className="no-data">No data.</p>
-            )}
-          </div>
+          {!single && (
+            <div className="column-verdicts">
+              {cellB ? (
+                <Verdicts index={index} cell={cellB} scope={scope.id} />
+              ) : (
+                <p className="no-data">No data.</p>
+              )}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -76,7 +86,7 @@ export function Comparison({
   const rows: ReactNode[] = [
     <div className="cmp-row cmp-headers" key="headers">
       <ColumnHeader index={index} label={labelA} cell={cellA} />
-      <ColumnHeader index={index} label={labelB} cell={cellB} />
+      {!single && <ColumnHeader index={index} label={labelB} cell={cellB} />}
     </div>,
   ];
   for (let i = 0; i < maxTurns; i++) {
@@ -87,7 +97,7 @@ export function Comparison({
       rows.push(
         <div className="cmp-row" key={`t${i}`}>
           <TurnCell turn={cellA?.transcript[i]} />
-          <TurnCell turn={cellB?.transcript[i]} />
+          {!single && <TurnCell turn={cellB?.transcript[i]} />}
         </div>,
       );
       if (i === firstAssistant) rows.push(verdictStage(initialScope, `v-init-${i}`));
@@ -95,7 +105,7 @@ export function Comparison({
     }
   }
 
-  return <div className="comparison">{rows}</div>;
+  return <div className={single ? "comparison single" : "comparison"}>{rows}</div>;
 }
 
 function ColumnHeader({

@@ -352,6 +352,11 @@ h1 {
   align-items: start;
 }
 
+/* Single-model view (model B = none): collapse the two columns to one. */
+.comparison.single .cmp-row {
+  grid-template-columns: 1fr;
+}
+
 .cmp-headers {
   margin-bottom: 0.2rem;
 }

@@ -47,9 +47,18 @@ describe("computeGuided", () => {
     expect(computeGuided(INDEX).map((l) => l.key)).toEqual(["split", "judges", "flips"]);
   });
 
-  it("uses the strongest model (highest total across stages) as the alternative in every entry", () => {
-    for (const list of computeGuided(INDEX)) {
-      for (const e of list.entries) expect(e.params.b).toBe("a");
+  it("uses the strongest model as model B only in the side-by-side split list", () => {
+    const split = computeGuided(INDEX).find((l) => l.key === "split");
+    expect(split?.entries.length).toBeGreaterThan(0);
+    for (const e of split?.entries ?? []) expect(e.params.b).toBe("a");
+  });
+
+  it("opens the judges-differed and pressure-flips lists single-model (b empty)", () => {
+    const lists = computeGuided(INDEX);
+    for (const key of ["judges", "flips"]) {
+      const list = lists.find((l) => l.key === key);
+      expect(list?.entries.length).toBeGreaterThan(0);
+      for (const e of list?.entries ?? []) expect(e.params.b).toBe("");
     }
   });
 
@@ -57,8 +66,11 @@ describe("computeGuided", () => {
     expect(computeGuided(INDEX).find((l) => l.key === "split")?.entries[0]?.params.a).toBe("b");
   });
 
-  it("pressure-flips A is the biggest mover, excluding the best", () => {
-    expect(computeGuided(INDEX).find((l) => l.key === "flips")?.entries[0]?.params.a).toBe("b");
+  it("pressure-flips no longer reserves the best model: it is now eligible as A", () => {
+    // a and b both move 0.5; with best ("a") no longer excluded, it wins the tie by order.
+    const flips = computeGuided(INDEX).find((l) => l.key === "flips");
+    expect(flips?.entries[0]?.params.a).toBe("a");
+    expect(flips?.entries[0]?.params.b).toBe("");
   });
 
   it("returns nothing without a score blob", () => {

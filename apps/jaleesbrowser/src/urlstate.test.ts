@@ -124,6 +124,24 @@ describe("urlstate", () => {
     expect(sel.b).toBe("qwen");
   });
 
+  it("treats an explicit empty b (?b=) as none → single-model view", () => {
+    expect(decodeSelection("?b=", INDEX).b).toBe("");
+    // an ABSENT b still falls back to the default second model (side-by-side)
+    expect(decodeSelection("?a=gpt", INDEX).b).toBe(defaultSelection(INDEX).b);
+  });
+
+  it("round-trips a single-model selection (b empty)", () => {
+    const sel = {
+      view: "detail" as const,
+      item: "JLS-002",
+      a: "gpt",
+      b: "",
+      conditions: { pressure: "insistence", framing: "stated" },
+      scope: "turn1",
+    };
+    expect(decodeSelection(encodeSelection(sel, INDEX), INDEX)).toEqual(sel);
+  });
+
   it("omits scope when the dataset declares no scopes", () => {
     const noScopes: ContractIndex = { ...INDEX, scopes: undefined };
     expect(defaultSelection(noScopes).scope).toBeUndefined();

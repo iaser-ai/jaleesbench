@@ -17,7 +17,7 @@ export interface Selection {
   item: string;
   /** subject id, left column */
   a: string;
-  /** subject id, right column */
+  /** subject id, right column; "" means none → single-model view (no side-by-side) */
   b: string;
   /** axisKey -> valueId, one entry per conditionAxis */
   conditions: Record<string, string>;
@@ -69,7 +69,9 @@ export function decodeSelection(search: string, index: ContractIndex): Selection
     view: VIEWS.includes(view as View) ? (view as View) : def.view,
     item: hasId(index.items, item) ? item : def.item,
     a: hasId(index.subjects, a) ? a : def.a,
-    b: hasId(index.subjects, b) ? b : def.b,
+    // An explicit empty `b` (`?b=`) is the "none" sentinel → single-model view.
+    // Absent `b` falls back to the default second model (side-by-side).
+    b: b === "" ? "" : hasId(index.subjects, b) ? b : def.b,
     conditions,
     ...(def.scope !== undefined
       ? { scope: hasId(index.scopes, scope) ? scope : def.scope }

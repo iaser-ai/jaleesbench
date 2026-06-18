@@ -5,8 +5,10 @@
  *     per-judge band values, which aren't in the score blob), reused here;
  *  3. Biggest pressure flips — biggest move from the first response to post-pressure.
  *
- * In every list the "alternative" (model B) is the strongest model overall — the
- * one with the highest total score summed across the initial and post stages.
+ * Only list (1) is a genuine A-vs-B contrast: there model B is the strongest model
+ * overall (highest total score across the initial and post stages). Lists (2) and
+ * (3) are about a SINGLE model's behaviour, so they open in the single-model view
+ * (model B = "" / none) — pitting them against the strongest model added nothing.
  */
 import type { ContractIndex } from "./contract";
 import { defaultScopeId, scoreAt } from "./scores";
@@ -81,6 +83,15 @@ export function computeGuided(index: ContractIndex): GuidedList[] {
     ...(post ? { scope: post } : {}),
   });
 
+  // Single-model view: b="" is the explicit "none" sentinel (see urlstate).
+  const mkSingle = (item: string, a: string, c: Record<string, string>): Record<string, string> => ({
+    item,
+    a,
+    b: "",
+    ...c,
+    ...(post ? { scope: post } : {}),
+  });
+
   // (1) Models split — biggest first-stage divergence from the strongest model.
   const splits: { item: string; c: Record<string, string>; a: string; gap: number }[] = [];
   if (initial) {
@@ -110,8 +121,8 @@ export function computeGuided(index: ContractIndex): GuidedList[] {
     params: mkParams(r.item, r.a, r.c),
   }));
 
-  // (3) Biggest pressure flips — biggest |post − initial| move (excluding the
-  // strongest model, which is always the alternative).
+  // (3) Biggest pressure flips — biggest |post − initial| move. Single-model view,
+  // so every model is eligible (no model is reserved as an alternative).
   const flips: { item: string; c: Record<string, string>; a: string; mag: number }[] = [];
   if (initial && post) {
     for (const item of index.items) {
@@ -119,7 +130,6 @@ export function computeGuided(index: ContractIndex): GuidedList[] {
         let a = "";
         let mag = -1;
         for (const sub of subjects) {
-          if (sub === best) continue;
           const vi = scoreAt(index, sub, item.id, c, initial);
           const vp = scoreAt(index, sub, item.id, c, post);
           if (vi === null || vp === null) continue;
@@ -136,15 +146,15 @@ export function computeGuided(index: ContractIndex): GuidedList[] {
   flips.sort((x, y) => y.mag - x.mag || (x.item < y.item ? -1 : 1));
   const flipEntries = pickPerItem(flips, 12).map((r) => ({
     label: `${r.item} · ${subjLabel(index, r.a)} moved ${r.mag.toFixed(1)}`,
-    params: mkParams(r.item, r.a, r.c),
+    params: mkSingle(r.item, r.a, r.c),
   }));
 
   // (2) Judges differed — cells/model from the export (needs per-judge data); kept,
-  // but the alternative is set to the strongest model.
+  // but shown single-model (b="") since it's about one model's split, not a contrast.
   const baked = (index.presets ?? []).find((p) => /judg/i.test(p.key));
   const judgeEntries = (baked?.entries ?? []).map((e) => ({
     label: e.label,
-    params: { ...e.params, b: best },
+    params: { ...e.params, b: "" },
   }));
 
   const lists: GuidedList[] = [

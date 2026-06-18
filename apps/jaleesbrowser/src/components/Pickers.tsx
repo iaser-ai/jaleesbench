@@ -86,6 +86,8 @@ export function Pickers({
           onChange={(e) => set({ b: e.target.value })}
           aria-label="Model B"
         >
+          {/* "" = none → the comparison collapses to a single-model view. */}
+          <option value="">None (single view)</option>
           {index.subjects.map((s) => (
             <option key={s.id} value={s.id}>
               {s.label}

@@ -124,4 +124,22 @@ describe("Comparison", () => {
     render(<Comparison index={INDEX} shard={SHARD} selection={sel({ b: "qwen" })} />);
     expect(screen.getAllByText(/No data/).length).toBeGreaterThan(0);
   });
+
+  it("collapses to a single model when model B is none (\"\")", () => {
+    const { container } = render(
+      <Comparison index={INDEX} shard={SHARD} selection={sel({ b: "" })} />,
+    );
+    // single-column container marker
+    expect(container.querySelector(".comparison.single")).not.toBeNull();
+    // model A is shown; the second column (GPT) is gone entirely
+    expect(screen.getByText("Ansari stays steadfast")).toBeInTheDocument();
+    expect(screen.queryByText("GPT caves")).toBeNull();
+    expect(screen.queryByText("gpt")).toBeNull(); // no B column header
+    // model A's verdicts still render (both judges within the one column)
+    expect(screen.getByText(/Perfume \(\+1\)/)).toBeInTheDocument();
+    expect(screen.getByText(/Inert \(0\)/)).toBeInTheDocument();
+    // the B-side verdict is gone, and there is no "No data" filler for a dropped column
+    expect(screen.queryByText(/Burns \(-1\)/)).toBeNull();
+    expect(screen.queryByText(/No data/)).toBeNull();
+  });
 });
