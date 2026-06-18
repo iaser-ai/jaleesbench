@@ -153,7 +153,7 @@ def _write_json_gz(path: Path, obj) -> int:
 
 
 def export_web(results_path=None, out_dir: Path = None, limit: int = None) -> dict:
-    """Export the results to `out_dir` as `index.json` + `data/probes/<id>.json`.
+    """Export the results to `out_dir` as `index.json` + `probes/<id>.json.gz`.
 
     `results_path` (default: package `results/`) is the raw results directory.
     `limit` exports only the first N probes (by id) — handy for fixtures/dev.
