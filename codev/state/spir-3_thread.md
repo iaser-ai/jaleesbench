@@ -161,3 +161,33 @@ gzip (D1/D3/P1/P2/P5 + consult-log); (2) CONTRACT.md said ~30MB/~7× — fixed t
 ~62MB/~3.5%. Claude minor: summary emitted null when direction absent → now
 conditional (matches rationale). Rebuttal written. Tests still 52 pass. Next:
 commit review fixes, `porch done 3` → expect phase advance to phase_2_scaffold.
+
+### Phase 1 APPROVED (iter 2 unanimous) → Phase 2
+Committed review fixes (680c1e1). porch done → iter-2 re-consult (porch generated
+iter2-context.md from rebuttal). **iter 2: Gemini/Codex/Claude ALL APPROVE.** porch
+advanced to **phase_2_scaffold** iteration 1. Note: porch implement check stays
+`uv run --directory jaleesbench pytest -q` (Python) for every phase per architect —
+the TS build+Vitest are verified by me (phase acceptance) + Pages CI.
+
+## 2026-06-18 — Phase 2 (phase_2_scaffold)
+Vite+React+TS app at apps/jaleesbrowser/: contract.ts (types), datasource.ts
+(DataSource interface + StaticFileDataSource w/ gzip DecompressionStream + version
+check), minimal App smoke view, Vitest+jsdom+@testing-library. Mini-fixture in
+public/data/. Verify TS build+test myself.
+
+### Phase 2 built + verified
+Scaffold: package.json (React18/Vite6/Vitest2/TS5.7), tsconfig (base ./, strict),
+vite.config (base:"./", jsdom test env), vitest.setup, index.html, .gitignore
+(node_modules/dist). src/: contract.ts (generic types, no JB strings),
+datasource.ts (DataSource iface + StaticFileDataSource: gzip via
+DecompressionStream + version check + UnsupportedVersionError), App.tsx (smoke:
+counts from index), main.tsx, datasource.test.ts (6: index load/version/malformed/
+non-OK/gunzip/missing-id — gzips via CompressionStream to stay web-standard),
+App.test.tsx (2: renders counts via fake DataSource; fail-soft alert).
+**npm run build (tsc+vite) ✓; npm test 8/8 ✓; dist uses relative ./assets/.**
+Integration cleanup: exporter shard dir `data/probes/`→`probes/` (avoids double
+`data/` in served URL); updated export_web.py + test_export_web.py + CONTRACT.md +
+plan. Fixture regenerated (public/data/index.json + probes/JLS-001.json.gz, 464KB).
+Full python suite 52 ✓. npm audit: 5 vulns in dev tooling (transitive) — not
+touching runtime bundle (just React); left as-is (audit fix --force risks breakage).
+Next: commit Phase 2, porch done → 3-way review.

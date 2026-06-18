@@ -215,11 +215,12 @@ def export_web(results_path=None, out_dir: Path = None, limit: int = None) -> di
                   for pid in present],
         # Shards are gzip-compressed JSON (~3.5× smaller on this rationale-heavy
         # text); the viewer decompresses client-side. index.json stays plain.
-        "shards": {pid: f"data/probes/{pid}.json.gz" for pid in present},
+        # Paths are relative to index.json (both live under the export root).
+        "shards": {pid: f"probes/{pid}.json.gz" for pid in present},
     }
 
     out_dir.mkdir(parents=True, exist_ok=True)
-    probes_dir = out_dir / "data" / "probes"
+    probes_dir = out_dir / "probes"
     probes_dir.mkdir(parents=True, exist_ok=True)
 
     sittings_by_probe = defaultdict(list)

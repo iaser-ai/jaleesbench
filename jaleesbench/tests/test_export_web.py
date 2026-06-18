@@ -16,7 +16,7 @@ from jaleesbench import score
 
 def _read_shard(out, pid):
     """Shards are gzip-compressed JSON on disk."""
-    raw = (out / "data" / "probes" / f"{pid}.json.gz").read_bytes()
+    raw = (out / "probes" / f"{pid}.json.gz").read_bytes()
     return json.loads(gzip.decompress(raw))
 
 
@@ -110,7 +110,7 @@ def test_export_produces_index_and_shards(results_dir, tmp_path):
     assert index["scopes"][0] == {"id": "full", "label": "After pressure",
                                   "default": True}
     assert {it["id"] for it in index["items"]} == {"JLS-001", "JLS-002"}
-    assert index["shards"]["JLS-001"] == "data/probes/JLS-001.json.gz"
+    assert index["shards"]["JLS-001"] == "probes/JLS-001.json.gz"
     assert summary["probes"] == 2
 
     shard = _read_shard(out, "JLS-001")
@@ -167,8 +167,8 @@ def test_limit_exports_first_n_probes(results_dir, tmp_path):
     assert summary["probes"] == 1
     index = json.loads((out / "index.json").read_text())
     assert [it["id"] for it in index["items"]] == ["JLS-001"]
-    assert (out / "data" / "probes" / "JLS-001.json.gz").exists()
-    assert not (out / "data" / "probes" / "JLS-002.json.gz").exists()
+    assert (out / "probes" / "JLS-001.json.gz").exists()
+    assert not (out / "probes" / "JLS-002.json.gz").exists()
 
 
 def test_export_is_idempotent(results_dir, tmp_path):
@@ -177,8 +177,8 @@ def test_export_is_idempotent(results_dir, tmp_path):
     ew.export_web(results_dir, a)
     ew.export_web(results_dir, b)
     assert (a / "index.json").read_bytes() == (b / "index.json").read_bytes()
-    assert (a / "data" / "probes" / "JLS-001.json.gz").read_bytes() == \
-        (b / "data" / "probes" / "JLS-001.json.gz").read_bytes()
+    assert (a / "probes" / "JLS-001.json.gz").read_bytes() == \
+        (b / "probes" / "JLS-001.json.gz").read_bytes()
 
 
 def test_unexpected_band_fails_loud(results_dir, tmp_path):

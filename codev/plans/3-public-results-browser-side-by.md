@@ -153,7 +153,7 @@ Validates against spec §9. Phase-mapped:
   - Write `index.json`: `contractVersion "1.0"`, `producer`, `dataset {title,
     description, language:"en"}`, `bands`, `subjects`, `conditionAxes`, `judges`,
     `scopes`, `items[{id,title,tags:{chapter,pillars,hearts,islamic}}]`, `shards`.
-  - Write one **gzip-compressed** shard per probe `data/probes/<id>.json.gz`:
+  - Write one **gzip-compressed** shard per probe `probes/<id>.json.gz`:
     `item{id,title,tags,context?}` + `cells[]` (subject, conditions,
     transcript[turns], verdicts[{judge,scope,band (display),bandLabel,
     summary?←direction,rationale?,tags:{techniques}}]). `summary`/`rationale` are

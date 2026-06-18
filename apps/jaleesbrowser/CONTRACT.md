@@ -75,11 +75,11 @@ A dataset is two kinds of artifact:
 
   // Where to fetch each item's detail shard — gzip-compressed JSON, path relative
   // to index.json. The viewer fetches and decompresses (DecompressionStream).
-  "shards": { "JLS-001": "data/probes/JLS-001.json.gz", … }
+  "shards": { "JLS-001": "probes/JLS-001.json.gz", … }
 }
 ```
 
-## Per-item shard (e.g. `data/probes/JLS-001.json.gz`)
+## Per-item shard (e.g. `probes/JLS-001.json.gz`, relative to `index.json`)
 
 The shard is **gzip-compressed JSON** on the wire/disk; decompressed it is:
 
