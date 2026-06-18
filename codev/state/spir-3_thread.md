@@ -203,3 +203,20 @@ fixture → fixed synthetic path to `probes/`, added URL-resolution assertion
 (baseUrl ./data/ + probes/… → /data/probes/…), added committed-fixture test
 (asserts v1 + relative probes/ paths). Build ✓, **9 app tests** ✓. Gemini rebutted
 (files exist, committed, Claude verified them). Next: commit fixes, porch done → iter2.
+
+### Phase 2 APPROVED (iter 2 unanimous) → Phase 3
+iter 2: all three APPROVE. porch advanced to phase_3_pickers_url.
+
+## 2026-06-18 — Phase 3 (phase_3_pickers_url)
+Built: urlstate.ts (Selection type; defaultSelection/decodeSelection/encodeSelection
+— generic over conditionAxes, fail-soft: invalid params → defaults), urlstate.test.ts
+(7: defaults, round-trip, generic axis encoding, missing→default, invalid→default,
+same-subject a=b, no-scopes). Pickers.tsx (searchable question picker + 2 model
+selects + one select per axis + scope select — ALL from index, no JB strings).
+App.tsx rewired: decode URL on load, replaceState on change, popstate restore,
+selection summary (Phase 4 replaces w/ comparison). App.test.tsx (6): default
+pickers, URL write on change, deep-link restore, invalid deep-link→defaults,
+question filter, fail-soft. Fixed: question block was a <label> wrapping BOTH filter
+input + select → ambiguous getByLabelText; made it a <div> w/ caption span + per-
+control aria-labels. **Build ✓, 20 app tests ✓, python 52 ✓.** Next: commit, porch
+done → 3-way review.
