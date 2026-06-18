@@ -1,517 +1,330 @@
-# Spec 3 — Public results browser: side-by-side model comparison, URL-shareable
+# Spec 3 — Public results EXPLORER: orient → leaderboard → divergence compare → drill-in
 
-**Status:** Draft (Specify phase)
+**Status:** Draft (Specify phase — elevated rewrite, supersedes the MVP "cell viewer" spec)
 **Issue:** #3
 **Protocol:** SPIR
 
 ## 1. Overview / Problem
 
-JaleesBench has produced a large, rich result set — 20,160 two-turn "sittings"
-(8 subject models × 6 pressures × 3 framings × 140 probes) and 80,640 judge
-verdicts (2 judges × 2 scopes per sitting). Today the only way to read it is the
-generated aggregate report (`report.html`) plus the raw `.jsonl` files, which are
-gitignored and far too large (190 MB `collect.jsonl`) for anyone outside the team
-to open.
+JaleesBench has produced a rich result set — 20,160 two-turn "sittings" (8 subject
+models × 6 pressures × 3 framings × 140 probes) and 80,640 judge verdicts (2 judges ×
+2 scopes per sitting). The raw `.jsonl` is gitignored and far too large (190 MB) for an
+outsider to open.
 
-There is no way for an outside reader — a scholar, a journalist, a curious
-practitioner — to **drill into a specific scenario** and see, with their own eyes,
-how two models actually answered the same question under the same pressure, and how
-the judges scored each. The headline numbers (e.g. "Ansari +0.48, qwen −0.48") are
-only credible if the underlying transcripts are inspectable.
+The first build delivered a working **drill-in cell viewer** (pick a question + two
+models + pressure + framing → side-by-side transcripts + verdicts, URL-shareable, on
+GitHub Pages, fed by a Python `export-web` CLI emitting a versioned data contract). That
+foundation is sound and **carries forward**. But on review it is **too low**: a person
+who just discovered this dataset cannot *understand* it — they land on a blank picker
+and must already know what to look for.
 
-**We want a public, shareable web app** for browsing the results so anyone can dig
-in directly: pick a question, pick two models, pick a pressure + framing, and see
-the two conversations and the judge verdicts side by side — with every view encoded
-in the URL so any cell is a shareable deep link.
+**This spec elevates the tool to an exploration instrument.** A newcomer should, in
+order: **orient** (what is this measuring?), see an **overview** (who is good company,
+who burns you, what pressure does), **compare two models ranked by where they differ
+most** (the centerpiece), and **drill in** to the transcripts and verdicts behind any
+cell — with **every view shareable by URL**.
 
-### Current state → desired state
+### What carries forward (do NOT rebuild)
+- The Python **`jaleesbench export-web`** CLI and the loaders it reuses.
+- The **versioned data contract** (`index.json` + per-probe shards) and `CONTRACT.md`.
+- The client-side **`DataSource` seam** (static-file impl).
+- The **drill-in detail view** (side-by-side transcripts + both judges' verdicts).
+- Fail-soft behavior, escaped-by-default rendering, relative asset paths, GitHub Pages
+  deploy.
 
-| | Current | Desired |
-|---|---|---|
-| Access | Aggregate report + gitignored 190 MB jsonl | Public web app, no install |
-| Granularity | Per-subject / per-probe summary tables | Any single cell: 2 models side by side |
-| Sharing | "open the html" | URL deep-link to an exact comparison |
-| Delivery | Local file, team-only | Public, zero-install — anyone with the link (hosting: §4) |
-| Scope | English + Arabic + experiments | **English only** (per issue) |
+### What is new (this spec)
+- An **orient** panel, an **overview leaderboard**, and a **divergence-ranked compare**
+  surface — the newcomer's path.
+- A **compact score matrix** in `index.json` (numbers only) so the app
+  ranks/leaderboards/compares **instantly, without loading any shard**.
+- **Markdown** (safely sanitized) + **collapsible** long responses + **sans-serif** +
+  **per-model score headers** in the drill-in.
+- **Guided presets**, **light/dark mode**, and **URL state for every surface**
+  (leaderboard / compare / ranking / detail).
 
 ## 2. Stakeholders
 
-- **Outside readers** (scholars, reviewers, journalists, practitioners): the
-  primary audience. Must be able to verify claims by reading real transcripts.
-- **The JaleesBench authors** (Waleed, Ben, Tim): need a credible companion to the
-  paper/report; "don't take our word for it, read it yourself."
-- **The architect** (this workspace): owns the data-contract requirement (§5).
-- **Future producers**: other benchmarks that adopt the same export format and want
-  to reuse the viewer (enabled by the data contract; not built out now).
+- **The newcomer** (primary): a scholar, reviewer, journalist, or curious practitioner
+  who just found the dataset and wants to *understand* it, then verify by reading
+  transcripts. The whole design serves this path.
+- **The JaleesBench authors** (Waleed, Ben, Tim): a credible companion to the paper.
+- **The architect**: owns the data-contract + score-matrix architecture.
+- **Future producers**: other benchmarks adopting the same contract.
 
 ## 3. Constraints
 
-This section lists only what is **genuinely fixed** — the requester's actual
-requirements and hard facts of the environment. The *how* (framework, hosting,
-data layout, export mechanism) is **not** decided here; those are weighed as open
-options in §4 with a recommendation the requester/architect can accept or redirect.
+### 3.1 Fixed requirements
 
-### 3.1 Fixed requirements (the requester's actual asks — treat as fixed)
+1. **Public + zero-install**, anyone with the link — no install/login/backend to run.
+2. **Every view is a URL-shareable deep link** — including the leaderboard, a compare
+   (A vs B) ranking, and a drill-in detail.
+3. **Read-only, no harness change** — never modifies `collect.jsonl` /
+   `judgments.jsonl` / `judgments_v2.jsonl`; adds only the export command.
+4. **English results for now** (Arabic excluded until judged; not precluded by design).
+5. **Data-contract generality** (architect KEY requirement, carried forward): the viewer
+   is generic over subjects / items / condition axes / a band ladder / judges; all
+   product-specific values live in the exported data. Build the clean seam; do not
+   over-engineer a schema engine.
+6. **Band scale fidelity**: bands reported on **−1…+1** (`score.py` `SCORE_SCALE` 0.5).
+7. **Build ON the existing foundation** (§1) — extend, do not discard.
+8. **Untrusted content safety (§5.6)**: model/producer text rendered escaped-by-default;
+   **markdown** is rendered only through a sanitizer with **raw HTML disabled** (no raw
+   HTML execution). This is the "later iteration" §5.6 anticipated.
 
-1. **Public + zero-install.** Anyone with the link can access and explore the results
-   — no install, login, or account. (The *issue* names GitHub Pages as a recommended
-   host; the requirement is "public + free + no backend to run"; the host itself is a
-   §4 recommendation.)
-2. **URL-shareable deep links.** The full selection — chosen question, the two compared
-   models, the pressure, the framing (and the verdict scope) — is encoded in the URL,
-   so every view is a shareable deep link.
-3. **Side-by-side two-model comparison.** For a chosen question + pressure + framing,
-   show **two** models' answers side by side — the full two-turn conversation
-   (question → response → pressure turn → response) for each — together with **both
-   judges' verdicts** for each side (band on the −1…+1 scale + rationale).
-4. **Read-only, no harness change.** The browser is read-only over the existing,
-   already-produced results. It must not modify `collect.jsonl` / `judgments.jsonl` /
-   `judgments_v2.jsonl`, and adds no new collection/judging/scoring behavior.
-5. **English results for now.** Scope is the English result set; Arabic is excluded
-   until its judging run completes — but must **not** be hard-excluded by design (the
-   data contract, §5, supports adding it later as another dataset).
-6. **Data-contract generality (architect KEY requirement — a fixed requirement).** The
-   viewer must be driven by a **documented, versioned data contract** (the exported
-   index + per-item schema), with JaleesBench as the **first producer**. It must be
-   able to render any results JSON conforming to that format or a derivative, and
-   (future) let a user load their own JSON. **Keep it simple:** build the clean
-   data-contract seam and ship JaleesBench-first; do **not** over-engineer a fully
-   generic schema engine, but do **not** bake JaleesBench specifics (band names,
-   "pressure"/"framing", probe fields) into the UI or the types. Detailed in §5.
-7. **Band scale fidelity.** Bands are reported on the **−1…+1** scale per the existing
-   `score.py` convention (native −2…+2 × `SCORE_SCALE` 0.5) — a data-fidelity
-   requirement so the browser agrees with the report/paper.
+### 3.2 Fixed environmental facts
+- Raw data is gitignored, ~190 MB, in the main checkout; the export reads a configurable
+  `--results-path` (CI cannot regenerate).
+- The English set (`collect.jsonl`) has exactly the **8 main subjects**; thinking/
+  steadfast/Arabic arms are separate files, out of scope.
+- Repo hygiene (project CLAUDE.md): explicit `git add`, `[Spec 3]` commits, no
+  attribution lines.
 
-### 3.2 Fixed environmental facts (not solution choices)
+## 4. The product — four surfaces + presets + polish
 
-- **Raw data is gitignored and lives in the main checkout** (`jaleesbench/results/`),
-  not in the builder worktree, and is large (190 MB `collect.jsonl`). Whatever
-  data-preparation step is chosen (see §4 Decision D) must therefore read raw results
-  from a **configurable path** (CI cannot regenerate from the raw data — see §7 C1).
-- **Subject set:** the English result set (`collect.jsonl`) contains exactly the **8
-  main subjects**. The 3 thinking-mode arms (`collect_thinking.jsonl`), the
-  ansari-steadfast arm, and the Arabic set live in separate files and are out of
-  scope. The data step should derive its subject list from the data present rather
-  than a hardcoded list.
-- **Repository hygiene** (project CLAUDE.md): never `git add -A`/`.`; commit messages
-  `[Spec 3] …`; scores reported on −1…+1; no attribution lines.
+A single-page app with a persistent **orient** header and three switchable surfaces
+(**overview**, **compare**, **detail**). The newcomer's path is overview → compare →
+detail; each surface deep-links to the next.
 
-## 4. Solution Exploration
+### 4.1 ORIENT (always at the top)
+A concise plain-English panel (collapsible, but open by default on first visit):
+- **What JaleesBench measures**: whether the AI is a *righteous companion* (al-jalīs
+  al-ṣāliḥ) — judged by the **residue its counsel leaves on the user** (the
+  perfume-seller vs the blacksmith), **not** knowledge or professed values.
+- **The axes**: 140 questions · 8 models · 6 pressures × 3 framings · 2 judges ·
+  band scale **−1 Burns … +1 Perfume**.
+- **What each control does** (question, the two models, pressure, framing, scope).
+- A **link to the paper** (`docs/paper/jaleesbench-paper.pdf`, via its GitHub URL),
+  clearly marked **draft / under review, not yet published**.
 
-Four genuine choices remain open: (A) the presentation layer, (B) hosting/delivery,
-(C) the data layout, and (D) the data-preparation mechanism. The requester asked for
-a *recommendation* and is explicitly open to alternatives, so each is weighed on merit
-below and a recommendation given — **not** a decided fact. The data contract (§5) is
-independent of all four and is a requirement either way.
+### 4.2 OVERVIEW — the leaderboard (landing surface)
+Not a blank picker. A **model leaderboard** computed instantly from the score matrix:
+- **Jalees Score** — mean band, Unstated framing, after pressure (the paper's headline:
+  what a user actually receives), per model, ranked.
+- **Recognition gap** — mean(Stated) − mean(Unstated) at full scope: how much better the
+  model is once it knows it serves a practising Muslim.
+- **Pressure effect** — full − turn-1 (Unstated): how far the model moves when pushed
+  (negative = caves).
+A newcomer immediately sees who is good company, who burns you, and what pressure does.
+Each model row links into **compare** (preselects that model) or its detail.
 
-### 4.A Presentation layer
+### 4.3 COMPARE — two models ranked by divergence (THE CENTERPIECE)
+"Two people pick two models and find the examples where they differ the most."
+- Pick **Model A** and **Model B**.
+- A **ranked list of cells** (question × pressure × framing) where A and B **differ
+  most** (e.g. A Perfume vs B Burns) — sorted by |score(A) − score(B)| descending — each
+  row showing the question, the condition, and both scores.
+- A section for where they **agree** (smallest divergence), and an **A-vs-B summary**
+  (how many cells each "wins", mean A vs mean B, biggest gaps).
+- **One click on a row → the drill-in detail** for that exact cell.
+- Computed entirely from the in-memory score matrix — **instant, no shard loads**.
 
-| Option | Notes |
-|---|---|
-| **A1. TypeScript SPA** (e.g. Vite + React; or Svelte/Solid/vanilla TS) building to a static bundle | Client-side selection, URL-state, lazy shard loading all live naturally in the browser. Matches "a TypeScript application." |
-| A2. Static-site generator (Astro / Eleventy / Hugo) pre-rendering pages | Would have to pre-render every (probe × subject-pair × pressure × framing) view — ≈ 140 × C(8,2)=28 × 6 × 3 ≈ **70k pages** — to keep URLs shareable, a poor fit for a selection-driven UI. |
-| A3. Hand-rolled static HTML + vanilla JS | Lightest toolchain, but reimplements routing/state/typing the requester explicitly wanted in TypeScript. |
+### 4.4 DRILL-IN — the detail view (the current view, done right)
+Side-by-side, Model A vs Model B, for the selected question + pressure + framing:
+- **Per-model score header** on each column: e.g. `glm-5.1 (+0.75 initial → +0.5
+  post-pressure)` — the mean of the 2 judges, turn-1 (initial) vs full (post-pressure),
+  on the −1…+1 scale. (Optionally also the model's overall-bench mean.)
+- The two-turn **transcripts** rendered as **markdown** (safely sanitized — §5.6),
+  **collapsible**: long responses show ~the first 10 lines with a click to
+  expand/collapse. Turns row-aligned across columns.
+- Both judges' **verdicts** per side (band chip + label + summary + rationale, rationale
+  markdown + collapsible), defaulting to the post-pressure scope, tolerant of a missing
+  rationale.
+- The item's tags (chapter/pillars/hearts/islamic) and proof-text context.
+- A **band legend** explaining Burns…Perfume from the data.
 
-**Recommendation: A1, a TypeScript SPA.** The interaction is inherently dynamic
-(pick-and-compare with deep links and on-demand detail), which is exactly what a small
-SPA does well and what an SSG fights. Within A1, **React + Vite** is the most
-conventional, lowest-risk stack and the recommendation, but the choice is not load-
-bearing: Svelte/Solid would satisfy the contract equally since §5 is framework-
-agnostic. *(Trade-off acknowledged: this adds a Node/TS toolchain to a
-Python repo — but the requester asked for a TS app, and the toolchain is dev-only.)*
+### 4.5 GUIDED PRESETS
+Curated deep-links, computed in the export and surfaced as a menu:
+- **Where the judges disagreed most** — cells with a ≥2-band judge split (the
+  `judgments_v2` re-judge signal captures exactly these).
+- **Where two models diverged most** — the widest cross-model spread cells.
+- **The polarizing set** — one model Perfume (+1), another Burns (−1) on the identical
+  situation.
+Each preset entry is a deep-link to a specific compare or detail view.
 
-### 4.B Hosting / delivery
+### 4.6 POLISH
+- **Light/dark toggle**, persisted in `localStorage`, defaulting to
+  `prefers-color-scheme`.
+- **Sans-serif** typography throughout.
+- **Responsive**: usable on mobile (the compare list and detail stack/adapt).
+- **Every view shareable by URL** — a `view` parameter plus that view's state
+  (leaderboard sort, compared A/B, ranking, or the full detail selection).
 
-| Option | Notes |
-|---|---|
-| **B1. Fully static, no backend, GitHub Pages** (this repo is already public) | Data committed as JSON, served as static assets. Zero infra, free, durable. |
-| B2. Static hosting elsewhere (Netlify / Vercel / Cloudflare Pages) | Functionally equivalent to B1; adds an external account/integration. |
-| B3. Small backend / API (e.g. FastAPI) querying the raw data server-side | Avoids shipping JSON and could serve the full raw set, but adds hosting cost, uptime, and ops burden. |
+## 5. Data contract & architecture (the enabler)
 
-**Recommendation: B1, fully static on GitHub Pages.** The data is modest
-(~10–30 MB slimmed, lazy-loaded), read-only, and changes rarely — a backend buys
-nothing here and adds an always-on dependency a public artifact shouldn't need.
-GitHub Pages is chosen over other static hosts only for proximity (same public repo,
-no extra accounts). **A backend stays genuinely on the table** and would be the right
-call *if* the data outgrew comfortable static limits or needed server-side compute —
-neither holds today.
-
-### 4.C Data layout
-
-| Option | Notes |
-|---|---|
-| **C1. Small `index.json` + one shard per probe**, lazy-loaded | Tiny initial load (just the catalog); detail fetched per selected question — matches the "pick a question" flow. |
-| C2. Single monolithic `data.json` | Simplest to produce, but forces a large initial download, defeating "initial load stays small." |
-| C3. Other groupings (per-subject, per-condition) | No grouping matches the access pattern as cleanly as per-probe (the user picks one question at a time). |
-
-**Recommendation: C1, per-probe shards + a small index.** It is the layout that keeps
-initial load small while serving exactly the slice a selection needs. (Shard-internal
-encoding and an optional prompt-dedup optimization are plan-level — §7 I2/I5.)
-
-### 4.D Data-preparation mechanism
-
-| Option | Notes |
-|---|---|
-| **D1. Python CLI reusing the existing loaders** (`score.py` / `collect.py`) | `load()`, `load_judgments()` (with the `judgments_v2` overlay), `load_probes()`, and the −1…+1 rescale already exist and are battle-tested. |
-| D2. Standalone script re-deriving the joins/overlay/rescale | Duplicates subtle logic (v2 identity-key overlay, rescale) — a second source of truth that can drift from the report. |
-
-**Recommendation: D1, a Python CLI subcommand** (e.g. `jaleesbench export-web`)
-reusing the loaders, accepting a configurable **`--results-path`** (default: the
-package `results/`) so it can read the gitignored data in the main checkout. A small
-refactor to thread a results path through `load()` / `load_judgments()` /
-`load_probes()` (currently bound to the module-level `RESULTS`) is needed and in scope.
-
-### 4.E Recommended approach (summary — a recommendation, not a decision)
-
-A **TypeScript SPA** (React + Vite recommended) building to a **static bundle**,
-hosted **fully static on GitHub Pages**, fed by a **Python `export-web` CLI** that
-emits a contract-shaped (`§5`) `index.json` + **per-probe shards** (committed in
-slimmed form; raw data stays gitignored). The app lives at **`apps/jaleesbrowser/`**
-(per architect direction; the name is a suggestion and could be more generic given
-the contract's producer-neutrality). The requester/architect can accept this or
-redirect any of Decisions A–D without disturbing the data contract (§5) or the fixed
-requirements (§3).
-
-## 5. Data Contract & Extensibility (KEY SECTION — architect requirement)
-
-The viewer is a function of a **documented, versioned data contract**, not of
-JaleesBench. JaleesBench is the **first producer**. This section defines the contract
-at the level of WHAT (the plan will finalize exact field encodings).
+The viewer is a function of a **documented, versioned data contract**. The elevated
+surfaces (overview/compare) are powered by one new idea: a **compact score matrix** in
+`index.json` so the app aggregates instantly without touching shards.
 
 ### 5.1 Design principle
+**Generic in the types/UI, specific in the data.** Types and components know *subjects /
+items / condition axes / a band ladder / judges / a score matrix*; they do not know
+"pressure", "framing", "Burns", or probe field names. Every JaleesBench-specific value
+lives in the data. The new aggregate surfaces degrade gracefully: a producer that omits
+the score matrix (or presets) still gets the drill-in viewer.
 
-**Generic in the types/UI, specific in the data.** The TypeScript types and React
-components know about abstract concepts — *subjects*, *items*, *condition axes*,
-*transcripts*, *judges*, *a band scale*. They do **not** know the strings "pressure",
-"framing", "Burns", "Perfume", "ghiba", or the probe field names. Every
-JaleesBench-specific value is carried **in the exported data** (`index.json`), so a
-different producer emitting the same shapes — with different axes, bands, or item
-metadata — renders without code changes. We build exactly this seam and no more: no
-plugin system, no schema-validation engine, no per-producer code paths.
+### 5.2 The contract artifacts
 
-### 5.2 The contract (two artifacts)
+**(a) `index.json` — the catalog + aggregate layer.** Small enough to load once on
+startup; powers orient, leaderboard, and compare with **no shard loads**. Fields
+(carried-forward unless marked NEW):
+- `contractVersion` — bumped to **`"1.1"`** (additive; viewer requires matching MAJOR,
+  ignores unknown fields).
+- `producer`, `dataset {title, description, language}`, `bands[]` (display scale,
+  label, optional color), `judges[]`, `scopes[]` (default flag), `conditionAxes[]`
+  (the generic pressure/framing seam), `items[{id,title,tags?}]`, `shards{itemId→path}`.
+- `subjects[]` — `{id, label, scores?}` where **NEW** `scores` = `{initial, post}`, the
+  model's overall mean band (turn-1 / full) for the score header's optional overall.
+- **NEW `scoreMatrix`** — the compact numeric core (§5.3).
+- **NEW `presets[]`** — curated deep-links (§5.4).
+- **NEW `paper`** *(optional)* — `{url, label, draft: true}` for the orient link.
 
-**(a) `index.json` — the catalog / manifest.** Small; loaded once on startup.
-Declares the dataset and everything the pickers need:
+**(b) Per-item shard (gzip `.json.gz`, lazy on drill-in)** — unchanged: `item{…,
+context?}` + `cells[]` (subject, conditions, transcript[turns], verdicts[{judge, scope,
+band, bandLabel, summary?, rationale?, tags?}]). Heavy text loads only when a detail is
+opened.
 
-- `contractVersion` — string (e.g. `"1.0"`); the viewer checks the major version.
-- `producer` — `{ name, version }` (e.g. `{ "name": "jaleesbench", "version": "…" }`).
-- `dataset` — display metadata: `{ title, description, language }`. `language` is a
-  BCP-47-ish tag (e.g. `"en"`, `"ar"`); the viewer sets text direction (LTR/RTL) from
-  it so a future Arabic dataset lays out correctly with no code change.
-- `bands` — the **ordered band ladder** on the display scale, e.g.
-  `[{ value: -1, label: "Burns", color: "#a02020" }, { value: -0.5, label: "Sparks" },
-  { value: 0, label: "Inert", color: "#666" }, { value: 0.5, label: "Scent" },
-  { value: 1, label: "Perfume", color: "#1a6840" }]`. The viewer renders/colors bands
-  **purely from this list** — each band may carry an optional `color` (the producer
-  supplies the palette, keeping the UI generic). When `color` is absent, the viewer
-  derives a neutral positional ramp from each band's ordinal position, so styling
-  never requires JaleesBench-specific code. (Optional per-band `description` for
-  tooltips.) Band labels carry the meaning so color is never the sole differentiator.
-- `subjects` — `[{ id, label }]`: the comparable models. The two model pickers are
-  populated from this.
-- `conditionAxes` — **the generic seam for pressure + framing.** An **ordered list of
-  axes**, each `{ key, label, values: [{ id, label, description? }] }`. JaleesBench
-  emits two axes: `pressure` (6 values) and `framing` (3 values: unstated/stated/
-  guided). The viewer renders one selector per axis by iterating this list — it never
-  hardcodes the two axes. A producer with one axis, or three, works unchanged.
-- `judges` — `[{ id, label }]`: who scored.
-- `scopes` *(optional)* — an ordered list `[{ id, label, default? }]` describing
-  per-verdict scopes. JaleesBench emits `full` (after pressure, default) and `turn1`
-  (first response only). If a producer omits scopes, verdicts are scope-less.
-- `items` — `[{ id, title, tags? }]`: the questions/probes. `title` is shown in the
-  picker. `tags` is an **opaque, optional** key→value(s) map for display
-  (JaleesBench fills it with `chapter`, `pillars`, `hearts`, `islamic`); the viewer
-  shows tags generically and assigns no meaning to specific keys.
-- `shards` — how to find each item's detail: a path template or an explicit
-  `{ itemId → relativePath }` map (e.g. `probes/JLS-001.json`). Paths are relative to
-  `index.json`.
+### 5.3 The score matrix (NEW — the key piece)
+A compact, numbers-only tensor: **subject × item × (each condition axis) × scope → mean
+band** (mean of that cell's judge bands, display scale; `null` if the cell is absent).
 
-**(b) Per-item shard (one JSON per probe).** Loaded on demand when an item is
-selected. Contains the heavy content for that item only:
+```jsonc
+"scoreMatrix": {
+  "order": ["subject", "item", "pressure", "framing", "scope"], // subject, item, axisKeys…, scope
+  "shape": [8, 140, 6, 3, 2],                                    // lengths, matching index lists
+  "data": [ /* flat, row-major: number | null */ ]
+}
+```
+- `order` references the index's ordered lists (`subjects`, `items`, each
+  `conditionAxes[k].values`, `scopes`) — fully generic, no hardcoded axis names.
+- `data` is row-major flat (last axis fastest). The viewer computes a cell's offset from
+  the shape; `null` marks a missing cell.
+- Size: 8·140·6·3·2 = 40,320 numbers ≈ ~200–300 KB plain (≈ tens of KB gzipped on the
+  wire) — a one-time load that makes overview/compare instant.
 
-- `item` — `{ id, title, tags?, context? }`. `context` is optional producer text for
-  display (JaleesBench may include `proof_texts` / chapter terrain).
-- `cells` — the comparable units. Each cell is one (subject × condition-tuple):
-  - `subject` — subject id.
-  - `conditions` — a map `{ <axisKey>: <valueId> }` matching `conditionAxes`
-    (JaleesBench: `{ pressure, framing }`).
-  - `transcript` — an **ordered list of turns** `[{ role, content }]`, role ∈
-    `user`/`assistant`. Generic length (JaleesBench: 4 turns — question, response,
-    pressure turn, response).
-  - `verdicts` — `[{ judge, scope?, band, bandLabel, summary?, rationale?,
-    tags? }]`. `band` is on the display scale and matches a `bands[].value`;
-    `bandLabel` is its label. `summary` ← JaleesBench `direction`; `rationale` ←
-    JaleesBench `rationale` (may be absent for v2-overlaid records — viewer must
-    tolerate a missing rationale). `tags` optionally carries `techniques_used`.
+**Derived client-side from the matrix (no shards):**
+- **Leaderboard**: per subject, mean over the (full, unstated) slice = Jalees Score;
+  recognition gap = mean(full, stated) − mean(full, unstated); pressure effect =
+  mean(full, unstated) − mean(turn1, unstated).
+- **Compare divergence**: for chosen A, B, for every (item × pressure × framing) cell,
+  `score(A,full) − score(B,full)`; rank by |·| for "differ most", by small |·| for
+  "agree"; aggregate for the A-vs-B summary.
 
-The shard is keyed/indexable so the viewer can find a cell by `(subject, conditions)`
-in O(1) (e.g. a flat list it indexes client-side, or a nested map). Final encoding is
-a plan decision.
+### 5.4 Presets (NEW)
+`presets[]` = `[{ key, label, description, entries[] }]`; each entry =
+`{ label, params }` where `params` is a flat URL-param map the viewer feeds through the
+same decoder (so axis keys stay generic). JaleesBench emits at least: judges-disagreed
+(≥2-band split), models-diverged (widest spread), polarizing (Perfume↔Burns).
 
-### 5.3 How the viewer consumes the contract (generic flow)
+### 5.5 Consumption, versioning, robustness (carried forward)
+- The viewer builds orient/leaderboard/compare from `index.json` (incl. `scoreMatrix`),
+  and lazy-loads a shard only on drill-in. If `scoreMatrix` is absent (a minimal
+  producer), the overview/compare surfaces are hidden and the app degrades to drill-in.
+- `contractVersion` MAJOR-gated; unknown fields ignored; **§5.6** (untrusted content) and
+  **§5.7** (relative asset paths) unchanged.
 
-1. Fetch `index.json`; validate `contractVersion` major. Build:
-   - question picker from `items` (id + title, with `tags` shown),
-   - two subject pickers from `subjects`,
-   - one selector per `conditionAxes` entry,
-   - band legend from `bands`, judge labels from `judges`, scope toggle from `scopes`.
-2. On any selection change, lazy-fetch the selected item's shard (cache it).
-3. Find cell A = `(subjectA, conditions)` and cell B = `(subjectB, conditions)`.
-4. Render the two `transcript`s side by side, and each side's `verdicts` (per judge:
-   band chip + label + summary/rationale), defaulting to the `default` scope with the
-   other scope available. If a cell is missing, show a clear "no data for this
-   combination" state (fail-soft).
+### 5.6 Cross-cutting: untrusted content, markdown, load-failure robustness
+- **Default: escaped plain text.** Any field NOT explicitly markdown-rendered is escaped
+  (React default); `dangerouslySetInnerHTML` is prohibited on raw producer data.
+- **Markdown (sanctioned):** transcript responses and judge rationales/summaries are
+  rendered as **markdown through a renderer with raw HTML disabled** (e.g. `markdown-it`
+  `html:false`) **and sanitized** (e.g. DOMPurify) before injection — no raw-HTML
+  execution, no `javascript:` URLs. A literal `<script>` in producer text renders as
+  inert text.
+- **Fail-soft** on every bad data asset (index/shard fetch failure, malformed JSON,
+  unsupported `contractVersion`, missing cell, absent subject/judge/axis/matrix ref) —
+  a visible, non-crashing message, never a blank page.
 
-### 5.4 JaleesBench-first, others later
+### 5.7 Asset paths (carried forward)
+All assets referenced relative to the app root (configurable `base`), so the build works
+under the GitHub Pages project path and locally without a hardcoded prefix. Shards are
+gzip — fetch and decompress only when the bytes are still gzip (host
+`Content-Encoding: gzip` may pre-decompress).
 
-JaleesBench is the only producer now, via the recommended `export-web` CLI (§4.D). The contract
-is designed so that (a) the Arabic set, once judged, is **another dataset in the same
-format** (new `index.json`, `language: "ar"`), and (b) **a future "load your own
-JSON" affordance** (point the viewer at any conforming `index.json`) is a small
-additive feature — **explicitly out of scope for this spec** but not precluded by any
-design choice here. We will **not** build a producer SDK, schema registry, or
-multi-dataset switcher now.
+## 6. Detailed behavior + URL state
 
-### 5.5 Versioning
-
-`contractVersion` is `MAJOR.MINOR`. The viewer requires a matching MAJOR and ignores
-unknown fields (forward-compatible). The contract is documented in-repo (a short
-`web/CONTRACT.md` or equivalent, finalized in the plan) so future producers have a
-spec to target. Breaking shape changes bump MAJOR.
-
-### 5.6 Cross-cutting: untrusted content & load-failure robustness
-
-Because the viewer renders **model-authored text** (transcripts, judge summaries and
-rationales, item context) and is intended to eventually load **arbitrary
-contract-conforming JSON**, all such content is treated as **untrusted**:
-
-- **Render model/producer text as escaped plain text.** No raw-HTML injection. React's
-  default text rendering (which escapes) satisfies this; `dangerouslySetInnerHTML` is
-  prohibited for any producer-sourced field. If a later iteration wants markdown
-  rendering, it MUST run through a sanitizer (e.g. DOMPurify) with HTML disabled —
-  but MVP renders plain text, preserving line breaks via CSS, not markup.
-- **Fail soft on bad data assets**, with a visible, non-crashing error state for each:
-  (a) `index.json` fetch failure or malformed JSON; (b) incompatible
-  `contractVersion` MAJOR (show "unsupported data version"); (c) a missing or
-  malformed per-item shard; (d) a referenced subject/judge/axis value absent from the
-  data. None of these may throw an unhandled runtime error that blanks the page.
-
-### 5.7 Asset paths
-
-All data and JS/CSS assets are referenced by **paths relative to the deployed app
-root**, so the same build works under a project-path base (e.g. the recommended
-GitHub Pages base `/jaleesbrowser/` or `/jaleesbench/`) and under a local dev server
-at `/` (and any future custom domain or host). Shard paths in `index.shards` are
-relative to `index.json`. The base path is build-configurable (e.g. Vite `base`); the
-app must not hardcode an absolute project-path prefix in fetch calls. This keeps the
-hosting decision (§4.B) from leaking into the code.
-
-## 6. Detailed behavior (the viewer UX)
-
-- **Pickers:** question (searchable by id/title across 140 probes), Model A, Model B,
-  and one selector per condition axis (Pressure, Framing). Sensible defaults when the
-  URL has no state (first item, first two subjects, default/first axis values).
-- **Side-by-side panel:** two columns, one per model. Each column shows the two-turn
-  conversation (user question → model response → pressure turn → model response),
-  clearly delineating user vs assistant turns. The shared turns (the probe question
-  and the pressure text) are identical across columns by construction — display them
-  so the reader sees both models answered the *same* prompt.
-- **Verdicts:** under each column, both judges' verdicts for that cell: band chip
-  (colored from the band ladder) + band label (e.g. "Perfume +1") + the judge's
-  summary/rationale. Default to the post-pressure (`full`) scope; allow viewing the
-  turn-1 verdict. Tolerate a missing rationale (v2 overlay).
-- **Band legend:** a small legend rendering the band ladder (Burns…Perfume) from
-  `index.bands` so the colors/labels are explained.
-- **Same subject on both sides:** permitted (renders two identical columns); the
-  pickers do not hard-block it. Default state picks two *different* subjects.
-- **URL state (shareable deep link):** the full selection is encoded in the query
-  string — `item`, `a` (subjectA), `b` (subjectB), one param per condition axis key
-  (`pressure`, `framing`), and `scope` (the verdict scope, default the contract's
-  default). Encoding/decoding the axis params is generic (iterate `conditionAxes`).
-  Changing any picker updates the URL (history replace); loading a URL restores the
-  exact view — **every view, including the scope choice, is a shareable deep link.**
-  Example:
-  `…/jaleesbench/?item=JLS-001&a=ansari&b=qwen3-235b&pressure=insistence&framing=unstated&scope=full`.
-- **Responsive layout:** desktop shows the two columns side by side; on narrow
-  (mobile) viewports the comparison falls back to a stacked or tabbed view so it
-  remains usable (SHOULD).
-- **Content safety & a11y:** all transcript/verdict text is rendered as escaped plain
-  text (see §5.6); band meaning is conveyed by label (not color alone), and pickers
-  are keyboard-navigable.
-- **Empty/edge states:** missing cell → "no data for this combination"; unknown URL
-  values (bad probe id, unknown subject/axis value, unsupported version) → fall back
-  to defaults / show a clear error without crashing (see §5.6).
+- **URL is the single source of view state.** A `view` param selects the surface, plus
+  per-view params; changing any control updates the URL (`history.replaceState`);
+  loading a URL restores the exact view; back/forward restores via `popstate`. Generic
+  over `conditionAxes` (axis params read/written by key).
+  - `?view=overview&sort=jalees` — leaderboard (+ sort key).
+  - `?view=compare&a=ansari&b=qwen3-235b` — divergence ranking for A vs B.
+  - `?view=detail&item=JLS-001&a=ansari&b=qwen3-235b&pressure=insistence&framing=unstated&scope=full`
+    — drill-in. (Back-compatible with the MVP's param names.)
+  - Presets resolve to one of the above.
+- **Defaults / fail-soft:** no params → overview. Invalid params → nearest valid default
+  (e.g. unknown subject → first; unknown view → overview), never a crash.
+- **Drill-in specifics:** per-model score header (initial → post), markdown +
+  collapsible transcripts (≈10-line clamp, expand/collapse), both judges' verdicts
+  (default full scope, turn-1 available), band legend, item tags + context, turns
+  row-aligned, RTL from `dataset.language`, keyboard-navigable controls.
 
 ## 7. Open Questions
 
-**Critical (resolve before/at spec-approval):**
+**Important (settle in plan):**
+- **I1 — Matrix slice for the leaderboard headline.** Recommend the paper's Jalees Score
+  (full, unstated) as the primary, with recognition gap + pressure effect as columns.
+- **I2 — Compare ranking scope.** Recommend ranking on `full` scope divergence;
+  optionally toggle to turn-1.
+- **I3 — Matrix size.** ~200–300 KB plain in `index.json`; acceptable for a one-time
+  load (gzipped on the wire). If it ever bloats, the matrix could move to a separate
+  lazily-loaded `matrix.json` — keep that option open.
+- **I4 — Markdown library.** Recommend `markdown-it` (`html:false`, linkify) + DOMPurify.
 
-- **C1 — Commit the exported data?** (Applies if the static-hosting recommendation,
-  §4.B, is accepted.) Static hosting serves committed files, and CI cannot regenerate
-  the export (it needs the 190 MB+ gitignored raw results). The slimmed, English-only
-  export (transcripts + verdicts only, dropping `usage`/`raw`/`attempts`/
-  `context_prefix`) is far smaller than the raw set — **estimated ~10–30 MB total**
-  across 140 shards (assistant responses and rationales dominate; shared prompt text is
-  small). **Recommendation:** commit the exported `index.json` + per-probe shards under
-  the app's static-assets dir (e.g. `apps/jaleesbrowser/public/data/`), keep raw
-  results gitignored. Confirm the actual size and acceptable repo-size impact at review.
-- **C2 — Deployment mechanism.** (Applies under §4.B static + GitHub Pages.) GitHub
-  Actions building the app and deploying to Pages (recommended) vs a `gh-pages` branch.
-  Recommendation: Actions workflow that builds the committed app + data (it does not
-  regenerate the export).
-
-**Important (affects design, can be settled in the plan):**
-
-- **I1 — Band scale in the contract:** emit bands on the display scale (−1…+1, per
-  fixed requirement §3.1.7) — recommended — and rely on the export to do the ×0.5. The
-  contract's `bands` ladder declares the display values.
-- **I2 — Shard cell encoding:** flat list vs nested map keyed by subject/conditions
-  (plan decision; both satisfy the contract).
-- **I5 — Shard prompt de-duplication (optimization, optional):** within a probe the
-  turn-1 question is identical across all cells and each pressure turn is identical
-  across subjects/framings. The canonical contract keeps the full transcript per cell
-  (simplest for the viewer); an optional shard-root shared-prompt table the viewer
-  rehydrates is a possible size optimization. Default: inline full transcripts unless
-  measured size (C1) warrants the optimization.
-- **I3 — Show both scopes or just `full`?** Default `full`, expose `turn1` as a
-  secondary view (recommended).
-- **I4 — Search/scale of question picker** (140 items): simple searchable
-  dropdown/list is sufficient.
-
-**Nice-to-know:**
-
-- N1 — A compact share affordance (copy-link button); URL is already shareable.
-- N2 — Showing the per-cell mean band alongside the two judges.
-- N3 — Light theming consistent with the existing report (green accent).
+**Nice-to-know:** N1 — sparkline per model in the leaderboard; N2 — copy-link button;
+N3 — "share this comparison" affordance.
 
 ## 8. Out of scope
-
-- Arabic results (excluded until judged; contract supports them later).
-- The thinking-mode / ansari-steadfast experimental arms (separate files).
-- Aggregate charts/leaderboards (that's the existing report's job; this is a
-  drill-in tool). A link back to the report is acceptable.
-- A "load your own JSON" UI, producer SDK, or multi-dataset switcher (enabled by the
-  contract, deliberately not built now).
-- Any change to collection/judging/scoring code beyond adding the export command.
+- Arabic results, thinking/steadfast experimental arms.
+- A backend / API, a "load your own JSON" UI, a producer SDK.
+- Statistical inference (CIs, significance) beyond the existing single-run means.
+- Any change to collection/judging/scoring code beyond the export command.
 
 ## 9. Success Criteria
 
 **Functional (MUST):**
+1. The reproducible `export-web` CLI emits a `1.1` contract — `index.json` (incl.
+   `scoreMatrix`, `subjects[].scores`, `presets`) + gzip per-probe shards — using the
+   existing loaders (v2 overlay + −1…+1 rescale).
+2. **Orient** panel explains the construct, axes, controls, and links the (draft) paper.
+3. **Overview leaderboard** ranks models by Jalees Score with recognition gap + pressure
+   effect — computed from the matrix, instant, no shard loads.
+4. **Compare**: pick A + B → a divergence-ranked list of cells (most-differ + agree +
+   A-vs-B summary); a row click opens the drill-in. Instant, no shard loads.
+5. **Drill-in** renders side-by-side transcripts (markdown, sanitized; collapsible) +
+   per-model score header (initial → post) + both judges' verdicts.
+6. **Presets** menu offers the curated deep-links (judges-disagreed, models-diverged,
+   polarizing).
+7. **Every view** (overview / compare / detail / preset) is encoded in the URL and
+   restored on load.
+8. **No JaleesBench-specific strings** in the types/components — all from data (§9.6
+   carried). Matrix consumed generically via `order`/`shape`.
+9. **Light/dark** toggle persisted (localStorage, prefers-color-scheme default);
+   sans-serif; responsive.
 
-1. A reproducible CLI export command produces a `index.json` + per-probe shards that
-   conform to the §5 contract, using the existing loaders incl. the `judgments_v2`
-   overlay and the −1…+1 rescale.
-2. The static viewer loads `index.json`, lets the user pick a question, two models,
-   a pressure, and a framing, and renders the two two-turn transcripts side by side.
-3. Both judges' verdicts (band + label + rationale/summary) are shown for each side,
-   defaulting to the post-pressure scope, tolerant of a missing rationale.
-4. The full selection is encoded in the URL; pasting that URL reproduces the exact
-   view (shareable deep link).
-5. The result is publicly accessible with zero install and no backend to run. Under
-   the recommended approach (§4.B) this means the app builds to a static bundle
-   deployable to free static hosting (recommended target: GitHub Pages at the project
-   path). If the requester redirects to a different host/backend (§4.B), this criterion
-   adjusts to that decision while keeping "public + zero-install."
-6. The viewer's types/components contain **no** JaleesBench-specific strings for
-   axes, bands, or item metadata — all such values come from the data (verifiable by
-   inspection / a reviewer).
+**SHOULD:** fail-soft on all bad assets/params incl. absent matrix (degrade to
+drill-in); band legend from data; `CONTRACT.md` updated; markdown raw-HTML disabled +
+sanitized; graceful when a producer omits matrix/presets.
 
-**Functional (SHOULD):**
+**Non-functional:** initial load = `index.json` only (no shards) for orient/leaderboard/
+compare; shards lazy on drill-in; deterministic/idempotent export; no secrets/raw jsonl
+committed; security per §5.6.
 
-7. Missing cells, malformed/absent URL params, and bad data assets (unreachable or
-   malformed `index.json`/shard, unsupported `contractVersion` MAJOR) fail soft with a
-   visible, non-crashing error state (§5.6).
-8. A band legend explains the Burns…Perfume ladder from the data (colors from
-   `index.bands`, with a positional fallback when `color` is absent).
-9. A short in-repo contract doc (`CONTRACT.md`) describes the format for future
-   producers.
-10. The export accepts `--results-path`, defaulting to the package `results/` dir.
-11. Responsive fallback (stacked/tabbed) on narrow viewports; band meaning conveyed by
-    label, not color alone; pickers keyboard-navigable.
-
-**Non-functional:**
-
-12. Initial load fetches only `index.json` (small); per-probe detail is lazy-loaded.
-13. Export is deterministic and re-runnable (idempotent output for the same input).
-14. No secrets, no large raw `.jsonl`, no `.vertex-sa.json` committed.
-15. **Security:** all producer/model-authored text is rendered escaped/plain; no
-    `dangerouslySetInnerHTML` on producer data (§5.6).
-
-**Test scenarios:**
-
-- Export a small subset and assert shard/index conform to the contract (schema-shape
-  test on the Python side).
-- Round-trip a deep-link URL → state → URL.
-- A cell known to be polarizing (e.g. JLS-006 ansari +1 vs a Burns side) renders both
-  transcripts and opposed bands.
-- A v2-overlaid judgment (no `rationale`) renders without error.
-- A malformed/absent shard and an unsupported `contractVersion` each render a
-  fail-soft error state, not a blank page.
-- Producer text containing HTML/markdown (e.g. `<script>` or `**bold**`) renders as
-  literal escaped text, not executed/interpreted.
+**Test scenarios:** matrix offset/round-trip + leaderboard/divergence math (unit);
+URL round-trip for each `view`; a polarizing cell shows opposed bands; a v2 verdict (no
+rationale) renders; literal `<script>`/`**bold**` renders inert-but-markdown; absent
+matrix → overview/compare hidden, drill-in still works; preset deep-link resolves.
 
 ## 10. Consultation Log
 
-### Iteration 1 — 3-way spec review (gemini / codex / claude)
+### Elevated rewrite (architect PR-gate feedback)
+The MVP "cell viewer" was judged too low. This spec was rewritten to an **exploration
+tool** — orient → leaderboard → divergence-ranked compare → drill-in — built **on** the
+existing foundation (export, contract, DataSource seam, drill-in all carry forward). Key
+architectural addition: a **compact score matrix** in `index.json` so overview/compare
+are instant without shard loads. Contract bumped 1.0 → **1.1** (additive: `scoreMatrix`,
+`subjects[].scores`, `presets`, `paper`), with graceful degradation when absent. The 7
+requester asks (markdown, collapsible, sans-serif, score header, presets, intro+paper,
+light/dark) are folded into §4/§5/§6.
 
-**Verdicts:** Gemini COMMENT · Codex REQUEST_CHANGES · Claude APPROVE. All three rated
-the spec strong/feasible with a well-designed data contract; the changes were
-convergent, concrete, and have been incorporated:
-
-- **Security / untrusted content** (Codex + Gemini): added §5.6 — render all
-  model/producer text as escaped plain text, prohibit `dangerouslySetInnerHTML` on
-  producer data, sanitize if rich rendering is ever added. Added success criterion 15
-  and a test scenario.
-- **Load-failure robustness** (Codex + Gemini): added §5.6 fail-soft requirements for
-  bad `index.json`/shard fetch, malformed JSON, and incompatible `contractVersion`;
-  folded into success criterion 7 and test scenarios.
-- **Configurable results path** (Codex): §3.2 now mandates `--results-path` and
-  explicitly puts the small loader refactor (threading a path through
-  `load`/`load_judgments`/`load_probes`) in scope; success criterion 10.
-- **Band color in the contract** (Gemini): §5.2 `bands` entries carry an optional
-  `color`, with a positional fallback — keeps the UI generic yet colored.
-- **Same subject on both sides** (Codex): §6 — permitted, not blocked; default picks
-  two different subjects.
-- **Mobile responsive + RTL-from-`language` + a11y** (Gemini + Claude): §6 responsive
-  fallback (SHOULD), §5.2/§6 set text direction from `dataset.language`, a11y nods;
-  success criterion 11.
-- **Asset/base path** (Gemini): added §5.7 — relative asset paths, configurable Vite
-  `base`, so dev (`/`) and Pages (`/jaleesbench/`) both work.
-- **App placement** (Claude): set at the repository root (later refined to
-  `apps/jaleesbrowser/` per architect spec-approval feedback below).
-- **Data-size estimate** (Claude): §7 C1 now estimates ~10–30 MB for the slimmed
-  export.
-- **Shard prompt de-duplication** (Gemini): captured as optional optimization §7 I5;
-  canonical contract keeps full transcripts per cell for viewer simplicity.
-- **Subject set / experimental arms** (Claude + Codex): §3.2 clarifies the export
-  reads `collect.jsonl` (8 main subjects); thinking/steadfast/Arabic arms are separate
-  files and out of scope.
-- **Scope in URL** (Claude): §6 adds `scope` to the URL state so every view —
-  including the verdict scope — is deep-linkable.
-
-### Spec-approval feedback (architect) — de-bake the solution
-
-The architect did **not** approve iteration 1: §3 over-baked the *solution*. The
-requester asked for a tech *recommendation* and is open to alternatives — TypeScript /
-Vite / React / GitHub Pages / no-backend / per-probe shards were **not** decided by
-them. Revised accordingly:
-
-- **§3 now lists only fixed requirements** — the requester's actual asks (public +
-  zero-install; URL deep links; side-by-side two-model comparison with both judges'
-  verdicts; read-only / no harness change; English for now; the §5 data-contract
-  generality; −1…+1 band fidelity) plus hard environmental facts (gitignored raw data,
-  8-subject set, repo hygiene). The framework, hosting, data layout, and export
-  mechanism were **removed from "fixed."**
-- **§4 now weighs four genuine open decisions** — (A) presentation layer, (B) hosting/
-  delivery, (C) data layout, (D) data-prep mechanism — on merit, each with a *reasoned
-  recommendation* the requester/architect can accept or redirect. No option is
-  pre-stamped REJECTED; the backend option (4.B B3) is explicitly kept on the table.
-- **App location** set to `apps/jaleesbrowser/` per the architect's inline note (name
-  flagged as a suggestion given the contract's producer-neutrality).
-- **All substantive review fixes retained** — §5 data contract, §5.6 untrusted-text /
-  fail-soft, `--results-path`, band color, scope-in-URL, responsive/RTL/a11y — these
-  were not relaxed.
-
-*(A second consultation and/or further human feedback at spec-approval will be logged
-here.)*
+*(The 3-way consultation porch runs on this draft, and human feedback at spec-approval,
+will be logged here.)*

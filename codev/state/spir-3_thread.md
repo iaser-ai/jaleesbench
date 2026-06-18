@@ -289,3 +289,36 @@ pass. Review consult: **Claude APPROVE · Codex COMMENT · Gemini REQUEST_CHANGE
   <details>, escaped) above comparison + ItemHeader.test (2). Wired into App + styles.
 Build ✓, **35 tests** ✓ (Python 52 ✓). Rebuttal written. Next: commit, push, porch
 done → iter2 re-consult → PR gate (HUMAN — never auto-approve).
+
+### PR-gate feedback (architect/requester reviewed live app) — 7 revisions, NOT approved
+Implementing on builder/spir-3, update PR #4, re-present at pr gate:
+1. Markdown for responses + rationales (markdown-it html:false + DOMPurify; keep §5.6).
+2. Collapsible response boxes (~10 lines, expand/collapse) for responses + long rationales.
+3. Sans-serif font throughout.
+4. Per-model score header per column: "model (+0.75 initial, +0.5 post pressure)" =
+   mean of 2 judges, turn1(initial) + full(post), −1…+1. Optional overall avg.
+5. Preset example sets (computed in export → index.json presets): (a) models split/
+   poorly (widest cross-model spread), (b) judges disagreed (≥2-band). Menu in UI.
+   Data confirms: 3231 ≥2-disagree cells, 1176 spread≥3 native.
+6. Intro/explanation panel + link to paper (docs/paper/jaleesbench-paper.pdf via GitHub
+   blob URL; DRAFT under review).
+7. Light/dark toggle, persisted localStorage, default prefers-color-scheme.
+Keep contract/DataSource seam/fail-soft/escaped-non-markdown. Bump contract 1.0→1.1
+(additive: presets + subjects[].scores). Update spec/plan/contract.
+
+### SUPERSEDED → ELEVATED VISION (architect msg 2) — rolled back to specify
+Architect STOPPED the 7-item plan: MVP is a "cell viewer", not an EXPLORATION tool.
+Raise the bar. Build ON existing foundation (export/contract/DataSource/drill-in carry
+forward — don't discard). **porch rollback 3 specify** done (review→specify). Rewrote
+spec to elevated vision:
+- 4 surfaces: (1) ORIENT panel (construct/axes/controls/paper link), (2) OVERVIEW
+  leaderboard (Jalees Score + recognition gap + pressure effect), (3) COMPARE =
+  CENTERPIECE (pick A+B → cells ranked by divergence + agree + summary → click → detail),
+  (4) DRILL-IN (markdown+collapsible+sans-serif+score header+verdicts). + PRESETS +
+  light/dark + URL-state-for-every-view.
+- KEY ARCH: compact **scoreMatrix** in index.json (subject×item×pressure×framing×scope →
+  mean band, ~40320 nums ~250KB) so overview/compare are INSTANT, no shard loads; heavy
+  transcripts lazy on drill-in only. subjects[].scores + presets + paper added.
+- Contract 1.0→1.1 additive; graceful degrade if matrix absent. §5.6 markdown sanctioned
+  (markdown-it html:false + DOMPurify). PR #4 NOT approved.
+Next: commit spec, porch done → consult → spec-approval gate (re-present elevated vision).
