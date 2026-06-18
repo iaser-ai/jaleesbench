@@ -30,10 +30,10 @@ gates:
   verify-approval:
     status: pending
 iteration: 1
-build_complete: false
+build_complete: true
 history: []
 started_at: '2026-06-17T23:15:34.666Z'
-updated_at: '2026-06-18T04:53:46.178Z'
+updated_at: '2026-06-18T04:59:16.395Z'
 pr_history:
   - phase: review
     pr_number: 4
