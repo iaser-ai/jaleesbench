@@ -119,6 +119,21 @@ describe("StaticFileDataSource", () => {
     expect(shardUrl).toMatch(/\/data\/probes\/JLS-001\.json\.gz$/);
   });
 
+  it("loads a shard the host already decompressed (Content-Encoding: gzip)", async () => {
+    // Some hosts serve `.gz` with Content-Encoding: gzip, so fetch returns plain
+    // JSON; the DataSource must NOT try to gunzip it again.
+    vi.stubGlobal(
+      "fetch",
+      routeFetch({
+        "index.json": () => json(INDEX),
+        "JLS-001.json.gz": () => json(SHARD),
+      }),
+    );
+    const shard = await new StaticFileDataSource("./data/").loadItem("JLS-001");
+    expect(shard.item.id).toBe("JLS-001");
+    expect(shard.cells[0].verdicts[0].bandLabel).toBe("High");
+  });
+
   it("throws for an unknown item id", async () => {
     vi.stubGlobal("fetch", routeFetch({ "index.json": () => json(INDEX) }));
     await expect(new StaticFileDataSource().loadItem("NOPE")).rejects.toThrow(

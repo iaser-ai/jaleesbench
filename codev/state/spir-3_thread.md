@@ -247,3 +247,24 @@ refs ARE handled in decodeSelection (correct layer, guaranteed valid by render t
 subjects/judges from same data) + showing the id IS the visible non-crashing state;
 judges aren't a selection axis so no "default" to substitute. Offered "(unknown id)"
 marker as trivial follow-up if architect prefers. Next: commit, porch done → iter2.
+
+### Phase 4 APPROVED (iter 2 unanimous) → Phase 5
+
+## 2026-06-18 — Phase 5 (phase_5_deploy) — ship it
+- Generated FULL English export → apps/jaleesbrowser/public/data: index.json +
+  **140 gzipped shards, 61 MB** committed (matches ~62MB projection). Raw data stays
+  gitignored. Clean (140 .gz + 1 .json, no secrets/jsonl).
+- .github/workflows/pages.yml: build apps/jaleesbrowser (npm ci + npm run build) +
+  deploy via actions/deploy-pages on push to main (paths apps/jaleesbrowser/**) or
+  manual dispatch. Builds committed app+data, does NOT regenerate export.
+- README.md: dev/build/test/regenerate-data/deploy docs.
+- **⚠️ BUG caught by `vite preview` check (plan-mandated):** server serves .json.gz
+  with `Content-Encoding: gzip` → fetch AUTO-decompresses → my DecompressionStream
+  double-decompressed → Z_DATA_ERROR. Hosts differ (Pages may/may not). FIX: DataSource
+  now reads arrayBuffer, decompresses ONLY if bytes still start with gzip magic
+  0x1f8b, else parses directly (handles both transparent-decompress + raw-gz hosts).
+  Added datasource.test for the pre-decompressed case. CONTRACT.md consumption note
+  updated. Re-verified end-to-end via vite preview: gzipped-on-wire=false → parsed
+  direct, 140 items, 144 cells, bands OK.
+- Build ✓ (relative ./assets/ + 140 shards in dist), **33 tests ✓**.
+Next: commit, porch done → 3-way review → PR.

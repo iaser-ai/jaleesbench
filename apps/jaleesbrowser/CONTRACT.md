@@ -138,8 +138,10 @@ The shard is **gzip-compressed JSON** on the wire/disk; decompressed it is:
   selector per `conditionAxes` entry, the band legend from `bands`, and the scope
   toggle from `scopes` — all generically, with no hardcoded JaleesBench strings.
 - Lazy-fetch a shard via `shards[itemId]` (relative to `index.json`) when an item is
-  selected; **decompress it with `DecompressionStream('gzip')`** (fetch → pipe through
-  the stream → `JSON.parse`) and cache the result.
+  selected. The shard is gzip-compressed, but some static hosts serve `.gz` with
+  `Content-Encoding: gzip` (the runtime then decompresses it for you). So read the
+  bytes and **decompress with `DecompressionStream('gzip')` only when they still start
+  with the gzip magic `0x1f 0x8b`**, otherwise parse them as plain JSON. Cache the result.
 - Locate a cell by `(subject, conditions)`. A missing cell renders "no data for this
   combination".
 - Treat all producer/model text (`transcript`, `summary`, `rationale`, `tags`,

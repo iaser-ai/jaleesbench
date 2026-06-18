@@ -64,12 +64,23 @@ export class StaticFileDataSource implements DataSource {
       throw new Error(`No shard for item "${itemId}"`);
     }
     const res = await fetch(this.resolve(rel));
-    if (!res.ok || !res.body) {
+    if (!res.ok) {
       throw new Error(`Failed to load shard ${rel} (HTTP ${res.status})`);
     }
-    // Shards are gzip-compressed; decompress in the browser/runtime.
-    const stream = res.body.pipeThrough(new DecompressionStream("gzip"));
-    const text = await new Response(stream).text();
+    // Shards are stored gzip-compressed. Some static hosts serve `.gz` with
+    // `Content-Encoding: gzip`, so the runtime already decompressed the body
+    // (it's plain JSON); others return the raw gzip bytes. Detect by the gzip
+    // magic number (0x1f 0x8b) and decompress only when still compressed.
+    const buf = await res.arrayBuffer();
+    const head = new Uint8Array(buf, 0, Math.min(2, buf.byteLength));
+    const stillGzipped = head.length >= 2 && head[0] === 0x1f && head[1] === 0x8b;
+    let text: string;
+    if (stillGzipped) {
+      const stream = new Response(buf).body!.pipeThrough(new DecompressionStream("gzip"));
+      text = await new Response(stream).text();
+    } else {
+      text = new TextDecoder().decode(buf);
+    }
     return JSON.parse(text) as ItemShard;
   }
 }
