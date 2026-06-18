@@ -1,7 +1,7 @@
 id: '3'
 title: public-results-browser-side-by
 protocol: spir
-phase: implement
+phase: review
 plan_phases:
   - id: phase_1_export
     title: Data contract + Python export CLI
@@ -17,8 +17,8 @@ plan_phases:
     status: complete
   - id: phase_5_deploy
     title: Static build, GitHub Pages deploy & real-data export
-    status: in_progress
-current_plan_phase: phase_5_deploy
+    status: complete
+current_plan_phase: null
 gates:
   spec-approval:
     status: approved
@@ -33,7 +33,7 @@ gates:
   verify-approval:
     status: pending
 iteration: 1
-build_complete: true
+build_complete: false
 history:
   - iteration: 1
     plan_phase: phase_1_export
@@ -84,4 +84,4 @@ history:
         file: >-
           /Users/mwk/Development/fftn/taqwabench/.builders/spir-3/codev/projects/3-public-results-browser-side-by/3-phase_4_compare-iter1-claude.txt
 started_at: '2026-06-17T23:15:34.666Z'
-updated_at: '2026-06-18T03:01:34.509Z'
+updated_at: '2026-06-18T03:05:47.669Z'
