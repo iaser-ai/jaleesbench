@@ -10,8 +10,9 @@ gates:
     requested_at: '2026-06-18T04:01:40.543Z'
     approved_at: '2026-06-18T04:44:12.467Z'
   plan-approval:
-    status: pending
+    status: approved
     requested_at: '2026-06-18T04:52:45.677Z'
+    approved_at: '2026-06-18T04:53:38.766Z'
   pr:
     status: pending
   verify-approval:
@@ -35,7 +36,7 @@ history:
         file: >-
           /Users/mwk/Development/fftn/taqwabench/.builders/spir-3/codev/projects/3-public-results-browser-side-by/3-plan-iter1-claude.txt
 started_at: '2026-06-17T23:15:34.666Z'
-updated_at: '2026-06-18T04:52:45.677Z'
+updated_at: '2026-06-18T04:53:38.767Z'
 pr_history:
   - phase: review
     pr_number: 4
