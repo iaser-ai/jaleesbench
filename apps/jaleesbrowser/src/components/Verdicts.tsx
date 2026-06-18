@@ -1,5 +1,7 @@
 import type { Cell, ContractIndex } from "../contract";
 import { BandChip } from "./BandLegend";
+import { Collapsible } from "./Collapsible";
+import { Markdown } from "./Markdown";
 
 /**
  * The judge verdicts for one cell, filtered to the selected scope. All text is
@@ -27,8 +29,14 @@ export function Verdicts({
             <BandChip index={index} value={v.band} label={v.bandLabel} />
             <span className="verdict-judge">{judgeLabel(index, v.judge)}</span>
           </div>
-          {v.summary && <p className="verdict-summary">{v.summary}</p>}
-          {v.rationale && <p className="verdict-rationale">{v.rationale}</p>}
+          {v.summary && (
+            <Markdown text={v.summary} className="verdict-summary" />
+          )}
+          {v.rationale && (
+            <Collapsible>
+              <Markdown text={v.rationale} className="verdict-rationale" />
+            </Collapsible>
+          )}
         </div>
       ))}
     </div>

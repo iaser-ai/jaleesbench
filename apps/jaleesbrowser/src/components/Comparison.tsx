@@ -1,7 +1,9 @@
 import { useMemo } from "react";
 import type { Cell, ContractIndex, ItemShard, Turn } from "../contract";
-import { cellKey, indexCells } from "../format";
+import { cellKey, indexCells, meanBandAtScope, signed } from "../format";
 import type { Selection } from "../urlstate";
+import { Collapsible } from "./Collapsible";
+import { Markdown } from "./Markdown";
 import { Verdicts } from "./Verdicts";
 
 /**
@@ -69,11 +71,28 @@ function Column({
   maxTurns: number;
   scope?: string;
 }) {
+  // Score header: mean of the 2 judges at the "initial" (non-default) and
+  // "post" (default) scope. Scope ids come from index.scopes — not hardcoded.
+  const postScope = (index.scopes ?? []).find((s) => s.default) ?? index.scopes?.[0];
+  const initialScope = (index.scopes ?? []).find((s) => s.id !== postScope?.id);
+  const initial = cell && initialScope ? meanBandAtScope(cell, initialScope.id) : null;
+  const post = cell && postScope ? meanBandAtScope(cell, postScope.id) : null;
+
   return (
     <section className="column" aria-label={`Responses from ${label}`}>
       <header className="column-header">
-        {label}
-        {!cell && <span className="no-data-tag"> · no data</span>}
+        <span className="column-model">{label}</span>
+        {cell ? (
+          <span className="column-score">
+            {" ("}
+            {initial !== null ? `${signed(initial)} initial` : "—"}
+            {" → "}
+            {post !== null ? `${signed(post)} post-pressure` : "—"}
+            {")"}
+          </span>
+        ) : (
+          <span className="no-data-tag"> · no data</span>
+        )}
       </header>
       {Array.from({ length: maxTurns }, (_, i) => (
         <TurnCell key={i} turn={cell?.transcript[i]} />
@@ -96,8 +115,10 @@ function TurnCell({ turn }: { turn?: Turn }) {
   return (
     <div className={`turn turn-${turn.role}`}>
       <span className="turn-role">{turn.role === "user" ? "User" : "Assistant"}</span>
-      {/* Escaped plain text; CSS preserves line breaks. Never raw HTML. */}
-      <div className="turn-content">{turn.content}</div>
+      {/* Markdown, sanitized (§5.6); long content collapses to ~10 lines. */}
+      <Collapsible>
+        <Markdown text={turn.content} className="turn-content" />
+      </Collapsible>
     </div>
   );
 }

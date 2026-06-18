@@ -363,3 +363,18 @@ types, ContractIndex +scores/presets/paper, SubjectRef +overall. DELETED CONTRAC
 README "Data format" note. Regenerated full data (index.json 223KB w/ scores; 140 shards
 byte-identical). 5 new export tests. **Python 57 ✓, app build ✓, app 35 ✓.** Next: commit,
 porch done (uv/pytest check) → 3-way review.
+
+### Phase 1 APPROVED (unanimous) → Phase 2
+## 2026-06-18 — Phase 2 (phase_2_drillin_polish)
+deps: markdown-it + dompurify (+@types/markdown-it). markdown.ts: renderMarkdown =
+markdown-it({html:false,linkify,breaks}) → DOMPurify (ALLOWED_URI http/https/mailto;
+afterSanitizeAttributes adds target/rel on <a>). markdown.test (5: bold/italic, inert
+<script>, http/mailto external, no js: href, tel: stripped by allowlist). Markdown.tsx
+(the ONE sanctioned dangerouslySetInnerHTML — sanitized). Collapsible.tsx (~10 lines/
+220px, toggle when scrollHeight overflows) + test (2, scrollHeight stubbed in jsdom).
+format.ts: meanBandAtScope. Comparison.tsx: turns via Markdown+Collapsible; per-model
+SCORE HEADER (initial→post from cell verdicts; scope ids derived from index.scopes —
+default=post, other=initial, NOT hardcoded). Verdicts.tsx: summary/rationale via
+Markdown(+Collapsible for rationale). styles.css: sans-serif body; .md/.collapsible/
+score-header styles. Comparison.test +1 (score header). **Build ✓, 43 tests ✓.** Next:
+commit, porch done → 3-way review.

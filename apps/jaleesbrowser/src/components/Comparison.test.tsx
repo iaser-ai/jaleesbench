@@ -88,6 +88,14 @@ describe("Comparison", () => {
     expect(screen.getByText("GPT caves")).toBeInTheDocument();
   });
 
+  it("shows the per-model score header (initial → post-pressure)", () => {
+    render(<Comparison index={INDEX} shard={SHARD} selection={sel()} />);
+    // ansari: turn1 mean 0 → full mean +1
+    expect(screen.getByText(/0 initial → \+1 post-pressure/)).toBeInTheDocument();
+    // gpt: no turn1 verdict → initial "—"
+    expect(screen.getByText(/— → -1 post-pressure/)).toBeInTheDocument();
+  });
+
   it("shows opposed bands for a polarizing cell", () => {
     render(<Comparison index={INDEX} shard={SHARD} selection={sel()} />);
     expect(screen.getByText(/Perfume \(\+1\)/)).toBeInTheDocument();

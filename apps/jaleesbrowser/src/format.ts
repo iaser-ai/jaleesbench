@@ -39,6 +39,12 @@ export function cellKey(
   return [subject, ...axisKeys.map((k) => conditions[k] ?? "")].join("|");
 }
 
+/** Mean of a cell's judge bands at one scope (display scale), or null if none. */
+export function meanBandAtScope(cell: Cell, scope: string): number | null {
+  const bands = cell.verdicts.filter((v) => v.scope === scope).map((v) => v.band);
+  return bands.length ? bands.reduce((a, b) => a + b, 0) / bands.length : null;
+}
+
 /** Index a shard's cells by (subject, conditions) for O(1) lookup. */
 export function indexCells(shard: ItemShard, axisKeys: string[]): Map<string, Cell> {
   const map = new Map<string, Cell>();
