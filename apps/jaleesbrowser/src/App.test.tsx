@@ -8,68 +8,43 @@ const INDEX: ContractIndex = {
   contractVersion: "1.0",
   producer: { name: "t", version: "0" },
   dataset: { title: "Test dataset", language: "en" },
-  bands: [{ value: 1, label: "High" }],
+  bands: [
+    { value: -1, label: "Burns" },
+    { value: 1, label: "Perfume" },
+  ],
   subjects: [
-    { id: "ansari", label: "ansari" },
-    { id: "gpt", label: "gpt" },
-    { id: "qwen", label: "qwen" },
+    { id: "a", label: "a" },
+    { id: "b", label: "b" },
   ],
   conditionAxes: [
-    {
-      key: "pressure",
-      label: "Pressure",
-      values: [
-        { id: "secularize", label: "Secularize" },
-        { id: "insistence", label: "Insistence" },
-      ],
-    },
-    {
-      key: "framing",
-      label: "Framing",
-      values: [
-        { id: "unstated", label: "Unstated" },
-        { id: "stated", label: "Stated" },
-      ],
-    },
+    { key: "pressure", label: "Pressure", values: [{ id: "x", label: "X" }] },
+    { key: "framing", label: "Framing", values: [{ id: "u", label: "U" }] },
   ],
-  judges: [{ id: "j1", label: "J1" }],
+  judges: [{ id: "j", label: "J" }],
   scopes: [
-    { id: "full", label: "Full", default: true },
-    { id: "turn1", label: "Turn 1" },
+    { id: "full", label: "post-pressure", default: true },
+    { id: "turn1", label: "initial" },
   ],
   items: [
     { id: "JLS-001", title: "First" },
     { id: "JLS-002", title: "Second" },
   ],
-  shards: { "JLS-001": "probes/JLS-001.json.gz", "JLS-002": "probes/JLS-002.json.gz" },
+  shards: {
+    "JLS-001": "probes/JLS-001.json.gz",
+    "JLS-002": "probes/JLS-002.json.gz",
+  },
+  // A/001=+1, A/002=+0.5, B/001=-1, B/002=+0.5 → JLS-001 diverges (Δ=2)
+  scores: {
+    order: ["subject", "item", "pressure", "framing", "scope"],
+    shape: [2, 2, 1, 1, 2],
+    data: [1, 0.5, 0.5, 0.2, -1, 0, 0.5, 0.1],
+  },
 };
 
-class FakeDataSource implements DataSource {
-  async loadIndex(): Promise<ContractIndex> {
-    return INDEX;
-  }
-  async loadItem(itemId: string): Promise<ItemShard> {
-    return { item: { id: itemId, title: "x" }, cells: [] };
-  }
-}
+const SHARD: ItemShard = { item: { id: "JLS-001", title: "First" }, cells: [] };
 
-class FailingDataSource implements DataSource {
-  async loadIndex(): Promise<ContractIndex> {
-    throw new Error("boom");
-  }
-  async loadItem(): Promise<ItemShard> {
-    throw new Error("boom");
-  }
-}
-
-/** Index loads, but the per-item shard fetch fails. */
-class ShardFailDataSource implements DataSource {
-  async loadIndex(): Promise<ContractIndex> {
-    return INDEX;
-  }
-  async loadItem(): Promise<ItemShard> {
-    throw new Error("shard 404");
-  }
+function makeDataSource(loadItem = vi.fn().mockResolvedValue(SHARD)): DataSource {
+  return { loadIndex: async () => INDEX, loadItem };
 }
 
 beforeEach(() => {
@@ -77,148 +52,70 @@ beforeEach(() => {
 });
 
 describe("App", () => {
-  it("renders generic pickers, the band legend, and the comparison", async () => {
-    render(<App dataSource={new FakeDataSource()} />);
-    expect(
-      await screen.findByRole("heading", { name: "Test dataset" }),
-    ).toBeInTheDocument();
-    expect(screen.getByLabelText("Model A")).toHaveValue("ansari");
-    expect(screen.getByLabelText("Model B")).toHaveValue("gpt");
-    expect(screen.getByLabelText("Pressure")).toHaveValue("secularize");
-    expect(screen.getByLabelText("Framing")).toHaveValue("unstated");
+  it("lands on the comparison (sidebar controls + stats + divergent list), no shard load", async () => {
+    const loadItem = vi.fn().mockResolvedValue(SHARD);
+    render(<App dataSource={makeDataSource(loadItem)} />);
+    expect(await screen.findByLabelText("Model A")).toHaveValue("a");
+    expect(screen.getByLabelText("Model B")).toHaveValue("b");
     expect(screen.getByLabelText("Scope")).toHaveValue("full");
-    expect(screen.getByLabelText("Band legend")).toBeInTheDocument();
-    // The comparison mounts once the shard loads (two columns from the selection).
-    expect(await screen.findByLabelText("Responses from ansari")).toBeInTheDocument();
-    expect(screen.getByLabelText("Responses from gpt")).toBeInTheDocument();
+    expect(screen.getByLabelText("Stats: a vs b")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /JLS-001/ })).toBeInTheDocument();
+    expect(loadItem).not.toHaveBeenCalled(); // list/stats = no shard loads
   });
 
-  it("compare view renders without loading a shard (no detail-only controls)", async () => {
-    const loadItem = vi.fn().mockResolvedValue({ item: { id: "x", title: "x" }, cells: [] });
-    const ds: DataSource = { loadIndex: async () => INDEX, loadItem };
-    window.history.replaceState(null, "", "?view=compare&a=ansari&b=gpt");
-    render(<App dataSource={ds} />);
-    expect(await screen.findByLabelText("Model A")).toHaveValue("ansari");
-    expect(screen.queryByLabelText("Question")).toBeNull(); // detail-only
-    expect(screen.queryByLabelText("Band legend")).toBeNull(); // detail-only
-    expect(loadItem).not.toHaveBeenCalled(); // compare = no shard loads
-  });
-
-  it("toggles between detail and compare, updating the URL", async () => {
-    render(<App dataSource={new FakeDataSource()} />);
-    expect(await screen.findByLabelText("Question")).toBeInTheDocument(); // detail default
-    fireEvent.click(screen.getByRole("button", { name: "Compare" }));
-    expect(screen.queryByLabelText("Question")).toBeNull();
-    const cmp = new URLSearchParams(window.location.search);
-    expect(cmp.get("view")).toBe("compare");
-    expect(cmp.get("item")).toBeNull(); // canonical compare link (no detail params)
-    fireEvent.click(screen.getByRole("button", { name: "Detail" }));
-    expect(screen.getByLabelText("Question")).toBeInTheDocument();
-  });
-
-  it("a compare-row click opens detail at the default scope (not the prior scope)", async () => {
-    const INDEX2: ContractIndex = {
-      contractVersion: "1.0",
-      producer: { name: "t", version: "0" },
-      dataset: { title: "T" },
-      bands: [{ value: 1, label: "High" }],
-      subjects: [
-        { id: "a", label: "a" },
-        { id: "b", label: "b" },
-      ],
-      conditionAxes: [
-        { key: "pressure", label: "P", values: [{ id: "x", label: "X" }] },
-        { key: "framing", label: "F", values: [{ id: "u", label: "U" }] },
-      ],
-      judges: [{ id: "j", label: "J" }],
-      scopes: [
-        { id: "full", label: "after", default: true },
-        { id: "turn1", label: "pre" },
-      ],
-      items: [{ id: "JLS-001", title: "First" }],
-      shards: { "JLS-001": "probes/JLS-001.json.gz" },
-      scores: {
-        order: ["subject", "item", "pressure", "framing", "scope"],
-        shape: [2, 1, 1, 1, 2],
-        data: [1, 0.3, -1, 0.2], // a/full=1, a/turn1=0.3, b/full=-1, b/turn1=0.2
-      },
-    };
-    const loadItem = vi
-      .fn()
-      .mockResolvedValue({ item: { id: "JLS-001", title: "First" }, cells: [] });
-    const ds: DataSource = { loadIndex: async () => INDEX2, loadItem };
-    window.history.replaceState(null, "", "?view=compare&a=a&b=b&scope=turn1");
-    render(<App dataSource={ds} />);
+  it("opens a cell's detail when a divergent row is clicked (loads its shard)", async () => {
+    const loadItem = vi.fn().mockResolvedValue(SHARD);
+    render(<App dataSource={makeDataSource(loadItem)} />);
     fireEvent.click(await screen.findByRole("button", { name: /JLS-001/ }));
+    expect(await screen.findByText("← Back to comparison")).toBeInTheDocument();
+    expect(screen.getByLabelText("Responses from a")).toBeInTheDocument();
+    expect(loadItem).toHaveBeenCalledWith("JLS-001");
     const params = new URLSearchParams(window.location.search);
-    expect(params.get("view")).toBe("detail");
-    expect(params.get("scope")).toBe("full"); // default scope (the ranking's), not turn1
-  });
-
-  it("shows a fail-soft message when the shard fails to load (pickers stay usable)", async () => {
-    render(<App dataSource={new ShardFailDataSource()} />);
-    expect(await screen.findByRole("alert")).toHaveTextContent("shard 404");
-    expect(screen.getByLabelText("Model A")).toHaveValue("ansari"); // pickers still work
-  });
-
-  it("writes the selection to the URL when a picker changes", async () => {
-    render(<App dataSource={new FakeDataSource()} />);
-    fireEvent.change(await screen.findByLabelText("Model B"), {
-      target: { value: "qwen" },
-    });
-    const params = new URLSearchParams(window.location.search);
-    expect(params.get("b")).toBe("qwen");
     expect(params.get("item")).toBe("JLS-001");
-    expect(params.get("pressure")).toBe("secularize");
-    expect(params.get("scope")).toBe("full");
   });
 
-  it("restores the exact selection from a deep-link URL", async () => {
+  it("returns to the comparison from the detail via 'back'", async () => {
+    render(<App dataSource={makeDataSource()} />);
+    fireEvent.click(await screen.findByRole("button", { name: /JLS-001/ }));
+    fireEvent.click(await screen.findByText("← Back to comparison"));
+    expect(screen.getByLabelText("Stats: a vs b")).toBeInTheDocument();
+    expect(screen.queryByText("← Back to comparison")).toBeNull();
+    expect(new URLSearchParams(window.location.search).get("item")).toBeNull();
+  });
+
+  it("restores an open cell from a deep-link URL", async () => {
     window.history.replaceState(
       null,
       "",
-      "?item=JLS-002&a=gpt&b=qwen&pressure=insistence&framing=stated&scope=turn1",
+      "?a=a&b=b&item=JLS-001&pressure=x&framing=u&scope=full",
     );
-    render(<App dataSource={new FakeDataSource()} />);
-    expect(await screen.findByLabelText("Question")).toHaveValue("JLS-002");
-    expect(screen.getByLabelText("Model A")).toHaveValue("gpt");
-    expect(screen.getByLabelText("Model B")).toHaveValue("qwen");
-    expect(screen.getByLabelText("Pressure")).toHaveValue("insistence");
-    expect(screen.getByLabelText("Scope")).toHaveValue("turn1");
+    render(<App dataSource={makeDataSource()} />);
+    expect(await screen.findByText("← Back to comparison")).toBeInTheDocument();
+    expect(screen.getByLabelText("Responses from a")).toBeInTheDocument();
   });
 
-  it("falls back to defaults for an invalid deep-link without crashing", async () => {
-    window.history.replaceState(null, "", "?item=NOPE&a=ghost&pressure=bogus");
-    render(<App dataSource={new FakeDataSource()} />);
-    expect(await screen.findByLabelText("Question")).toHaveValue("JLS-001");
-    expect(screen.getByLabelText("Model A")).toHaveValue("ansari");
-    expect(screen.getByLabelText("Pressure")).toHaveValue("secularize");
+  it("an absent item in the URL falls back to the comparison (no crash)", async () => {
+    window.history.replaceState(null, "", "?item=NOPE");
+    render(<App dataSource={makeDataSource()} />);
+    expect(await screen.findByLabelText("Stats: a vs b")).toBeInTheDocument();
   });
 
-  it("renders the comparison for a valid default when the URL references an absent subject/axis", async () => {
-    // a=ghost (absent subject) and pressure=bogus (absent axis value) must fall back
-    // to valid defaults in the *rendered comparison*, not leak the raw ids.
-    window.history.replaceState(null, "", "?a=ghost&b=qwen&pressure=bogus");
-    render(<App dataSource={new FakeDataSource()} />);
-    expect(await screen.findByLabelText("Responses from ansari")).toBeInTheDocument(); // a → default
-    expect(screen.getByLabelText("Responses from qwen")).toBeInTheDocument(); // b kept (valid)
-    expect(screen.queryByLabelText("Responses from ghost")).toBeNull();
-    expect(screen.getByLabelText("Pressure")).toHaveValue("secularize"); // bad axis → default
+  it("shows a fail-soft message when the shard fails to load", async () => {
+    const loadItem = vi.fn().mockRejectedValue(new Error("shard 404"));
+    window.history.replaceState(null, "", "?a=a&b=b&item=JLS-001&pressure=x&framing=u");
+    render(<App dataSource={makeDataSource(loadItem)} />);
+    expect(await screen.findByRole("alert")).toHaveTextContent("shard 404");
+    expect(screen.getByLabelText("Model A")).toHaveValue("a"); // controls stay usable
   });
 
-  it("filters the question picker by id/title", async () => {
-    render(<App dataSource={new FakeDataSource()} />);
-    fireEvent.change(await screen.findByLabelText("Filter questions"), {
-      target: { value: "First" },
-    });
-    const question = screen.getByLabelText("Question") as HTMLSelectElement;
-    const values = Array.from(question.options).map((o) => o.value);
-    expect(values).toContain("JLS-001");
-    expect(values).not.toContain("JLS-002");
-  });
-
-  it("shows a fail-soft message when the source errors", async () => {
-    render(<App dataSource={new FailingDataSource()} />);
+  it("shows a fail-soft message when the index fails to load", async () => {
+    const ds: DataSource = {
+      loadIndex: async () => {
+        throw new Error("boom");
+      },
+      loadItem: vi.fn(),
+    };
+    render(<App dataSource={ds} />);
     expect(await screen.findByRole("alert")).toHaveTextContent("boom");
   });
 });

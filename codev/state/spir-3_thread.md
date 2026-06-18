@@ -433,3 +433,21 @@ copy) + narrowed §9.6 wording (data-rendering components are generic; IntroPane
 copy). #2 = porch metadata, moot now porch is parked. App.tsx passes index to IntroPanel.
 **Final: Python 57 ✓, app 65 ✓, build ✓, preview serves app+index 200.** Commit, push,
 ping architect: PR #4 ready for requester. No more porch/consults.
+
+### UX/IA re-architecture (architect, watching live) — TWO-PANE STATS-LEAD
+Three rapid refinements folded together:
+1. Kill Detail|Compare tabs → ONE flow; surface derived from whether a cell is open
+   (urlstate: dropped `view`, item optional, isDetail()=item set).
+2. TWO-PANE shell: left SIDEBAR (Model A/B + scope + Presets + ThemeToggle + small
+   collapsed About) · right MAIN pane scrolls within (full-height flex).
+3. Main pane LEADS with A-vs-B aggregate STATS (client-side from score blob, no new
+   data): ModelStats — Overall mean, Recognition gain (last-axis 2nd−1st @ default
+   scope), Steadfastness (default−other scope), + by-pressure & by-framing breakdowns.
+   Then a compact "Most divergent cases" list (top-12 + show more) → click row → detail
+   (← Back). Terse preset labels/descriptions.
+New: ModelStats.tsx(+test), DivergentCases.tsx(+test), scores.ts subjectStats/sliceMean
+(+coord-memo WeakMap → O(1) lookups, instant on 140 probes). IntroPanel→compact native
+<details> About (data-driven facts). Presets→compact <details>, terse. Removed Compare.tsx
++ Pickers.tsx (question/axis pickers gone — list-driven). App.tsx rewritten two-pane.
+styles two-pane. export: terse presets, dropped view param. Regenerated data.
+**Build ✓, 58 tests/14 files ✓, preview boots (app+index 200).** Commit, push, ping.

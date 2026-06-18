@@ -234,7 +234,7 @@ def test_presets_polarizing_present_and_empty_omitted(results_dir, tmp_path):
     # judges agree in this fixture → judges-differed has no entries → omitted
     assert "judges-differed" not in keys
     pol = next(p for p in presets if p["key"] == "polarizing")
-    assert pol["entries"][0]["params"]["view"] == "detail"
+    assert pol["entries"][0]["params"]["item"]  # a deep-link to a specific cell
     assert pol["entries"][0]["params"]["a"] == "ansari"  # max-score model
     assert pol["entries"][0]["params"]["b"] == "gpt-5.5"  # min-score model
 

@@ -225,9 +225,9 @@ def _compute_presets(judgments, titles, present):
         permean[(p, pr, f)][s] = m
 
     def entry(p, pr, f, a, b, why):
-        return {"label": f"{p} {titles.get(p, '')} — {why} · "
-                         f"{pr.replace('_', ' ')}/{f}",
-                "params": {"view": "detail", "item": p, "a": a, "b": b,
+        # Terse one-liner: id + a few words. The condition lives in the deep-link.
+        return {"label": f"{p} · {why}",
+                "params": {"item": p, "a": a, "b": b,
                            "pressure": pr, "framing": f, "scope": "full"}}
 
     # (a) widest cross-model spread — max-score model (a) vs min-score model (b).
@@ -269,15 +269,12 @@ def _compute_presets(judgments, titles, present):
 
     presets = []
     if a_entries:
-        presets.append({"key": "polarizing", "label": "Polarizing — models split",
-                        "description": "Questions where two models diverge most — one "
-                                       "near Perfume, another near Burns.",
+        presets.append({"key": "polarizing", "label": "Models split",
+                        "description": "one near Perfume, one near Burns",
                         "entries": a_entries})
     if b_entries:
-        presets.append({"key": "judges-differed",
-                        "label": "Where the judges differed",
-                        "description": "Cells where the two judges placed the same "
-                                       "response ≥2 bands apart.",
+        presets.append({"key": "judges-differed", "label": "Judges differed",
+                        "description": "the two judges ≥2 bands apart",
                         "entries": b_entries})
     return presets
 
