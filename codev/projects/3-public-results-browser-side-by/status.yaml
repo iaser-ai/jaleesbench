@@ -5,10 +5,10 @@ phase: implement
 plan_phases:
   - id: phase_1_export
     title: Data contract + Python export CLI
-    status: in_progress
+    status: complete
   - id: phase_2_scaffold
     title: App scaffold, contract types & DataSource seam
-    status: pending
+    status: in_progress
   - id: phase_3_pickers_url
     title: Generic pickers + URL deep-link state
     status: pending
@@ -18,7 +18,7 @@ plan_phases:
   - id: phase_5_deploy
     title: Static build, GitHub Pages deploy & real-data export
     status: pending
-current_plan_phase: phase_1_export
+current_plan_phase: phase_2_scaffold
 gates:
   spec-approval:
     status: approved
@@ -32,8 +32,8 @@ gates:
     status: pending
   verify-approval:
     status: pending
-iteration: 2
-build_complete: true
+iteration: 1
+build_complete: false
 history:
   - iteration: 1
     plan_phase: phase_1_export
@@ -52,4 +52,4 @@ history:
         file: >-
           /Users/mwk/Development/fftn/taqwabench/.builders/spir-3/codev/projects/3-public-results-browser-side-by/3-phase_1_export-iter1-claude.txt
 started_at: '2026-06-17T23:15:34.666Z'
-updated_at: '2026-06-18T02:12:14.771Z'
+updated_at: '2026-06-18T02:16:15.815Z'
