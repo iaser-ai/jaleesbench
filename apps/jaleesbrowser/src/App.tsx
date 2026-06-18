@@ -138,7 +138,7 @@ export function App({ dataSource }: { dataSource: DataSource }) {
         <ThemeToggle />
       </header>
 
-      <IntroPanel paper={index.paper} />
+      <IntroPanel index={index} />
 
       <nav className="mode-toggle" aria-label="View mode">
         <button

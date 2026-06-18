@@ -41,9 +41,13 @@ real 140-probe dataset):
   deep-links (12 each on the real data).
 - [x] **§9.6** Every view (compare / detail / preset) is URL-encoded and restored;
   compare links are canonical.
-- [x] **§9.7** No JaleesBench-specific strings in the types/components — axis values,
-  band names, and the score-header scope labels all come from the data (the score-blob
-  is consumed generically via `order`/`shape`).
+- [x] **§9.7** No JaleesBench-specific strings in the **data-rendering** types/components
+  (Comparison, Compare, Verdicts, Pickers, scores) — axis values, band names, and the
+  score-header scope labels all come from the data (the score-blob is consumed
+  generically via `order`/`shape`), so the viewer renders any producer's data. The
+  `IntroPanel` is the intentional, producer-specific **orientation** copy ("about this
+  dataset"); even there the factual figures (counts, axis labels, band ladder) are
+  derived from the data.
 - [x] **§9.8** Light/dark persisted (localStorage, `prefers-color-scheme` default);
   sans-serif; responsive.
 

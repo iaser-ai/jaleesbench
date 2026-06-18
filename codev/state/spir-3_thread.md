@@ -418,3 +418,18 @@ exact revealing case compare exists for). Rewrote review doc (trimmed-scope fina
 Architecture Updates + Lessons Learned Updates sections). Next: commit review, push (update
 PR #4), porch done → review consult → pr gate → bring PR #4 to requester (architect).
 Python 57 ✓ app 65 ✓.
+
+### Process change (architect): SKIP THE PORCH RITUAL
+Architect: stop the protocol cycle — no per-phase 3-way consults, no review-doc gating,
+no further gates. Implement directly, keep tests green, push (PR #4 auto-updates), ping
+architect when ready for requester; they review PR #4 + merge manually; porch parked.
+"Build it; don't orchestrate it."
+
+Final review consult (before the ritual was dropped): Claude/Gemini APPROVE, Codex
+REQUEST_CHANGES on (1) IntroPanel hardcoded JB facts vs §9.6 claim, (2) status.yaml not
+PR-ready. Addressed #1 (genuine improvement, kept): IntroPanel now DATA-DRIVEN for facts
+(counts/axis-labels/band-names from index; construct prose is intentional editorial "about"
+copy) + narrowed §9.6 wording (data-rendering components are generic; IntroPanel = orientation
+copy). #2 = porch metadata, moot now porch is parked. App.tsx passes index to IntroPanel.
+**Final: Python 57 ✓, app 65 ✓, build ✓, preview serves app+index 200.** Commit, push,
+ping architect: PR #4 ready for requester. No more porch/consults.
