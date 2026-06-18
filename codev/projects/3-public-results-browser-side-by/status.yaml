@@ -30,6 +30,7 @@ gates:
     approved_at: '2026-06-18T01:44:31.415Z'
   pr:
     status: pending
+    requested_at: '2026-06-18T03:16:50.212Z'
   verify-approval:
     status: pending
 iteration: 1
@@ -84,9 +85,10 @@ history:
         file: >-
           /Users/mwk/Development/fftn/taqwabench/.builders/spir-3/codev/projects/3-public-results-browser-side-by/3-phase_4_compare-iter1-claude.txt
 started_at: '2026-06-17T23:15:34.666Z'
-updated_at: '2026-06-18T03:08:33.582Z'
+updated_at: '2026-06-18T03:16:50.212Z'
 pr_history:
   - phase: review
     pr_number: 4
     branch: builder/spir-3
     created_at: '2026-06-18T03:08:25.132Z'
+pr_ready_for_human: true
