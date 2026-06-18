@@ -7,47 +7,18 @@ current_plan_phase: null
 gates:
   spec-approval:
     status: pending
+    requested_at: '2026-06-18T04:01:40.543Z'
   plan-approval:
     status: pending
   pr:
     status: pending
   verify-approval:
     status: pending
-iteration: 3
-build_complete: true
-history:
-  - iteration: 1
-    build_output: ''
-    reviews:
-      - model: gemini
-        verdict: COMMENT
-        file: >-
-          /Users/mwk/Development/fftn/taqwabench/.builders/spir-3/codev/projects/3-public-results-browser-side-by/3-specify-iter1-gemini.txt
-      - model: codex
-        verdict: REQUEST_CHANGES
-        file: >-
-          /Users/mwk/Development/fftn/taqwabench/.builders/spir-3/codev/projects/3-public-results-browser-side-by/3-specify-iter1-codex.txt
-      - model: claude
-        verdict: APPROVE
-        file: >-
-          /Users/mwk/Development/fftn/taqwabench/.builders/spir-3/codev/projects/3-public-results-browser-side-by/3-specify-iter1-claude.txt
-  - iteration: 2
-    build_output: ''
-    reviews:
-      - model: gemini
-        verdict: REQUEST_CHANGES
-        file: >-
-          /Users/mwk/Development/fftn/taqwabench/.builders/spir-3/codev/projects/3-public-results-browser-side-by/3-specify-iter2-gemini.txt
-      - model: codex
-        verdict: REQUEST_CHANGES
-        file: >-
-          /Users/mwk/Development/fftn/taqwabench/.builders/spir-3/codev/projects/3-public-results-browser-side-by/3-specify-iter2-codex.txt
-      - model: claude
-        verdict: APPROVE
-        file: >-
-          /Users/mwk/Development/fftn/taqwabench/.builders/spir-3/codev/projects/3-public-results-browser-side-by/3-specify-iter2-claude.txt
+iteration: 1
+build_complete: false
+history: []
 started_at: '2026-06-17T23:15:34.666Z'
-updated_at: '2026-06-18T04:01:34.651Z'
+updated_at: '2026-06-18T04:01:40.544Z'
 pr_history:
   - phase: review
     pr_number: 4
