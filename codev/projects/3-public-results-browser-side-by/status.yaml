@@ -5,17 +5,17 @@ phase: implement
 plan_phases:
   - id: phase_1_scores_presets
     title: 'Export: per-cell score blob + presets + paper; remove CONTRACT.md'
-    status: in_progress
+    status: complete
   - id: phase_2_drillin_polish
     title: 'Drill-in: markdown + collapsible + sans-serif + score header'
-    status: pending
+    status: in_progress
   - id: phase_3_compare_view
     title: Compare-by-divergence view + URL view-state
     status: pending
   - id: phase_4_presets_intro_theme
     title: Presets menu + intro/paper panel + light/dark
     status: pending
-current_plan_phase: phase_1_scores_presets
+current_plan_phase: phase_2_drillin_polish
 gates:
   spec-approval:
     status: approved
@@ -30,10 +30,10 @@ gates:
   verify-approval:
     status: pending
 iteration: 1
-build_complete: true
+build_complete: false
 history: []
 started_at: '2026-06-17T23:15:34.666Z'
-updated_at: '2026-06-18T04:59:16.395Z'
+updated_at: '2026-06-18T05:02:00.111Z'
 pr_history:
   - phase: review
     pr_number: 4
