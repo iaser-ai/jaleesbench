@@ -322,3 +322,21 @@ spec to elevated vision:
 - Contract 1.0→1.1 additive; graceful degrade if matrix absent. §5.6 markdown sanctioned
   (markdown-it html:false + DOMPurify). PR #4 NOT approved.
 Next: commit spec, porch done → consult → spec-approval gate (re-present elevated vision).
+
+### TRIM (architect msg 3) — over-built; cut to requester's asks
+Elevated spec passed review (iter3 APPROVE/COMMENT) → spec-approval gate. Architect then
+said: I over-built, TRIM. Re-present trimmed spec at gate, architect will fast-clear
+(minimal/no heavy plan re-gate), bring PR #4 back for requester.
+CUT: overview/leaderboard surface + metrics; compare 'agree'/win-tally summary;
+versioned-contract ceremony (version bump, producer-declared leaderboard metrics config,
+CONTRACT.md, graceful-degrade prose). 'Beyond JaleesBench' → ONE rule: don't hardcode JB
+strings in UI/types.
+KEEP (requester's asks): drill-in done right; markdown(sanitized §5.6)+collapsible+
+sans-serif+light/dark; per-model score header (initial→post, mean of 2 judges turn1/full);
+COMPARE = pick A+B → cells ranked by |score(A)−score(B)| desc → click → drill-in; presets
+(polarizing/models-poorly, judges-differed); intro+paper link; public+URL-state; DataSource
+seam. Score matrix STAYS as PLAIN numbers blob (scores{order,shape,data}) for fast compare/
+presets — NOT versioned contract, NOT producer metrics. contractVersion stays 1.0 (no bump);
+remove CONTRACT.md.
+Rewrote spec to trimmed scope (gate already flagged). Next: commit, re-notify architect for
+fast clear (no heavy re-consult per streamlining). Then implement on branch + update PR #4.
