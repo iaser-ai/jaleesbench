@@ -14,11 +14,11 @@ plan_phases:
     status: complete
   - id: phase_4_compare
     title: Side-by-side comparison, verdicts & band legend
-    status: in_progress
+    status: complete
   - id: phase_5_deploy
     title: Static build, GitHub Pages deploy & real-data export
-    status: pending
-current_plan_phase: phase_4_compare
+    status: in_progress
+current_plan_phase: phase_5_deploy
 gates:
   spec-approval:
     status: approved
@@ -32,8 +32,8 @@ gates:
     status: pending
   verify-approval:
     status: pending
-iteration: 2
-build_complete: true
+iteration: 1
+build_complete: false
 history:
   - iteration: 1
     plan_phase: phase_1_export
@@ -84,4 +84,4 @@ history:
         file: >-
           /Users/mwk/Development/fftn/taqwabench/.builders/spir-3/codev/projects/3-public-results-browser-side-by/3-phase_4_compare-iter1-claude.txt
 started_at: '2026-06-17T23:15:34.666Z'
-updated_at: '2026-06-18T02:53:23.268Z'
+updated_at: '2026-06-18T02:56:25.074Z'
