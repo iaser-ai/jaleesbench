@@ -64,6 +64,32 @@ describe("Compare", () => {
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ b: "A" }));
   });
 
+  it("shows the top 50 rows with a 'show more' that reveals the rest", () => {
+    const n = 60;
+    const items = Array.from({ length: n }, (_, i) => ({
+      id: `JLS-${String(i + 1).padStart(3, "0")}`,
+      title: `Q${i + 1}`,
+    }));
+    // 2 subjects × n items × 1 × 1 × 1 — A=+1, B=-1 for every item (all Δ=2).
+    const data = [...items.map(() => 1), ...items.map(() => -1)];
+    const big: ContractIndex = {
+      ...INDEX,
+      items,
+      scores: {
+        order: ["subject", "item", "pressure", "framing", "scope"],
+        shape: [2, n, 1, 1, 1],
+        data,
+      },
+    };
+    render(
+      <Compare index={big} selection={sel} onChange={() => {}} onOpenDetail={() => {}} />,
+    );
+    // 50 row-buttons + 1 "show more" button
+    expect(screen.getAllByRole("button")).toHaveLength(51);
+    fireEvent.click(screen.getByRole("button", { name: /Show more/ }));
+    expect(screen.getAllByRole("button")).toHaveLength(60); // all rows, no show-more
+  });
+
   it("shows a fail-soft message when there is no score blob", () => {
     const noScores: ContractIndex = { ...INDEX, scores: undefined };
     render(

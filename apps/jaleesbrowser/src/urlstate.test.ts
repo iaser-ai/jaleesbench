@@ -54,7 +54,19 @@ describe("urlstate", () => {
     });
   });
 
-  it("encode → decode round-trips a selection (incl. view)", () => {
+  it("encode → decode round-trips a full detail selection", () => {
+    const sel = {
+      view: "detail" as const,
+      item: "JLS-002",
+      a: "gpt",
+      b: "qwen",
+      conditions: { pressure: "insistence", framing: "stated" },
+      scope: "turn1",
+    };
+    expect(decodeSelection(encodeSelection(sel, INDEX), INDEX)).toEqual(sel);
+  });
+
+  it("encodes compare links canonically (view + a + b only, no detail params)", () => {
     const sel = {
       view: "compare" as const,
       item: "JLS-002",
@@ -63,7 +75,17 @@ describe("urlstate", () => {
       conditions: { pressure: "insistence", framing: "stated" },
       scope: "turn1",
     };
-    expect(decodeSelection(encodeSelection(sel, INDEX), INDEX)).toEqual(sel);
+    const p = new URLSearchParams(encodeSelection(sel, INDEX));
+    expect(p.get("view")).toBe("compare");
+    expect(p.get("a")).toBe("gpt");
+    expect(p.get("b")).toBe("qwen");
+    expect(p.get("item")).toBeNull(); // detail-only params omitted
+    expect(p.get("pressure")).toBeNull();
+    expect(p.get("scope")).toBeNull();
+    // decoding the canonical compare link keeps the compare view + a/b
+    const decoded = decodeSelection(encodeSelection(sel, INDEX), INDEX);
+    expect(decoded.view).toBe("compare");
+    expect([decoded.a, decoded.b]).toEqual(["gpt", "qwen"]);
   });
 
   it("falls back to the detail view for an unknown view param", () => {

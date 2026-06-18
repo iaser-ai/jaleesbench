@@ -77,17 +77,23 @@ export function decodeSelection(search: string, index: ContractIndex): Selection
   };
 }
 
-/** Encode a Selection as a `?…` query string (axis keys come from the contract). */
+/**
+ * Encode a Selection as a `?…` query string — **per-view**: compare links are
+ * canonical (`view`, `a`, `b` only), while detail links also carry the item,
+ * condition axes, and scope. Axis keys come from the contract.
+ */
 export function encodeSelection(sel: Selection, index: ContractIndex): string {
   const params = new URLSearchParams();
   params.set("view", sel.view);
-  params.set("item", sel.item);
   params.set("a", sel.a);
   params.set("b", sel.b);
-  for (const axis of index.conditionAxes) {
-    const v = sel.conditions[axis.key];
-    if (v !== undefined) params.set(axis.key, v);
+  if (sel.view === "detail") {
+    params.set("item", sel.item);
+    for (const axis of index.conditionAxes) {
+      const v = sel.conditions[axis.key];
+      if (v !== undefined) params.set(axis.key, v);
+    }
+    if (sel.scope !== undefined) params.set("scope", sel.scope);
   }
-  if (sel.scope !== undefined) params.set("scope", sel.scope);
   return `?${params.toString()}`;
 }

@@ -109,7 +109,9 @@ describe("App", () => {
     expect(await screen.findByLabelText("Question")).toBeInTheDocument(); // detail default
     fireEvent.click(screen.getByRole("button", { name: "Compare" }));
     expect(screen.queryByLabelText("Question")).toBeNull();
-    expect(new URLSearchParams(window.location.search).get("view")).toBe("compare");
+    const cmp = new URLSearchParams(window.location.search);
+    expect(cmp.get("view")).toBe("compare");
+    expect(cmp.get("item")).toBeNull(); // canonical compare link (no detail params)
     fireEvent.click(screen.getByRole("button", { name: "Detail" }));
     expect(screen.getByLabelText("Question")).toBeInTheDocument();
   });
