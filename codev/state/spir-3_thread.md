@@ -348,3 +348,18 @@ foundation): P1 export score-blob+presets+paper (remove CONTRACT.md), P2 drill-i
 (markdown+collapsible+sans-serif+score header), P3 compare-by-divergence view+URL view-state,
 P4 presets menu+intro/paper panel+light/dark. Checks pass (4 phases). Next: commit, porch
 done → plan consult → plan-approval gate (architect fast-clear).
+
+### Trimmed plan APPROVED → IMPLEMENT (4 phases)
+Plan-approval cleared. Implementing phases 1-4 on builder/spir-3, update PR #4.
+
+## 2026-06-18 — Phase 1 (phase_1_scores_presets)
+export_web.py: added `scores` blob (subject×item×pressure×framing×scope → mean band,
+flat {order,shape,data}, null if absent; shape [8,140,6,3,2]=40320), `presets`
+(polarizing=widest-spread max-vs-min, judges-differed=≥2 native band split; deterministic,
+one-per-probe cap 12, empty omitted), `paper` (GitHub blob URL, draft:true), subjects[].
+overall {initial,post}. Cleaned docstrings (no "versioned contract"/CONTRACT.md). Kept
+contractVersion 1.0. contract.ts: +ScoreMatrix/Preset/PresetEntry/Paper/SubjectScore
+types, ContractIndex +scores/presets/paper, SubjectRef +overall. DELETED CONTRACT.md;
+README "Data format" note. Regenerated full data (index.json 223KB w/ scores; 140 shards
+byte-identical). 5 new export tests. **Python 57 ✓, app build ✓, app 35 ✓.** Next: commit,
+porch done (uv/pytest check) → 3-way review.

@@ -1,14 +1,14 @@
-"""Export JaleesBench results into the static viewer's data contract.
+"""Export JaleesBench results into the data the static viewer reads.
 
-Produces a versioned ``index.json`` (catalog) + one shard per probe (spec 3 §5),
-consumed by the ``apps/jaleesbrowser`` viewer. Read-only over the harness results:
-it reuses the ``score.py`` loaders (``judgments_v2`` overlay + the −2…+2 → −1…+1
-rescale) and never modifies the source ``.jsonl`` files.
+Produces ``index.json`` (catalog + a compact per-cell score blob + presets) and one
+gzip shard per probe, consumed by the ``apps/jaleesbrowser`` viewer. Read-only over
+the harness results: it reuses the ``score.py`` loaders (``judgments_v2`` overlay +
+the −2…+2 → −1…+1 rescale) and never modifies the source ``.jsonl`` files.
 
-The contract is generic — *subjects*, *items*, *condition axes*, a *band ladder*,
-*judges* — so JaleesBench specifics live only in the emitted data, not in the
-viewer. JaleesBench is the first producer of this format. See
-``apps/jaleesbrowser/CONTRACT.md`` for the full schema and version rule.
+The viewer is kept generic — it uses *subjects*, *items*, *condition axes*, a *band
+ladder*, *judges* — so JaleesBench-specific values (pressure/framing/Burns…) live in
+the emitted data, not in the UI. No formal versioned schema; the shapes are
+documented inline + in the app README.
 """
 
 import gzip
@@ -152,6 +152,133 @@ def _write_json_gz(path: Path, obj) -> int:
     return len(data)
 
 
+PAPER = {
+    "url": ("https://github.com/iaser-ai/jaleesbench/blob/main/"
+            "docs/paper/jaleesbench-paper.pdf"),
+    "label": "JaleesBench paper",
+    "draft": True,
+}
+
+
+def _mean(xs):
+    return sum(xs) / len(xs) if xs else None
+
+
+def _cell_means(judgments):
+    """(subject, probe, pressure, framing, scope) -> mean band on the DISPLAY scale."""
+    acc = defaultdict(list)
+    for j in judgments:
+        acc[(j["subject"], j["probe_id"], j["pressure"], j["framing"],
+             j["scope"])].append(j["band"])
+    return {k: _mean(v) * SCORE_SCALE for k, v in acc.items()}
+
+
+def _subject_overall(judgments):
+    """Per subject: overall mean band (display scale) at turn-1 (initial) / full (post)."""
+    acc = defaultdict(lambda: {"turn1": [], "full": []})
+    for j in judgments:
+        if j["scope"] in ("turn1", "full"):
+            acc[j["subject"]][j["scope"]].append(j["band"])
+    out = {}
+    for s, d in acc.items():
+        i, p = _mean(d["turn1"]), _mean(d["full"])
+        out[s] = {"initial": round(i * SCORE_SCALE, 4) if i is not None else None,
+                  "post": round(p * SCORE_SCALE, 4) if p is not None else None}
+    return out
+
+
+def _score_matrix(cell_means, subjects, items, pressures, framings, scopes):
+    """A compact numbers-only blob: subject × item × pressure × framing × scope →
+    mean band (display scale), flat row-major, `null` where a cell is absent. The
+    viewer reads it generically from the index's ordered lists. Just numbers — no
+    versioned schema, no producer-declared metrics."""
+    data = []
+    for s in subjects:
+        for it in items:
+            for pr in pressures:
+                for fr in framings:
+                    for sc in scopes:
+                        v = cell_means.get((s, it, pr, fr, sc))
+                        data.append(round(v, 4) if v is not None else None)
+    return {
+        "order": ["subject", "item", "pressure", "framing", "scope"],
+        "shape": [len(subjects), len(items), len(pressures), len(framings), len(scopes)],
+        "data": data,
+    }
+
+
+def _compute_presets(judgments, titles, present):
+    """Curated deep-links from the full-scope cells. Deterministic (fixed thresholds,
+    sorted by magnitude with item/condition tie-breaks, one entry per item, capped).
+    A preset with no qualifying entries is omitted."""
+    cell_judges = defaultdict(dict)  # (subject,probe,pressure,framing) -> {judge: band}
+    for j in judgments:
+        if j["scope"] == "full":
+            cell_judges[(j["subject"], j["probe_id"], j["pressure"],
+                         j["framing"])][j["judge"]] = j["band"]
+    cell_mean = {k: _mean(list(v.values())) for k, v in cell_judges.items()}
+    permean = defaultdict(dict)  # (probe,pressure,framing) -> {subject: mean band}
+    for (s, p, pr, f), m in cell_mean.items():
+        permean[(p, pr, f)][s] = m
+
+    def entry(p, pr, f, a, b, why):
+        return {"label": f"{p} {titles.get(p, '')} — {why} · "
+                         f"{pr.replace('_', ' ')}/{f}",
+                "params": {"view": "detail", "item": p, "a": a, "b": b,
+                           "pressure": pr, "framing": f, "scope": "full"}}
+
+    # (a) widest cross-model spread — max-score model (a) vs min-score model (b).
+    spreads = []
+    for (p, pr, f), d in permean.items():
+        if len(d) < 2:
+            continue
+        hi, lo = max(d, key=d.get), min(d, key=d.get)
+        spreads.append((d[hi] - d[lo], p, pr, f, hi, lo))
+    spreads.sort(key=lambda e: (-e[0], e[1], e[2], e[3]))
+    a_entries, seen = [], set()
+    for _, p, pr, f, hi, lo in spreads:
+        if p in seen:
+            continue
+        seen.add(p)
+        a_entries.append(entry(p, pr, f, hi, lo, f"{hi} vs {lo}"))
+        if len(a_entries) >= 12:
+            break
+
+    # (b) the two judges' native band values differ by >=2 — split model vs top model.
+    disag = []
+    for (s, p, pr, f), jb in cell_judges.items():
+        vals = list(jb.values())
+        if len(vals) >= 2 and (max(vals) - min(vals)) >= 2:
+            disag.append((max(vals) - min(vals), p, pr, f, s))
+    disag.sort(key=lambda e: (-e[0], e[1], e[2], e[3], e[4]))
+    b_entries, seen_b = [], set()
+    for _, p, pr, f, s in disag:
+        if p in seen_b:
+            continue
+        seen_b.add(p)
+        d = permean.get((p, pr, f), {})
+        contrast = max(d, key=d.get) if d else s
+        if contrast == s:
+            contrast = min(d, key=d.get) if len(d) > 1 else s
+        b_entries.append(entry(p, pr, f, s, contrast, f"judges split on {s}"))
+        if len(b_entries) >= 12:
+            break
+
+    presets = []
+    if a_entries:
+        presets.append({"key": "polarizing", "label": "Polarizing — models split",
+                        "description": "Questions where two models diverge most — one "
+                                       "near Perfume, another near Burns.",
+                        "entries": a_entries})
+    if b_entries:
+        presets.append({"key": "judges-differed",
+                        "label": "Where the judges differed",
+                        "description": "Cells where the two judges placed the same "
+                                       "response ≥2 bands apart.",
+                        "entries": b_entries})
+    return presets
+
+
 def export_web(results_path=None, out_dir: Path = None, limit: int = None) -> dict:
     """Export the results to `out_dir` as `index.json` + `probes/<id>.json.gz`.
 
@@ -186,6 +313,10 @@ def export_web(results_path=None, out_dir: Path = None, limit: int = None) -> di
     scopes_present = {j["scope"] for j in judgments}
     scopes = [s for s in SCOPES if s in scopes_present]
 
+    cell_means = _cell_means(judgments)
+    overall = _subject_overall(judgments)
+    titles = {pid: probes[pid]["title"] for pid in present}
+
     index = {
         "contractVersion": CONTRACT_VERSION,
         "producer": {"name": "jaleesbench", "version": _package_version()},
@@ -197,7 +328,8 @@ def export_web(results_path=None, out_dir: Path = None, limit: int = None) -> di
         },
         "bands": [{"value": native * SCORE_SCALE, "label": label, "color": color}
                   for native, label, color in BAND_LADDER],
-        "subjects": [{"id": s, "label": s} for s in subjects],
+        "subjects": [{"id": s, "label": s, "overall": overall.get(s)}
+                     for s in subjects],
         "conditionAxes": [
             {"key": "pressure", "label": "Pressure",
              "values": [{"id": p, "label": _humanize(p)} for p in pressures]},
@@ -217,6 +349,12 @@ def export_web(results_path=None, out_dir: Path = None, limit: int = None) -> di
         # text); the viewer decompresses client-side. index.json stays plain.
         # Paths are relative to index.json (both live under the export root).
         "shards": {pid: f"probes/{pid}.json.gz" for pid in present},
+        # Compact per-cell score blob — powers the compare ranking + presets
+        # instantly, without loading any shard.
+        "scores": _score_matrix(cell_means, subjects, present, pressures, framings,
+                                scopes),
+        "presets": _compute_presets(judgments, titles, present),
+        "paper": PAPER,
     }
 
     out_dir.mkdir(parents=True, exist_ok=True)

@@ -1,25 +1,36 @@
 # jaleesbrowser
 
-A public, zero-install web app for browsing JaleesBench results: pick a question,
-pick two models, pick a pressure + framing, and read the two conversations and the
-judge verdicts **side by side**. The full selection is encoded in the URL, so every
-view is a shareable deep link.
+A public, zero-install web app for exploring JaleesBench results: read what two models
+actually said side by side, find the questions where they differ most, and drill into
+the judge verdicts. Every view is encoded in the URL as a shareable deep link.
 
-It is a static TypeScript SPA (Vite + React) that reads an exported, **versioned data
-contract** — it is generic over *subjects / items / condition axes / a band ladder /
-judges*, with JaleesBench as the first producer of that format. See
-[`CONTRACT.md`](./CONTRACT.md).
+It is a static TypeScript SPA (Vite + React). The UI is kept generic — it uses
+*subjects / items / condition axes / a band ladder / judges* — so the
+JaleesBench-specific values (pressure/framing/Burns…) come from the exported data, not
+the components. There is no formal versioned contract; the data shapes are documented
+below.
 
 ## Layout
 
 ```
 apps/jaleesbrowser/
-  src/                     app source (contract types, DataSource seam, UI)
+  src/                     app source (data types, DataSource seam, UI)
   public/data/             the exported dataset (committed)
-    index.json             catalog/manifest (plain JSON)
-    probes/<id>.json.gz    one gzip-compressed shard per probe
-  CONTRACT.md              the data-contract reference
+    index.json             catalog + compact per-cell score blob + presets (plain JSON)
+    probes/<id>.json.gz    one gzip-compressed shard per probe (transcripts + verdicts)
 ```
+
+## Data format
+
+`export-web` writes `index.json` (plain) + one gzip shard per probe:
+
+- **`index.json`** — `dataset`, `bands`, `subjects` (+ overall means), `conditionAxes`
+  (the generic pressure/framing seam), `judges`, `scopes`, `items`, `shards` (itemId →
+  path), a compact **`scores`** blob (`{order, shape, data}` — flat per-cell mean bands
+  so compare + presets are instant), **`presets`** (curated deep-links), and a
+  **`paper`** link. Just data — no versioned schema.
+- **shards** — `{ item, cells[] }`; each cell has the two-turn `transcript` and the
+  per-judge `verdicts`. Loaded lazily, only when a drill-in opens.
 
 ## Develop
 
@@ -59,11 +70,11 @@ committed app + data — it does not regenerate the export. The Vite `base` is `
 (relative), so the bundle works at the project Pages path
 (`https://<org>.github.io/jaleesbench/`) with no hardcoded prefix.
 
-Shards are served as `*.json.gz` and decompressed in the browser via
-`DecompressionStream('gzip')`; `index.json` is plain.
+Shards are served as `*.json.gz`; the viewer decompresses them, detecting whether the
+host already applied `Content-Encoding: gzip` (gzip magic byte). `index.json` is plain.
 
 ## Scope
 
-English results only for now. Arabic is excluded until its judging run completes, but
-is not precluded by design — it would be another dataset in the same contract
+English results only for now. Arabic is excluded until its judging run completes, but is
+not precluded by design — it would be another dataset in the same format
 (`language: "ar"`, which drives RTL layout).

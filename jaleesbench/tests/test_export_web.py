@@ -189,6 +189,77 @@ def test_unexpected_band_fails_loud(results_dir, tmp_path):
         ew.export_web(results_dir, tmp_path / "out")
 
 
+# --- score blob + presets + paper (trimmed-scope additions) -----------------
+
+def test_score_blob_shape_values_and_overall(results_dir, tmp_path):
+    out = tmp_path / "out"
+    ew.export_web(results_dir, out)
+    index = json.loads((out / "index.json").read_text())
+    scores = index["scores"]
+    assert scores["order"] == ["subject", "item", "pressure", "framing", "scope"]
+    # 2 subjects × 2 items × 1 pressure × 1 framing × 2 scopes
+    assert scores["shape"] == [2, 2, 1, 1, 2]
+    assert len(scores["data"]) == 2 * 2 * 1 * 1 * 2
+    # ansari (idx0) JLS-001 full = +1.0, turn1 = +0.5; gpt full = -1.0
+    assert scores["data"][0] == 1.0   # ansari, JLS-001, full
+    assert scores["data"][1] == 0.5   # ansari, JLS-001, turn1
+    assert scores["data"][4] == -1.0  # gpt, JLS-001, full
+    # per-subject overall means
+    ansari = next(s for s in index["subjects"] if s["id"] == "ansari")
+    assert ansari["overall"] == {"initial": 0.5, "post": 1.0}
+
+
+def test_score_blob_has_nulls_for_absent_cells(results_dir, tmp_path):
+    # Drop one subject's cells for JLS-002 so the matrix has nulls there.
+    sittings = [json.loads(l) for l in (results_dir / "collect.jsonl").read_text().splitlines()]
+    judg = [json.loads(l) for l in (results_dir / "judgments.jsonl").read_text().splitlines()]
+    sittings = [s for s in sittings if not (s["subject"] == "gpt-5.5" and s["probe_id"] == "JLS-002")]
+    judg = [j for j in judg if not (j["subject"] == "gpt-5.5" and j["probe_id"] == "JLS-002")]
+    (results_dir / "collect.jsonl").write_text("\n".join(json.dumps(s) for s in sittings))
+    (results_dir / "judgments.jsonl").write_text("\n".join(json.dumps(j) for j in judg))
+    out = tmp_path / "out"
+    ew.export_web(results_dir, out)
+    scores = json.loads((out / "index.json").read_text())["scores"]
+    # gpt (idx1) JLS-002 (idx1) full/turn1 → flat offset 6,7 → null
+    assert scores["data"][6] is None
+    assert scores["data"][7] is None
+
+
+def test_presets_polarizing_present_and_empty_omitted(results_dir, tmp_path):
+    out = tmp_path / "out"
+    ew.export_web(results_dir, out)
+    presets = json.loads((out / "index.json").read_text())["presets"]
+    keys = {p["key"] for p in presets}
+    assert "polarizing" in keys  # ansari +1 vs gpt -1 → widest spread
+    # judges agree in this fixture → judges-differed has no entries → omitted
+    assert "judges-differed" not in keys
+    pol = next(p for p in presets if p["key"] == "polarizing")
+    assert pol["entries"][0]["params"]["view"] == "detail"
+    assert pol["entries"][0]["params"]["a"] == "ansari"  # max-score model
+    assert pol["entries"][0]["params"]["b"] == "gpt-5.5"  # min-score model
+
+
+def test_presets_judges_differed_when_judges_split(results_dir, tmp_path):
+    # Override one judge's full band so the two judges differ by 4 (>=2) on a cell.
+    v2 = _judgment("ansari", "JLS-001", "insistence", "unstated",
+                   "claude-opus-4-8", "full", -2)
+    (results_dir / "judgments_v2.jsonl").write_text(json.dumps(v2))
+    out = tmp_path / "out"
+    ew.export_web(results_dir, out)
+    presets = json.loads((out / "index.json").read_text())["presets"]
+    jd = next((p for p in presets if p["key"] == "judges-differed"), None)
+    assert jd is not None
+    assert jd["entries"][0]["params"]["a"] == "ansari"
+
+
+def test_paper_link(results_dir, tmp_path):
+    out = tmp_path / "out"
+    ew.export_web(results_dir, out)
+    paper = json.loads((out / "index.json").read_text())["paper"]
+    assert paper["draft"] is True
+    assert paper["url"].endswith("docs/paper/jaleesbench-paper.pdf")
+
+
 # --- loader refactor: the new results_path param ----------------------------
 
 def test_load_judgments_accepts_results_path(tmp_path):

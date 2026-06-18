@@ -1,5 +1,5 @@
 /**
- * TypeScript types for the results-viewer data contract (see CONTRACT.md).
+ * TypeScript types for the exported viewer data (see the app README "Data format").
  *
  * These types are GENERIC — subjects, items, condition axes, a band ladder,
  * judges, transcripts, verdicts. They contain NO JaleesBench-specific strings
@@ -17,9 +17,16 @@ export interface Band {
   description?: string;
 }
 
+/** A subject's overall mean band (display scale), turn-1 (initial) / full (post). */
+export interface SubjectScore {
+  initial: number | null;
+  post: number | null;
+}
+
 export interface SubjectRef {
   id: string;
   label: string;
+  overall?: SubjectScore | null;
 }
 
 export interface AxisValue {
@@ -55,6 +62,36 @@ export interface ItemRef {
   tags?: Tags;
 }
 
+/**
+ * A compact numbers-only score blob: subject × item × (each condition axis) ×
+ * scope → mean band (display scale), flat row-major; `null` if the cell is absent.
+ * Dimension order/lengths come from the index's ordered lists (see `order`/`shape`).
+ */
+export interface ScoreMatrix {
+  order: string[]; // ["subject","item",<axisKey>…,"scope"]
+  shape: number[];
+  data: (number | null)[];
+}
+
+export interface PresetEntry {
+  label: string;
+  /** A flat URL-param map fed through the same decoder (axis keys stay generic). */
+  params: Record<string, string>;
+}
+
+export interface Preset {
+  key: string;
+  label: string;
+  description?: string;
+  entries: PresetEntry[];
+}
+
+export interface Paper {
+  url: string;
+  label: string;
+  draft?: boolean;
+}
+
 /** The catalog/manifest (`index.json`), loaded once on startup. */
 export interface ContractIndex {
   contractVersion: string;
@@ -68,6 +105,10 @@ export interface ContractIndex {
   items: ItemRef[];
   /** itemId -> shard path, relative to index.json (gzip-compressed `.json.gz`). */
   shards: Record<string, string>;
+  /** Optional: powers the instant compare ranking + presets without shard loads. */
+  scores?: ScoreMatrix;
+  presets?: Preset[];
+  paper?: Paper;
 }
 
 export interface Turn {
