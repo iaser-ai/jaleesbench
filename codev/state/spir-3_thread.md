@@ -85,3 +85,15 @@ D1 DataSource seam (architect, recommended), D2 stack assumptions from spec §4
 branch, single PR after final implement phase.
 Next: commit plan, `porch done 3` → 3-way plan consult → expect plan-approval gate
 → STOP + notify architect.
+
+### Plan 3-way review done
+`porch done 3` (checks pass) → consult. Verdicts: **Gemini APPROVE · Codex
+REQUEST_CHANGES · Claude APPROVE** (Claude verified loaders/v2/SCORE_SCALE against
+code — all correct). Incorporated all: searchable question picker (P3); full
+fail-soft enumeration index/shard fetch+malformed+version+missing-cell+absent-ref
+(P4); explicit DOM test stack vitest+jsdom+@testing-library (P2); band colors
+DEFINED in exporter (BAND_NAMES is html_report.py:17, no 5-color palette exists)
+(P1); collect.py precision = only RESULTS needs overriding (P1); Vite base "./"
+relative (P2/P5); turn-row alignment across columns (P4); container-level RTL (P4).
+Consultation Log added to plan. Next: commit, rebuttal, porch done → plan-approval
+gate → STOP + notify architect (never auto-approve).

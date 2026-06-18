@@ -124,9 +124,11 @@ Validates against spec §9. Phase-mapped:
   (`--results-path`, `--out`, `--limit`).
 - `jaleesbench/jaleesbench/score.py` (edit) — thread an optional `results_path` into
   `load()` / `load_judgments()` (default keeps the module-level `RESULTS`).
-- `jaleesbench/jaleesbench/collect.py` (edit) — allow `load_probes()` + a results-path
-  helper so the exporter reads the right dirs (probes come from bundled `DATA`,
-  transcripts/judgments from `--results-path`).
+- `jaleesbench/jaleesbench/collect.py` (edit) — make the `RESULTS` results dir
+  **overridable** (param/helper) so the exporter can point at `--results-path`.
+  (`load_probes()` already takes a `path` arg and reads from bundled `DATA` — it needs
+  no change; only the `RESULTS` location must become overridable. Probes come from
+  `DATA`, transcripts/judgments from `--results-path`.)
 - `jaleesbench/tests/test_export_web.py` (new) — schema-shape + semantics tests.
 - `apps/jaleesbrowser/CONTRACT.md` (new) — the versioned contract reference.
 
@@ -135,8 +137,11 @@ Validates against spec §9. Phase-mapped:
   - Load sittings (`collect.jsonl`), judgments (overlaid via `load_judgments`), probes
     (`load_probes`). Derive `subjects` from the data present (8 main subjects);
     `conditionAxes` = `pressure` (6) + `framing` (3); `judges` (2); `scopes` =
-    `full` (default) + `turn1`; `bands` = the −1…+1 ladder with labels + colors from
-    `BAND_NAMES` / the report palette.
+    `full` (default) + `turn1`; `bands` = the −1…+1 ladder. Band **labels** come from
+    `BAND_NAMES` (`html_report.py:17`: Burns/Sparks/Inert/Scent/Perfume). NB: the
+    report has no 5-point color palette (only binary `.pos` `#1a6840` / `.neg`
+    `#a02020`), so the exporter **defines its own 5-color band map** (e.g. a red→grey→
+    green ramp), emitting it in `bands[].color`.
   - Write `index.json`: `contractVersion "1.0"`, `producer`, `dataset {title,
     description, language:"en"}`, `bands`, `subjects`, `conditionAxes`, `judges`,
     `scopes`, `items[{id,title,tags:{chapter,pillars,hearts,islamic}}]`, `shards`.
@@ -185,7 +190,10 @@ commit.
 
 #### Files
 - `apps/jaleesbrowser/package.json`, `vite.config.ts`, `tsconfig.json`, `index.html`,
-  `.gitignore` (new) — scaffold (Vite `base` build-configurable, relative asset paths).
+  `.gitignore` (new) — scaffold. Vite `base: "./"` (relative asset paths, host-agnostic
+  per spec §5.7). Dev deps include the **DOM component-test stack** so Phase 4's
+  component tests are executable: `vitest`, `jsdom` (Vitest `environment: "jsdom"`),
+  `@testing-library/react`, `@testing-library/jest-dom`, plus a `vitest.setup.ts`.
 - `apps/jaleesbrowser/src/main.tsx`, `src/App.tsx` (new) — entry + minimal shell.
 - `apps/jaleesbrowser/src/contract.ts` (new) — TS types for index + shard (generic:
   no JaleesBench string literals).
@@ -196,7 +204,8 @@ commit.
   produced by Phase 1's exporter, for dev + tests.
 
 #### Implementation Details
-- Vitest as the test runner (ships with the Vite ecosystem).
+- Vitest as the test runner with a `jsdom` environment + `@testing-library/react` for
+  component rendering (configured here so Phase 4 tests run without extra setup).
 - `StaticFileDataSource(baseUrl)` resolves `index.json` and shard paths relative to the
   app base; checks `contractVersion` MAJOR and throws a typed `UnsupportedVersionError`
   the UI renders fail-soft (Phase 3/4).
@@ -228,13 +237,15 @@ Self-contained new directory; revert the commit (no changes outside `apps/`).
 
 #### Objectives
 - Build the selection UI generically from the index (question, model A, model B, one
-  selector per `conditionAxes`, scope toggle).
+  selector per `conditionAxes`, scope toggle). The **question picker is searchable by
+  id and title** across the ~140 probes (spec §6 / §7 I4).
 - Encode the full selection in the URL and restore it on load; fail soft on bad params.
 
 #### Files
 - `apps/jaleesbrowser/src/urlstate.ts` (new) + `urlstate.test.ts` (new) — encode/decode
   `{item, a, b, <axisKey>…, scope}` ↔ query string; generic over axes.
-- `apps/jaleesbrowser/src/components/Pickers.tsx` (new) — the selectors.
+- `apps/jaleesbrowser/src/components/Pickers.tsx` (new) — the selectors, incl. a
+  **searchable** question picker (filter by id/title; ~140 items).
 - `apps/jaleesbrowser/src/App.tsx` (edit) — wire pickers ⇄ URL; compute defaults.
 
 #### Implementation Details
@@ -246,6 +257,7 @@ Self-contained new directory; revert the commit (no changes outside `apps/`).
 
 #### Acceptance Criteria
 - [ ] Changing any picker updates the URL; reloading restores the exact selection.
+- [ ] The question picker filters ~140 probes by id/title as the user types.
 - [ ] A crafted URL with a bad probe id / unknown subject / unknown axis value loads
       defaults, no crash.
 - [ ] Selectors are rendered purely from index metadata (no literal axis/band strings).
@@ -283,13 +295,22 @@ Revert the commit; Phase 2 smoke view remains.
 #### Implementation Details
 - Lazy-fetch shard on item change (cache by item id). Index `cells` into a Map.
 - Each column: the 4 turns (user/assistant delineated); shared user turns identical by
-  construction. Below: per judge a band chip (color from `index.bands`, positional
-  fallback) + label (e.g. "Perfume +1") + summary/rationale; default `full` scope,
-  toggle to `turn1`; tolerate missing rationale.
+  construction. **Turns are row-aligned across the two columns** (a per-turn grid/flex
+  row, not two independent stacks) so user-turn-2 / assistant-turn-2 stay horizontally
+  aligned even when one model is far more verbose. Below: per judge a band chip (color
+  from `index.bands`, positional fallback) + label (e.g. "Perfume +1") + summary/
+  rationale; default `full` scope, toggle to `turn1`; tolerate missing rationale.
 - **Security**: all producer text rendered as escaped plain text (React default;
   `dangerouslySetInnerHTML` prohibited); line breaks via CSS `white-space`.
-- **a11y/RTL**: band meaning by label not color alone; keyboard-navigable; `dir` from
-  `dataset.language`. Missing cell → "no data for this combination".
+- **Fail-soft states** (spec §5.6 / §9.7) — each a visible, non-crashing message, not a
+  blank page: (a) `index.json` fetch failure; (b) malformed `index.json`; (c) shard
+  fetch failure / malformed shard JSON; (d) unsupported `contractVersion` MAJOR
+  (`UnsupportedVersionError` from Phase 2); (e) a selected `(subject, conditions)` cell
+  absent → "no data for this combination"; (f) a URL/selection referencing a
+  subject/judge/axis value absent from the data → fall back to a valid default.
+- **a11y/RTL**: band meaning by label not color alone; keyboard-navigable; set `dir`
+  (LTR/RTL) from `dataset.language` at the **page/column-container** level (so column
+  order, alignment, and margins flow correctly), not just on text snippets.
 - Responsive: side-by-side on desktop, stacked/tabbed on narrow viewports.
 
 #### Acceptance Criteria
@@ -298,12 +319,15 @@ Revert the commit; Phase 2 smoke view remains.
 - [ ] A polarizing cell (e.g. JLS-006: one side +1, other −1) shows opposed bands.
 - [ ] A v2 verdict (no rationale) renders without error.
 - [ ] Producer text containing `<script>` / `**bold**` renders as literal text.
-- [ ] Missing cell and unsupported `contractVersion` show fail-soft states.
+- [ ] Each fail-soft case renders a visible message, not a blank page: index fetch
+      failure, malformed index/shard JSON, unsupported `contractVersion`, missing cell,
+      and a reference to an absent subject/judge/axis value.
 
 #### Test Plan
 - **Unit**: `format` band lookup + fallback; cell indexing.
 - **Component**: render Comparison against fixture shard — polarizing cell, missing
-  rationale, XSS-literal, missing cell.
+  rationale, XSS-literal, missing cell, plus fail-soft states (index/shard fetch
+  failure via a stub DataSource, malformed JSON, unsupported version, absent ref).
 - **Manual**: walk several real cells in dev.
 
 #### Rollback Strategy
@@ -327,14 +351,16 @@ Revert the commit; Phases 2–3 remain functional (pickers + URL, no panel).
 - `apps/jaleesbrowser/README.md` (new) — how to export data, dev, build, deploy.
 - `apps/jaleesbrowser/public/data/*` (replace fixture with the **full English export**)
   — committed slimmed data (raw results stay gitignored).
-- `apps/jaleesbrowser/vite.config.ts` (edit) — finalize `base` for the Pages path.
+- `apps/jaleesbrowser/vite.config.ts` (verify) — relative `base: "./"` (from Phase 2)
+  already makes the build host-agnostic; verify, don't hardcode a project path.
 
 #### Implementation Details
 - Run `jaleesbench export-web --results-path <main-checkout results> --out
   apps/jaleesbrowser/public/data` locally (raw data isn't in CI); commit the output.
 - Measure committed size; if uncomfortable vs spec §7 C1, apply D3 prompt-dedup.
-- Actions workflow: `npm ci && npm run build` then `actions/deploy-pages`. Confirm Pages
-  base path matches the repo (`/jaleesbench/`).
+- Actions workflow: `npm ci && npm run build` then `actions/deploy-pages`. With relative
+  `base: "./"` the bundle works at the Pages subpath without hardcoding it; confirm via
+  `vite preview` served under a subpath before merge.
 
 #### Acceptance Criteria
 - [ ] `npm run build` succeeds with the production base path; assets load via relative
@@ -392,3 +418,35 @@ mini-fixture that Phases 2–4 test against; Phase 5 swaps in the full export.
   path; live Pages check in the verify phase.
 - All test data is a small committed fixture — the suite never needs the 190 MB raw
   results, so it runs in CI.
+
+## Consultation Log
+
+### Iteration 1 — 3-way plan review (gemini / codex / claude)
+
+**Verdicts:** Gemini APPROVE · Codex REQUEST_CHANGES · Claude APPROVE. Claude verified
+the plan's codebase assumptions file-by-file (loaders, v2 overlay, CLI, SCORE_SCALE)
+and found them correct. All actionable feedback incorporated:
+
+- **Searchable question picker** (Codex): Phase 3 objective/files/acceptance now require
+  the question picker to filter ~140 probes by id/title (spec §6 / §7 I4).
+- **Complete fail-soft enumeration** (Codex): Phase 4 now lists every required fail-soft
+  state — index fetch failure, malformed index/shard JSON, unsupported `contractVersion`,
+  missing cell, and absent subject/judge/axis reference — with matching acceptance +
+  component tests.
+- **DOM component-test setup** (Codex): Phase 2 explicitly provisions the test stack
+  (`vitest` + `jsdom` + `@testing-library/react` + `vitest.setup.ts`) so Phase 4's
+  component tests are runnable.
+- **Band colors defined in the exporter** (Claude): Phase 1 corrected — `BAND_NAMES`
+  lives in `html_report.py:17` and there is no 5-point palette to reuse (only binary
+  `.pos`/`.neg`), so the exporter defines its own 5-color band map emitted in
+  `bands[].color`.
+- **`collect.py` precision** (Claude): Phase 1 clarified — `load_probes()` already takes
+  a `path` arg and needs no change; only the `RESULTS` dir must become overridable.
+- **Vite relative base** (Gemini): Phase 2 sets `base: "./"` (host-agnostic per spec
+  §5.7); Phase 5 verifies rather than hardcodes a project path.
+- **Turn-row alignment** (Gemini): Phase 4 aligns turns across columns via a per-turn
+  grid/flex row so verbose vs. concise models stay horizontally aligned.
+- **Container-level RTL** (Gemini): Phase 4 sets `dir` from `dataset.language` at the
+  page/column-container level, not just on text snippets.
+
+*(Human feedback at plan-approval will be logged here.)*
