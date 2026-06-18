@@ -67,3 +67,21 @@ Revised:
 - §9 crit 5 generalized off hard-Pages; §5.7/§7 reference recommendations not bakes.
 Gate still pending (WAITING FOR HUMAN APPROVAL). Commit + re-notify architect; do
 NOT porch approve.
+
+## 2026-06-17 — Plan phase
+
+spec-approval APPROVED by human (architect). `porch next` → plan phase.
+Architect added a new OPEN plan decision to carry: a thin client-side **DataSource
+seam** (`loadIndex()`/`loadItem(id)`) the UI depends on, static-file fetcher the
+ONLY impl now; NO DB adapter/API client/query layer (YAGNI). Recommend it; requester
+decides at plan-approval.
+
+Wrote plan (5 linear phases): 1 export CLI+contract → 2 scaffold+DataSource seam+
+types → 3 pickers+URL state → 4 side-by-side compare+verdicts+legend → 5 static
+build+Pages deploy+real export. Machine-readable phases JSON present; porch checks
+(plan_exists / has_phases_json / min_two_phases=5) all PASS. Open decisions section:
+D1 DataSource seam (architect, recommended), D2 stack assumptions from spec §4
+(confirm/redirect), D3 shard encoding. PR strategy: phases = git commits on ONE
+branch, single PR after final implement phase.
+Next: commit plan, `porch done 3` → 3-way plan consult → expect plan-approval gate
+→ STOP + notify architect.
