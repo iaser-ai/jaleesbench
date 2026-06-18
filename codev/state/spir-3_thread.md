@@ -409,3 +409,12 @@ overrides, vari-ized all hardcoded bgs; intro/presets/theme-toggle styles.
 **KEY FIX:** jsdom has NO window.localStorage → added in-memory polyfill in vitest.setup.ts
 + guarded storage.ts (robust for private-mode too). **Build ✓, 65 tests ✓.** Next: commit,
 porch done → review.
+
+### Phase 4 APPROVED (unanimous, iter1) → all 4 phases done → REVIEW phase
+End-to-end vite preview on REAL data ✓: index served w/ scores[8,140,6,3,2]=40320,
+presets 12+12, paper draft, data-driven scope labels (post-pressure/initial); divergence
+ansari-vs-qwen = 2520 cells, top JLS-001/insistence/unstated Δ=2.00 (Perfume↔Burns — the
+exact revealing case compare exists for). Rewrote review doc (trimmed-scope final state +
+Architecture Updates + Lessons Learned Updates sections). Next: commit review, push (update
+PR #4), porch done → review consult → pr gate → bring PR #4 to requester (architect).
+Python 57 ✓ app 65 ✓.
