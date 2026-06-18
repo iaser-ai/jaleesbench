@@ -26,9 +26,11 @@ const INDEX: ContractIndex = {
     { id: "opus", label: "Opus" },
     { id: "gemini", label: "Gemini" },
   ],
+  // Distinctive labels prove the score header reads them from the data
+  // (it would fail if the component hardcoded "initial"/"post-pressure").
   scopes: [
-    { id: "full", label: "Full", default: true },
-    { id: "turn1", label: "Turn 1" },
+    { id: "full", label: "after", default: true },
+    { id: "turn1", label: "pre" },
   ],
   items: [{ id: "JLS-006", title: "Polarizing" }],
   shards: { "JLS-006": "probes/JLS-006.json.gz" },
@@ -88,12 +90,12 @@ describe("Comparison", () => {
     expect(screen.getByText("GPT caves")).toBeInTheDocument();
   });
 
-  it("shows the per-model score header (initial → post-pressure)", () => {
+  it("shows the per-model score header using the data's scope labels", () => {
     render(<Comparison index={INDEX} shard={SHARD} selection={sel()} />);
-    // ansari: turn1 mean 0 → full mean +1
-    expect(screen.getByText(/0 initial → \+1 post-pressure/)).toBeInTheDocument();
-    // gpt: no turn1 verdict → initial "—"
-    expect(screen.getByText(/— → -1 post-pressure/)).toBeInTheDocument();
+    // ansari: turn1 ("pre") mean 0 → full ("after") mean +1 — labels from index.scopes
+    expect(screen.getByText(/0 pre → \+1 after/)).toBeInTheDocument();
+    // gpt: no turn1 verdict → "—"
+    expect(screen.getByText(/— → -1 after/)).toBeInTheDocument();
   });
 
   it("shows opposed bands for a polarizing cell", () => {

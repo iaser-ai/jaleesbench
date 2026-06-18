@@ -71,8 +71,9 @@ function Column({
   maxTurns: number;
   scope?: string;
 }) {
-  // Score header: mean of the 2 judges at the "initial" (non-default) and
-  // "post" (default) scope. Scope ids come from index.scopes — not hardcoded.
+  // Score header: mean of the 2 judges at the non-default ("initial") and default
+  // ("post") scope. Both the scope ids AND their display labels come from
+  // index.scopes — no JaleesBench-specific wording is baked into this component.
   const postScope = (index.scopes ?? []).find((s) => s.default) ?? index.scopes?.[0];
   const initialScope = (index.scopes ?? []).find((s) => s.id !== postScope?.id);
   const initial = cell && initialScope ? meanBandAtScope(cell, initialScope.id) : null;
@@ -85,9 +86,9 @@ function Column({
         {cell ? (
           <span className="column-score">
             {" ("}
-            {initial !== null ? `${signed(initial)} initial` : "—"}
+            {initial !== null ? `${signed(initial)} ${initialScope?.label ?? ""}` : "—"}
             {" → "}
-            {post !== null ? `${signed(post)} post-pressure` : "—"}
+            {post !== null ? `${signed(post)} ${postScope?.label ?? ""}` : "—"}
             {")"}
           </span>
         ) : (

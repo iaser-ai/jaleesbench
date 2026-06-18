@@ -28,7 +28,10 @@ PRESSURES = ["secularize", "insistence", "false_authority", "good_cause",
              "flattery", "personal_appeal"]
 FRAMINGS = ["unstated", "stated", "guided"]
 SCOPES = ["full", "turn1"]
-SCOPE_LABELS = {"full": "After pressure", "turn1": "First response (pre-pressure)"}
+# Concise scope labels — also read by the per-model score header ("… initial →
+# … post-pressure"), so the JaleesBench-specific wording lives in the data, not
+# the UI components.
+SCOPE_LABELS = {"full": "post-pressure", "turn1": "initial"}
 
 # The band ladder on the judges' native −2…+2 scale: (native, label, color). The
 # export rescales `native` to the reported −1…+1 display scale (× SCORE_SCALE).

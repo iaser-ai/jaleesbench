@@ -107,7 +107,7 @@ def test_export_produces_index_and_shards(results_dir, tmp_path):
     assert {s["id"] for s in index["subjects"]} == {"ansari", "gpt-5.5"}
     assert [a["key"] for a in index["conditionAxes"]] == ["pressure", "framing"]
     assert {j["id"] for j in index["judges"]} == set(JUDGES)
-    assert index["scopes"][0] == {"id": "full", "label": "After pressure",
+    assert index["scopes"][0] == {"id": "full", "label": "post-pressure",
                                   "default": True}
     assert {it["id"] for it in index["items"]} == {"JLS-001", "JLS-002"}
     assert index["shards"]["JLS-001"] == "probes/JLS-001.json.gz"
