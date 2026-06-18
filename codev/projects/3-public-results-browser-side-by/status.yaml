@@ -1,9 +1,24 @@
 id: '3'
 title: public-results-browser-side-by
 protocol: spir
-phase: plan
-plan_phases: []
-current_plan_phase: null
+phase: implement
+plan_phases:
+  - id: phase_1_export
+    title: Data contract + Python export CLI
+    status: in_progress
+  - id: phase_2_scaffold
+    title: App scaffold, contract types & DataSource seam
+    status: pending
+  - id: phase_3_pickers_url
+    title: Generic pickers + URL deep-link state
+    status: pending
+  - id: phase_4_compare
+    title: Side-by-side comparison, verdicts & band legend
+    status: pending
+  - id: phase_5_deploy
+    title: Static build, GitHub Pages deploy & real-data export
+    status: pending
+current_plan_phase: phase_1_export
 gates:
   spec-approval:
     status: approved
@@ -18,7 +33,7 @@ gates:
   verify-approval:
     status: pending
 iteration: 1
-build_complete: true
+build_complete: false
 history: []
 started_at: '2026-06-17T23:15:34.666Z'
-updated_at: '2026-06-18T01:44:31.416Z'
+updated_at: '2026-06-18T01:44:38.192Z'
