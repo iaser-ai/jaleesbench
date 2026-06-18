@@ -1,9 +1,21 @@
 id: '3'
 title: public-results-browser-side-by
 protocol: spir
-phase: plan
-plan_phases: []
-current_plan_phase: null
+phase: implement
+plan_phases:
+  - id: phase_1_scores_presets
+    title: 'Export: per-cell score blob + presets + paper; remove CONTRACT.md'
+    status: in_progress
+  - id: phase_2_drillin_polish
+    title: 'Drill-in: markdown + collapsible + sans-serif + score header'
+    status: pending
+  - id: phase_3_compare_view
+    title: Compare-by-divergence view + URL view-state
+    status: pending
+  - id: phase_4_presets_intro_theme
+    title: Presets menu + intro/paper panel + light/dark
+    status: pending
+current_plan_phase: phase_1_scores_presets
 gates:
   spec-approval:
     status: approved
@@ -17,26 +29,11 @@ gates:
     status: pending
   verify-approval:
     status: pending
-iteration: 2
-build_complete: true
-history:
-  - iteration: 1
-    build_output: ''
-    reviews:
-      - model: gemini
-        verdict: APPROVE
-        file: >-
-          /Users/mwk/Development/fftn/taqwabench/.builders/spir-3/codev/projects/3-public-results-browser-side-by/3-plan-iter1-gemini.txt
-      - model: codex
-        verdict: REQUEST_CHANGES
-        file: >-
-          /Users/mwk/Development/fftn/taqwabench/.builders/spir-3/codev/projects/3-public-results-browser-side-by/3-plan-iter1-codex.txt
-      - model: claude
-        verdict: APPROVE
-        file: >-
-          /Users/mwk/Development/fftn/taqwabench/.builders/spir-3/codev/projects/3-public-results-browser-side-by/3-plan-iter1-claude.txt
+iteration: 1
+build_complete: false
+history: []
 started_at: '2026-06-17T23:15:34.666Z'
-updated_at: '2026-06-18T04:53:38.767Z'
+updated_at: '2026-06-18T04:53:46.178Z'
 pr_history:
   - phase: review
     pr_number: 4
