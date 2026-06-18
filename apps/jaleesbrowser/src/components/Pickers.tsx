@@ -112,23 +112,6 @@ export function Pickers({
           </select>
         </label>
       ))}
-
-      {index.scopes && index.scopes.length > 0 && selection.scope !== undefined && (
-        <label className="picker">
-          <span>Scope</span>
-          <select
-            value={selection.scope}
-            onChange={(e) => set({ scope: e.target.value })}
-            aria-label="Scope"
-          >
-            {index.scopes.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.label}
-              </option>
-            ))}
-          </select>
-        </label>
-      )}
     </section>
   );
 }

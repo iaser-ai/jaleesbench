@@ -80,7 +80,6 @@ export function computeGuided(index: ContractIndex): GuidedList[] {
     a,
     b: best,
     ...c,
-    ...(post ? { scope: post } : {}),
   });
 
   // Single-model view: b="" is the explicit "none" sentinel (see urlstate).
@@ -89,7 +88,6 @@ export function computeGuided(index: ContractIndex): GuidedList[] {
     a,
     b: "",
     ...c,
-    ...(post ? { scope: post } : {}),
   });
 
   // (1) Models split — biggest first-stage divergence from the strongest model.

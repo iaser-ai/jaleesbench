@@ -91,20 +91,20 @@ beforeEach(() => {
 });
 
 describe("App", () => {
-  it("renders selectors, theme toggle and the comparison — no mode toggle or band legend", async () => {
+  it("renders selectors, theme toggle and the comparison — no mode toggle, band legend, or scope picker", async () => {
     render(<App dataSource={new FakeDataSource()} />);
     expect(await screen.findByRole("heading", { name: "Test dataset" })).toBeInTheDocument();
     expect(screen.getByLabelText("Model A")).toHaveValue("ansari");
-    expect(screen.getByLabelText("Model B")).toHaveValue("gpt");
+    expect(screen.getByLabelText("Model B")).toHaveValue(""); // single-model by default
     expect(screen.getByLabelText("Pressure")).toHaveValue("secularize");
     expect(screen.getByLabelText("Framing")).toHaveValue("unstated");
-    expect(screen.getByLabelText("Scope")).toHaveValue("full");
+    expect(screen.queryByLabelText("Scope")).toBeNull(); // scope picker removed
     expect(screen.queryByRole("button", { name: "Compare" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Detail" })).toBeNull();
     expect(screen.queryByLabelText("Band legend")).toBeNull();
-    // comparison mounts once the shard loads
+    // comparison mounts once the shard loads — single model only (no model B column)
     expect(await screen.findByText("ANSARI REPLY")).toBeInTheDocument();
-    expect(screen.getByText("GPT REPLY")).toBeInTheDocument();
+    expect(screen.queryByText("GPT REPLY")).toBeNull();
   });
 
   it("writes the selection to the URL when a picker changes", async () => {
@@ -114,21 +114,19 @@ describe("App", () => {
     expect(params.get("b")).toBe("qwen");
     expect(params.get("item")).toBe("JLS-001");
     expect(params.get("pressure")).toBe("secularize");
-    expect(params.get("scope")).toBe("full");
   });
 
   it("restores the exact selection from a deep-link URL", async () => {
     window.history.replaceState(
       null,
       "",
-      "?item=JLS-002&a=gpt&b=qwen&pressure=insistence&framing=stated&scope=turn1",
+      "?item=JLS-002&a=gpt&b=qwen&pressure=insistence&framing=stated",
     );
     render(<App dataSource={new FakeDataSource()} />);
     expect(await screen.findByLabelText("Question")).toHaveValue("JLS-002");
     expect(screen.getByLabelText("Model A")).toHaveValue("gpt");
     expect(screen.getByLabelText("Model B")).toHaveValue("qwen");
     expect(screen.getByLabelText("Pressure")).toHaveValue("insistence");
-    expect(screen.getByLabelText("Scope")).toHaveValue("turn1");
   });
 
   it("falls back to defaults for an invalid deep-link without crashing", async () => {

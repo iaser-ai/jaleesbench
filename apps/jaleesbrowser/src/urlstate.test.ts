@@ -43,14 +43,13 @@ const INDEX: ContractIndex = {
 };
 
 describe("urlstate", () => {
-  it("defaultSelection is the detail view, first item, two distinct subjects, first axis values, default scope", () => {
+  it("defaultSelection is the detail view, first item, first model, single-model (no B), first axis values", () => {
     expect(defaultSelection(INDEX)).toEqual({
       view: "detail",
       item: "JLS-001",
       a: "ansari",
-      b: "gpt",
+      b: "",
       conditions: { pressure: "secularize", framing: "unstated" },
-      scope: "full",
     });
   });
 
@@ -61,7 +60,6 @@ describe("urlstate", () => {
       a: "gpt",
       b: "qwen",
       conditions: { pressure: "insistence", framing: "stated" },
-      scope: "turn1",
     };
     expect(decodeSelection(encodeSelection(sel, INDEX), INDEX)).toEqual(sel);
   });
@@ -73,7 +71,6 @@ describe("urlstate", () => {
       a: "gpt",
       b: "qwen",
       conditions: { pressure: "insistence", framing: "stated" },
-      scope: "turn1",
     };
     const p = new URLSearchParams(encodeSelection(sel, INDEX));
     expect(p.get("view")).toBe("compare");
@@ -81,7 +78,6 @@ describe("urlstate", () => {
     expect(p.get("b")).toBe("qwen");
     expect(p.get("item")).toBeNull(); // detail-only params omitted
     expect(p.get("pressure")).toBeNull();
-    expect(p.get("scope")).toBeNull();
     // decoding the canonical compare link keeps the compare view + a/b
     const decoded = decodeSelection(encodeSelection(sel, INDEX), INDEX);
     expect(decoded.view).toBe("compare");
@@ -98,16 +94,15 @@ describe("urlstate", () => {
     const p = new URLSearchParams(qs);
     expect(p.get("pressure")).toBe("secularize");
     expect(p.get("framing")).toBe("unstated");
-    expect(p.get("scope")).toBe("full");
   });
 
   it("falls back to defaults for missing params", () => {
     expect(decodeSelection("", INDEX)).toEqual(defaultSelection(INDEX));
   });
 
-  it("falls back to defaults for invalid params (bad item / subject / axis / scope)", () => {
+  it("falls back to defaults for invalid params (bad item / subject / axis)", () => {
     const sel = decodeSelection(
-      "?item=NOPE&a=ghost&b=qwen&pressure=bogus&framing=stated&scope=zzz",
+      "?item=NOPE&a=ghost&b=qwen&pressure=bogus&framing=stated",
       INDEX,
     );
     expect(sel.item).toBe("JLS-001"); // bad item → default
@@ -115,7 +110,6 @@ describe("urlstate", () => {
     expect(sel.b).toBe("qwen"); // valid kept
     expect(sel.conditions.pressure).toBe("secularize"); // bad axis value → default
     expect(sel.conditions.framing).toBe("stated"); // valid kept
-    expect(sel.scope).toBe("full"); // bad scope → default
   });
 
   it("allows the same subject on both sides", () => {
@@ -124,10 +118,11 @@ describe("urlstate", () => {
     expect(sel.b).toBe("qwen");
   });
 
-  it("treats an explicit empty b (?b=) as none → single-model view", () => {
-    expect(decodeSelection("?b=", INDEX).b).toBe("");
-    // an ABSENT b still falls back to the default second model (side-by-side)
-    expect(decodeSelection("?a=gpt", INDEX).b).toBe(defaultSelection(INDEX).b);
+  it("b is single-model by default; only a valid id opts into side-by-side", () => {
+    expect(decodeSelection("", INDEX).b).toBe(""); // no param → single-model default
+    expect(decodeSelection("?b=", INDEX).b).toBe(""); // explicit empty → single-model
+    expect(decodeSelection("?b=bogus", INDEX).b).toBe(""); // invalid id → single-model
+    expect(decodeSelection("?b=qwen", INDEX).b).toBe("qwen"); // valid id → side-by-side
   });
 
   it("round-trips a single-model selection (b empty)", () => {
@@ -137,14 +132,8 @@ describe("urlstate", () => {
       a: "gpt",
       b: "",
       conditions: { pressure: "insistence", framing: "stated" },
-      scope: "turn1",
     };
     expect(decodeSelection(encodeSelection(sel, INDEX), INDEX)).toEqual(sel);
   });
 
-  it("omits scope when the dataset declares no scopes", () => {
-    const noScopes: ContractIndex = { ...INDEX, scopes: undefined };
-    expect(defaultSelection(noScopes).scope).toBeUndefined();
-    expect(encodeSelection(defaultSelection(noScopes), noScopes)).not.toContain("scope");
-  });
 });

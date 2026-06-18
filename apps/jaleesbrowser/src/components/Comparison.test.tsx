@@ -76,7 +76,6 @@ function sel(over: Partial<Selection> = {}): Selection {
     a: "ansari",
     b: "gpt",
     conditions: { pressure: "insistence", framing: "unstated" },
-    scope: "full",
     ...over,
   };
 }

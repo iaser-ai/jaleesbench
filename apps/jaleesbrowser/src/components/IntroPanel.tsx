@@ -77,12 +77,6 @@ export function IntroPanel({ index }: { index: ContractIndex }) {
                 {ax.values.length} options).
               </li>
             ))}
-            {index.scopes && index.scopes.length > 1 && (
-              <li>
-                <strong>Scope</strong> —{" "}
-                {index.scopes.map((s) => s.label).join(" vs ")}.
-              </li>
-            )}
           </ul>
           <p>
             <strong>Compare</strong> two models to find the questions where they differ
