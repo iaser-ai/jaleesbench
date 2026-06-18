@@ -54,10 +54,15 @@ contract ceremony.
 - `jaleesbench/jaleesbench/export_web.py` (edit) — emit into `index.json`: `scores`
   (`{order, shape, data}` flat row-major mean band per subject×item×pressure×framing×
   scope, `null` if absent), `presets` (polarizing/models-poorly + judges-differed,
-  §4.4/§5.5 semantics, deterministic), `paper` (`{url, label, draft:true}`), and
-  per-subject overall means. Keep `contractVersion "1.0"`.
+  §4.4/§5.5 semantics, deterministic, **empty sets omitted**), `paper`
+  (`{url, label, draft:true}`), and per-subject `overall` means. Keep
+  `contractVersion "1.0"`. **Clean stale "versioned contract" / `CONTRACT.md` wording**
+  from the module + function docstrings/comments.
+- `apps/jaleesbrowser/src/contract.ts` (edit) — extend `ContractIndex` with typed
+  `scores`, `presets`, `paper`, and `subjects[].overall` (so Phases 2–4 have typed
+  access; avoids shape drift). These are plain optional fields (no schema ceremony).
 - `jaleesbench/tests/test_export_web.py` (edit) — assert the `scores` blob shape/values
-  (incl. a `null`), preset structure + determinism, `paper` field.
+  (incl. a `null`), preset structure + determinism + empty-omission, `paper` field.
 - `apps/jaleesbrowser/CONTRACT.md` (**delete**); fold a short "data format" note into
   `apps/jaleesbrowser/README.md` (edit).
 - Regenerate `apps/jaleesbrowser/public/data/` (full export with the new fields).
@@ -83,8 +88,10 @@ contract ceremony.
 - `apps/jaleesbrowser/src/components/Collapsible.tsx` (new) + test — clamps to ~10 lines,
   expand/collapse toggle when content overflows.
 - `apps/jaleesbrowser/src/components/Comparison.tsx` (edit) — transcript turns via
-  `Markdown` + `Collapsible`; **per-model score header** (initial → post from the score
-  blob/verdicts, e.g. `glm-5.1 (+0.75 initial → +0.5 post-pressure)`).
+  `Markdown` + `Collapsible`; **per-model score header** computed **from the shard's
+  verdicts** (mean of the 2 judges at turn-1 / full — the `scores` blob reader arrives in
+  Phase 3; the drill-in already has the verdicts), e.g.
+  `glm-5.1 (+0.75 initial → +0.5 post-pressure)`.
 - `apps/jaleesbrowser/src/components/Verdicts.tsx` (edit) — rationale/summary via
   `Markdown` + `Collapsible`.
 - `apps/jaleesbrowser/src/styles.css` (edit) — sans-serif throughout; collapsible/score-
@@ -108,18 +115,23 @@ contract ceremony.
   `|score(A)−score(B)|` desc at the default scope, null-either excluded, tie-break
   item/condition.
 - `apps/jaleesbrowser/src/urlstate.ts` (edit) + test — a `view` param (`detail` |
-  `compare`); encode/decode per-view state; default landing `detail`.
+  `compare`); encode/decode per-view state; default landing `detail`; an unknown/invalid
+  `view` falls back to `detail`.
 - `apps/jaleesbrowser/src/components/Compare.tsx` (new) + test — A/B pickers + the ranked
-  list (question, condition, both scores); a row click → `view=detail` for that cell.
+  list (question, condition, both scores), **top-N = 50 with a "show more"** (spec §5.3/
+  I1); a row click → `view=detail` for that cell.
 - `apps/jaleesbrowser/src/App.tsx` (edit) — render `detail` vs `compare` by `view`; mode
-  toggle; wire row-click navigation.
+  toggle; wire row-click navigation. **Gate the shard-load effect to `view==='detail'`**
+  so compare never fetches a shard (spec: compare is instant from `index.json`).
 
 #### Acceptance / Tests
 - [ ] `divergenceRanking` orders by |Δ| desc, excludes null-either cells, deterministic
-      tie-break (unit).
-- [ ] `?view=compare&a=..&b=..` restores the compare view; a row click deep-links to
-      `view=detail`; round-trip (test).
-- [ ] Compare renders instantly from the index (no shard fetch).
+      tie-break, top-N + show-more (unit).
+- [ ] `?view=compare&a=..&b=..` restores the compare view; an invalid `view` → detail; a
+      row click deep-links to `view=detail`; round-trip (test).
+- [ ] Compare renders instantly from the index — **no shard fetch in compare mode**
+      (assert the DataSource `loadItem` is not called; the shard-load effect is gated to
+      detail).
 
 ---
 
