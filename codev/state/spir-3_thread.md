@@ -268,3 +268,10 @@ marker as trivial follow-up if architect prefers. Next: commit, porch done → i
   direct, 140 items, 144 cells, bands OK.
 - Build ✓ (relative ./assets/ + 140 shards in dist), **33 tests ✓**.
 Next: commit, porch done → 3-way review → PR.
+
+### Phase 5 APPROVED (iter 1 unanimous, no issues) → REVIEW phase
+All 5 implement phases done. porch → review phase. Wrote
+codev/reviews/3-public-results-browser-side-by.md (spec compliance §9.1-15 all met,
+deviations: data/probes→probes, collect.py unedited, gzip size, gzip-serving fix;
+lessons; debt; consult summary; no flaky). Next: commit review, porch done → review
+consult → PR gate (human). PR = single PR after final implement phase (per PR strategy).
