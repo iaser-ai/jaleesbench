@@ -2,8 +2,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { BandLegend } from "./components/BandLegend";
 import { Compare } from "./components/Compare";
 import { Comparison } from "./components/Comparison";
+import { IntroPanel } from "./components/IntroPanel";
 import { ItemHeader } from "./components/ItemHeader";
 import { Pickers } from "./components/Pickers";
+import { Presets } from "./components/Presets";
+import { ThemeToggle } from "./components/ThemeToggle";
 import type { ContractIndex, ItemShard } from "./contract";
 import type { DataSource } from "./datasource";
 import { type DivergenceRow, defaultScopeId } from "./scores";
@@ -130,7 +133,12 @@ export function App({ dataSource }: { dataSource: DataSource }) {
 
   return (
     <main dir={dir}>
-      <h1>{index.dataset.title}</h1>
+      <header className="app-header">
+        <h1>{index.dataset.title}</h1>
+        <ThemeToggle />
+      </header>
+
+      <IntroPanel paper={index.paper} />
 
       <nav className="mode-toggle" aria-label="View mode">
         <button
@@ -148,6 +156,8 @@ export function App({ dataSource }: { dataSource: DataSource }) {
           Compare
         </button>
       </nav>
+
+      <Presets index={index} onApply={onChange} />
 
       {selection.view === "compare" ? (
         <Compare

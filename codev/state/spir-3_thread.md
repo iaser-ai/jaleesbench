@@ -393,3 +393,19 @@ click→onOpenDetail, keyboard a11y; Compare.test (3). App.tsx: mode toggle, ren
 vs compare by view, **shard-load GATED to view==='detail'** (compare = no shard loads),
 onOpenDetail builds detail Selection. App.test +2 (compare no-shard + toggle). styles:
 mode-toggle/compare-table. **Build ✓, 53 tests ✓.** Next: commit, porch done → review.
+iter1 Codex (tie-break lexical not declared-order; compare→detail scope) fixed +tests →
+iter2 Codex (canonical per-view URLs; top-50/show-more untested) fixed +tests → iter3 all
+APPROVE.
+
+## 2026-06-18 — Phase 4 (phase_4_presets_intro_theme)
+theme.ts (getInitialTheme: persisted→prefers-color-scheme→light, matchMedia guarded;
+useTheme applies data-theme + persists) + theme.test (4). storage.ts (getStored/setStored
+— guarded try/catch + optional chaining, never throws). ThemeToggle.tsx. IntroPanel.tsx
+(construct/axes/controls + paper link draft; open first-visit, collapsed after via
+orient-seen) + test (2). Presets.tsx (menu from index.presets; entry params → decodeSelection
+→ onApply) + test (2). App.tsx: app-header+ThemeToggle, IntroPanel, Presets(onApply=onChange).
+styles.css: light/dark CSS vars (--bg/fg/panel/border/accent/error...) + [data-theme=dark]
+overrides, vari-ized all hardcoded bgs; intro/presets/theme-toggle styles.
+**KEY FIX:** jsdom has NO window.localStorage → added in-memory polyfill in vitest.setup.ts
++ guarded storage.ts (robust for private-mode too). **Build ✓, 65 tests ✓.** Next: commit,
+porch done → review.
