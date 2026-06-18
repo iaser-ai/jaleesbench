@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 import type { ContractIndex } from "./contract";
-import { type DataSource, StaticFileDataSource } from "./datasource";
-
-const defaultDataSource: DataSource = new StaticFileDataSource();
+import type { DataSource } from "./datasource";
 
 /**
  * Phase 2 smoke shell: load the index via the DataSource and report counts. The
  * pickers (Phase 3) and the side-by-side comparison (Phase 4) build on this.
+ *
+ * The UI depends ONLY on the `DataSource` interface — the concrete
+ * implementation is injected by the composition root (`main.tsx`), so the seam
+ * stays real and a future source is swapped in without touching the UI.
  */
-export function App({ dataSource = defaultDataSource }: { dataSource?: DataSource }) {
+export function App({ dataSource }: { dataSource: DataSource }) {
   const [index, setIndex] = useState<ContractIndex | null>(null);
   const [error, setError] = useState<string | null>(null);
 

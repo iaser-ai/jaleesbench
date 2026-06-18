@@ -1,6 +1,7 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import type { ContractIndex, ItemShard } from "./contract";
 import { StaticFileDataSource, UnsupportedVersionError } from "./datasource";
+import realIndex from "../public/data/index.json";
 
 /** Gzip a string using the web CompressionStream (symmetric to the
  * DataSource's DecompressionStream) — keeps the test free of Node-only APIs. */
@@ -27,7 +28,7 @@ const INDEX: ContractIndex = {
   judges: [{ id: "j1", label: "J1" }],
   scopes: [{ id: "full", label: "Full", default: true }],
   items: [{ id: "JLS-001", title: "First" }],
-  shards: { "JLS-001": "data/probes/JLS-001.json.gz" },
+  shards: { "JLS-001": "probes/JLS-001.json.gz" },
 };
 
 const SHARD: ItemShard = {
@@ -72,7 +73,7 @@ describe("StaticFileDataSource", () => {
     vi.stubGlobal("fetch", routeFetch({ "index.json": () => json(INDEX) }));
     const idx = await new StaticFileDataSource().loadIndex();
     expect(idx.subjects).toHaveLength(2);
-    expect(idx.shards["JLS-001"]).toBe("data/probes/JLS-001.json.gz");
+    expect(idx.shards["JLS-001"]).toBe("probes/JLS-001.json.gz");
   });
 
   it("throws UnsupportedVersionError on a MAJOR mismatch", async () => {
@@ -101,18 +102,21 @@ describe("StaticFileDataSource", () => {
     await expect(new StaticFileDataSource().loadIndex()).rejects.toThrow(/HTTP 500/);
   });
 
-  it("loads and gunzips a shard", async () => {
-    vi.stubGlobal(
-      "fetch",
-      routeFetch({
-        "index.json": () => json(INDEX),
-        "JLS-001.json.gz": () => gz(),
-      }),
-    );
-    const shard = await new StaticFileDataSource().loadItem("JLS-001");
+  it("loads and gunzips a shard, resolving the path against the base", async () => {
+    const fetchMock = routeFetch({
+      "index.json": () => json(INDEX),
+      "JLS-001.json.gz": () => gz(),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const shard = await new StaticFileDataSource("./data/").loadItem("JLS-001");
     expect(shard.item.id).toBe("JLS-001");
     expect(shard.cells[0].subject).toBe("a");
     expect(shard.cells[0].verdicts[0].bandLabel).toBe("High");
+    // baseUrl "./data/" + relative shard "probes/…" must resolve under /data/probes/.
+    const shardUrl = String(
+      fetchMock.mock.calls.find((c) => String(c[0]).includes(".json.gz"))?.[0],
+    );
+    expect(shardUrl).toMatch(/\/data\/probes\/JLS-001\.json\.gz$/);
   });
 
   it("throws for an unknown item id", async () => {
@@ -120,5 +124,14 @@ describe("StaticFileDataSource", () => {
     await expect(new StaticFileDataSource().loadItem("NOPE")).rejects.toThrow(
       /No shard/,
     );
+  });
+
+  it("the committed fixture matches the contract (v1, relative probes/ paths)", () => {
+    expect(realIndex.contractVersion.split(".")[0]).toBe("1");
+    const paths = Object.values(realIndex.shards);
+    expect(paths.length).toBeGreaterThan(0);
+    for (const p of paths) {
+      expect(p).toMatch(/^probes\//); // relative to index.json, no leading slash
+    }
   });
 });

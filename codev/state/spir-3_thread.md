@@ -191,3 +191,15 @@ plan. Fixture regenerated (public/data/index.json + probes/JLS-001.json.gz, 464K
 Full python suite 52 ✓. npm audit: 5 vulns in dev tooling (transitive) — not
 touching runtime bundle (just React); left as-is (audit fix --force risks breakage).
 Next: commit Phase 2, porch done → 3-way review.
+
+### Phase 2 3-way review (iter 1)
+Committed eb816e0, porch done (check pass), consult: **Claude APPROVE · Codex
+REQUEST_CHANGES · Gemini REQUEST_CHANGES (false positive — empty consult sandbox
+again, same as P1)**. Codex (both fixed): (1) App.tsx instantiated concrete
+StaticFileDataSource → moved to main.tsx (composition root), App takes required
+`dataSource: DataSource` prop, imports only the interface type — seam now real;
+(2) datasource.test.ts used stale `data/probes/` synthetic path + didn't test real
+fixture → fixed synthetic path to `probes/`, added URL-resolution assertion
+(baseUrl ./data/ + probes/… → /data/probes/…), added committed-fixture test
+(asserts v1 + relative probes/ paths). Build ✓, **9 app tests** ✓. Gemini rebutted
+(files exist, committed, Claude verified them). Next: commit fixes, porch done → iter2.
