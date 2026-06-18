@@ -1,94 +1,26 @@
 id: '3'
 title: public-results-browser-side-by
 protocol: spir
-phase: review
-plan_phases:
-  - id: phase_1_export
-    title: Data contract + Python export CLI
-    status: complete
-  - id: phase_2_scaffold
-    title: App scaffold, contract types & DataSource seam
-    status: complete
-  - id: phase_3_pickers_url
-    title: Generic pickers + URL deep-link state
-    status: complete
-  - id: phase_4_compare
-    title: Side-by-side comparison, verdicts & band legend
-    status: complete
-  - id: phase_5_deploy
-    title: Static build, GitHub Pages deploy & real-data export
-    status: complete
+phase: specify
+plan_phases: []
 current_plan_phase: null
 gates:
   spec-approval:
-    status: approved
-    requested_at: '2026-06-17T23:28:53.754Z'
-    approved_at: '2026-06-17T23:58:17.023Z'
+    status: pending
   plan-approval:
-    status: approved
-    requested_at: '2026-06-18T00:08:42.726Z'
-    approved_at: '2026-06-18T01:44:31.415Z'
+    status: pending
   pr:
     status: pending
-    requested_at: '2026-06-18T03:16:50.212Z'
   verify-approval:
     status: pending
 iteration: 1
-build_complete: true
-history:
-  - iteration: 1
-    plan_phase: phase_1_export
-    build_output: ''
-    reviews:
-      - model: gemini
-        verdict: APPROVE
-        file: >-
-          /Users/mwk/Development/fftn/taqwabench/.builders/spir-3/codev/projects/3-public-results-browser-side-by/3-phase_1_export-iter1-gemini.txt
-      - model: codex
-        verdict: REQUEST_CHANGES
-        file: >-
-          /Users/mwk/Development/fftn/taqwabench/.builders/spir-3/codev/projects/3-public-results-browser-side-by/3-phase_1_export-iter1-codex.txt
-      - model: claude
-        verdict: APPROVE
-        file: >-
-          /Users/mwk/Development/fftn/taqwabench/.builders/spir-3/codev/projects/3-public-results-browser-side-by/3-phase_1_export-iter1-claude.txt
-  - iteration: 1
-    plan_phase: phase_2_scaffold
-    build_output: ''
-    reviews:
-      - model: gemini
-        verdict: REQUEST_CHANGES
-        file: >-
-          /Users/mwk/Development/fftn/taqwabench/.builders/spir-3/codev/projects/3-public-results-browser-side-by/3-phase_2_scaffold-iter1-gemini.txt
-      - model: codex
-        verdict: REQUEST_CHANGES
-        file: >-
-          /Users/mwk/Development/fftn/taqwabench/.builders/spir-3/codev/projects/3-public-results-browser-side-by/3-phase_2_scaffold-iter1-codex.txt
-      - model: claude
-        verdict: APPROVE
-        file: >-
-          /Users/mwk/Development/fftn/taqwabench/.builders/spir-3/codev/projects/3-public-results-browser-side-by/3-phase_2_scaffold-iter1-claude.txt
-  - iteration: 1
-    plan_phase: phase_4_compare
-    build_output: ''
-    reviews:
-      - model: gemini
-        verdict: APPROVE
-        file: >-
-          /Users/mwk/Development/fftn/taqwabench/.builders/spir-3/codev/projects/3-public-results-browser-side-by/3-phase_4_compare-iter1-gemini.txt
-      - model: codex
-        verdict: REQUEST_CHANGES
-        file: >-
-          /Users/mwk/Development/fftn/taqwabench/.builders/spir-3/codev/projects/3-public-results-browser-side-by/3-phase_4_compare-iter1-codex.txt
-      - model: claude
-        verdict: APPROVE
-        file: >-
-          /Users/mwk/Development/fftn/taqwabench/.builders/spir-3/codev/projects/3-public-results-browser-side-by/3-phase_4_compare-iter1-claude.txt
+build_complete: false
+history: []
 started_at: '2026-06-17T23:15:34.666Z'
-updated_at: '2026-06-18T03:16:50.212Z'
+updated_at: '2026-06-18T03:43:52.500Z'
 pr_history:
   - phase: review
     pr_number: 4
     branch: builder/spir-3
     created_at: '2026-06-18T03:08:25.132Z'
-pr_ready_for_human: true
+pr_ready_for_human: false
