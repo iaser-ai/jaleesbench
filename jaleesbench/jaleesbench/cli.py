@@ -78,6 +78,20 @@ def report():
     build_html()
 
 
+@app.command(name="export-web")
+def export_web(
+    out: str = typer.Option(..., help="Output dir for index.json + per-probe shards"),
+    results_path: str = typer.Option(
+        None, help="Results dir to read (default: the package results/)"),
+    limit: int = typer.Option(None, help="Export only the first N probes (by id)"),
+):
+    """Export results into the static viewer's data contract (index.json +
+    per-probe shards) for apps/jaleesbrowser. Read-only over the harness data."""
+    from pathlib import Path
+    from .export_web import export_web as _export
+    _export(Path(results_path) if results_path else None, Path(out), limit=limit)
+
+
 if __name__ == "__main__":
     app()
 

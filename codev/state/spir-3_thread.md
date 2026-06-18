@@ -97,3 +97,56 @@ DEFINED in exporter (BAND_NAMES is html_report.py:17, no 5-color palette exists)
 relative (P2/P5); turn-row alignment across columns (P4); container-level RTL (P4).
 Consultation Log added to plan. Next: commit, rebuttal, porch done → plan-approval
 gate → STOP + notify architect (never auto-approve).
+
+## 2026-06-18 — Implement phase, Phase 1 (phase_1_export)
+
+plan-approval APPROVED. `porch next` → implement / phase_1_export.
+
+### Merge race (resolved)
+Architect msg1 said `git fetch origin && git merge origin/main` to get the
+uv/pytest check override (protocol.json). I did it (merge commit cd44030). Then
+msg2 said "DISREGARD, do NOT merge". Then msg3 resolved: LEAVE the merge as-is (no
+revert), it correctly points the implement check at uv/pytest. **PAUSE before
+`porch done 3`** — architect will confirm how the check resolves (maybe a cleaner
+.codev/config.json swap). Do NOT run the implement check yet.
+
+### Phase 1 built (UNCOMMITTED — porch commits after review)
+- score.py: threaded optional `results_path` into load()/load_judgments()
+  (default RESULTS unchanged → existing tests still pass; monkeypatch-friendly).
+  collect.py NOT touched (threading via score.py suffices; load_probes already
+  takes a path arg + reads bundled DATA). Minor deviation from plan's file list,
+  intent met.
+- export_web.py (new): `export_web(results_path, out_dir, limit)` → contract-shaped
+  index.json + data/probes/<id>.json. Generic (subjects/items/conditionAxes/bands/
+  judges/scopes). Slim (drops usage/raw/attempts/context_prefix). Deterministic
+  (sort_keys, fixed orderings) → idempotent. Bands display scale −1…+1; 5-color
+  ramp defined here (BAND_LADDER). v2 missing-rationale tolerated. Fail-loud on
+  unexpected band.
+- cli.py: added `export-web` command (--out, --results-path, --limit).
+- tests/test_export_web.py (new): 8 tests. **Full suite 52 passed** (uv run pytest).
+- apps/jaleesbrowser/CONTRACT.md (new): versioned contract reference.
+- Real-data smoke (--limit 2): valid index + 144-cell shards, 4 turns, 4 verdicts.
+
+### ⚠️ SIZE FINDING (needs architect decision)
+Real smoke: 2 shards = 3.2 MB → ~1.6 MB/probe → **~220 MB for 140 probes**, ~10×
+the plan/spec §7-C1 ~10–30 MB estimate. Bulk = 576 judge rationales/probe +
+transcripts (can't drop without losing the feature). Prompt-dedup (D3) won't fix
+it (prompts are a small fraction). Real levers: gzip-committed shards (+DataSource
+decompress) ≈ ~30 MB; or finer sharding (per probe×subject — reduces per-fetch not
+total); or drop turn-1 rationales (~halve); or accept. This is the spec's "confirm
+repo-size impact at review" checkpoint, arriving early. **Flagged to architect;
+paused for their call** (also affects Phase 2 DataSource + Phase 5 commit).
+
+PAUSED before `porch done 3` per architect. Two items for architect: (1) confirm
+implement-check mechanism, (2) size strategy decision.
+
+### Both decisions resolved (architect)
+(1) Run implement check normally — merged override makes it uv/pytest + pass.
+(2) SIZE → GZIP: shards written as gzip `.json.gz`; index.json plain; shards
+paths point at `.json.gz`; StaticFileDataSource decompresses via
+DecompressionStream('gzip'). Amended export_web.py (`_write_json_gz`,
+mtime=0 → idempotent), tests (read via gzip.decompress), CONTRACT.md.
+Re-smoke (limit 4): ~445KB/gzipped shard → **~62 MB committed** for 140 probes
+(gzip ~3.5× here — rationale-heavy text — not 7×; still 3.5× better than 220MB,
+per-fetch ~445KB/probe fine). 52 tests pass. UNBLOCKED → running `porch done 3`
+(implement check + 3-way impl review).

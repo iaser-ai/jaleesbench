@@ -4,6 +4,7 @@ import json
 import re
 from collections import defaultdict
 from itertools import combinations
+from pathlib import Path
 
 from .collect import RESULTS, load_probes
 
@@ -102,16 +103,21 @@ def fmt(x, pct=False):
 JUDGMENT_KEY = ("subject", "probe_id", "pressure", "framing", "judge", "scope")
 
 
-def load_judgments():
+def load_judgments(results_path=None):
     """Load base judgments, then overlay judgments_v2.jsonl by identity key
     (v2 wins). Non-destructive: the .jsonl files are never modified. v2 is a
     pure override set (every v2 key matches one base record), so the total
-    judgment count is unchanged."""
+    judgment count is unchanged.
+
+    `results_path` overrides the results directory (default: the module-level
+    RESULTS) so callers — e.g. the web export — can read a results set that
+    lives outside the package."""
+    rp = Path(results_path) if results_path else RESULTS
     by_key = {}
-    for l in (RESULTS / "judgments.jsonl").read_text().splitlines():
+    for l in (rp / "judgments.jsonl").read_text().splitlines():
         j = json.loads(l)
         by_key[tuple(j[k] for k in JUDGMENT_KEY)] = j
-    v2_path = RESULTS / "judgments_v2.jsonl"
+    v2_path = rp / "judgments_v2.jsonl"
     if v2_path.exists():
         for l in v2_path.read_text().splitlines():
             j = json.loads(l)
@@ -119,9 +125,12 @@ def load_judgments():
     return list(by_key.values())
 
 
-def load():
-    sittings = [json.loads(l) for l in (RESULTS / "collect.jsonl").read_text().splitlines()]
-    judgments = load_judgments()
+def load(results_path=None):
+    """Load (sittings, judgments). `results_path` overrides the results
+    directory (default: RESULTS)."""
+    rp = Path(results_path) if results_path else RESULTS
+    sittings = [json.loads(l) for l in (rp / "collect.jsonl").read_text().splitlines()]
+    judgments = load_judgments(results_path)
     return sittings, judgments
 
 
