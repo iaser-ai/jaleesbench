@@ -236,3 +236,14 @@ responsive stack @720px, band chips). App.tsx: lazy shard load cached by item id
 dir from dataset.language (RTL) + BandLegend + Comparison + shard fail-soft alert.
 App.test +2 (legend+comparison mount; shard-fail fail-soft). main.tsx imports
 styles.css. **Build ✓ (emits CSS), 31 tests / 5 files ✓.** Next: commit, porch done.
+
+### Phase 4 3-way review (iter 1)
+**Claude APPROVE · Gemini APPROVE · Codex REQUEST_CHANGES.** Codex: absent
+subject/judge/axis refs (1) judgeLabel/subjectLabel `?? id` silent, (2) not tested.
+Response: added render-level test (URL ?a=ghost → comparison shows default "ansari",
+not "ghost"; bad axis → default) — 32 tests ✓. Rebutted #1: selection-level absent
+refs ARE handled in decodeSelection (correct layer, guaranteed valid by render time);
+`?? id` is defensive-only (never fires on contract-valid data since exporter derives
+subjects/judges from same data) + showing the id IS the visible non-crashing state;
+judges aren't a selection axis so no "default" to substitute. Offered "(unknown id)"
+marker as trivial follow-up if architect prefers. Next: commit, porch done → iter2.

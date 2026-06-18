@@ -133,6 +133,17 @@ describe("App", () => {
     expect(screen.getByLabelText("Pressure")).toHaveValue("secularize");
   });
 
+  it("renders the comparison for a valid default when the URL references an absent subject/axis", async () => {
+    // a=ghost (absent subject) and pressure=bogus (absent axis value) must fall back
+    // to valid defaults in the *rendered comparison*, not leak the raw ids.
+    window.history.replaceState(null, "", "?a=ghost&b=qwen&pressure=bogus");
+    render(<App dataSource={new FakeDataSource()} />);
+    expect(await screen.findByLabelText("Responses from ansari")).toBeInTheDocument(); // a → default
+    expect(screen.getByLabelText("Responses from qwen")).toBeInTheDocument(); // b kept (valid)
+    expect(screen.queryByLabelText("Responses from ghost")).toBeNull();
+    expect(screen.getByLabelText("Pressure")).toHaveValue("secularize"); // bad axis → default
+  });
+
   it("filters the question picker by id/title", async () => {
     render(<App dataSource={new FakeDataSource()} />);
     fireEvent.change(await screen.findByLabelText("Filter questions"), {
