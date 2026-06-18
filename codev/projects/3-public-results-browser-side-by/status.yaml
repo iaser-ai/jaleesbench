@@ -8,14 +8,14 @@ plan_phases:
     status: complete
   - id: phase_2_drillin_polish
     title: 'Drill-in: markdown + collapsible + sans-serif + score header'
-    status: in_progress
+    status: complete
   - id: phase_3_compare_view
     title: Compare-by-divergence view + URL view-state
-    status: pending
+    status: in_progress
   - id: phase_4_presets_intro_theme
     title: Presets menu + intro/paper panel + light/dark
     status: pending
-current_plan_phase: phase_2_drillin_polish
+current_plan_phase: phase_3_compare_view
 gates:
   spec-approval:
     status: approved
@@ -29,8 +29,8 @@ gates:
     status: pending
   verify-approval:
     status: pending
-iteration: 3
-build_complete: true
+iteration: 1
+build_complete: false
 history:
   - iteration: 1
     plan_phase: phase_2_drillin_polish
@@ -65,7 +65,7 @@ history:
         file: >-
           /Users/mwk/Development/fftn/taqwabench/.builders/spir-3/codev/projects/3-public-results-browser-side-by/3-phase_2_drillin_polish-iter2-claude.txt
 started_at: '2026-06-17T23:15:34.666Z'
-updated_at: '2026-06-18T05:21:55.925Z'
+updated_at: '2026-06-18T05:21:57.823Z'
 pr_history:
   - phase: review
     pr_number: 4
