@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
 import { StaticFileDataSource } from "./datasource";
+import "./styles.css";
 
 const root = document.getElementById("root");
 if (!root) {

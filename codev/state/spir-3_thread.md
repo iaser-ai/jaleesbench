@@ -220,3 +220,19 @@ question filter, fail-soft. Fixed: question block was a <label> wrapping BOTH fi
 input + select → ambiguous getByLabelText; made it a <div> w/ caption span + per-
 control aria-labels. **Build ✓, 20 app tests ✓, python 52 ✓.** Next: commit, porch
 done → 3-way review.
+
+### Phase 3 APPROVED (iter 1 unanimous, no issues) → Phase 4
+
+## 2026-06-18 — Phase 4 (phase_4_compare) — core UX
+Built: format.ts (bandColor w/ producer color + positional fallback ramp; signed();
+cellKey/indexCells — cells indexed by subject+axis-values in axis order) +
+format.test (4). components/: BandLegend.tsx (BandChip + legend from index.bands),
+Verdicts.tsx (per-judge band chip+label+summary+rationale, scope-filtered, missing
+rationale tolerated, escaped text), Comparison.tsx (2-col grid, column-grouped DOM +
+CSS subgrid for turn row-alignment, TurnCell w/ white-space:pre-wrap, missing cell →
+"no data"), Comparison.test (6: both columns, polarizing +1/-1, missing rationale,
+XSS literal <script>, scope filter, missing cell). styles.css (grid/subgrid,
+responsive stack @720px, band chips). App.tsx: lazy shard load cached by item id +
+dir from dataset.language (RTL) + BandLegend + Comparison + shard fail-soft alert.
+App.test +2 (legend+comparison mount; shard-fail fail-soft). main.tsx imports
+styles.css. **Build ✓ (emits CSS), 31 tests / 5 files ✓.** Next: commit, porch done.

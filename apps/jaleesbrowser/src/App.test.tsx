@@ -48,8 +48,8 @@ class FakeDataSource implements DataSource {
   async loadIndex(): Promise<ContractIndex> {
     return INDEX;
   }
-  async loadItem(): Promise<ItemShard> {
-    throw new Error("unused");
+  async loadItem(itemId: string): Promise<ItemShard> {
+    return { item: { id: itemId, title: "x" }, cells: [] };
   }
 }
 
@@ -62,12 +62,22 @@ class FailingDataSource implements DataSource {
   }
 }
 
+/** Index loads, but the per-item shard fetch fails. */
+class ShardFailDataSource implements DataSource {
+  async loadIndex(): Promise<ContractIndex> {
+    return INDEX;
+  }
+  async loadItem(): Promise<ItemShard> {
+    throw new Error("shard 404");
+  }
+}
+
 beforeEach(() => {
   window.history.replaceState(null, "", "/");
 });
 
 describe("App", () => {
-  it("renders generic pickers and a default selection summary", async () => {
+  it("renders generic pickers, the band legend, and the comparison", async () => {
     render(<App dataSource={new FakeDataSource()} />);
     expect(
       await screen.findByRole("heading", { name: "Test dataset" }),
@@ -77,7 +87,16 @@ describe("App", () => {
     expect(screen.getByLabelText("Pressure")).toHaveValue("secularize");
     expect(screen.getByLabelText("Framing")).toHaveValue("unstated");
     expect(screen.getByLabelText("Scope")).toHaveValue("full");
-    expect(screen.getByText(/Comparing/)).toHaveTextContent("ansari");
+    expect(screen.getByLabelText("Band legend")).toBeInTheDocument();
+    // The comparison mounts once the shard loads (two columns from the selection).
+    expect(await screen.findByLabelText("Responses from ansari")).toBeInTheDocument();
+    expect(screen.getByLabelText("Responses from gpt")).toBeInTheDocument();
+  });
+
+  it("shows a fail-soft message when the shard fails to load (pickers stay usable)", async () => {
+    render(<App dataSource={new ShardFailDataSource()} />);
+    expect(await screen.findByRole("alert")).toHaveTextContent("shard 404");
+    expect(screen.getByLabelText("Model A")).toHaveValue("ansari"); // pickers still work
   });
 
   it("writes the selection to the URL when a picker changes", async () => {

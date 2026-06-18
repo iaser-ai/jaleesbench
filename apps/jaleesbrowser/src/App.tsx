@@ -1,14 +1,16 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { BandLegend } from "./components/BandLegend";
+import { Comparison } from "./components/Comparison";
 import { Pickers } from "./components/Pickers";
-import type { ContractIndex } from "./contract";
+import type { ContractIndex, ItemShard } from "./contract";
 import type { DataSource } from "./datasource";
 import { decodeSelection, encodeSelection, type Selection } from "./urlstate";
 
 /**
- * Loads the index via the injected DataSource, then drives the pickers and the
- * URL deep-link state. The selection (question, two models, condition axes,
- * scope) lives in the URL so every view is shareable. Phase 4 replaces the
- * selection summary with the side-by-side comparison.
+ * The application root: loads the index via the injected DataSource, drives the
+ * pickers + URL deep-link state, lazily loads the selected probe's shard (cached
+ * by item id), and renders the side-by-side comparison. Every load failure is
+ * fail-soft (a visible message, never a blank page).
  *
  * The UI depends ONLY on the `DataSource` interface (injected by `main.tsx`).
  */
@@ -16,6 +18,9 @@ export function App({ dataSource }: { dataSource: DataSource }) {
   const [index, setIndex] = useState<ContractIndex | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selection, setSelection] = useState<Selection | null>(null);
+  const [shard, setShard] = useState<ItemShard | null>(null);
+  const [shardError, setShardError] = useState<string | null>(null);
+  const shardCache = useRef<Map<string, ItemShard>>(new Map());
 
   useEffect(() => {
     let cancelled = false;
@@ -39,6 +44,32 @@ export function App({ dataSource }: { dataSource: DataSource }) {
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
   }, [index]);
+
+  // Lazily load the selected probe's shard (cached by item id; one shard holds
+  // every subject × condition cell, so switching subjects/conditions never refetches).
+  const itemId = selection?.item;
+  useEffect(() => {
+    if (!index || !itemId) return;
+    let cancelled = false;
+    setShardError(null);
+    const cached = shardCache.current.get(itemId);
+    if (cached) {
+      setShard(cached);
+      return;
+    }
+    setShard(null);
+    dataSource
+      .loadItem(itemId)
+      .then((s) => {
+        if (cancelled) return;
+        shardCache.current.set(itemId, s);
+        setShard(s);
+      })
+      .catch((e) => !cancelled && setShardError(e instanceof Error ? e.message : String(e)));
+    return () => {
+      cancelled = true;
+    };
+  }, [index, itemId, dataSource]);
 
   const onChange = useCallback(
     (next: Selection) => {
@@ -65,30 +96,24 @@ export function App({ dataSource }: { dataSource: DataSource }) {
     );
   }
 
+  const dir = (index.dataset.language ?? "en").toLowerCase().startsWith("ar")
+    ? "rtl"
+    : "ltr";
+
   return (
-    <main>
+    <main dir={dir}>
       <h1>{index.dataset.title}</h1>
       <Pickers index={index} selection={selection} onChange={onChange} />
-      <p className="selection-summary">
-        Comparing <strong>{subjectLabel(index, selection.a)}</strong> vs{" "}
-        <strong>{subjectLabel(index, selection.b)}</strong> on{" "}
-        <strong>{selection.item}</strong>
-        {index.conditionAxes.map((axis) => (
-          <span key={axis.key}>
-            {" "}
-            · {axis.label}: {axisValueLabel(index, axis.key, selection.conditions[axis.key])}
-          </span>
-        ))}
-      </p>
+      <BandLegend index={index} />
+      {shardError ? (
+        <p className="shard-error no-data" role="alert">
+          Could not load this question’s data: {shardError}
+        </p>
+      ) : !shard ? (
+        <p>Loading responses…</p>
+      ) : (
+        <Comparison index={index} shard={shard} selection={selection} />
+      )}
     </main>
   );
-}
-
-function subjectLabel(index: ContractIndex, id: string): string {
-  return index.subjects.find((s) => s.id === id)?.label ?? id;
-}
-
-function axisValueLabel(index: ContractIndex, key: string, valueId: string | undefined): string {
-  const axis = index.conditionAxes.find((a) => a.key === key);
-  return axis?.values.find((v) => v.id === valueId)?.label ?? valueId ?? "—";
 }
