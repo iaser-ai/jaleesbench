@@ -1,7 +1,7 @@
 id: '3'
 title: public-results-browser-side-by
 protocol: spir
-phase: specify
+phase: plan
 plan_phases: []
 current_plan_phase: null
 gates:
@@ -19,7 +19,7 @@ iteration: 1
 build_complete: false
 history: []
 started_at: '2026-06-17T23:15:34.666Z'
-updated_at: '2026-06-18T04:44:12.468Z'
+updated_at: '2026-06-18T04:44:20.159Z'
 pr_history:
   - phase: review
     pr_number: 4
