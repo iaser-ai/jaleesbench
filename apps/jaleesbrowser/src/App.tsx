@@ -86,16 +86,19 @@ export function App({ dataSource }: { dataSource: DataSource }) {
     [index],
   );
 
-  // A compare row → the drill-in detail for that exact cell (same A/B).
+  // A compare row → the drill-in detail for that exact cell (same A/B). Open at
+  // the scope the ranking used (the default scope) so the detail is consistent
+  // with the divergence the user clicked, regardless of any prior scope.
   const onOpenDetail = useCallback(
     (row: DivergenceRow) => {
       if (!selection || !index) return;
+      const scope = defaultScopeId(index);
       onChange({
         ...selection,
         view: "detail",
         item: row.item,
         conditions: row.conditions,
-        scope: selection.scope ?? defaultScopeId(index),
+        ...(scope !== undefined ? { scope } : {}),
       });
     },
     [selection, index, onChange],

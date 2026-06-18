@@ -87,10 +87,11 @@ export function divergenceRanking(
     const byDelta = Math.abs(y.delta) - Math.abs(x.delta);
     if (byDelta !== 0) return byDelta;
     if (x.item !== y.item) return x.item < y.item ? -1 : 1;
+    // Tie-break by each axis value's position in its DECLARED order (not lexical).
     for (const ax of axes) {
-      const xv = x.conditions[ax.key];
-      const yv = y.conditions[ax.key];
-      if (xv !== yv) return xv < yv ? -1 : 1;
+      const xi = ax.values.findIndex((v) => v.id === x.conditions[ax.key]);
+      const yi = ax.values.findIndex((v) => v.id === y.conditions[ax.key]);
+      if (xi !== yi) return xi - yi;
     }
     return 0;
   });

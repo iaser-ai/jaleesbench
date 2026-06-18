@@ -114,6 +114,45 @@ describe("App", () => {
     expect(screen.getByLabelText("Question")).toBeInTheDocument();
   });
 
+  it("a compare-row click opens detail at the default scope (not the prior scope)", async () => {
+    const INDEX2: ContractIndex = {
+      contractVersion: "1.0",
+      producer: { name: "t", version: "0" },
+      dataset: { title: "T" },
+      bands: [{ value: 1, label: "High" }],
+      subjects: [
+        { id: "a", label: "a" },
+        { id: "b", label: "b" },
+      ],
+      conditionAxes: [
+        { key: "pressure", label: "P", values: [{ id: "x", label: "X" }] },
+        { key: "framing", label: "F", values: [{ id: "u", label: "U" }] },
+      ],
+      judges: [{ id: "j", label: "J" }],
+      scopes: [
+        { id: "full", label: "after", default: true },
+        { id: "turn1", label: "pre" },
+      ],
+      items: [{ id: "JLS-001", title: "First" }],
+      shards: { "JLS-001": "probes/JLS-001.json.gz" },
+      scores: {
+        order: ["subject", "item", "pressure", "framing", "scope"],
+        shape: [2, 1, 1, 1, 2],
+        data: [1, 0.3, -1, 0.2], // a/full=1, a/turn1=0.3, b/full=-1, b/turn1=0.2
+      },
+    };
+    const loadItem = vi
+      .fn()
+      .mockResolvedValue({ item: { id: "JLS-001", title: "First" }, cells: [] });
+    const ds: DataSource = { loadIndex: async () => INDEX2, loadItem };
+    window.history.replaceState(null, "", "?view=compare&a=a&b=b&scope=turn1");
+    render(<App dataSource={ds} />);
+    fireEvent.click(await screen.findByRole("button", { name: /JLS-001/ }));
+    const params = new URLSearchParams(window.location.search);
+    expect(params.get("view")).toBe("detail");
+    expect(params.get("scope")).toBe("full"); // default scope (the ranking's), not turn1
+  });
+
   it("shows a fail-soft message when the shard fails to load (pickers stay usable)", async () => {
     render(<App dataSource={new ShardFailDataSource()} />);
     expect(await screen.findByRole("alert")).toHaveTextContent("shard 404");

@@ -57,4 +57,32 @@ describe("divergenceRanking", () => {
     const noScores: ContractIndex = { ...INDEX, scores: undefined };
     expect(divergenceRanking(noScores, "A", "B")).toEqual([]);
   });
+
+  it("breaks |Δ| ties by declared axis-value order, not lexically", () => {
+    // pressure declared order is [b, a] (NON-lexical). Two cells with equal Δ=2;
+    // the one with pressure "b" must rank first (declared order), not "a".
+    const tied: ContractIndex = {
+      ...INDEX,
+      conditionAxes: [
+        {
+          key: "pressure",
+          label: "P",
+          values: [
+            { id: "b", label: "B" },
+            { id: "a", label: "A" },
+          ],
+        },
+        { key: "framing", label: "F", values: [{ id: "u", label: "U" }] },
+      ],
+      items: [{ id: "JLS-001", title: "First" }],
+      // shape [subject2, item1, pressure2, framing1, scope1]; A=+1 both, B=-1 both.
+      scores: {
+        order: ["subject", "item", "pressure", "framing", "scope"],
+        shape: [2, 1, 2, 1, 1],
+        data: [1, 1, -1, -1],
+      },
+    };
+    const rows = divergenceRanking(tied, "A", "B");
+    expect(rows.map((r) => r.conditions.pressure)).toEqual(["b", "a"]);
+  });
 });
