@@ -8,17 +8,17 @@ plan_phases:
     status: complete
   - id: phase_2_scaffold
     title: App scaffold, contract types & DataSource seam
-    status: in_progress
+    status: complete
   - id: phase_3_pickers_url
     title: Generic pickers + URL deep-link state
-    status: pending
+    status: in_progress
   - id: phase_4_compare
     title: Side-by-side comparison, verdicts & band legend
     status: pending
   - id: phase_5_deploy
     title: Static build, GitHub Pages deploy & real-data export
     status: pending
-current_plan_phase: phase_2_scaffold
+current_plan_phase: phase_3_pickers_url
 gates:
   spec-approval:
     status: approved
@@ -32,8 +32,8 @@ gates:
     status: pending
   verify-approval:
     status: pending
-iteration: 2
-build_complete: true
+iteration: 1
+build_complete: false
 history:
   - iteration: 1
     plan_phase: phase_1_export
@@ -68,4 +68,4 @@ history:
         file: >-
           /Users/mwk/Development/fftn/taqwabench/.builders/spir-3/codev/projects/3-public-results-browser-side-by/3-phase_2_scaffold-iter1-claude.txt
 started_at: '2026-06-17T23:15:34.666Z'
-updated_at: '2026-06-18T02:31:52.857Z'
+updated_at: '2026-06-18T02:33:33.720Z'
