@@ -256,8 +256,16 @@ band** (mean of that cell's judge bands, display scale; `null` if the cell is ab
 ### 5.4 Presets (NEW)
 `presets[]` = `[{ key, label, description, entries[] }]`; each entry =
 `{ label, params }` where `params` is a flat URL-param map the viewer feeds through the
-same decoder (so axis keys stay generic). JaleesBench emits at least: judges-disagreed
-(≥2-band split), models-diverged (widest spread), polarizing (Perfume↔Burns).
+same decoder (so axis keys stay generic). JaleesBench emits at least three, computed
+deterministically (fixed thresholds, then sorted by magnitude with item/condition
+tie-breaks, capped, one entry per item for variety):
+- **judges-disagreed** — cells where the two judges' **native band values differ by ≥2**
+  (i.e. ≥1.0 on the display scale) at the default scope; the entry links that subject
+  (whose judges split) as `a` vs the cell's top-scoring subject as `b`.
+- **models-diverged** — `(item × condition)` cells with the widest cross-model spread;
+  the entry links the **max-score subject as `a` and the min-score subject as `b`**.
+- **polarizing** — a subset of the above where one model is at the top band (+1) and
+  another at the bottom (−1) on the identical situation.
 
 ### 5.5 Consumption, versioning, robustness (carried forward)
 - The viewer builds orient/leaderboard/compare from `index.json` (incl. `scoreMatrix`),
@@ -297,8 +305,14 @@ gzip — fetch and decompress only when the bytes are still gzip (host
   - `?view=detail&item=JLS-001&a=ansari&b=qwen3-235b&pressure=insistence&framing=unstated&scope=full`
     — drill-in. (Back-compatible with the MVP's param names.)
   - Presets resolve to one of the above.
-- **Defaults / fail-soft:** no params → overview. Invalid params → nearest valid default
-  (e.g. unknown subject → first; unknown view → overview), never a crash.
+- **Defaults / fail-soft:** no params → overview **when a score matrix is present**;
+  if the matrix is absent (a minimal producer), overview/compare are unavailable and the
+  default landing is the **detail** drill-in (first item, first two subjects, default
+  condition + scope). Invalid params → nearest valid default (unknown subject → first;
+  unknown/unavailable view → the default landing), never a crash.
+- **Compare scope (normative):** the divergence ranking and win/agree tally use the
+  **default scope** (`scopes[].default`, = `full` for JaleesBench). A turn-1 toggle is an
+  optional enhancement (§7 I2); when present it is encoded in the compare URL state.
 - **Navigation rules (explicit):**
   - An **overview row** → `view=compare` with that model as `a`; `b` defaults to the
     next-ranked distinct model (the top model if the row *is* the next-ranked). The row
@@ -403,6 +417,16 @@ the spec review. The substantive **spec-level** points were addressed:
   compare-row→detail, orient first-visit persistence, and list sort/limit.
 - **Concrete markdown link safety** (Codex): §5.6 allowlists `http`/`https`/`mailto`,
   strips `javascript:`, and sets `rel=noopener`/`target` on external links.
+
+### Iteration 3 — re-review (Claude APPROVE · Codex COMMENT · Gemini COMMENT)
+
+No REQUEST_CHANGES. Folded in the non-blocking precision comments: no-matrix landing →
+**detail** (§6); compare ranking on the **default scope** is normative (§4.3/§6); preset
+pairing made explicit (models-diverged = max-score `a` vs min-score `b`; judges-disagreed
+= split subject vs top subject) and "≥2-band" defined as **native band values differing
+by ≥2** (§5.4). Remaining Gemini notes (plan still says `1.0`; `DecompressionStream`
+test/feature-detection) are Plan/Implement-phase items — the existing tests already
+exercise `DecompressionStream`/`CompressionStream` in Node successfully.
 
 *(Human feedback at spec-approval will be logged here. The implementation **plan** is
 rewritten to this elevated spec in the Plan phase.)*
