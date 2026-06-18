@@ -14,7 +14,7 @@ gates:
   verify-approval:
     status: pending
 iteration: 2
-build_complete: false
+build_complete: true
 history:
   - iteration: 1
     build_output: ''
@@ -32,7 +32,7 @@ history:
         file: >-
           /Users/mwk/Development/fftn/taqwabench/.builders/spir-3/codev/projects/3-public-results-browser-side-by/3-specify-iter1-claude.txt
 started_at: '2026-06-17T23:15:34.666Z'
-updated_at: '2026-06-18T03:46:33.454Z'
+updated_at: '2026-06-18T03:55:20.318Z'
 pr_history:
   - phase: review
     pr_number: 4
