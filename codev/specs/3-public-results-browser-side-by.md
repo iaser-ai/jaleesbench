@@ -97,15 +97,21 @@ A concise plain-English panel (collapsible, but open by default on first visit):
   clearly marked **draft / under review, not yet published**.
 
 ### 4.2 OVERVIEW — the leaderboard (landing surface)
-Not a blank picker. A **model leaderboard** computed instantly from the score matrix:
-- **Jalees Score** — mean band, Unstated framing, after pressure (the paper's headline:
-  what a user actually receives), per model, ranked.
-- **Recognition gap** — mean(Stated) − mean(Unstated) at full scope: how much better the
-  model is once it knows it serves a practising Muslim.
-- **Pressure effect** — full − turn-1 (Unstated): how far the model moves when pushed
-  (negative = caves).
+Not a blank picker. A **model leaderboard** computed instantly from the score matrix.
+**The metrics are producer-declared** (`index.leaderboard.metrics`, §5.4) so the UI
+stays generic — it computes each metric over matrix *slices* without hardcoding axis
+values. JaleesBench declares three (their JaleesBench-specific meaning lives in the
+data, not the code):
+- **Jalees Score** — `mean` over the (Unstated framing, after-pressure) slice: the
+  paper's headline, what a user actually receives. Models are ranked by this primary
+  metric.
+- **Recognition gap** — `delta`: mean(Stated) − mean(Unstated) at full scope — how much
+  better the model is once it knows it serves a practising Muslim.
+- **Pressure effect** — `delta`: full − turn-1 (Unstated) — how far the model moves
+  when pushed (negative = caves).
 A newcomer immediately sees who is good company, who burns you, and what pressure does.
-Each model row links into **compare** (preselects that model) or its detail.
+Each model row **preselects that model as Model A in compare** (Model B defaults to the
+next-ranked model); the row also links to that model's first drill-in.
 
 ### 4.3 COMPARE — two models ranked by divergence (THE CENTERPIECE)
 "Two people pick two models and find the examples where they differ the most."
@@ -175,6 +181,7 @@ startup; powers orient, leaderboard, and compare with **no shard loads**. Fields
 - `subjects[]` — `{id, label, scores?}` where **NEW** `scores` = `{initial, post}`, the
   model's overall mean band (turn-1 / full) for the score header's optional overall.
 - **NEW `scoreMatrix`** — the compact numeric core (§5.3).
+- **NEW `leaderboard`** — producer-declared overview metrics (§5.3).
 - **NEW `presets[]`** — curated deep-links (§5.4).
 - **NEW `paper`** *(optional)* — `{url, label, draft: true}` for the orient link.
 
@@ -201,13 +208,50 @@ band** (mean of that cell's judge bands, display scale; `null` if the cell is ab
 - Size: 8·140·6·3·2 = 40,320 numbers ≈ ~200–300 KB plain (≈ tens of KB gzipped on the
   wire) — a one-time load that makes overview/compare instant.
 
-**Derived client-side from the matrix (no shards):**
-- **Leaderboard**: per subject, mean over the (full, unstated) slice = Jalees Score;
-  recognition gap = mean(full, stated) − mean(full, unstated); pressure effect =
-  mean(full, unstated) − mean(turn1, unstated).
-- **Compare divergence**: for chosen A, B, for every (item × pressure × framing) cell,
-  `score(A,full) − score(B,full)`; rank by |·| for "differ most", by small |·| for
-  "agree"; aggregate for the A-vs-B summary.
+**Derived client-side from the matrix (no shards), driven by producer config:**
+- **Leaderboard** uses `index.leaderboard.metrics` (below) — the UI computes each metric
+  per subject over matrix slices generically (no hardcoded axis values).
+- **Compare divergence**: for chosen A, B, for every (item × condition-tuple) cell at the
+  default scope, `score(A) − score(B)`; rank by |·| for "differ most", by small |·| for
+  "agree"; aggregate for the A-vs-B summary. (Axis-generic — no hardcoded axis names.)
+
+**NEW `index.leaderboard` (producer-declared metrics — keeps the UI generic):**
+```jsonc
+"leaderboard": {
+  "primaryKey": "jalees",                 // metric to rank/sort by default
+  "metrics": [
+    { "key":"jalees", "label":"Jalees Score", "kind":"mean",
+      "where": { "framing":"unstated", "scope":"full" } },
+    { "key":"recognition", "label":"Recognition gap", "kind":"delta",
+      "from": { "framing":"unstated", "scope":"full" },
+      "to":   { "framing":"stated",   "scope":"full" } },
+    { "key":"pressure", "label":"Pressure effect", "kind":"delta",
+      "from": { "framing":"unstated", "scope":"turn1" },
+      "to":   { "framing":"unstated", "scope":"full" } }
+  ]
+}
+```
+- A *slice* (`where`/`from`/`to`) is a partial constraint mapping axis keys (and the
+  special key `scope`) to value ids; unconstrained axes are free. The UI matches matrix
+  cells against it without knowing the axis names.
+- `kind:"mean"` → per subject, mean band over cells matching `where`.
+  `kind:"delta"` → per subject, mean(`to`) − mean(`from`).
+- Only two kinds (`mean`, `delta`) — deliberately not a formula DSL. JaleesBench supplies
+  these defs; a producer omitting `leaderboard` simply has no overview surface.
+
+### 5.3a Aggregation semantics (explicit, for reproducibility/testing)
+- **Null cells are excluded** from every mean (mean over present cells in the slice); a
+  metric with zero present cells for a subject renders `—`.
+- **Compare divergence** considers only cells where **both** A and B are non-null; a cell
+  missing for either model is omitted from the ranking and the win/agree tally.
+- **Wins / agree / ties**: A "wins" a cell if `score(A) − score(B) > ε`; B wins if
+  `< −ε`; otherwise it is an "agree" (tie). `ε = 0.001` on the display scale. The
+  "differ most" list is the top-N by `|score(A) − score(B)|` (descending, ties broken by
+  item then condition order); "agree" is the smallest-|Δ| set. N is a plan-level constant
+  (recommend ~50, with a "show more").
+- **Presets** are computed in the export from the matrix/verdicts; a preset with no
+  qualifying entries is omitted. Each preset caps entries (plan constant) and is
+  deterministic (fixed thresholds + ordering).
 
 ### 5.4 Presets (NEW)
 `presets[]` = `[{ key, label, description, entries[] }]`; each entry =
@@ -226,10 +270,12 @@ same decoder (so axis keys stay generic). JaleesBench emits at least: judges-dis
 - **Default: escaped plain text.** Any field NOT explicitly markdown-rendered is escaped
   (React default); `dangerouslySetInnerHTML` is prohibited on raw producer data.
 - **Markdown (sanctioned):** transcript responses and judge rationales/summaries are
-  rendered as **markdown through a renderer with raw HTML disabled** (e.g. `markdown-it`
-  `html:false`) **and sanitized** (e.g. DOMPurify) before injection — no raw-HTML
-  execution, no `javascript:` URLs. A literal `<script>` in producer text renders as
-  inert text.
+  rendered as **markdown through a renderer with raw HTML disabled** (`markdown-it`
+  `html:false`) **and sanitized** (DOMPurify) before injection — no raw-HTML execution.
+  A literal `<script>` in producer text renders as inert text.
+  - **Links:** only `http`, `https`, and `mailto` URL schemes are allowed; `javascript:`
+    (and any other scheme) is stripped. External links render with
+    `rel="noopener noreferrer"` and `target="_blank"`.
 - **Fail-soft** on every bad data asset (index/shard fetch failure, malformed JSON,
   unsupported `contractVersion`, missing cell, absent subject/judge/axis/matrix ref) —
   a visible, non-crashing message, never a blank page.
@@ -253,6 +299,17 @@ gzip — fetch and decompress only when the bytes are still gzip (host
   - Presets resolve to one of the above.
 - **Defaults / fail-soft:** no params → overview. Invalid params → nearest valid default
   (e.g. unknown subject → first; unknown view → overview), never a crash.
+- **Navigation rules (explicit):**
+  - An **overview row** → `view=compare` with that model as `a`; `b` defaults to the
+    next-ranked distinct model (the top model if the row *is* the next-ranked). The row
+    also offers a direct drill-in (its first cell at the default condition + scope).
+  - A **compare row** (a divergence/agree entry) → `view=detail` for that exact
+    `item × condition × (a,b)`, default scope.
+  - The **orient** panel is open on a visitor's first load and collapsed thereafter,
+    persisted via a `localStorage` flag (`orient-seen`); a deep-linked non-overview view
+    starts with orient collapsed. The toggle is always available.
+  - Compare "differ most" / "agree" lists are top-N (plan constant) with a "show more";
+    ties broken deterministically (item id, then condition order). See §5.3a.
 - **Drill-in specifics:** per-model score header (initial → post), markdown +
   collapsible transcripts (≈10-line clamp, expand/collapse), both judges' verdicts
   (default full scope, turn-1 available), band legend, item tags + context, turns
@@ -283,11 +340,12 @@ N3 — "share this comparison" affordance.
 
 **Functional (MUST):**
 1. The reproducible `export-web` CLI emits a `1.1` contract — `index.json` (incl.
-   `scoreMatrix`, `subjects[].scores`, `presets`) + gzip per-probe shards — using the
-   existing loaders (v2 overlay + −1…+1 rescale).
+   `scoreMatrix`, `leaderboard`, `subjects[].scores`, `presets`) + gzip per-probe shards
+   — using the existing loaders (v2 overlay + −1…+1 rescale).
 2. **Orient** panel explains the construct, axes, controls, and links the (draft) paper.
-3. **Overview leaderboard** ranks models by Jalees Score with recognition gap + pressure
-   effect — computed from the matrix, instant, no shard loads.
+3. **Overview leaderboard** ranks models by the producer-declared primary metric, with
+   the other declared metrics as columns — computed generically from the matrix
+   (no hardcoded axis values), instant, no shard loads. Null cells excluded (§5.3a).
 4. **Compare**: pick A + B → a divergence-ranked list of cells (most-differ + agree +
    A-vs-B summary); a row click opens the drill-in. Instant, no shard loads.
 5. **Drill-in** renders side-by-side transcripts (markdown, sanitized; collapsible) +
@@ -309,10 +367,13 @@ sanitized; graceful when a producer omits matrix/presets.
 compare; shards lazy on drill-in; deterministic/idempotent export; no secrets/raw jsonl
 committed; security per §5.6.
 
-**Test scenarios:** matrix offset/round-trip + leaderboard/divergence math (unit);
-URL round-trip for each `view`; a polarizing cell shows opposed bands; a v2 verdict (no
-rationale) renders; literal `<script>`/`**bold**` renders inert-but-markdown; absent
-matrix → overview/compare hidden, drill-in still works; preset deep-link resolves.
+**Test scenarios:** matrix offset/round-trip; leaderboard metric computation from
+producer `metrics` defs (mean + delta over slices, nulls excluded); divergence
+ranking/win-agree/tie (ε) with cells missing for one model excluded; URL round-trip for
+each `view`; a polarizing cell shows opposed bands; a v2 verdict (no rationale) renders;
+literal `<script>` renders inert and `**bold**` renders as markdown; a `javascript:`
+link is stripped, `https`/`mailto` allowed; absent matrix → overview/compare hidden,
+drill-in still works; preset deep-link resolves.
 
 ## 10. Consultation Log
 
@@ -326,5 +387,22 @@ are instant without shard loads. Contract bumped 1.0 → **1.1** (additive: `sco
 requester asks (markdown, collapsible, sans-serif, score header, presets, intro+paper,
 light/dark) are folded into §4/§5/§6.
 
-*(The 3-way consultation porch runs on this draft, and human feedback at spec-approval,
-will be logged here.)*
+### Iteration 2 — 3-way review of the elevated spec (Claude APPROVE · Codex/Gemini REQUEST_CHANGES)
+
+Both REQUEST_CHANGES were chiefly that **the committed plan is still the MVP plan** —
+expected: the plan is rewritten in the *next* (Plan) phase, after spec-approval; this is
+the spec review. The substantive **spec-level** points were addressed:
+- **Genericity contradiction** (Codex): the leaderboard metrics no longer hardcode
+  JaleesBench axis values — they are **producer-declared** in `index.leaderboard.metrics`
+  (mean/delta over matrix slices, §5.3), so the UI computes them generically. The
+  divergence compare was already axis-generic.
+- **Aggregation semantics** (Codex): added §5.3a — null exclusion, both-non-null for
+  compare, wins/agree/ties with `ε`, top-N + deterministic tie-breaks, sparse-preset
+  omission.
+- **Navigation/state ambiguity** (Codex): §6 now specifies overview→compare preselect,
+  compare-row→detail, orient first-visit persistence, and list sort/limit.
+- **Concrete markdown link safety** (Codex): §5.6 allowlists `http`/`https`/`mailto`,
+  strips `javascript:`, and sets `rel=noopener`/`target` on external links.
+
+*(Human feedback at spec-approval will be logged here. The implementation **plan** is
+rewritten to this elevated spec in the Plan phase.)*
