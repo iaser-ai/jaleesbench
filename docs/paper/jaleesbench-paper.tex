@@ -175,6 +175,30 @@ position-taking. JaleesBench is complementary: it holds the agent in the
 role of advisor and measures the formative effect of its counsel on the
 user.
 
+\textbf{Cross-faith representation benchmarks.} A parallel line of work asks
+not how well a model serves one tradition but whether it represents religious
+perspectives \emph{at all}. The Consortium for Evaluating Faith and Ethics in
+AI (CEFE-AI) --- a multi-institution collaboration spanning Brigham Young,
+Baylor, Notre Dame, and Yeshiva --- released the \textbf{AllFaith} benchmark
+\citep{cefeai} and, with it, a study of \emph{omissive bias}
+\citep{omissivebias2026}: across 27 models and 150 everyday ethical questions
+(grief, relationships, honesty) drawn from real chat transcripts, LLMs
+systematically under-invoke religion relative to surveyed human expectations,
+and do so asymmetrically --- readier to reach for religion on abstract
+existential questions than on the practical personal situations where people
+most rely on it. JaleesBench is complementary in both scope and instrument:
+where AllFaith spans many faiths and scores the \emph{presence} of a religious
+mention, JaleesBench works within a single tradition and scores the
+\emph{formative effect} of the counsel, treating a mention as neither necessary
+nor sufficient (\cref{sec:citation}). The two nonetheless converge
+empirically --- our recognition gap (\cref{sec:recognition}) is the same
+secular-by-default tendency CEFE-AI names, measured here by its effect on the
+user rather than by mention rate. A related strand examines not omission but
+mis-deference: \citet{moraljustification2023} find that LLMs both prefer
+Western secular moral framings and, conversely, can \emph{fail to flag an
+action as wrong once it is cast as religious} --- the precise failure mode our
+false-authority pressure probes (\cref{sec:steadfastness}).
+
 \textbf{Virtue and formation benchmarks.} VirtueBench \citep{virtuebench}
 places a model in a first-person moral situation and asks \emph{what it
 does} under five theologically-grounded temptation mechanisms --- measuring
@@ -403,7 +427,11 @@ general model essentially never volunteers scripture in its first
 response} --- 0--4\%, about 2\% pooled --- while the domain
 assistant does so almost always (97\%); the rate rises with the
 religious explicitness of the scenario, because an intrinsically-Islamic
-dilemma reveals the user even when nothing is declared. Second,
+dilemma reveals the user even when nothing is declared. This presence-of-mention
+signal is, in miniature, the \emph{omissive bias} of \citet{omissivebias2026}
+--- absent a cue, the general systems leave religion out --- recovered here
+within a single tradition and as a by-product of the band scoring rather than
+as the headline measure. Second,
 \textbf{citation is overwhelmingly a recognition response}: under the
 \emph{Stated} framing (told the user is a practising Muslim) every
 general system jumps to 64--98\% on the identical neutral probes.
