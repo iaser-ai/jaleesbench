@@ -340,3 +340,11 @@ presets — NOT versioned contract, NOT producer metrics. contractVersion stays 
 remove CONTRACT.md.
 Rewrote spec to trimmed scope (gate already flagged). Next: commit, re-notify architect for
 fast clear (no heavy re-consult per streamlining). Then implement on branch + update PR #4.
+
+### Trimmed spec APPROVED → Plan phase (LIGHT)
+Architect cleared spec-approval. Streamlined build: LIGHT plan → implement → update PR #4;
+architect clears plan gate fast. Wrote lean plan (4 phases, additive on existing
+foundation): P1 export score-blob+presets+paper (remove CONTRACT.md), P2 drill-in polish
+(markdown+collapsible+sans-serif+score header), P3 compare-by-divergence view+URL view-state,
+P4 presets menu+intro/paper panel+light/dark. Checks pass (4 phases). Next: commit, porch
+done → plan consult → plan-approval gate (architect fast-clear).
