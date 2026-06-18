@@ -102,6 +102,57 @@ h1 {
   white-space: nowrap;
 }
 
+/* Item header --------------------------------------------------------------- */
+.item-header {
+  margin: 1rem 0 0.25rem;
+}
+
+.item-title {
+  font-size: 1.1rem;
+  margin: 0 0 0.4rem;
+}
+
+.item-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 1rem;
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.item-tag {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.item-tag dt {
+  color: var(--muted);
+  font-weight: bold;
+}
+
+.item-tag dd {
+  margin: 0;
+}
+
+.item-context {
+  margin-top: 0.5rem;
+  font-size: 0.88rem;
+}
+
+.item-context summary {
+  cursor: pointer;
+  color: var(--muted);
+}
+
+.item-context-body {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  border-left: 3px solid var(--border);
+  padding: 0.4rem 0.7rem;
+  margin-top: 0.4rem;
+  background: #faf9f6;
+}
+
 /* Comparison --------------------------------------------------------------- */
 .comparison {
   display: grid;

@@ -134,6 +134,11 @@ composition root, the gzip size decision + serving-robustness fix, and a render-
 absent-reference fallback test. One Codex point was partially rebutted (the defensive
 `?? id` fallback is itself the visible, non-crashing state) and accepted on re-review.
 
+The PR/review round fixed two more: a stray **NUL byte** in `format.ts` (which made git
+treat a source file as binary — Gemini) was removed, and the exported `items[].tags` +
+`item.context` are now rendered via a generic `ItemHeader` panel above the comparison
+(Codex; spec §5.3), grounding each comparison in its chapter + proof texts.
+
 ## Architecture Updates
 
 - **New top-level `apps/` directory** with the first app, `apps/jaleesbrowser/` — a Vite

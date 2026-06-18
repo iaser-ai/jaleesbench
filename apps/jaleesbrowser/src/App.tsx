@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BandLegend } from "./components/BandLegend";
 import { Comparison } from "./components/Comparison";
+import { ItemHeader } from "./components/ItemHeader";
 import { Pickers } from "./components/Pickers";
 import type { ContractIndex, ItemShard } from "./contract";
 import type { DataSource } from "./datasource";
@@ -112,7 +113,10 @@ export function App({ dataSource }: { dataSource: DataSource }) {
       ) : !shard ? (
         <p>Loading responses…</p>
       ) : (
-        <Comparison index={index} shard={shard} selection={selection} />
+        <>
+          <ItemHeader shard={shard} />
+          <Comparison index={index} shard={shard} selection={selection} />
+        </>
       )}
     </main>
   );

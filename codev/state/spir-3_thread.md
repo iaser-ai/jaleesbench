@@ -275,3 +275,17 @@ codev/reviews/3-public-results-browser-side-by.md (spec compliance §9.1-15 all 
 deviations: data/probes→probes, collect.py unedited, gzip size, gzip-serving fix;
 lessons; debt; consult summary; no flaky). Next: commit review, porch done → review
 consult → PR gate (human). PR = single PR after final implement phase (per PR strategy).
+
+### PR opened (#4) + review 3-way (iter 1)
+Wrote review doc (+ Architecture Updates + Lessons Learned Updates sections for porch
+checks). Pushed branch, opened **PR #4**, recorded via porch done --pr 4. Review checks
+pass. Review consult: **Claude APPROVE · Codex COMMENT · Gemini REQUEST_CHANGES.**
+- Gemini (FIXED): format.ts committed as BINARY — stray NUL byte (0x00) at cellKey
+  `.join()` separator! Valid UTF-8 so build tolerated, but git→binary (undiffable).
+  Replaced NUL → "|". Verified 0 NUL in committed blob, git grep finds it. Scanned all
+  src — only format.ts affected (other NULs are legit .gz/.node binaries).
+- Codex (COMMENT, ADDRESSED): items[].tags + item.context exported but never rendered
+  (spec §5.3). Added generic ItemHeader.tsx (title + opaque tags as <dl> + context in
+  <details>, escaped) above comparison + ItemHeader.test (2). Wired into App + styles.
+Build ✓, **35 tests** ✓ (Python 52 ✓). Rebuttal written. Next: commit, push, porch
+done → iter2 re-consult → PR gate (HUMAN — never auto-approve).
