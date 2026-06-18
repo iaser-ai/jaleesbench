@@ -150,3 +150,14 @@ Re-smoke (limit 4): ~445KB/gzipped shard → **~62 MB committed** for 140 probes
 (gzip ~3.5× here — rationale-heavy text — not 7×; still 3.5× better than 220MB,
 per-fetch ~445KB/probe fine). 52 tests pass. UNBLOCKED → running `porch done 3`
 (implement check + 3-way impl review).
+
+### Phase 1 impl check + 3-way review
+Committed phase 1 (6b29c77) so consult sees full diff. `porch done 3` implement
+check (uv/pytest via override) PASSED. 3-way impl consult:
+**Gemini APPROVE (sandbox saw no files — plan-based) · Codex REQUEST_CHANGES ·
+Claude APPROVE (verified code, 52 pass)**. Codex asks (both doc reconciliation):
+(1) plan + Phase 2 DataSource still said plain-JSON shards — reconciled plan to
+gzip (D1/D3/P1/P2/P5 + consult-log); (2) CONTRACT.md said ~30MB/~7× — fixed to
+~62MB/~3.5%. Claude minor: summary emitted null when direction absent → now
+conditional (matches rationale). Rebuttal written. Tests still 52 pass. Next:
+commit review fixes, `porch done 3` → expect phase advance to phase_2_scaffold.

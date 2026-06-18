@@ -46,9 +46,10 @@ interface DataSource {
 }
 ```
 
-with a **single implementation now** — `StaticFileDataSource` (fetches `index.json`
-and `data/<shard>` over HTTP). The UI never calls `fetch` directly; it depends only on
-the interface. **Build ONLY the seam + the static-file impl. Do NOT build a DB adapter,
+with a **single implementation now** — `StaticFileDataSource` (fetches plain
+`index.json` and the **gzip-compressed** `data/<shard>.json.gz`, decompressing shards
+client-side via `DecompressionStream('gzip')` — see Phase 1 size decision below). The
+UI never calls `fetch` directly; it depends only on the interface. **Build ONLY the seam + the static-file impl. Do NOT build a DB adapter,
 API client, or query layer now (YAGNI).** A future DB/API-backed source becomes a
 localized drop-in (one new class implementing the same two methods) without touching
 the UI. **Recommendation: adopt the seam.** Cost is ~one small interface + one class;
@@ -64,12 +65,19 @@ reusing the loaders (D-D1). These were recommendations, not decisions — confir
 plan-approval. Redirecting any of them changes the corresponding phase(s) but not the
 data contract (spec §5) or the fixed requirements (spec §3).
 
-### D3 — Shard cell encoding (plan-level, spec §7 I2/I5)
+### D3 — Shard cell encoding + size (plan-level, spec §7 I2/I5; UPDATED in Phase 1)
 
 **Recommendation:** each shard stores a flat `cells` array; the client indexes it by
-`(subject, conditions)` into a Map on load. Keep full transcripts inline (no
-prompt-dedup) unless the measured export size (spec §7 C1) is uncomfortable — dedup
-stays an easy follow-up since it is internal to the export + DataSource.
+`(subject, conditions)` into a Map on load, with **full transcripts inline** (no
+prompt-dedup).
+
+**Phase-1 measurement + decision (architect-approved):** plain JSON shards measured
+~1.6 MB/probe → **~220 MB** for 140 probes — far over the original ~10–30 MB estimate.
+Resolution: each shard is written **gzip-compressed** (`<id>.json.gz`); `index.json`
+stays plain; `index.shards` paths point at the `.json.gz`; the `StaticFileDataSource`
+decompresses via `DecompressionStream('gzip')`. Gzip yields ~3.5× on this
+rationale-heavy text → **~62 MB committed** (full fidelity, no content dropped).
+Prompt-dedup was not needed (prompts are a small fraction of shard bytes).
 
 ## Success Metrics
 
@@ -145,11 +153,15 @@ Validates against spec §9. Phase-mapped:
   - Write `index.json`: `contractVersion "1.0"`, `producer`, `dataset {title,
     description, language:"en"}`, `bands`, `subjects`, `conditionAxes`, `judges`,
     `scopes`, `items[{id,title,tags:{chapter,pillars,hearts,islamic}}]`, `shards`.
-  - Write one shard per probe `data/probes/<id>.json`: `item{id,title,tags,context?}`
-    + `cells[]` (subject, conditions, transcript[turns], verdicts[{judge,scope,band
-    (display),bandLabel,summary←direction,rationale?,tags:{techniques}}]).
+  - Write one **gzip-compressed** shard per probe `data/probes/<id>.json.gz`:
+    `item{id,title,tags,context?}` + `cells[]` (subject, conditions,
+    transcript[turns], verdicts[{judge,scope,band (display),bandLabel,
+    summary?←direction,rationale?,tags:{techniques}}]). `summary`/`rationale` are
+    omitted when absent. `index.json` is plain (small); `index.shards` paths end
+    in `.json.gz` (see D3 size decision).
   - **Slim**: drop `usage`/`raw`/`attempts`/`context_prefix`. Deterministic ordering
-    (sorted keys) so re-runs are idempotent.
+    (sorted keys, fixed orderings) + gzip `mtime=0` so re-runs are byte-identical
+    (idempotent).
 - `--results-path` defaults to the package `results/`; for the real run it points at
   the main checkout (`/Users/mwk/Development/fftn/taqwabench/jaleesbench/results`)
   whose data is gitignored and absent from the worktree.
@@ -174,8 +186,8 @@ commit.
 #### Risks
 - **Risk**: loader refactor regresses the report. **Mitigation**: optional param with
   unchanged default; run `jaleesbench report` smoke once.
-- **Risk**: export size larger than the ~10–30 MB estimate. **Mitigation**: measure in
-  Phase 5; prompt-dedup (D3) available as a contained follow-up.
+- **Risk**: export size larger than the ~10–30 MB estimate. **RESOLVED in Phase 1**:
+  measured ~220 MB plain → gzip shards → ~62 MB committed (see D3).
 
 ---
 
@@ -198,7 +210,9 @@ commit.
 - `apps/jaleesbrowser/src/contract.ts` (new) — TS types for index + shard (generic:
   no JaleesBench string literals).
 - `apps/jaleesbrowser/src/datasource.ts` (new) — `DataSource` interface +
-  `StaticFileDataSource` (fetch + JSON parse + version check). **No DB/API/query layer.**
+  `StaticFileDataSource`: `loadIndex` fetches plain `index.json`; `loadItem` fetches
+  the gzip shard and decompresses via `DecompressionStream('gzip')` → `JSON.parse`;
+  plus the `contractVersion` check. **No DB/API/query layer.**
 - `apps/jaleesbrowser/src/datasource.test.ts` (new) — unit tests against a fixture.
 - `apps/jaleesbrowser/public/data/` (new) — committed **mini-fixture** (1–2 probes)
   produced by Phase 1's exporter, for dev + tests.
@@ -208,7 +222,9 @@ commit.
   component rendering (configured here so Phase 4 tests run without extra setup).
 - `StaticFileDataSource(baseUrl)` resolves `index.json` and shard paths relative to the
   app base; checks `contractVersion` MAJOR and throws a typed `UnsupportedVersionError`
-  the UI renders fail-soft (Phase 3/4).
+  the UI renders fail-soft (Phase 3/4). Shards are gzip — `loadItem` pipes the response
+  body through `DecompressionStream('gzip')` before `JSON.parse` (test via a gzipped
+  fixture so the decompress path is exercised).
 - `contract.ts` types mirror spec §5 exactly and are the only place the shard/index
   shapes are named.
 
@@ -350,14 +366,16 @@ Revert the commit; Phases 2–3 remain functional (pickers + URL, no panel).
   Pages (builds the committed app + data; does **not** regenerate the export).
 - `apps/jaleesbrowser/README.md` (new) — how to export data, dev, build, deploy.
 - `apps/jaleesbrowser/public/data/*` (replace fixture with the **full English export**)
-  — committed slimmed data (raw results stay gitignored).
+  — committed slimmed data: plain `index.json` + gzip `*.json.gz` shards (~62 MB; raw
+  results stay gitignored).
 - `apps/jaleesbrowser/vite.config.ts` (verify) — relative `base: "./"` (from Phase 2)
   already makes the build host-agnostic; verify, don't hardcode a project path.
 
 #### Implementation Details
 - Run `jaleesbench export-web --results-path <main-checkout results> --out
   apps/jaleesbrowser/public/data` locally (raw data isn't in CI); commit the output.
-- Measure committed size; if uncomfortable vs spec §7 C1, apply D3 prompt-dedup.
+- Confirm committed size (~62 MB gzip, per the Phase 1 D3 measurement); ensure Pages
+  serves `.json.gz` with a usable content-type (the DataSource decompresses regardless).
 - Actions workflow: `npm ci && npm run build` then `actions/deploy-pages`. With relative
   `base: "./"` the bundle works at the Pages subpath without hardcoding it; confirm via
   `vite preview` served under a subpath before merge.
@@ -450,3 +468,11 @@ and found them correct. All actionable feedback incorporated:
   page/column-container level, not just on text snippets.
 
 *(Human feedback at plan-approval will be logged here.)*
+
+### Phase 1 implementation — gzip size decision (architect-approved)
+
+During Phase 1 the real export measured ~220 MB plain (~1.6 MB/probe), far over the
+~10–30 MB estimate. The architect approved gzip-compressed shards (`.json.gz`, index
+plain, `DecompressionStream('gzip')` in the DataSource) → ~62 MB committed. This plan
+was reconciled accordingly (D1, D3, Phase 1, Phase 2 DataSource, Phase 5) so the
+Phase 2 handoff is consistent. (Raised by Codex in the phase_1 implementation review.)

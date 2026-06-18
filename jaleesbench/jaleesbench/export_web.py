@@ -83,8 +83,9 @@ def _build_verdicts(judgments: list[dict]) -> list[dict]:
             "scope": j["scope"],
             "band": native * SCORE_SCALE,
             "bandLabel": BAND_LABEL[native],
-            "summary": j.get("direction"),
         }
+        if j.get("direction"):
+            verdict["summary"] = j["direction"]
         if j.get("rationale"):
             verdict["rationale"] = j["rationale"]
         if j.get("techniques_used"):
@@ -212,8 +213,8 @@ def export_web(results_path=None, out_dir: Path = None, limit: int = None) -> di
                             "hearts": probes[pid].get("hearts", []),
                             "islamic": probes[pid].get("islamic")}}
                   for pid in present],
-        # Shards are gzip-compressed JSON (~7× smaller); the viewer decompresses
-        # client-side. index.json itself stays plain (it is small).
+        # Shards are gzip-compressed JSON (~3.5× smaller on this rationale-heavy
+        # text); the viewer decompresses client-side. index.json stays plain.
         "shards": {pid: f"data/probes/{pid}.json.gz" for pid in present},
     }
 

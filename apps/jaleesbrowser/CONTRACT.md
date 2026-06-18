@@ -160,7 +160,8 @@ changes bump MAJOR.
   export; such records may lack `rationale`, so `rationale` is optional.
 - Harness-only fields (`usage`, `raw`, `attempts`, `context_prefix`) are dropped to
   keep shards small.
-- Shards are gzip-compressed (`.json.gz`, ~7× smaller) so the full English set commits
-  at ~30 MB instead of ~220 MB plain. `index.json` is left plain (it is small).
+- Shards are gzip-compressed (`.json.gz`). On JaleesBench's rationale-heavy text gzip
+  yields ~3.5×, so the full English set commits at **~62 MB** instead of ~220 MB plain.
+  `index.json` is left plain (it is small).
 - Output is deterministic — sorted keys, fixed orderings, and gzip `mtime=0` — so
   re-runs are byte-identical (idempotent).
