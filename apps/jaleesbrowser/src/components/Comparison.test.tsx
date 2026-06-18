@@ -26,8 +26,7 @@ const INDEX: ContractIndex = {
     { id: "opus", label: "Opus" },
     { id: "gemini", label: "Gemini" },
   ],
-  // Distinctive labels prove the score header reads them from the data
-  // (it would fail if the component hardcoded "initial"/"post-pressure").
+  // Distinctive scope labels prove the header reads them from the data.
   scopes: [
     { id: "full", label: "after", default: true },
     { id: "turn1", label: "pre" },
@@ -83,26 +82,37 @@ function sel(over: Partial<Selection> = {}): Selection {
 }
 
 describe("Comparison", () => {
-  it("renders both columns' transcripts and verdicts", () => {
+  it("renders both models' responses side by side", () => {
     render(<Comparison index={INDEX} shard={SHARD} selection={sel()} />);
-    expect(screen.getByLabelText("Responses from ansari")).toBeInTheDocument();
-    expect(screen.getByLabelText("Responses from gpt")).toBeInTheDocument();
     expect(screen.getByText("Ansari stays steadfast")).toBeInTheDocument();
     expect(screen.getByText("GPT caves")).toBeInTheDocument();
   });
 
-  it("shows the per-model score header using the data's scope labels", () => {
+  it("renders each shared user prompt once, not duplicated per column", () => {
     render(<Comparison index={INDEX} shard={SHARD} selection={sel()} />);
-    // ansari: turn1 ("pre") mean 0 → full ("after") mean +1 — labels from index.scopes
-    expect(screen.getByText(/0 pre → \+1 after/)).toBeInTheDocument();
-    // gpt: no turn1 verdict → "—"
-    expect(screen.getByText(/— → -1 after/)).toBeInTheDocument();
+    // Both models received the identical prompt → it appears exactly once.
+    expect(screen.getAllByText(/<script>alert\(1\)<\/script>/)).toHaveLength(1);
+    expect(screen.getAllByText("the pressure turn")).toHaveLength(1);
   });
 
-  it("shows opposed bands for a polarizing cell", () => {
+  it("renders model text as literal (no HTML injection)", () => {
+    const { container } = render(<Comparison index={INDEX} shard={SHARD} selection={sel()} />);
+    expect(container.querySelector("script")).toBeNull();
+  });
+
+  it("shows the per-model score header using the data's scope labels", () => {
     render(<Comparison index={INDEX} shard={SHARD} selection={sel()} />);
-    expect(screen.getByText(/Perfume \(\+1\)/)).toBeInTheDocument();
-    expect(screen.getByText(/Burns \(-1\)/)).toBeInTheDocument();
+    expect(screen.getByText(/pre → \+1 after/)).toBeInTheDocument(); // ansari: turn1 0 → full +1
+    expect(screen.getByText(/— → -1 after/)).toBeInTheDocument(); // gpt: no turn1 → "—"
+  });
+
+  it("shows each stage's judges: initial after the first response, post after pressure", () => {
+    render(<Comparison index={INDEX} shard={SHARD} selection={sel()} />);
+    expect(screen.getByText(/Judges — pre/)).toBeInTheDocument();
+    expect(screen.getByText(/Judges — after/)).toBeInTheDocument();
+    expect(screen.getByText(/Perfume \(\+1\)/)).toBeInTheDocument(); // ansari, post
+    expect(screen.getByText(/Burns \(-1\)/)).toBeInTheDocument(); // gpt, post
+    expect(screen.getByText(/Inert \(0\)/)).toBeInTheDocument(); // ansari, initial
   });
 
   it("tolerates a verdict with no rationale", () => {
@@ -110,23 +120,8 @@ describe("Comparison", () => {
     expect(screen.getByText("bad")).toBeInTheDocument(); // gpt summary, no rationale, no crash
   });
 
-  it("renders model text as literal (no HTML injection)", () => {
-    const { container } = render(
-      <Comparison index={INDEX} shard={SHARD} selection={sel()} />,
-    );
-    expect(container.querySelector("script")).toBeNull();
-    expect(screen.getAllByText(/<script>alert\(1\)<\/script>/).length).toBeGreaterThan(0);
-  });
-
-  it("filters verdicts by the selected scope", () => {
-    render(<Comparison index={INDEX} shard={SHARD} selection={sel({ scope: "turn1" })} />);
-    expect(screen.getByText(/Inert \(0\)/)).toBeInTheDocument(); // ansari turn1 verdict
-    expect(screen.queryByText(/Perfume/)).toBeNull(); // full-scope verdict hidden
-  });
-
   it("shows a fail-soft no-data state for a missing cell", () => {
     render(<Comparison index={INDEX} shard={SHARD} selection={sel({ b: "qwen" })} />);
-    expect(screen.getByText("No data for this combination.")).toBeInTheDocument();
-    expect(screen.getByLabelText("Responses from qwen")).toBeInTheDocument();
+    expect(screen.getAllByText(/No data/).length).toBeGreaterThan(0);
   });
 });
