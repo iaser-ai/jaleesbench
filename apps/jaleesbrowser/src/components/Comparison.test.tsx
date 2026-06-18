@@ -72,6 +72,7 @@ const SHARD: ItemShard = {
 
 function sel(over: Partial<Selection> = {}): Selection {
   return {
+    view: "detail",
     item: "JLS-006",
     a: "ansari",
     b: "gpt",

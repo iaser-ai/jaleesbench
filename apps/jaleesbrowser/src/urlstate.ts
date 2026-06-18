@@ -7,7 +7,12 @@
 
 import type { ContractIndex } from "./contract";
 
+export type View = "detail" | "compare";
+const VIEWS: View[] = ["detail", "compare"];
+
 export interface Selection {
+  /** which surface: the drill-in detail, or the A-vs-B compare ranking */
+  view: View;
   /** item (probe) id */
   item: string;
   /** subject id, left column */
@@ -34,6 +39,7 @@ export function defaultSelection(index: ContractIndex): Selection {
   const scopes = index.scopes ?? [];
   const scope = (scopes.find((s) => s.default) ?? scopes[0])?.id;
   return {
+    view: "detail",
     item: index.items[0]?.id ?? "",
     a: index.subjects[0]?.id ?? "",
     b: (index.subjects[1] ?? index.subjects[0])?.id ?? "",
@@ -57,8 +63,10 @@ export function decodeSelection(search: string, index: ContractIndex): Selection
   const a = params.get("a");
   const b = params.get("b");
   const scope = params.get("scope");
+  const view = params.get("view");
 
   return {
+    view: VIEWS.includes(view as View) ? (view as View) : def.view,
     item: hasId(index.items, item) ? item : def.item,
     a: hasId(index.subjects, a) ? a : def.a,
     b: hasId(index.subjects, b) ? b : def.b,
@@ -72,6 +80,7 @@ export function decodeSelection(search: string, index: ContractIndex): Selection
 /** Encode a Selection as a `?…` query string (axis keys come from the contract). */
 export function encodeSelection(sel: Selection, index: ContractIndex): string {
   const params = new URLSearchParams();
+  params.set("view", sel.view);
   params.set("item", sel.item);
   params.set("a", sel.a);
   params.set("b", sel.b);

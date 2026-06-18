@@ -43,8 +43,9 @@ const INDEX: ContractIndex = {
 };
 
 describe("urlstate", () => {
-  it("defaultSelection picks first item, two distinct subjects, first axis values, default scope", () => {
+  it("defaultSelection is the detail view, first item, two distinct subjects, first axis values, default scope", () => {
     expect(defaultSelection(INDEX)).toEqual({
+      view: "detail",
       item: "JLS-001",
       a: "ansari",
       b: "gpt",
@@ -53,8 +54,9 @@ describe("urlstate", () => {
     });
   });
 
-  it("encode → decode round-trips a selection", () => {
+  it("encode → decode round-trips a selection (incl. view)", () => {
     const sel = {
+      view: "compare" as const,
       item: "JLS-002",
       a: "gpt",
       b: "qwen",
@@ -62,6 +64,11 @@ describe("urlstate", () => {
       scope: "turn1",
     };
     expect(decodeSelection(encodeSelection(sel, INDEX), INDEX)).toEqual(sel);
+  });
+
+  it("falls back to the detail view for an unknown view param", () => {
+    expect(decodeSelection("?view=bogus", INDEX).view).toBe("detail");
+    expect(decodeSelection("?view=compare", INDEX).view).toBe("compare");
   });
 
   it("encodes axis keys generically (one query param per axis)", () => {

@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "./App";
 import type { ContractIndex, ItemShard } from "./contract";
 import type { DataSource } from "./datasource";
@@ -91,6 +91,27 @@ describe("App", () => {
     // The comparison mounts once the shard loads (two columns from the selection).
     expect(await screen.findByLabelText("Responses from ansari")).toBeInTheDocument();
     expect(screen.getByLabelText("Responses from gpt")).toBeInTheDocument();
+  });
+
+  it("compare view renders without loading a shard (no detail-only controls)", async () => {
+    const loadItem = vi.fn().mockResolvedValue({ item: { id: "x", title: "x" }, cells: [] });
+    const ds: DataSource = { loadIndex: async () => INDEX, loadItem };
+    window.history.replaceState(null, "", "?view=compare&a=ansari&b=gpt");
+    render(<App dataSource={ds} />);
+    expect(await screen.findByLabelText("Model A")).toHaveValue("ansari");
+    expect(screen.queryByLabelText("Question")).toBeNull(); // detail-only
+    expect(screen.queryByLabelText("Band legend")).toBeNull(); // detail-only
+    expect(loadItem).not.toHaveBeenCalled(); // compare = no shard loads
+  });
+
+  it("toggles between detail and compare, updating the URL", async () => {
+    render(<App dataSource={new FakeDataSource()} />);
+    expect(await screen.findByLabelText("Question")).toBeInTheDocument(); // detail default
+    fireEvent.click(screen.getByRole("button", { name: "Compare" }));
+    expect(screen.queryByLabelText("Question")).toBeNull();
+    expect(new URLSearchParams(window.location.search).get("view")).toBe("compare");
+    fireEvent.click(screen.getByRole("button", { name: "Detail" }));
+    expect(screen.getByLabelText("Question")).toBeInTheDocument();
   });
 
   it("shows a fail-soft message when the shard fails to load (pickers stay usable)", async () => {

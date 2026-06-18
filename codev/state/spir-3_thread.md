@@ -378,3 +378,18 @@ default=post, other=initial, NOT hardcoded). Verdicts.tsx: summary/rationale via
 Markdown(+Collapsible for rationale). styles.css: sans-serif body; .md/.collapsible/
 score-header styles. Comparison.test +1 (score header). **Build ✓, 43 tests ✓.** Next:
 commit, porch done → 3-way review.
+iter1 Codex REQUEST_CHANGES (score header hardcoded "post-pressure"/"initial") → moved
+to data: export SCOPE_LABELS={full:"post-pressure",turn1:"initial"}, header reads
+index.scopes labels (test uses pre/after to prove genericity). iter2 Codex+Claude APPROVE,
+Gemini REQUEST_CHANGES (empty sandbox false positive, rebutted) → iter3 all APPROVE.
+
+## 2026-06-18 — Phase 3 (phase_3_compare_view)
+scores.ts: scoreAt (read scores blob by coords from order/shape — generic) +
+divergenceRanking(index,a,b) (every item×condition at default scope, |Δ| desc, null-
+either excluded, deterministic tie-break) + defaultScopeId. scores.test (4). urlstate.ts:
++view ("detail"|"compare"), default detail, invalid→detail; urlstate.test +view. Compare.tsx:
+A/B selects + ranked table (question/conditions/scoreA/scoreB/Δ), top-N=50+show-more, row
+click→onOpenDetail, keyboard a11y; Compare.test (3). App.tsx: mode toggle, render detail
+vs compare by view, **shard-load GATED to view==='detail'** (compare = no shard loads),
+onOpenDetail builds detail Selection. App.test +2 (compare no-shard + toggle). styles:
+mode-toggle/compare-table. **Build ✓, 53 tests ✓.** Next: commit, porch done → review.

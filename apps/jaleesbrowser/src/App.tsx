@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BandLegend } from "./components/BandLegend";
+import { Compare } from "./components/Compare";
 import { Comparison } from "./components/Comparison";
 import { ItemHeader } from "./components/ItemHeader";
 import { Pickers } from "./components/Pickers";
 import type { ContractIndex, ItemShard } from "./contract";
 import type { DataSource } from "./datasource";
-import { decodeSelection, encodeSelection, type Selection } from "./urlstate";
+import { type DivergenceRow, defaultScopeId } from "./scores";
+import { decodeSelection, encodeSelection, type Selection, type View } from "./urlstate";
 
 /**
  * The application root: loads the index via the injected DataSource, drives the
@@ -48,9 +50,11 @@ export function App({ dataSource }: { dataSource: DataSource }) {
 
   // Lazily load the selected probe's shard (cached by item id; one shard holds
   // every subject × condition cell, so switching subjects/conditions never refetches).
+  // Only in the detail view — compare ranks from the index alone, no shard loads.
   const itemId = selection?.item;
+  const isDetail = selection?.view === "detail";
   useEffect(() => {
-    if (!index || !itemId) return;
+    if (!index || !itemId || !isDetail) return;
     let cancelled = false;
     setShardError(null);
     const cached = shardCache.current.get(itemId);
@@ -70,7 +74,7 @@ export function App({ dataSource }: { dataSource: DataSource }) {
     return () => {
       cancelled = true;
     };
-  }, [index, itemId, dataSource]);
+  }, [index, itemId, isDetail, dataSource]);
 
   const onChange = useCallback(
     (next: Selection) => {
@@ -80,6 +84,26 @@ export function App({ dataSource }: { dataSource: DataSource }) {
       }
     },
     [index],
+  );
+
+  // A compare row → the drill-in detail for that exact cell (same A/B).
+  const onOpenDetail = useCallback(
+    (row: DivergenceRow) => {
+      if (!selection || !index) return;
+      onChange({
+        ...selection,
+        view: "detail",
+        item: row.item,
+        conditions: row.conditions,
+        scope: selection.scope ?? defaultScopeId(index),
+      });
+    },
+    [selection, index, onChange],
+  );
+
+  const setView = useCallback(
+    (view: View) => selection && onChange({ ...selection, view }),
+    [selection, onChange],
   );
 
   if (error) {
@@ -104,18 +128,47 @@ export function App({ dataSource }: { dataSource: DataSource }) {
   return (
     <main dir={dir}>
       <h1>{index.dataset.title}</h1>
-      <Pickers index={index} selection={selection} onChange={onChange} />
-      <BandLegend index={index} />
-      {shardError ? (
-        <p className="shard-error no-data" role="alert">
-          Could not load this question’s data: {shardError}
-        </p>
-      ) : !shard ? (
-        <p>Loading responses…</p>
+
+      <nav className="mode-toggle" aria-label="View mode">
+        <button
+          type="button"
+          aria-pressed={selection.view === "detail"}
+          onClick={() => setView("detail")}
+        >
+          Detail
+        </button>
+        <button
+          type="button"
+          aria-pressed={selection.view === "compare"}
+          onClick={() => setView("compare")}
+        >
+          Compare
+        </button>
+      </nav>
+
+      {selection.view === "compare" ? (
+        <Compare
+          index={index}
+          selection={selection}
+          onChange={onChange}
+          onOpenDetail={onOpenDetail}
+        />
       ) : (
         <>
-          <ItemHeader shard={shard} />
-          <Comparison index={index} shard={shard} selection={selection} />
+          <Pickers index={index} selection={selection} onChange={onChange} />
+          <BandLegend index={index} />
+          {shardError ? (
+            <p className="shard-error no-data" role="alert">
+              Could not load this question’s data: {shardError}
+            </p>
+          ) : !shard ? (
+            <p>Loading responses…</p>
+          ) : (
+            <>
+              <ItemHeader shard={shard} />
+              <Comparison index={index} shard={shard} selection={selection} />
+            </>
+          )}
         </>
       )}
     </main>
