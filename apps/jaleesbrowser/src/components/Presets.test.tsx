@@ -23,12 +23,13 @@ const INDEX: ContractIndex = {
   presets: [
     {
       key: "polarizing",
-      label: "Models split",
-      description: "one near Perfume, one near Burns",
+      label: "Polarizing — models split",
+      description: "one near Perfume, another near Burns",
       entries: [
         {
-          label: "JLS-001 · a vs b",
+          label: "JLS-001 — a vs b",
           params: {
+            view: "detail",
             item: "JLS-001",
             a: "a",
             b: "b",
@@ -46,10 +47,11 @@ describe("Presets", () => {
   it("lists the presets and applies an entry's deep-link as a Selection", () => {
     const onApply = vi.fn();
     render(<Presets index={INDEX} onApply={onApply} />);
-    expect(screen.getByText("Models split")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "JLS-001 · a vs b" }));
+    expect(screen.getByText("Polarizing — models split")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "JLS-001 — a vs b" }));
     expect(onApply).toHaveBeenCalledWith(
       expect.objectContaining({
+        view: "detail",
         item: "JLS-001",
         a: "a",
         b: "b",

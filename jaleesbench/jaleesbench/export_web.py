@@ -214,25 +214,35 @@ def _compute_presets(judgments, titles, present):
     """Curated deep-links from the full-scope cells. Deterministic (fixed thresholds,
     sorted by magnitude with item/condition tie-breaks, one entry per item, capped).
     A preset with no qualifying entries is omitted."""
-    cell_judges = defaultdict(dict)  # (subject,probe,pressure,framing) -> {judge: band}
+    # Judge bands per cell, kept per scope: 'Models split' ranks on the FIRST
+    # stage (turn1, pre-pressure); 'judges split' uses the full-scope cells.
+    cell_judges = {"turn1": defaultdict(dict), "full": defaultdict(dict)}
     for j in judgments:
-        if j["scope"] == "full":
-            cell_judges[(j["subject"], j["probe_id"], j["pressure"],
-                         j["framing"])][j["judge"]] = j["band"]
-    cell_mean = {k: _mean(list(v.values())) for k, v in cell_judges.items()}
-    permean = defaultdict(dict)  # (probe,pressure,framing) -> {subject: mean band}
-    for (s, p, pr, f), m in cell_mean.items():
-        permean[(p, pr, f)][s] = m
+        sc = j["scope"]
+        if sc in cell_judges:
+            cell_judges[sc][(j["subject"], j["probe_id"], j["pressure"],
+                             j["framing"])][j["judge"]] = j["band"]
 
-    def entry(p, pr, f, a, b, why):
+    def _permean(scope):  # (probe,pressure,framing) -> {subject: mean band}
+        cm = {k: _mean(list(v.values())) for k, v in cell_judges[scope].items()}
+        pm = defaultdict(dict)
+        for (s, p, pr, f), m in cm.items():
+            pm[(p, pr, f)][s] = m
+        return pm
+
+    permean_t1 = _permean("turn1")
+    permean_full = _permean("full")
+
+    def entry(p, pr, f, a, b, why, scope):
         # Terse one-liner: id + a few words. The condition lives in the deep-link.
         return {"label": f"{p} · {why}",
                 "params": {"item": p, "a": a, "b": b,
-                           "pressure": pr, "framing": f, "scope": "full"}}
+                           "pressure": pr, "framing": f, "scope": scope}}
 
-    # (a) widest cross-model spread — max-score model (a) vs min-score model (b).
+    # (a) widest cross-model spread on the FIRST STAGE — max-score (a) vs min (b),
+    # sorted largest difference first.
     spreads = []
-    for (p, pr, f), d in permean.items():
+    for (p, pr, f), d in permean_t1.items():
         if len(d) < 2:
             continue
         hi, lo = max(d, key=d.get), min(d, key=d.get)
@@ -243,13 +253,13 @@ def _compute_presets(judgments, titles, present):
         if p in seen:
             continue
         seen.add(p)
-        a_entries.append(entry(p, pr, f, hi, lo, f"{hi} vs {lo}"))
+        a_entries.append(entry(p, pr, f, hi, lo, f"{hi} vs {lo}", "turn1"))
         if len(a_entries) >= 12:
             break
 
     # (b) the two judges' native band values differ by >=2 — split model vs top model.
     disag = []
-    for (s, p, pr, f), jb in cell_judges.items():
+    for (s, p, pr, f), jb in cell_judges["full"].items():
         vals = list(jb.values())
         if len(vals) >= 2 and (max(vals) - min(vals)) >= 2:
             disag.append((max(vals) - min(vals), p, pr, f, s))
@@ -259,11 +269,11 @@ def _compute_presets(judgments, titles, present):
         if p in seen_b:
             continue
         seen_b.add(p)
-        d = permean.get((p, pr, f), {})
+        d = permean_full.get((p, pr, f), {})
         contrast = max(d, key=d.get) if d else s
         if contrast == s:
             contrast = min(d, key=d.get) if len(d) > 1 else s
-        b_entries.append(entry(p, pr, f, s, contrast, f"judges split on {s}"))
+        b_entries.append(entry(p, pr, f, s, contrast, f"judges split on {s}", "full"))
         if len(b_entries) >= 12:
             break
 
@@ -321,7 +331,7 @@ def export_web(results_path=None, out_dir: Path = None, limit: int = None) -> di
         "contractVersion": CONTRACT_VERSION,
         "producer": {"name": "jaleesbench", "version": _package_version()},
         "dataset": {
-            "title": "JaleesBench — English results",
+            "title": "JaleesBench",
             "description": ("Side-by-side model responses and judge verdicts from "
                             "the JaleesBench righteous-companion benchmark."),
             "language": "en",

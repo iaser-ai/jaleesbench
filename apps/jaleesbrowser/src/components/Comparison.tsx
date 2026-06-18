@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { type ReactNode, useMemo } from "react";
 import type { Cell, ContractIndex, ItemShard, Turn } from "../contract";
 import { cellKey, indexCells, meanBandAtScope, signed } from "../format";
 import type { Selection } from "../urlstate";
@@ -7,12 +7,14 @@ import { Markdown } from "./Markdown";
 import { Verdicts } from "./Verdicts";
 
 /**
- * The side-by-side comparison: two columns (Model A / Model B), each showing the
- * full transcript and the judge verdicts for the selected condition + scope.
- *
- * Layout uses a 2-column grid with CSS subgrid (styles.css) so the two columns'
- * turns row-align on desktop while the DOM stays grouped by column (clean mobile
- * stacking). A missing cell renders a fail-soft "no data" state for that column.
+ * Side-by-side comparison of two models, laid out in conversation order:
+ *   - shared USER prompts (question, then pressure) are rendered ONCE, full-width
+ *     (both models got the identical prompt);
+ *   - the two assistant responses sit side-by-side;
+ *   - the judges' verdict on the FIRST response (initial scope) appears right
+ *     after it, and the verdict AFTER the pressure (post scope) appears after the
+ *     pressure exchange.
+ * A missing cell renders a fail-soft "no data" state on its side.
  */
 export function Comparison({
   index,
@@ -30,82 +32,113 @@ export function Comparison({
   const cells = useMemo(() => indexCells(shard, axisKeys), [shard, axisKeys]);
   const cellA = cells.get(cellKey(selection.a, selection.conditions, axisKeys));
   const cellB = cells.get(cellKey(selection.b, selection.conditions, axisKeys));
+  const labelA = subjectLabel(index, selection.a);
+  const labelB = subjectLabel(index, selection.b);
   const maxTurns = Math.max(
     cellA?.transcript.length ?? 0,
     cellB?.transcript.length ?? 0,
   );
 
-  // header + N turns + verdicts → explicit row tracks so the columns' subgrids align.
-  const rowTracks = `repeat(${2 + maxTurns}, auto)`;
+  // Default scope = the post-pressure judgment; the other = the initial
+  // (first-response) judgment. Labels come from the data, not hardcoded.
+  const postScope = (index.scopes ?? []).find((s) => s.default) ?? index.scopes?.[0];
+  const initialScope = (index.scopes ?? []).find((s) => s.id !== postScope?.id);
 
-  return (
-    <div className="comparison" style={{ gridTemplateRows: rowTracks }}>
-      <Column
-        index={index}
-        label={subjectLabel(index, selection.a)}
-        cell={cellA}
-        maxTurns={maxTurns}
-        scope={selection.scope}
-      />
-      <Column
-        index={index}
-        label={subjectLabel(index, selection.b)}
-        cell={cellB}
-        maxTurns={maxTurns}
-        scope={selection.scope}
-      />
-    </div>
-  );
+  const roleAt = (i: number) => cellA?.transcript[i]?.role ?? cellB?.transcript[i]?.role;
+  const assistantIdx: number[] = [];
+  for (let i = 0; i < maxTurns; i++) if (roleAt(i) === "assistant") assistantIdx.push(i);
+  const firstAssistant = assistantIdx[0];
+  const lastAssistant = assistantIdx[assistantIdx.length - 1];
+
+  const verdictStage = (scope: { id: string; label?: string } | undefined, key: string) =>
+    scope === undefined ? null : (
+      <div className="verdict-stage" key={key}>
+        <p className="verdict-stage-label">Judges — {scope.label ?? scope.id}</p>
+        <div className="cmp-row">
+          <div className="column-verdicts">
+            {cellA ? (
+              <Verdicts index={index} cell={cellA} scope={scope.id} />
+            ) : (
+              <p className="no-data">No data.</p>
+            )}
+          </div>
+          <div className="column-verdicts">
+            {cellB ? (
+              <Verdicts index={index} cell={cellB} scope={scope.id} />
+            ) : (
+              <p className="no-data">No data.</p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+
+  const rows: ReactNode[] = [
+    <div className="cmp-row cmp-headers" key="headers">
+      <ColumnHeader index={index} label={labelA} cell={cellA} />
+      <ColumnHeader index={index} label={labelB} cell={cellB} />
+    </div>,
+  ];
+  for (let i = 0; i < maxTurns; i++) {
+    if (roleAt(i) === "user") {
+      const turn = cellA?.transcript[i] ?? cellB?.transcript[i];
+      rows.push(<SharedTurn key={`t${i}`} turn={turn} />);
+    } else {
+      rows.push(
+        <div className="cmp-row" key={`t${i}`}>
+          <TurnCell turn={cellA?.transcript[i]} />
+          <TurnCell turn={cellB?.transcript[i]} />
+        </div>,
+      );
+      if (i === firstAssistant) rows.push(verdictStage(initialScope, `v-init-${i}`));
+      if (i === lastAssistant) rows.push(verdictStage(postScope, `v-post-${i}`));
+    }
+  }
+
+  return <div className="comparison">{rows}</div>;
 }
 
-function Column({
+function ColumnHeader({
   index,
   label,
   cell,
-  maxTurns,
-  scope,
 }: {
   index: ContractIndex;
   label: string;
   cell?: Cell;
-  maxTurns: number;
-  scope?: string;
 }) {
-  // Score header: mean of the 2 judges at the non-default ("initial") and default
-  // ("post") scope. Both the scope ids AND their display labels come from
-  // index.scopes — no JaleesBench-specific wording is baked into this component.
   const postScope = (index.scopes ?? []).find((s) => s.default) ?? index.scopes?.[0];
   const initialScope = (index.scopes ?? []).find((s) => s.id !== postScope?.id);
   const initial = cell && initialScope ? meanBandAtScope(cell, initialScope.id) : null;
   const post = cell && postScope ? meanBandAtScope(cell, postScope.id) : null;
 
   return (
-    <section className="column" aria-label={`Responses from ${label}`}>
-      <header className="column-header">
-        <span className="column-model">{label}</span>
-        {cell ? (
-          <span className="column-score">
-            {" ("}
-            {initial !== null ? `${signed(initial)} ${initialScope?.label ?? ""}` : "—"}
-            {" → "}
-            {post !== null ? `${signed(post)} ${postScope?.label ?? ""}` : "—"}
-            {")"}
-          </span>
-        ) : (
-          <span className="no-data-tag"> · no data</span>
-        )}
-      </header>
-      {Array.from({ length: maxTurns }, (_, i) => (
-        <TurnCell key={i} turn={cell?.transcript[i]} />
-      ))}
-      <div className="column-verdicts">
-        {cell ? (
-          <Verdicts index={index} cell={cell} scope={scope} />
-        ) : (
-          <p className="no-data">No data for this combination.</p>
-        )}
-      </div>
-    </section>
+    <header className="column-header">
+      <span className="column-model">{label}</span>
+      {cell ? (
+        <span className="column-score">
+          {" ("}
+          {initial !== null ? `${signed(initial)} ${initialScope?.label ?? ""}` : "—"}
+          {" → "}
+          {post !== null ? `${signed(post)} ${postScope?.label ?? ""}` : "—"}
+          {")"}
+        </span>
+      ) : (
+        <span className="no-data-tag"> · no data</span>
+      )}
+    </header>
+  );
+}
+
+function SharedTurn({ turn }: { turn?: Turn }) {
+  if (!turn) return null;
+  return (
+    <div className="turn turn-user shared-turn">
+      <span className="turn-role">User</span>
+      <Collapsible>
+        <Markdown text={turn.content} className="turn-content" />
+      </Collapsible>
+    </div>
   );
 }
 
@@ -116,7 +149,6 @@ function TurnCell({ turn }: { turn?: Turn }) {
   return (
     <div className={`turn turn-${turn.role}`}>
       <span className="turn-role">{turn.role === "user" ? "User" : "Assistant"}</span>
-      {/* Markdown, sanitized (§5.6); long content collapses to ~10 lines. */}
       <Collapsible>
         <Markdown text={turn.content} className="turn-content" />
       </Collapsible>

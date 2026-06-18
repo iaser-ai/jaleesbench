@@ -13,34 +13,6 @@ const cartesian = (lists: string[][]): string[][] =>
     [[]],
   );
 
-// Per-index coordinate maps (id -> position), built once so scoreAt is O(1) per
-// dimension instead of an O(N) findIndex in the hot ranking/stats loops.
-interface Coords {
-  subject: Map<string, number>;
-  item: Map<string, number>;
-  scope: Map<string, number>;
-  axis: Map<string, Map<string, number>>;
-}
-const coordCache = new WeakMap<ContractIndex, Coords>();
-function coordsOf(index: ContractIndex): Coords {
-  let c = coordCache.get(index);
-  if (!c) {
-    c = {
-      subject: new Map(index.subjects.map((s, i) => [s.id, i])),
-      item: new Map(index.items.map((it, i) => [it.id, i])),
-      scope: new Map((index.scopes ?? []).map((s, i) => [s.id, i])),
-      axis: new Map(
-        index.conditionAxes.map((ax) => [
-          ax.key,
-          new Map(ax.values.map((v, i) => [v.id, i])),
-        ]),
-      ),
-    };
-    coordCache.set(index, c);
-  }
-  return c;
-}
-
 /** The mean band for one (subject, item, conditions, scope), or null if absent. */
 export function scoreAt(
   index: ContractIndex,
@@ -51,111 +23,23 @@ export function scoreAt(
 ): number | null {
   const sm = index.scores;
   if (!sm) return null;
-  const c = coordsOf(index);
-  let offset = 0;
+  const coords: number[] = [];
   for (let d = 0; d < sm.order.length; d++) {
     const dim = sm.order[d];
-    let i: number | undefined;
-    if (dim === "subject") i = c.subject.get(subject);
-    else if (dim === "item") i = c.item.get(item);
-    else if (dim === "scope") i = scope !== undefined ? c.scope.get(scope) : undefined;
-    else i = c.axis.get(dim)?.get(conditions[dim]);
-    if (i === undefined || i >= sm.shape[d]) return null;
-    offset = offset * sm.shape[d] + i;
-  }
-  return sm.data[offset] ?? null;
-}
-
-/** Mean band for a subject over all cells matching `fixed` (axisKey→valueId), at
- *  `scope`; nulls excluded. Axes not in `fixed` are averaged over. */
-export function sliceMean(
-  index: ContractIndex,
-  subject: string,
-  scope: string | undefined,
-  fixed: Record<string, string>,
-): number | null {
-  if (!index.scores) return null;
-  const axes = index.conditionAxes;
-  const valueLists = axes.map((ax) =>
-    fixed[ax.key] !== undefined ? [fixed[ax.key]] : ax.values.map((v) => v.id),
-  );
-  const combos = cartesian(valueLists);
-  let sum = 0;
-  let n = 0;
-  for (const item of index.items) {
-    for (const combo of combos) {
-      const cond: Record<string, string> = {};
-      axes.forEach((ax, i) => {
-        cond[ax.key] = combo[i];
-      });
-      const s = scoreAt(index, subject, item.id, cond, scope);
-      if (s !== null) {
-        sum += s;
-        n += 1;
-      }
+    let i: number;
+    if (dim === "subject") i = index.subjects.findIndex((s) => s.id === subject);
+    else if (dim === "item") i = index.items.findIndex((it) => it.id === item);
+    else if (dim === "scope") i = (index.scopes ?? []).findIndex((s) => s.id === scope);
+    else {
+      const axis = index.conditionAxes.find((a) => a.key === dim);
+      i = axis ? axis.values.findIndex((v) => v.id === conditions[dim]) : -1;
     }
+    if (i < 0 || i >= sm.shape[d]) return null;
+    coords.push(i);
   }
-  return n ? sum / n : null;
-}
-
-export interface AxisBreakdown {
-  key: string;
-  label: string;
-  values: { id: string; label: string; mean: number | null }[];
-}
-
-export interface SubjectStats {
-  /** mean band over all cells at the default scope */
-  overall: number | null;
-  /** post-pressure − initial (default scope − the other scope): steadfastness */
-  steadfastness: number | null;
-  /** recognition gain: 2nd − 1st value of the recognition axis at the default scope */
-  recognition: number | null;
-  /** the recognition axis label (for the recognition gain caption), if any */
-  recognitionAxisLabel?: string;
-  /** mean band per value, per condition axis (e.g. by pressure, by framing) */
-  byAxis: AxisBreakdown[];
-}
-
-/** Per-model aggregate stats, computed client-side from the score blob (no new
- *  data). The recognition axis is taken to be the LAST condition axis (JaleesBench
- *  order: pressure, framing → framing), so recognition = mean(2nd value) −
- *  mean(1st value) of that axis at the default scope. */
-export function subjectStats(index: ContractIndex, subject: string): SubjectStats {
-  const def = defaultScopeId(index);
-  const scopes = index.scopes ?? [];
-  const other = scopes.find((s) => s.id !== def)?.id;
-
-  const overall = sliceMean(index, subject, def, {});
-  const post = overall;
-  const initial = other ? sliceMean(index, subject, other, {}) : null;
-  const steadfastness = post !== null && initial !== null ? post - initial : null;
-
-  const byAxis: AxisBreakdown[] = index.conditionAxes.map((ax) => ({
-    key: ax.key,
-    label: ax.label,
-    values: ax.values.map((v) => ({
-      id: v.id,
-      label: v.label,
-      mean: sliceMean(index, subject, def, { [ax.key]: v.id }),
-    })),
-  }));
-
-  const recAxis = index.conditionAxes[index.conditionAxes.length - 1];
-  let recognition: number | null = null;
-  if (recAxis && recAxis.values.length >= 2) {
-    const base = sliceMean(index, subject, def, { [recAxis.key]: recAxis.values[0].id });
-    const rec = sliceMean(index, subject, def, { [recAxis.key]: recAxis.values[1].id });
-    recognition = base !== null && rec !== null ? rec - base : null;
-  }
-
-  return {
-    overall,
-    steadfastness,
-    recognition,
-    recognitionAxisLabel: recAxis?.label,
-    byAxis,
-  };
+  let offset = 0;
+  for (let d = 0; d < coords.length; d++) offset = offset * sm.shape[d] + coords[d];
+  return sm.data[offset] ?? null;
 }
 
 export interface DivergenceRow {

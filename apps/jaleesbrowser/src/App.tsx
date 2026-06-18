@@ -1,23 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { BandLegend } from "./components/BandLegend";
 import { Comparison } from "./components/Comparison";
-import { DivergentCases } from "./components/DivergentCases";
 import { IntroPanel } from "./components/IntroPanel";
 import { ItemHeader } from "./components/ItemHeader";
-import { ModelStats } from "./components/ModelStats";
+import { Pickers } from "./components/Pickers";
 import { Presets } from "./components/Presets";
 import { ThemeToggle } from "./components/ThemeToggle";
 import type { ContractIndex, ItemShard } from "./contract";
 import type { DataSource } from "./datasource";
-import { type DivergenceRow, defaultScopeId } from "./scores";
-import { decodeSelection, encodeSelection, isDetail, type Selection } from "./urlstate";
+import { decodeSelection, encodeSelection, type Selection } from "./urlstate";
 
 /**
- * Two-pane shell: a left sidebar holds the controls (Model A/B, scope, presets,
- * theme, a small "about"); the main pane is one continuous flow — A-vs-B aggregate
- * stats and the most-divergent-cases list, and (when a row is opened) that cell's
- * drill-in detail with a "back". No Detail/Compare tabs; the surface is derived
- * from whether a cell is open. The UI depends only on the `DataSource` interface.
+ * The application root: loads the index via the injected DataSource, drives the
+ * selectors + URL deep-link state, lazily loads the selected probe's shard
+ * (cached by item id), and renders the side-by-side comparison. Every load
+ * failure is fail-soft (a visible message, never a blank page).
+ *
+ * The UI depends ONLY on the `DataSource` interface (injected by `main.tsx`).
  */
 export function App({ dataSource }: { dataSource: DataSource }) {
   const [index, setIndex] = useState<ContractIndex | null>(null);
@@ -42,6 +40,7 @@ export function App({ dataSource }: { dataSource: DataSource }) {
     };
   }, [dataSource]);
 
+  // Restore the selection on browser back/forward.
   useEffect(() => {
     if (!index) return;
     const onPop = () => setSelection(decodeSelection(window.location.search, index));
@@ -49,8 +48,8 @@ export function App({ dataSource }: { dataSource: DataSource }) {
     return () => window.removeEventListener("popstate", onPop);
   }, [index]);
 
-  // Load the open cell's shard (cached). Only when a cell is open — the stats +
-  // divergence list compute from the index alone, no shard loads.
+  // Lazily load the selected probe's shard (cached by item id; one shard holds
+  // every subject × condition cell, so switching subjects/conditions never refetches).
   const itemId = selection?.item;
   useEffect(() => {
     if (!index || !itemId) return;
@@ -85,44 +84,18 @@ export function App({ dataSource }: { dataSource: DataSource }) {
     [index],
   );
 
-  const setControl = useCallback(
-    (patch: Partial<Selection>) => selection && onChange({ ...selection, ...patch }),
-    [selection, onChange],
-  );
-
-  const onPick = useCallback(
-    (row: DivergenceRow) => {
-      if (!selection || !index) return;
-      onChange({
-        ...selection,
-        item: row.item,
-        conditions: row.conditions,
-        scope: selection.scope ?? defaultScopeId(index),
-      });
-    },
-    [selection, index, onChange],
-  );
-
-  const onBack = useCallback(() => {
-    if (selection) onChange({ ...selection, item: undefined });
-  }, [selection, onChange]);
-
   if (error) {
     return (
-      <div className="app">
-        <main className="main">
-          <p role="alert">Could not load results: {error}</p>
-        </main>
-      </div>
+      <main>
+        <p role="alert">Could not load results: {error}</p>
+      </main>
     );
   }
   if (!index || !selection) {
     return (
-      <div className="app">
-        <main className="main">
-          <p>Loading…</p>
-        </main>
-      </div>
+      <main>
+        <p>Loading…</p>
+      </main>
     );
   }
 
@@ -131,96 +104,34 @@ export function App({ dataSource }: { dataSource: DataSource }) {
     : "ltr";
 
   return (
-    <div className="app" dir={dir}>
+    <main dir={dir} className="app-shell">
       <aside className="sidebar">
-        <div className="sidebar-head">
+        <header className="app-header">
           <h1>{index.dataset.title}</h1>
           <ThemeToggle />
-        </div>
-        <p className="subtitle">
-          Compare two models and find where they differ — then read the transcripts and
-          judge verdicts.
-        </p>
-        <div className="controls">
-          <label className="picker">
-            <span>Model A</span>
-            <select
-              aria-label="Model A"
-              value={selection.a}
-              onChange={(e) => setControl({ a: e.target.value })}
-            >
-              {index.subjects.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="picker">
-            <span>Model B</span>
-            <select
-              aria-label="Model B"
-              value={selection.b}
-              onChange={(e) => setControl({ b: e.target.value })}
-            >
-              {index.subjects.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          {index.scopes && index.scopes.length > 0 && selection.scope !== undefined && (
-            <label className="picker">
-              <span>Scope</span>
-              <select
-                aria-label="Scope"
-                value={selection.scope}
-                onChange={(e) => setControl({ scope: e.target.value })}
-              >
-                {index.scopes.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-        </div>
-        <Presets index={index} onApply={onChange} />
+        </header>
+
         <IntroPanel index={index} />
+
+        <Pickers index={index} selection={selection} onChange={onChange} />
+
+        <Presets index={index} onApply={onChange} />
       </aside>
 
-      <main className="main">
-        {isDetail(selection) ? (
-          shardError ? (
-            <p className="no-data shard-error" role="alert">
-              Could not load this question’s data: {shardError}
-            </p>
-          ) : !shard ? (
-            <p>Loading responses…</p>
-          ) : (
-            <>
-              <button type="button" className="back" onClick={onBack}>
-                ← Back to comparison
-              </button>
-              <ItemHeader shard={shard} />
-              <BandLegend index={index} />
-              <Comparison index={index} shard={shard} selection={selection} />
-            </>
-          )
+      <section className="content">
+        {shardError ? (
+          <p className="shard-error no-data" role="alert">
+            Could not load this question’s data: {shardError}
+          </p>
+        ) : !shard ? (
+          <p>Loading responses…</p>
         ) : (
           <>
-            <ModelStats index={index} a={selection.a} b={selection.b} />
-            <DivergentCases
-              index={index}
-              a={selection.a}
-              b={selection.b}
-              onPick={onPick}
-            />
+            <ItemHeader shard={shard} />
+            <Comparison index={index} shard={shard} selection={selection} />
           </>
         )}
-      </main>
-    </div>
+      </section>
+    </main>
   );
 }
