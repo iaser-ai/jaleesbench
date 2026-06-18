@@ -84,4 +84,9 @@ history:
         file: >-
           /Users/mwk/Development/fftn/taqwabench/.builders/spir-3/codev/projects/3-public-results-browser-side-by/3-phase_4_compare-iter1-claude.txt
 started_at: '2026-06-17T23:15:34.666Z'
-updated_at: '2026-06-18T03:05:47.669Z'
+updated_at: '2026-06-18T03:08:25.132Z'
+pr_history:
+  - phase: review
+    pr_number: 4
+    branch: builder/spir-3
+    created_at: '2026-06-18T03:08:25.132Z'
