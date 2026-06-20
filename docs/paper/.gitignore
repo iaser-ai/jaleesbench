@@ -1,3 +1,6 @@
+# Figure QA rasters (the tracked figures are vector PDFs)
+figures/*.png
+
 # LaTeX build artifacts
 *.aux
 *.fdb_latexmk

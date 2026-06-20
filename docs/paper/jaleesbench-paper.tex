@@ -10,6 +10,10 @@
 \usepackage{parskip}
 \usepackage{booktabs}
 \usepackage{array}
+\usepackage{graphicx}
+
+% Two-line table label making Ansari's base model explicit.
+\newcommand{\ansarilabel}{\shortstack[l]{Ansari\\[-1pt]{\scriptsize on Gemini 3.5 Flash}}}
 \setlength{\emergencystretch}{3em} % discourage overfull lines
 
 % A few math symbols appear in running text; map them to math-mode glyphs.
@@ -71,17 +75,21 @@ scored by two independent frontier judges anchored to each scenario's
 own Qurʾān-and-hadith proof texts on a five-band scale from Burns (−1,
 harmful company) to Perfume (+1, counsel in the Prophet's manner).
 Across eight subject systems --- a domain-tuned Islamic assistant, frontier
-APIs, and a range of smaller and open-weights models --- we find that (1)
-responses are \emph{good company} mainly when the agent is told whom it
-serves: the recognition gap dominates the instruction gap; (2) every
-system caves under \emph{relational} pressure (insistence, personal
-appeal) while a misquoted authority tends to \emph{sharpen} the stronger
-ones; (3) the domain-tuned assistant's advantage is overwhelmingly its
+APIs, and a range of smaller and open-weights models --- we find that (1) a
+one-page guide spelling out what makes good companionship sharply boosts every
+general model --- the frontier APIs climb from a middling +0.28/+0.23 to a
+Guided +0.84--0.87, on par with the domain-tuned assistant, so much of the
+expert's edge is companionship instruction that fits in a prompt; (2) every
+system caves under \emph{relational} pressure --- insistence and personal
+appeal; (3) the domain-tuned assistant's advantage is overwhelmingly its
 retrieval-and-prompting layer, not its base model (+0.74 over the
-identical underlying model); and (4) the benchmark is directly
-actionable --- we use its findings to add a steadfastness instruction to
-the domain assistant and measure the improvement. We release the probe
-bank, judging rubric, and harness.
+identical underlying model); and (4) the benchmark is directly actionable ---
+guided by its diagnosis, a single steadfastness instruction added to the domain
+assistant lifts it from +0.48 to +0.84 (Unstated, after pressure), matching the
+best guided frontier systems while preserving first-response quality. The construct ---
+companionship judged by formative effect --- is faith-general; we instantiate
+it for Islam here as the first of a planned cross-tradition family, and release
+the probe bank, judging rubric, and harness.
 \end{abstract}
 
 \section{Introduction}\label{sec:intro}
@@ -95,7 +103,12 @@ faith,
 better or worse equipped to act well, more or less likely to return for
 counsel?
 
-We study this question for Islam first, where two adjacent properties are
+We study this question for Islam first. We begin with Islam because it
+supplies an unusually well-structured ground truth --- a canonical,
+cross-school virtue compilation that ships its own proof texts
+(\cref{sec:source}) --- but the construct and method are designed to travel,
+and we intend JaleesBench to be the first instance of a \emph{cross-tradition}
+family (\cref{sec:futurework}). For Islam, two adjacent properties are
 already benchmarked. \textbf{Knowledge} is covered by IslamicMMLU
 \citep{islamicmmlu2026} and IslamicLegalBench \citep{islamiclegalbench2026},
 which test Qurʾān, hadith, and jurisprudence
@@ -155,8 +168,8 @@ Our contributions:
   statistics (\cref{sec:eval}).
 \item
   \textbf{A demonstration that the benchmark is actionable}: its
-  diagnosis of a specific weakness directly yields a fix that we measure
-  (\cref{sec:casestudy}).
+  diagnosis of a specific weakness directly yields a fix that lifts the domain
+  assistant from +0.48 to +0.84 after pressure (\cref{sec:casestudy}).
 \end{enumerate}
 
 \section{Related work}\label{sec:related}
@@ -327,24 +340,43 @@ pressure)}\label{sec:scorecard}
 \begin{table}[t]
 \centering
 \caption{Jalees Score (Unstated, after pressure), Guided ceiling, and pooled
-steadfastness for all eight subjects. Bootstrap 95\% CIs for the Jalees
-Score are given in the text.}
+steadfastness --- the latter being the \emph{change} in band from the first to
+the post-pressure response, so a negative value means the counsel degrades under
+pushback --- for all eight subjects. Each value is a point estimate
+$\pm$ the half-width of a probe-cluster bootstrap 95\% CI (5{,}000 resamples
+over the 140 probes); \cref{fig:scorecard} plots all three columns.}
 \label{tab:scorecard}
+\small\setlength{\tabcolsep}{5pt}
 \begin{tabular}{@{}lrrr@{}}
 \toprule
-System & Jalees Score & Guided ceiling & Steadfastness \\
+System & Jalees Score & Guided ceiling & Steadfastness ($\Delta$) \\
 \midrule
-Ansari            & \textbf{+0.48} & +0.66 & −0.29 \\
-GPT-5.5           & +0.27 & +0.87 & −0.08 \\
-Claude Sonnet 4.6 & +0.23 & +0.84 & −0.04 \\
-GLM-5.1           & −0.18 & +0.81 & −0.22 \\
-Nemotron-3-Ultra  & −0.21 & +0.56 & −0.07 \\
-Gemini 3.5 Flash  & −0.26 & +0.70 & −0.26 \\
-Gemma-4-31B       & −0.34 & +0.57 & −0.29 \\
-Qwen3-235B        & −0.48 & +0.12 & −0.29 \\
+\ansarilabel & \textbf{+0.48}~$\pm$~0.08 & +0.66~$\pm$~0.07 & −0.29~$\pm$~0.06 \\
+GPT-5.5           & +0.28~$\pm$~0.10 & +0.87~$\pm$~0.05 & −0.08~$\pm$~0.05 \\
+Claude Sonnet 4.6 & +0.23~$\pm$~0.07 & +0.84~$\pm$~0.05 & −0.04~$\pm$~0.04 \\
+GLM-5.1           & −0.18~$\pm$~0.10 & +0.81~$\pm$~0.05 & −0.22~$\pm$~0.05 \\
+Nemotron-3-Ultra  & −0.21~$\pm$~0.09 & +0.56~$\pm$~0.09 & −0.07~$\pm$~0.04 \\
+Gemini 3.5 Flash  & −0.26~$\pm$~0.09 & +0.70~$\pm$~0.06 & −0.26~$\pm$~0.06 \\
+Gemma-4-31B       & −0.34~$\pm$~0.09 & +0.57~$\pm$~0.09 & −0.29~$\pm$~0.06 \\
+Qwen3-235B        & −0.48~$\pm$~0.08 & +0.12~$\pm$~0.08 & −0.29~$\pm$~0.06 \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figures/fig_scorecard}
+\caption{The scorecard of \cref{tab:scorecard} in one chart (bootstrap 95\% CIs
+are given in the table). For each subject, on the band score axis: the
+\emph{first-response} score (triangle), the \emph{after-pressure} Jalees Score
+(filled circle, coloured red below Inert / green above) --- the red segment
+between them is the \textbf{steadfastness drop} under pushback --- and the
+\emph{Guided ceiling} (open diamond), reached by adding the one-page guide. All
+three values are labelled. Every system loses ground from triangle to circle
+(steadfastness is net-negative for all), and every system has a high ceiling it
+reaches only when guided. Subjects are sorted by Jalees Score.}
+\label{fig:scorecard}
+\end{figure}
 
 In \cref{tab:scorecard}, the domain-tuned assistant and the two large
 frontier APIs are net-positive company to an undeclared Muslim user; the
@@ -352,16 +384,19 @@ smaller and open-weights systems --- including Gemini 3.5 Flash, a
 frontier-lab model --- are net-negative, competent but secular by default.
 Bootstrap 95\% confidence intervals (5{,}000 resamples over the 140 probes)
 span roughly $\pm$0.07--0.10: Ansari +0.48 [+0.40, +0.56], and the two
-closest pairs --- GPT-5.5 +0.27 [+0.17, +0.38] vs Claude Sonnet 4.6 +0.23
+closest pairs --- GPT-5.5 +0.28 [+0.17, +0.38] vs Claude Sonnet 4.6 +0.23
 [+0.16, +0.29], and Nemotron-3-Ultra −0.21 [−0.29, −0.12] vs GLM-5.1 −0.18
 [−0.28, −0.08] --- have overlapping intervals, not separable at 95\%. The
 large gaps (Ansari above the field, the open-weights tail below Inert) sit
-well outside these intervals.
+well outside these intervals. We compute the same probe-cluster bootstrap
+interval for \emph{every} quantity reported below; the tables give its
+half-width, the figures draw it as error bars, and the complete set of
+intervals (every table cell) ships with the reproducibility artifact.
 
 \subsection{Recognition dominates instruction}\label{sec:recognition}
 
 For seven of eight systems the recognition gap (Stated − Unstated) is the
-larger lever. The exception is Ansari, whose retrieval-and-prompting layer
+larger lever (\cref{fig:framing}). The exception is Ansari, whose retrieval-and-prompting layer
 already assumes a Muslim interlocutor, so almost no recognition gap remains
 to close (its instruction gap, +0.12, slightly exceeds its recognition gap,
 +0.05). The Guided one-page instruction then lifts the whole pool to
@@ -373,21 +408,142 @@ mostly measures what is lost when the agent does not know whom it serves.
 \subsection{Steadfastness: relational pressure breaks; false authority
 sharpens}\label{sec:steadfastness}
 
-Every system caves on net, and the collapse concentrates on the two
-\emph{relational} pressures --- insistence and personal appeal --- that
-stake the relationship rather than tempt. The one pressure under which
-the stronger systems \emph{improve} is false authority: confronted with
-a misquoted ruling, they check it and answer better than their first
-response. The exception is Qwen3-235B, which tends to accept the
-fabricated authority.
+\textbf{Steadfastness} is the change in band from a system's first response to
+its post-pressure response (negative = the push degraded the counsel), shown
+per pressure in \cref{fig:steadfastness}. Every system caves on net, and the collapse
+concentrates on the two \emph{relational} pressures --- insistence and personal
+appeal --- that stake the relationship rather than tempt: these are the
+deepest-red columns of the heatmap, with drops reaching −0.60. The one pressure
+under which the stronger systems \emph{improve} is false authority: confronted
+with a misquoted ruling they check it and answer better than their first
+response (GPT-5.5 +0.24, Gemini 3.5 Flash +0.18, Nemotron-3-Ultra +0.14, Claude
+Sonnet 4.6 +0.13). The exception is Qwen3-235B, which tends to accept the
+fabricated authority (−0.13).
+
+\textbf{Ansari inherits its base model's weakness.} The heatmap places the
+domain-tuned assistant directly above its own base model, and the two rows are
+nearly identical on the relational pressures: Ansari drops −0.60 under
+insistence and −0.59 under personal appeal, against Gemini 3.5 Flash's −0.59 and
+−0.60. Ansari's retrieval-and-prompting layer raises the \emph{level} of its
+counsel far above the base model (the +0.74 of \cref{sec:ansari-layer}) but does
+nothing for its \emph{steadfastness} under relational pushback: that failure
+mode passes through the layer unchanged from the model underneath. It is exactly
+this inherited weakness that the case study of \cref{sec:casestudy} targets and
+repairs.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figures/fig_steadfastness}
+\caption{Steadfastness by pressure (Unstated): the band change from the first
+to the post-pressure response (each cell is a point estimate; probe-cluster
+bootstrap 95\% CI half-widths range $\approx$0.04--0.13, and the pooled column
+matches the Steadfastness column of \cref{tab:scorecard}). Red marks where the
+push degrades the counsel, green where it sharpens it. Rows are ordered by
+pooled steadfastness, with
+Ansari placed directly above its base model Gemini 3.5 Flash --- the two are
+near-identical on the relational pressures (insistence, personal appeal), the
+visual signature of an inherited weakness the retrieval-and-prompting layer does
+not fix. \emph{False authority} is the one push under which the stronger systems
+improve (they check the misquoted ruling); Qwen3-235B is the exception, tending
+to accept the fabricated authority.}
+\label{fig:steadfastness}
+\end{figure}
 
 \subsection{The Ansari layer, not the model}\label{sec:ansari-layer}
 
 Ansari scores +0.48 Unstated; its underlying base model, Gemini 3.5
-Flash, scores −0.26 on identical probes. The \textbf{+0.74} difference is
+Flash, scores −0.26 on identical probes. The \textbf{+0.74} [+0.67, +0.83]
+difference is
 the measured value of Ansari's retrieval-and-prompting layer --- the
 largest single contrast in the run --- and the systems share a
 relational-steadfastness weakness, which the layer does not fix.
+
+\subsection{Once both are guided, the retrieval layer adds
+little}\label{sec:guided-wash}
+
+That +0.74 is measured against the \emph{unguided} base model. A one-page guide
+changes the picture: handed the same guide, the bare base model (Gemini 3.5
+Flash, Guided +0.70) slightly \emph{exceeds} its own domain-tuned descendant
+(Ansari, Guided +0.66), and does so in every probe class --- religion-neutral
++0.73 vs +0.69, names-Islam +0.70 vs +0.66, and even intrinsically-Islamic +0.66
+vs +0.61, where retrieved rulings might be expected to help most. Cell by cell
+the two agree on the large majority of probes (594 of 840 tie); where they
+differ it is almost never the first response --- both routinely open at Perfume
+--- but turn-2 steadfastness, and the base model holds its line slightly more
+often than it caves relative to Ansari (144 cells better, 102 worse).
+
+Two opposing mechanisms keep them close. First, \textbf{the layer's
+scripture-fluency can misfire.} On JLS-103 (``the two brothers'': a user wanting
+to reconcile estranged siblings by attributing to each affectionate words the
+other never said), Ansari retrieves a genuine concession --- the prophetic
+dispensation permitting a benevolent untruth to make peace between people --- and
+misapplies it, telling the user the plan is ``not only permissible; it is highly
+praised'' and then crafting the fabricated messages (Burns under every
+pressure). Guided Gemini, reasoning from the guide's plain injunction not to
+invent quotes, refuses and writes truthful alternatives (Perfume): a real
+proof-text, confidently misapplied, licenses the very harm, and the base model
+without retrieval avoids the trap. Second, \textbf{the layer helps on ritual
+specifics:} on intrinsically-Islamic probes about a particular practice ---
+image-making (JLS-116), a commanded table sunnah (JLS-061), sakeenah in prayer
+(JLS-055), the Fajr obligation (JLS-011) --- Ansari more often holds the exact
+ruling under insistence where guided Gemini softens it. The two effects roughly
+cancel.
+
+The lesson is not that the retrieval layer is worthless --- it is what makes
+Ansari strong \emph{out of the box} (\cref{sec:ansari-layer}), where no guide is
+present --- but that a single page of companionship instruction hands a generic
+frontier model almost all of that value for free, and without the layer's
+occasional scripture-backed misfire.
+
+\subsection{Where the counsel is good company: by virtue and heart
+state}\label{sec:by-theme}
+
+Each probe is tagged with the conduct pillar(s) it exercises (Ibn al-Qayyim's
+patience, restraint, courage, and justice, plus cross-cutting) and the state(s)
+of the heart it engages (al-Ghazali's stations; \cref{app:guide}).
+\cref{fig:virtues,fig:hearts} break the Unstated Jalees Score down along these
+two axes. The system ranking is preserved within almost every cell --- the
+deficit is broad, not localised to a few themes --- but its \emph{depth} varies
+sharply, and in a consistent direction.
+
+By virtue, \textbf{patience} is the one pillar on which even the weak models stay
+near Inert (field mean +0.07; GLM-5.1 −0.05, Gemini 3.5 Flash −0.06, Gemma-4-31B
+−0.08), while \textbf{justice} and the cross-cutting virtues are where they fail
+hardest (field mean −0.10 each; Gemini 3.5 Flash −0.36, Gemma-4-31B −0.43,
+Qwen3-235B −0.57). By heart state the same shape recurs: counsel is best on
+\textbf{repentance}, \textbf{fear-and-hope}, and \textbf{vigilance} (field means
++0.17, +0.07, +0.03 --- the weak models hover near zero) and worst on
+\textbf{love-and-contentment} (field mean −0.16, the lowest state for
+\emph{every} system, Ansari included at its own floor of +0.37).
+
+The pattern is interpretable. The themes on which models are good company are
+those where sound counsel coincides with comfort and encouragement: be patient,
+turn back to God, hope in His mercy, keep watch over oneself. The themes on which
+they fail are those where sound counsel must regulate desire or assert a claim
+against what the user wants: justice and rights; love, attachment, and
+contentment. Secular-by-default systems console readily and constrain
+reluctantly --- the same asymmetry the relational-pressure result
+(\cref{sec:steadfastness}) shows from another angle.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figures/fig_virtues}
+\caption{Unstated Jalees Score (after pressure) by conduct pillar, subjects
+ordered by overall score and the bottom row pooling across systems. Patience is
+the one virtue on which even the weak models stay near Inert; justice and the
+cross-cutting virtues are the hardest.}
+\label{fig:virtues}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figures/fig_hearts}
+\caption{Unstated Jalees Score (after pressure) by heart state (al-Ghazali's
+stations), same layout as \cref{fig:virtues}. Counsel is best where it turns the
+person toward God (repentance, fear-and-hope, vigilance) and worst on
+love-and-contentment --- the hardest state for every system.}
+\label{fig:hearts}
+\end{figure}
 
 \subsection{Source citation (turn-1, by probe type)}\label{sec:citation}
 
@@ -404,13 +560,14 @@ the user's faith (intrinsically-Islamic scenarios reveal it regardless).
 \centering
 \caption{Turn-1 source-citation rate (Unstated framing) by probe class:
 probes that are not Islamic at all, that name Islam, and that are
-intrinsically Islamic.}
+intrinsically Islamic. \cref{fig:citation} plots these rates with bootstrap
+95\% CIs next to the Stated framing.}
 \label{tab:citation}
 \begin{tabular}{@{}lrrr@{}}
 \toprule
 System & not Islamic at all & names Islam & intrinsically Islamic \\
 \midrule
-Ansari            & 97\% & 96\% & 96\% \\
+\ansarilabel      & 97\% & 96\% & 96\% \\
 GPT-5.5           & 3\%  & 12\% & 42\% \\
 GLM-5.1           & 3\%  & 35\% & 55\% \\
 Qwen3-235B        & 3\%  & 33\% & 49\% \\
@@ -421,6 +578,20 @@ Gemma-4-31B       & 0\%  & 11\% & 22\% \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figures/fig_citation}
+\caption{Turn-1 scripture-citation rate by probe class, with probe-cluster
+bootstrap 95\% CIs. \emph{Left} (Unstated): blind to the user's faith, the
+general systems essentially never volunteer scripture on religion-neutral
+probes, and the rate climbs only as the scenario itself reveals Islam.
+\emph{Right} (Stated): told the user is a practising Muslim, every general
+system jumps on the identical probes --- citation is a recognition response,
+not a default. Ansari, which assumes a Muslim interlocutor, cites near-100\%
+throughout.}
+\label{fig:citation}
+\end{figure}
 
 Two findings. First, \textbf{on religion-neutral probes a Muslim-unaware
 general model essentially never volunteers scripture in its first
@@ -443,8 +614,9 @@ already penalize.
 
 \subsection{Judge agreement}\label{sec:judge-agreement}
 
-Across 40,320 dual-judged cells, exact band agreement is 66\% and
-within-one 85\% --- lower than a ten-probe pilot's 73/88, reflecting the
+Across 40,320 dual-judged cells, exact band agreement is 66\% (95\% CI
+64--68\%) and within-one 85\% (84--86\%) --- lower than a ten-probe pilot's
+73/88, reflecting the
 harder, more ambiguous terrain of the full bank (etiquette thresholds,
 gray-area permissibility, register under distress). Gemini is the
 stricter judge throughout.
@@ -476,7 +648,8 @@ pool --- Gemma-4-31B (bottom), GLM-5.1 (low-middle), and Claude Sonnet
 pressures) with the model's \textbf{native thinking mode enabled}, on
 the identical serving as the baseline so that the reasoning pass is the
 only change. The Jalees Score barely moves: Gemma −0.34→−0.30, GLM
-−0.18→−0.17, Sonnet +0.23→+0.20 --- all \textbar Δ\textbar{} ≤ 0.05,
+−0.18→−0.17, Sonnet +0.23→+0.20 --- all \textbar Δ\textbar{} ≤ 0.05 and
+well within each pair's overlapping 95\% CIs,
 with steadfastness likewise unchanged. The reasoning pass is not inert
 (Gemma-4 fails a classic reasoning trap with thinking off and solves it
 with thinking on); it simply does not make these models better
@@ -516,12 +689,15 @@ the entire 140-probe bank (2,520 cells, judged identically on a separate
 track) to rule out overfitting to the ten held-out probes. The
 improvement holds: on the same three pressures steadfastness moves from
 \textbf{−0.49 to −0.08} (an improvement of +0.41, matching the held-out
-+0.44), and pooled over all six pressures from −0.29 to −0.05, lifting
-the post-pressure Jalees Score from +0.48 to +0.84. The three pressures
++0.44), and pooled over all six pressures from −0.29 [−0.36, −0.23] to
+−0.05 [−0.08, −0.03] --- non-overlapping intervals --- lifting
+the post-pressure Jalees Score from +0.48 [+0.40, +0.56] to
++0.84 [+0.78, +0.90]. The three pressures
 the instruction was \emph{not} written for do not regress --- each
 improves slightly (false authority −0.03→−0.02, good cause −0.18→−0.06,
 flattery −0.13→−0.02) --- so a single boundary instruction generalizes
-across the pressure set. The effect on the headline number is large: at
+across the pressure set (\cref{fig:casestudy}). The effect on the headline
+number is large: at
 \textbf{+0.84} Unstated, the amended Ansari --- given no cue about whom it
 serves --- matches Claude Sonnet 4.6's fully-\emph{Guided} ceiling (+0.84),
 approaches the pool's best Guided score (GPT-5.5, +0.87), and outscores every
@@ -531,9 +707,24 @@ strongest out-of-the-box companion in the pool.
 This closes the loop a benchmark should: a measured weakness, a targeted
 fix, a measured improvement --- and the amendment is planned for deployment.
 
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figures/fig_casestudy}
+\caption{The \cref{sec:casestudy} intervention, before (baseline Ansari) vs
+after (one steadfastness instruction added), full 140-probe bank, with bootstrap
+95\% CIs. \emph{Left:} steadfastness by pressure --- the collapse on the
+relational pressures the instruction targets (insistence, personal appeal,
+secularize, marked $*$) is almost entirely closed, and the three pressures it was
+\emph{not} written for do not regress. \emph{Right:} the headline post-pressure
+Jalees Score (Unstated) rises from +0.48 to +0.84, with the first response's
+quality preserved.}
+\label{fig:casestudy}
+\end{figure}
+
 \section{Limitations}\label{sec:limitations}
 
-We report bootstrap confidence intervals over probes (\cref{sec:scorecard}), but generate a
+We report probe-cluster bootstrap 95\% confidence intervals for every reported
+quantity (\cref{sec:scorecard}), but generate a
 single response per cell, so run-to-run stochasticity is not captured.
 Systems and judges ran at \textbf{default configuration}; \cref{sec:reasoning} shows that enabling reasoning moves the
 Jalees Score by ≤0.05 on three subjects spanning the ranking, though we did
@@ -560,28 +751,44 @@ retrieval and a companionship prompt (Ansari) is the strongest
 told whom it serves, because its layer already assumes it. Second, general
 frontier models are competent but secular by default, yet can be
 \emph{guided}: handed a one-page companionship guide, every system lifts to
-+0.56\ldots+0.87. Until that guidance is built into the products, the
++0.56\ldots+0.87, the frontier APIs reaching +0.84--0.87 --- on par with the
+domain-tuned assistant, so most of the expert's edge is guidance that fits in a
+prompt. Until that guidance is built into the products, the
 practical workaround is concrete --- a Muslim user can paste the one-page
 guide (\cref{app:guide}) into their own message to recover much of the gap. We
 offer this as a usage pattern, not a normative prescription; like the
 benchmark's directional claims, it awaits the scholar review of \cref{sec:limitations}. Third, the dominant failure mode is relational: every system softens
 its counsel under insistence and personal appeal, and a single boundary
-instruction measurably repairs it (\cref{sec:casestudy}).
+instruction measurably repairs it --- lifting the domain assistant from +0.48 to
++0.84 after pressure (\cref{sec:casestudy}).
 
 \section{Future work}\label{sec:futurework}
 
-The construct --- companionship judged by formative effect --- is not
-specific to Islam. The same recipe (take a tradition's canonical virtue
+\textbf{Broadening beyond Islam.} The construct --- companionship judged by
+its formative effect on the person who receives the counsel --- is not
+specific to Islam; Islam is simply the first tradition we instantiate. The
+recipe is deliberately tradition-agnostic: take a tradition's canonical virtue
 compilation, cluster its chapters into distinct measurements, author one
-disguised probe each, and judge against the chapter's own proof texts)
-should instantiate for other faiths, and we intend JaleesBench to be the
-first of a family. Within Islam, the eight subjects here are a sample; we
-plan to benchmark further Islamically-oriented assistants, and to put the
-probe bank, proof-text selection, and a sample of judged sittings before a
-panel of scholars before making any normative claim.
+disguised first-person probe each, and judge against that chapter's own proof
+texts rather than the evaluator's. We intend JaleesBench to be the first
+instance of a cross-tradition family, and we see the broadening running along
+two complementary axes that the related work marks out: \emph{depth} within a
+tradition (this work) and \emph{breadth} across many --- the latter the
+territory of cross-faith representation efforts such as CEFE-AI's AllFaith
+\citep{cefeai,omissivebias2026}. A mature account of ``good spiritual
+company'' will need both. Each new instantiation requires a comparable
+canonical source and qualified reviewers for that tradition, which sets the
+pace of the expansion. Within Islam, the eight subjects here are a sample; we
+plan to benchmark further Islamically-oriented assistants, and --- before any
+normative claim --- to put the probe bank, proof-text selection, and a sample
+of judged sittings before a panel of scholars.
 
 \appendix
 \crefalias{section}{appsec}
+
+\bigskip
+\begin{center}\Large\bfseries Appendices\end{center}
+\medskip
 
 \section{Polarizing scenarios}\label{app:polarizing}
 
@@ -677,37 +884,6 @@ purge.
 his wife's gifts. Personal appeal, with insistence, is where every
 system is weakest (\cref{sec:steadfastness}).
 
-\section{Steadfastness by pressure}\label{app:steadfastness}
-
-Change in band from the first response to after the pressure push,
-Unstated framing, both judges pooled (negative = the push degrades the
-counsel). The two \emph{relational} pressures --- insistence and
-personal appeal --- drive the collapse for every system; false authority
-is the one push under which the stronger systems \emph{improve}.
-
-\begin{table}[t]
-\centering
-\caption{Steadfastness by pressure (Unstated, both judges pooled): change in
-band from the first to the post-pressure response; negative = the push
-degraded the counsel.}
-\label{tab:steadfastness}
-\small\setlength{\tabcolsep}{4pt}
-\begin{tabular}{@{}lrrrrrrr@{}}
-\toprule
-System & secul. & insist. & false auth. & good cause & flattery & pers. appeal & \textbf{all} \\
-\midrule
-Ansari            & −0.28 & −0.60 & −0.01 & −0.17 & −0.11 & −0.59 & \textbf{−0.29} \\
-GPT-5.5           & −0.14 & −0.26 & +0.24 & −0.03 & −0.05 & −0.25 & \textbf{−0.08} \\
-Claude Sonnet 4.6 & −0.08 & −0.28 & +0.13 & −0.02 & +0.06 & −0.07 & \textbf{−0.04} \\
-GLM-5.1           & −0.23 & −0.41 & +0.07 & −0.08 & −0.12 & −0.51 & \textbf{−0.22} \\
-Nemotron-3-Ultra  & −0.05 & −0.24 & +0.14 & +0.03 & −0.02 & −0.30 & \textbf{−0.07} \\
-Gemini 3.5 Flash  & −0.26 & −0.59 & +0.18 & −0.07 & −0.20 & −0.60 & \textbf{−0.26} \\
-Gemma-4-31B       & −0.23 & −0.53 & +0.01 & −0.23 & −0.24 & −0.51 & \textbf{−0.29} \\
-Qwen3-235B        & −0.28 & −0.41 & −0.13 & −0.20 & −0.29 & −0.44 & \textbf{−0.29} \\
-\bottomrule
-\end{tabular}
-\end{table}
-
 \section{Framing staircase}\label{app:framing}
 
 Post-pressure Jalees Score under each framing, with the two derived gaps.
@@ -720,23 +896,39 @@ exception, where even Guided instruction cannot clear the Inert line.
 \centering
 \caption{Framing staircase: post-pressure Jalees Score under each framing,
 with the recognition gap (Stated − Unstated) and instruction gap (Guided −
-Stated).}
+Stated). Values are point estimates $\pm$ the half-width of a probe-cluster
+bootstrap 95\% CI; \cref{fig:framing} plots the staircase.}
 \label{tab:framing}
+\footnotesize\setlength{\tabcolsep}{4pt}
 \begin{tabular}{@{}lrrrrr@{}}
 \toprule
 System & Unstated & Stated & Guided & Recognition (S−U) & Instruction (G−S) \\
 \midrule
-Ansari            & +0.48 & +0.53 & +0.66 & +0.05 & +0.12 \\
-GPT-5.5           & +0.27 & +0.73 & +0.87 & +0.46 & +0.13 \\
-Claude Sonnet 4.6 & +0.23 & +0.65 & +0.84 & +0.43 & +0.19 \\
-GLM-5.1           & −0.18 & +0.38 & +0.81 & +0.56 & +0.43 \\
-Nemotron-3-Ultra  & −0.21 & +0.31 & +0.56 & +0.52 & +0.25 \\
-Gemini 3.5 Flash  & −0.26 & +0.28 & +0.70 & +0.55 & +0.42 \\
-Gemma-4-31B       & −0.34 & +0.26 & +0.57 & +0.60 & +0.32 \\
-Qwen3-235B        & −0.48 & −0.13 & +0.12 & +0.34 & +0.25 \\
+\ansarilabel      & +0.48~$\pm$~0.08 & +0.53~$\pm$~0.08 & +0.66~$\pm$~0.07 & +0.05~$\pm$~0.04 & +0.12~$\pm$~0.05 \\
+GPT-5.5           & +0.28~$\pm$~0.10 & +0.73~$\pm$~0.07 & +0.87~$\pm$~0.05 & +0.46~$\pm$~0.07 & +0.13~$\pm$~0.04 \\
+Claude Sonnet 4.6 & +0.23~$\pm$~0.07 & +0.65~$\pm$~0.05 & +0.84~$\pm$~0.05 & +0.43~$\pm$~0.06 & +0.19~$\pm$~0.04 \\
+GLM-5.1           & −0.18~$\pm$~0.10 & +0.38~$\pm$~0.10 & +0.81~$\pm$~0.05 & +0.56~$\pm$~0.07 & +0.43~$\pm$~0.07 \\
+Nemotron-3-Ultra  & −0.21~$\pm$~0.09 & +0.31~$\pm$~0.10 & +0.56~$\pm$~0.09 & +0.52~$\pm$~0.07 & +0.25~$\pm$~0.06 \\
+Gemini 3.5 Flash  & −0.26~$\pm$~0.09 & +0.28~$\pm$~0.10 & +0.70~$\pm$~0.06 & +0.55~$\pm$~0.07 & +0.42~$\pm$~0.08 \\
+Gemma-4-31B       & −0.34~$\pm$~0.09 & +0.26~$\pm$~0.11 & +0.57~$\pm$~0.09 & +0.60~$\pm$~0.08 & +0.32~$\pm$~0.06 \\
+Qwen3-235B        & −0.48~$\pm$~0.08 & −0.13~$\pm$~0.09 & +0.12~$\pm$~0.08 & +0.34~$\pm$~0.07 & +0.25~$\pm$~0.06 \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figures/fig_framing}
+\caption{The framing staircase. For each subject the post-pressure Jalees
+Score climbs from Unstated (filled circle) to Stated (open circle) to Guided
+(diamond); the purple segment is the \emph{recognition gap} (telling the agent
+whom it serves) and the blue segment the \emph{instruction gap} (handing it
+the one-page guide). For seven of eight systems recognition is the longer
+segment --- knowing the user matters more than instructing the agent. Ansari
+is the exception: its layer already assumes a Muslim interlocutor, so little
+recognition gap remains.}
+\label{fig:framing}
+\end{figure}
 
 \section{Rubric and reproducibility}\label{app:rubric}
 
