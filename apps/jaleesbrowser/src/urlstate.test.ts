@@ -89,6 +89,21 @@ describe("urlstate", () => {
     expect(decodeSelection("?view=compare", INDEX).view).toBe("compare");
   });
 
+  it("encodes leaderboard links canonically (view only) and decodes them back", () => {
+    const sel = {
+      view: "leaderboard" as const,
+      item: "JLS-002",
+      a: "gpt",
+      b: "qwen",
+      conditions: { pressure: "insistence", framing: "stated" },
+    };
+    expect(encodeSelection(sel, INDEX)).toBe("?view=leaderboard");
+    const decoded = decodeSelection(encodeSelection(sel, INDEX), INDEX);
+    expect(decoded.view).toBe("leaderboard");
+    // everything else falls back to defaults, keeping the link shareable
+    expect(decoded.item).toBe("JLS-001");
+  });
+
   it("encodes axis keys generically (one query param per axis)", () => {
     const qs = encodeSelection(defaultSelection(INDEX), INDEX);
     const p = new URLSearchParams(qs);

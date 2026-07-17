@@ -44,6 +44,21 @@ const INDEX: ContractIndex = {
   shards: { "JLS-001": "probes/JLS-001.json.gz", "JLS-002": "probes/JLS-002.json.gz" },
 };
 
+// INDEX plus a score blob (constant per subject: ansari .6, gpt .4, qwen .2 in
+// every cell, both scopes), which switches the leaderboard nav on.
+const SCORED_INDEX: ContractIndex = {
+  ...INDEX,
+  scores: {
+    order: ["subject", "item", "pressure", "framing", "scope"],
+    shape: [3, 2, 2, 2, 2],
+    data: [
+      ...Array(16).fill(0.6),
+      ...Array(16).fill(0.4),
+      ...Array(16).fill(0.2),
+    ],
+  },
+};
+
 function cell(subject: string, reply: string): Cell {
   return {
     subject,
@@ -57,10 +72,13 @@ function cell(subject: string, reply: string): Cell {
 }
 
 class FakeDataSource implements DataSource {
+  loadItemCalls = 0;
+  constructor(private index: ContractIndex = INDEX) {}
   async loadIndex(): Promise<ContractIndex> {
-    return INDEX;
+    return this.index;
   }
   async loadItem(itemId: string): Promise<ItemShard> {
+    this.loadItemCalls++;
     return {
       item: { id: itemId, title: "x" },
       cells: [cell("ansari", "ANSARI REPLY"), cell("gpt", "GPT REPLY")],
@@ -157,5 +175,37 @@ describe("App", () => {
   it("shows a fail-soft message when the source errors", async () => {
     render(<App dataSource={new FailingDataSource()} />);
     expect(await screen.findByRole("alert")).toHaveTextContent("boom");
+  });
+
+  it("hides the leaderboard nav when the index ships no score blob", async () => {
+    render(<App dataSource={new FakeDataSource()} />);
+    await screen.findByRole("heading", { name: "Test dataset" });
+    expect(screen.queryByRole("button", { name: "Leaderboard" })).toBeNull();
+  });
+
+  it("switches to the leaderboard view and back into a subject's detail view", async () => {
+    render(<App dataSource={new FakeDataSource(SCORED_INDEX)} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Leaderboard" }));
+    expect(screen.getByRole("heading", { name: "Leaderboard" })).toBeInTheDocument();
+    // Pickers are hidden on the leaderboard; the URL carries only the view.
+    expect(screen.queryByLabelText("Model A")).toBeNull();
+    expect(new URLSearchParams(window.location.search).get("view")).toBe("leaderboard");
+    // Clicking a model drops into its detail view.
+    fireEvent.click(screen.getByRole("button", { name: "qwen" }));
+    expect(await screen.findByLabelText("Model A")).toHaveValue("qwen");
+    expect(new URLSearchParams(window.location.search).get("a")).toBe("qwen");
+  });
+
+  it("restores the leaderboard view from a deep-link URL without fetching any shard", async () => {
+    window.history.replaceState(null, "", "?view=leaderboard");
+    const dataSource = new FakeDataSource(SCORED_INDEX);
+    render(<App dataSource={dataSource} />);
+    expect(await screen.findByRole("heading", { name: "Leaderboard" })).toBeInTheDocument();
+    // Aggregate view renders from the index alone — no shard load in the background.
+    expect(dataSource.loadItemCalls).toBe(0);
+    // Dropping into a subject's detail view triggers the (first) shard load.
+    fireEvent.click(screen.getByRole("button", { name: "gpt" }));
+    expect(await screen.findByText("GPT REPLY")).toBeInTheDocument();
+    expect(dataSource.loadItemCalls).toBe(1);
   });
 });
