@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Comparison } from "./components/Comparison";
 import { IntroPanel } from "./components/IntroPanel";
 import { ItemHeader } from "./components/ItemHeader";
+import { Leaderboard } from "./components/Leaderboard";
 import { Pickers } from "./components/Pickers";
 import { Presets } from "./components/Presets";
 import { ThemeToggle } from "./components/ThemeToggle";
@@ -103,6 +104,9 @@ export function App({ dataSource }: { dataSource: DataSource }) {
     ? "rtl"
     : "ltr";
 
+  const onLeaderboard = selection.view === "leaderboard";
+  const setView = (view: Selection["view"]) => onChange({ ...selection, view });
+
   return (
     <main dir={dir} className="app-shell">
       <aside className="sidebar">
@@ -111,15 +115,45 @@ export function App({ dataSource }: { dataSource: DataSource }) {
           <ThemeToggle />
         </header>
 
+        {/* The leaderboard needs the index's score blob; without it there is
+            nothing to rank, so the whole view stays hidden. */}
+        {index.scores && (
+          <nav className="view-nav" aria-label="View">
+            <button
+              type="button"
+              className={onLeaderboard ? "" : "active"}
+              onClick={() => setView("detail")}
+            >
+              Browse
+            </button>
+            <button
+              type="button"
+              className={onLeaderboard ? "active" : ""}
+              onClick={() => setView("leaderboard")}
+            >
+              Leaderboard
+            </button>
+          </nav>
+        )}
+
         <IntroPanel index={index} />
 
-        <Pickers index={index} selection={selection} onChange={onChange} />
+        {!onLeaderboard && (
+          <>
+            <Pickers index={index} selection={selection} onChange={onChange} />
 
-        <Presets index={index} onApply={onChange} />
+            <Presets index={index} onApply={onChange} />
+          </>
+        )}
       </aside>
 
       <section className="content">
-        {shardError ? (
+        {onLeaderboard ? (
+          <Leaderboard
+            index={index}
+            onOpenSubject={(a) => onChange({ ...selection, view: "detail", a, b: "" })}
+          />
+        ) : shardError ? (
           <p className="shard-error no-data" role="alert">
             Could not load this question’s data: {shardError}
           </p>

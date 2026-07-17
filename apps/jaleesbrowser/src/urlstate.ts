@@ -7,11 +7,11 @@
 
 import type { ContractIndex } from "./contract";
 
-export type View = "detail" | "compare";
-const VIEWS: View[] = ["detail", "compare"];
+export type View = "detail" | "compare" | "leaderboard";
+const VIEWS: View[] = ["detail", "compare", "leaderboard"];
 
 export interface Selection {
-  /** which surface: the drill-in detail, or the A-vs-B compare ranking */
+  /** which surface: the drill-in detail, the A-vs-B compare ranking, or the leaderboard */
   view: View;
   /** item (probe) id */
   item: string;
@@ -72,13 +72,15 @@ export function decodeSelection(search: string, index: ContractIndex): Selection
 }
 
 /**
- * Encode a Selection as a `?…` query string — **per-view**: compare links are
- * canonical (`view`, `a`, `b` only), while detail links also carry the item and
- * condition axes. Axis keys come from the contract.
+ * Encode a Selection as a `?…` query string — **per-view**: leaderboard links
+ * are canonical (`view` only), compare links carry `view`, `a`, `b`, while
+ * detail links also carry the item and condition axes. Axis keys come from the
+ * contract.
  */
 export function encodeSelection(sel: Selection, index: ContractIndex): string {
   const params = new URLSearchParams();
   params.set("view", sel.view);
+  if (sel.view === "leaderboard") return `?${params.toString()}`;
   params.set("a", sel.a);
   params.set("b", sel.b);
   if (sel.view === "detail") {
