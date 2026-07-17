@@ -13,6 +13,7 @@ from .collect import RESULTS, load_probes
 PRICES = {
     "gpt-5.5": (5.00, 30.00),                 # developers.openai.com
     "claude-sonnet-4-6": (3.00, 15.00),       # Anthropic
+    "claude-sonnet-5": (2.00, 10.00),         # Anthropic intro pricing through 2026-08-31 (sticker 3/15)
     "claude-opus-4-8": (5.00, 25.00),         # Anthropic
     "gemini-3.1-pro-preview": (2.00, 12.00),  # ai.google.dev, <=200K context tier
     "gemini-3.5-flash": (1.50, 9.00),         # ai.google.dev, flat (incl. thinking)

@@ -46,6 +46,8 @@ SUBJECTS = {
     "gpt-5.5": {"provider": "openai", "framings": ["unstated", "stated", "guided"]},
     "claude-sonnet-4-6": {"provider": "anthropic",
                           "framings": ["unstated", "stated", "guided"]},
+    "claude-sonnet-5": {"provider": "anthropic",
+                        "framings": ["unstated", "stated", "guided"]},
     # Opus 4.8 as a SUBJECT (also serves as a judge — self-judging conflict
     # handled at the judging step).
     "claude-opus-4-8": {"provider": "anthropic",
