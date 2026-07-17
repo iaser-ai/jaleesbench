@@ -20,6 +20,7 @@ PRICES = {
     "qwen3-235b": (0.20, 0.80),               # friendli.ai/pricing, 2026-06-12
     "glm-5.1": (1.40, 4.40),                  # friendli.ai/pricing, 2026-06-12
     "nemotron-3-ultra": (0.37, 1.08),         # blackbox.ai model page, 2026-06-12
+    "inkling": (1.87, 4.68),                  # tinker models page, 2026-07-16 (50% launch discount)
     "ansari": (0.0, 0.0),                     # free community endpoint
 }
 

@@ -68,6 +68,11 @@ SUBJECTS = {
     "nemotron-3-ultra": {"provider": "blackbox",
                          "model": "blackboxai/nvidia/nemotron-3-ultra",
                          "framings": ["unstated", "stated", "guided"]},
+    # Thinking Machines Inkling via Tinker's OpenAI-compatible endpoint
+    # (TINKER_API_KEY in repo .env). Reasoning model: hidden pass bills as
+    # completion tokens; final answer lands in message.content.
+    "inkling": {"provider": "tinker", "model": "thinkingmachines/Inkling",
+                "framings": ["unstated", "stated", "guided"]},
     # Ansari via its OpenAI-compatible route (ansari-multisage spec 19):
     # drives the real facilitator pipeline, accepts the system role, reports
     # usage, no marketing footer, and the leaderboard bearer bypasses the
@@ -109,7 +114,8 @@ def load_env() -> None:
                 k, _, v = line.partition("=")
                 os.environ.setdefault(k.strip(), v.strip())
     for key in ["ANTHROPIC_API_KEY", "OPENAI_API_KEY",
-                "FRIENDLI_API_KEY", "BLACKBOX_API_KEY", "LEADERBOARD_API_KEY"]:
+                "FRIENDLI_API_KEY", "BLACKBOX_API_KEY", "LEADERBOARD_API_KEY",
+                "TINKER_API_KEY"]:
         if not os.environ.get(key):
             raise RuntimeError(f"{key} not set after loading env files")
     # Gemini auth: a Vertex service account (preferred) OR a Gemini API key.
@@ -140,8 +146,9 @@ async def call_subject(subject: str, ctx: str | None, messages: list[dict],
     holds the clean probe turns; the fold happens here, per provider.
     """
     spec = SUBJECTS[subject]
-    # Ansari is a free community endpoint: be patient with rate limits.
-    retries = 5 if spec["provider"] == "ansari" else RETRIES
+    # Ansari (free community endpoint) and Tinker (in-flight request cap that
+    # 429s under launch load): be patient with rate limits.
+    retries = 5 if spec["provider"] in ("ansari", "tinker") else RETRIES
 
     def folded(m: dict) -> dict:
         if m["role"] != "user" or not ctx:
@@ -153,7 +160,7 @@ async def call_subject(subject: str, ctx: str | None, messages: list[dict],
         try:
             provider = spec["provider"]
             model = spec.get("model", subject)
-            if provider in ("openai", "friendli", "blackbox", "ansari"):
+            if provider in ("openai", "friendli", "blackbox", "ansari", "tinker"):
                 msgs = [folded(m) for m in messages]
                 # Friendli thinking arms turn on the gemma4/GLM reasoning pass;
                 # the final answer still arrives in message.content.
@@ -204,7 +211,7 @@ async def call_subject(subject: str, ctx: str | None, messages: list[dict],
         except Exception as e:  # noqa: BLE001 — retry transient, then fail loudly
             last_err = e
             if attempt < retries:
-                backoff = 30 * (attempt + 1) if spec["provider"] == "ansari" \
+                backoff = 30 * (attempt + 1) if spec["provider"] in ("ansari", "tinker") \
                     else 2 * (attempt + 1)
                 await asyncio.sleep(backoff)
     raise RuntimeError(f"subject {subject} failed after {retries + 1} attempts: {last_err}")

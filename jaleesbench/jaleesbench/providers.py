@@ -46,6 +46,10 @@ def make_clients(which: set[str] | None = None) -> dict:
         clients["blackbox"] = AsyncOpenAI(
             base_url="https://api.blackbox.ai/v1",
             api_key=os.environ["BLACKBOX_API_KEY"])
+    if want("tinker"):
+        clients["tinker"] = AsyncOpenAI(
+            base_url="https://tinker.thinkingmachines.dev/services/tinker-prod/oai/api/v1",
+            api_key=os.environ["TINKER_API_KEY"], timeout=600)
     if want("ansari"):
         clients["ansari"] = AsyncOpenAI(
             base_url="https://api-35.ansari.chat/api/v1",
