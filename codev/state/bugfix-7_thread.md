@@ -29,3 +29,23 @@ Fix plan (small, well within BUGFIX scope):
 3. Un-skip the test; assert turn-1 semantics (`a=ansari`, `b=gpt-5.5`,
    `scope=turn1`) and add a regression test for the zero-spread guard
    (degenerate turn-1 → polarizing preset omitted, no self-pairing).
+
+## Fix (2026-07-17)
+
+Implemented as planned. Net product diff is tiny (guard is 2 lines); test diff
++22/−12. New regression test verified to FAIL with the guard removed. Full suite
+58 passed. One infra detour: `porch check` failed on the skeleton's hardwired
+npm checks (known npm-vs-uv issue; AIR already had an override) — added
+`codev/protocols/bugfix/protocol.json` mirroring the AIR override (compileall as
+build stand-in, `uv run --directory jaleesbench pytest -q` for tests).
+
+## PR (2026-07-17)
+
+PR #8 opened (Fixes #7): https://github.com/iaser-ai/jaleesbench/pull/8
+CMAP 3-way review verdicts:
+- **gemini**: COMMENT — lane skipped (agy CLI unavailable in this env; non-blocking)
+- **codex**: APPROVE (confidence MEDIUM — couldn't run pytest in its sandbox; no key issues)
+- **claude**: APPROVE (confidence HIGH; no key issues)
+
+No REQUEST_CHANGES to address. Requested the `pr` gate via `porch done`;
+waiting for human approval.
