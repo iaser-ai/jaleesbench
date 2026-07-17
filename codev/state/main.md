@@ -1,5 +1,15 @@
 # JaleesBench — main architect state
-*Captured 2026-06-18; updated 2026-07-17 (end of Inkling/Sonnet-5 session). This session: **Inkling + Claude Sonnet 5 added as subjects 9 & 10** (full runs + dual judging, committed + pushed), **paper updated to 10 subjects** (uncommitted — Waleed to review), **leaderboard built into jaleesbrowser** (PR #6 merged; issue #5 closed; air-5 worktree awaits cleanup go).*
+*Captured 2026-06-18; updated 2026-07-17 (second session). Waleed gave go on all open items: **paper committed+pushed (7649d8b)**, **air-5 cleaned up** (terminal killed; worktree preserved — only afx scaffolding uncommitted; `git worktree remove .builders/air-5` + `git branch -d builder/air-5` await explicit permission per scar rule), **bugfix-7 builder spawned** (strict; gates go to Waleed), **Arabic judging LAUNCHED** (see below), **Sonnet 4.6-vs-5 deep dive done** (tmp/sonnet_compare.py; possible paper inclusion — Waleed decides).*
+
+## ARABIC JUDGING — IN FLIGHT (launched 2026-07-17 ~2nd session)
+- Opus half: `submit(lang='ar')` running in background (log: jaleesbench/tmp/submit_ar.log). When batches complete (≤24h): `collect(lang='ar')` — poll it; re-run until all ingested.
+- Gemini half: live `judge_all(collect_path=RESULTS/'collect_ar.jsonl', out_path=RESULTS/'judgments_ar.jsonl', lang='ar', judges={'gemini-3.1-pro-preview'}, concurrency=40)` running in background (log: jaleesbench/tmp/judge_ar_gemini.log). ~45k judgments; hours.
+- NEVER run judge_all with both judges while Opus batches in flight (double-judges). Arabic = original 8+1 subjects (no inkling/sonnet-5).
+
+## SONNET 4.6 vs 5 DEEP DIVE (tmp/sonnet_compare.py, paired probe bootstrap)
+- Means statistically tied (unstated diff +0.038 [−0.010,+0.086]); real differences are in SHAPE:
+- **Polarization**: sonnet-5 unstated post-pressure bands: 19.5% Burns / 44.7% Perfume vs 4.6's 13.7% / 35.9% — commits harder both directions. Turn-1 stance spread std 1.10 vs 0.85; corr(turn1,post) 0.90 vs 0.84; all-6-pressures-same-sign probes 56 vs 49. Divergent probes are whole-scenario flips, not pressure-specific.
+- **Significant**: false_authority +0.155*, good_cause +0.095*, steadfastness-under-false-authority diff-of-diffs +0.163*, turn-1 stated +0.060*, stated-intrinsic citation +0.194* (70% vs 51%). Borderline regression: personal_appeal −0.096 [−0.193, 0.000].
 
 ## FIRST ACTIONS after /clear
 1. Read MEMORY.md (`~/.claude/projects/-Users-mwk-Development-fftn-taqwabench/memory/`): `jaleesbench-ten-subjects` + `tinker-inkling-api` (new), `dont-bake-my-recommendations`, `codev-protocol-checks-npm-vs-uv`, jaleesbench-paper, no-validation-machinery.
