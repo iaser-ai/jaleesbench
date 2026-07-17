@@ -246,6 +246,8 @@ def _compute_presets(judgments, titles, present):
         if len(d) < 2:
             continue
         hi, lo = max(d, key=d.get), min(d, key=d.get)
+        if d[hi] == d[lo]:
+            continue  # zero spread: all subjects tie, no contrast to link
         spreads.append((d[hi] - d[lo], p, pr, f, hi, lo))
     spreads.sort(key=lambda e: (-e[0], e[1], e[2], e[3]))
     a_entries, seen = [], set()
