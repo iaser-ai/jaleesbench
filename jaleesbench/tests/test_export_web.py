@@ -64,17 +64,19 @@ PROBES = (("JLS-001", "The team message"), ("JLS-002", "Another probe"))
 @pytest.fixture
 def results_dir(tmp_path):
     """2 probes × 2 subjects × 1 pressure × 1 framing, judged by 2 judges at 2
-    scopes. ansari scores Perfume (+2 native) after pressure, gpt-5.5 Burns (−2)."""
+    scopes. ansari scores Perfume (+2 native) after pressure, gpt-5.5 Burns (−2);
+    at turn-1 ansari +1 vs gpt-5.5 −1, so the first stage has real spread too."""
     sittings, judgments = [], []
     for pid, _ in PROBES:
         for subj in ("ansari", "gpt-5.5"):
             sittings.append(_sitting(subj, pid, "insistence", "unstated"))
             full_band = 2 if subj == "ansari" else -2
+            turn1_band = 1 if subj == "ansari" else -1
             for judge in JUDGES:
                 judgments.append(_judgment(subj, pid, "insistence", "unstated",
                                            judge, "full", full_band))
                 judgments.append(_judgment(subj, pid, "insistence", "unstated",
-                                           judge, "turn1", 1))
+                                           judge, "turn1", turn1_band))
     (tmp_path / "collect.jsonl").write_text(
         "\n".join(json.dumps(s) for s in sittings))
     (tmp_path / "judgments.jsonl").write_text(
@@ -225,25 +227,33 @@ def test_score_blob_has_nulls_for_absent_cells(results_dir, tmp_path):
     assert scores["data"][7] is None
 
 
-# PRE-EXISTING FAILURE (skipped by air-5, unrelated to issue #5): the exporter's
-# polarizing preset now ranks on the FIRST stage (turn1), but this test still
-# asserts the old full-scope expectation; in this fixture the turn-1 spread is
-# degenerate, so max/min both resolve to "ansari". Needs a decision on whether
-# the test or the exporter (no hi==lo guard) is wrong.
-@pytest.mark.skip(reason="pre-existing failure on main: asserts full-scope preset "
-                         "semantics after the exporter moved to turn1 ranking")
 def test_presets_polarizing_present_and_empty_omitted(results_dir, tmp_path):
     out = tmp_path / "out"
     ew.export_web(results_dir, out)
     presets = json.loads((out / "index.json").read_text())["presets"]
     keys = {p["key"] for p in presets}
-    assert "polarizing" in keys  # ansari +1 vs gpt -1 → widest spread
+    assert "polarizing" in keys  # ansari +1 vs gpt -1 at turn1 → widest spread
     # judges agree in this fixture → judges-differed has no entries → omitted
     assert "judges-differed" not in keys
     pol = next(p for p in presets if p["key"] == "polarizing")
     assert pol["entries"][0]["params"]["item"]  # a deep-link to a specific cell
-    assert pol["entries"][0]["params"]["a"] == "ansari"  # max-score model
-    assert pol["entries"][0]["params"]["b"] == "gpt-5.5"  # min-score model
+    assert pol["entries"][0]["params"]["a"] == "ansari"  # max turn-1 score
+    assert pol["entries"][0]["params"]["b"] == "gpt-5.5"  # min turn-1 score
+    assert pol["entries"][0]["params"]["scope"] == "turn1"  # first-stage ranking
+
+
+def test_presets_polarizing_skips_zero_spread_cells(results_dir, tmp_path):
+    # Flatten turn-1: every subject ties, so no cell has a genuine contrast and
+    # the exporter must omit the preset rather than emit an "X vs X" self-pairing.
+    judg = [json.loads(l) for l in (results_dir / "judgments.jsonl").read_text().splitlines()]
+    for j in judg:
+        if j["scope"] == "turn1":
+            j["band"] = 1
+    (results_dir / "judgments.jsonl").write_text("\n".join(json.dumps(j) for j in judg))
+    out = tmp_path / "out"
+    ew.export_web(results_dir, out)
+    presets = json.loads((out / "index.json").read_text())["presets"]
+    assert "polarizing" not in {p["key"] for p in presets}
 
 
 def test_presets_judges_differed_when_judges_split(results_dir, tmp_path):
