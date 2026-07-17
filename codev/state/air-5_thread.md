@@ -38,3 +38,13 @@ view nav in `App.tsx` (hidden when the index has no scores), tests for all.
 - 81/81 tests pass (15 new across 4 files), `tsc` clean, vite build clean.
 - Real-data sanity: computed Unstated post-pressure ranking puts ansari first
   (+0.480), qwen3-235b last (−0.476) — matches the paper's ordering.
+
+## PR phase
+
+- Pre-existing failure found in the porch tests check:
+  `test_export_web.py::test_presets_polarizing_present_and_empty_omitted`
+  fails on main (exporter's polarizing preset moved to turn-1 ranking; test
+  still asserts full-scope; fixture degenerate → ansari-vs-ansari). Skipped
+  with annotation per AIR rules, documented in the PR, flagged to architect.
+- PR #6 opened: https://github.com/iaser-ai/jaleesbench/pull/6 (review in the
+  PR body). Porch at the `pr` gate — waiting for human approval.
