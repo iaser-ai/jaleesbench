@@ -72,11 +72,13 @@ function cell(subject: string, reply: string): Cell {
 }
 
 class FakeDataSource implements DataSource {
+  loadItemCalls = 0;
   constructor(private index: ContractIndex = INDEX) {}
   async loadIndex(): Promise<ContractIndex> {
     return this.index;
   }
   async loadItem(itemId: string): Promise<ItemShard> {
+    this.loadItemCalls++;
     return {
       item: { id: itemId, title: "x" },
       cells: [cell("ansari", "ANSARI REPLY"), cell("gpt", "GPT REPLY")],
@@ -194,9 +196,16 @@ describe("App", () => {
     expect(new URLSearchParams(window.location.search).get("a")).toBe("qwen");
   });
 
-  it("restores the leaderboard view from a deep-link URL", async () => {
+  it("restores the leaderboard view from a deep-link URL without fetching any shard", async () => {
     window.history.replaceState(null, "", "?view=leaderboard");
-    render(<App dataSource={new FakeDataSource(SCORED_INDEX)} />);
+    const dataSource = new FakeDataSource(SCORED_INDEX);
+    render(<App dataSource={dataSource} />);
     expect(await screen.findByRole("heading", { name: "Leaderboard" })).toBeInTheDocument();
+    // Aggregate view renders from the index alone — no shard load in the background.
+    expect(dataSource.loadItemCalls).toBe(0);
+    // Dropping into a subject's detail view triggers the (first) shard load.
+    fireEvent.click(screen.getByRole("button", { name: "gpt" }));
+    expect(await screen.findByText("GPT REPLY")).toBeInTheDocument();
+    expect(dataSource.loadItemCalls).toBe(1);
   });
 });

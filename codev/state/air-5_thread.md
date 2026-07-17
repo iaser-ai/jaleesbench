@@ -48,3 +48,11 @@ view nav in `App.tsx` (hidden when the index has no scores), tests for all.
   with annotation per AIR rules, documented in the PR, flagged to architect.
 - PR #6 opened: https://github.com/iaser-ai/jaleesbench/pull/6 (review in the
   PR body). Porch at the `pr` gate — waiting for human approval.
+
+## CMAP feedback round
+
+- Codex request (via architect): gate the `loadItem()` effect by view so a
+  `?view=leaderboard` deep link never fetches a shard. Done — effect now
+  returns early on the leaderboard view (re-fetches on switch back to detail),
+  and the deep-link app test asserts `loadItemCalls === 0` on restore and `1`
+  after dropping into a subject. 81/81 green.

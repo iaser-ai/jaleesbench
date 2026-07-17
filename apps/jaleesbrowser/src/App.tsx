@@ -51,9 +51,12 @@ export function App({ dataSource }: { dataSource: DataSource }) {
 
   // Lazily load the selected probe's shard (cached by item id; one shard holds
   // every subject × condition cell, so switching subjects/conditions never refetches).
+  // Gated by view: aggregate views (leaderboard) render from the index alone, so a
+  // ?view=leaderboard deep link must not fetch a shard.
   const itemId = selection?.item;
+  const view = selection?.view;
   useEffect(() => {
-    if (!index || !itemId) return;
+    if (!index || !itemId || view === "leaderboard") return;
     let cancelled = false;
     setShardError(null);
     const cached = shardCache.current.get(itemId);
@@ -73,7 +76,7 @@ export function App({ dataSource }: { dataSource: DataSource }) {
     return () => {
       cancelled = true;
     };
-  }, [index, itemId, dataSource]);
+  }, [index, itemId, view, dataSource]);
 
   const onChange = useCallback(
     (next: Selection) => {
@@ -104,7 +107,7 @@ export function App({ dataSource }: { dataSource: DataSource }) {
     ? "rtl"
     : "ltr";
 
-  const onLeaderboard = selection.view === "leaderboard";
+  const onLeaderboard = view === "leaderboard";
   const setView = (view: Selection["view"]) => onChange({ ...selection, view });
 
   return (
