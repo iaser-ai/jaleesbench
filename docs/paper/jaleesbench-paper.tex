@@ -723,6 +723,52 @@ on both sides of the ranking: Claude Sonnet 5 (+0.27) and Inkling (+0.25)
 in the top cluster, Nemotron-3-Ultra (−0.21) below two non-reasoning
 frontier systems.
 
+\subsection{Same score, different character: Claude Sonnet 4.6 vs
+Sonnet 5}\label{sec:sonnets}
+
+Two adjacent generations of the same model family tie on the scorecard:
+Claude Sonnet 4.6 scores +0.23 Faith unstated and Claude Sonnet 5 +0.27, a
+paired difference of +0.04 [−0.01, +0.09] (every contrast in this section is
+a scenario-cluster bootstrap difference, Sonnet 5 minus Sonnet 4.6, paired on
+the same 140 clusters). The tie is real, but it is not sameness: the two
+models reach the same average as differently shaped distributions.
+
+Sonnet 5 commits. Its post-pressure judgments (Faith unstated) place 45\% of
+sittings in the top band and 20\% in the harmful bottom band, against 36\%
+and 14\% for Sonnet 4.6 --- more mass at both extremes, less in the middle.
+The commitment is made at the first response and holds through pressure:
+Sonnet 5's first-response stances are more spread across scenarios
+(per-scenario mean-band SD 1.10 vs 0.85), its post-pressure outcome tracks
+its first response more tightly ($r$ = 0.90 vs 0.84), and on 56 of 140
+scenarios all six pressure variants land on the same side of neutral (49 for
+Sonnet 4.6). Its largest divergences from Sonnet 4.6 are accordingly
+whole-scenario flips rather than pressure-specific wobbles: on a debt
+scenario (``The month's rent'') Sonnet 5 sits at −0.75 under every one of
+the six pressures where Sonnet 4.6 hovers near zero, while on a hospitality
+scenario (``The garlic dinner'') it holds +1.00 across the board. When its
+first read of a scenario is right it sweeps the cell; when the read is
+wrong, no pressure variant shakes it loose.
+
+The same trade appears at the two poles of the pressure grid. Where the
+pressure is manipulative, commitment protects: under false authority Sonnet
+5 outscores Sonnet 4.6 by +0.16 [+0.06, +0.25] --- its improvement upon
+being handed a misquoted ruling more than doubles its predecessor's (+0.30
+vs +0.13, \cref{sec:steadfastness}) --- and under the good-cause
+rationalization by +0.10 [+0.01, +0.17]. Its counsel is also better
+grounded: on intrinsically Islamic scenarios with Faith stated it cites
+Qur'an or hadith in 70\% of first responses against 51\% (+0.19 [+0.10,
++0.29]). Where the pressure is relational, the same commitment reads as
+inflexibility: personal appeal is the one pressure under which Sonnet 5
+trails its predecessor (−0.10 [−0.19, +0.00], on the boundary of
+significance), and the scenarios where it loses the most ground skew toward
+family rupture and grief while those where it gains skew toward worship
+discipline. For a companionship benchmark the lesson is methodological as
+much as it is about these two models: a generation-over-generation change
+that the aggregate records as +0.04 is, underneath, a redistribution ---
+better manipulation resistance and grounding, bought with a harder
+commitment to the first reading of the person --- and it is visible only in
+the band distributions and per-scenario contrasts, not in the score.
+
 \section{Case study: the benchmark improves a deployed
 system}\label{sec:casestudy}
 
