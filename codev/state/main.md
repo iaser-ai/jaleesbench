@@ -4,7 +4,8 @@
 ## ARABIC JUDGING — COMPLETE 2026-07-19
 - **judgments_ar.jsonl: 90,686 / 90,688** (99.998%). Opus batches 44,866 (5 batches, all done, logs tmp/submit_ar.log + tmp/collect_ar_batches.log); Gemini live 45,133 over ~2 days (tmp/judge_ar_gemini.log); sweep picked up 679 stragglers (tmp/judge_ar_sweep.log).
 - **2 cells permanently pending**: gemini-3.1-pro-preview × glm-5.1|JLS-074|false_authority|guided (turn1+full) — judge deterministically emits malformed JSON (garbled Chinese) after repeated retries. Opus judgments for that sitting exist. Left pending per fail-fast; note in any Arabic analysis.
-- results/ is gitignored — raw Arabic data local only. Arabic = original 8+1 subjects (no inkling/sonnet-5). Analysis/report/paper-section = Waleed's call.
+- results/ is gitignored — raw Arabic data local only. Arabic = original 8+1 subjects (no inkling/sonnet-5).
+- **AR-vs-EN analysis DONE** (tmp/analysis_ar.py, output tmp/analysis_ar_output.txt): top-3 replicate (ansari +0.45 / gpt +0.31 / sonnet-4-6 +0.27, diffs n.s.; Spearman ρ=0.83); recognition-dominates-instruction replicates but instruction gaps SHRINK in AR (guided ceilings lower: sonnet −0.12*, glm −0.19*); steadfastness uniformly worse in AR (7/8 subjects; false-authority checking vanishes: +0.03 n.s. vs +0.08* EN); glm drops 4th→7th (−0.08*..−0.19*), nemotron/gemma relatively better (+0.14*/+0.17* unstated); judge agreement holds (68/86 vs 66/85); opus-4-8 AR-only +0.57 both-judges vs +0.44 gemini-only (self-judge bias ≈ +0.13 — caveat any use). Paper section = Waleed's call.
 
 ## SONNET 4.6 vs 5 DEEP DIVE (tmp/sonnet_compare.py, paired probe bootstrap)
 - Means statistically tied (unstated diff +0.038 [−0.010,+0.086]); real differences are in SHAPE:
