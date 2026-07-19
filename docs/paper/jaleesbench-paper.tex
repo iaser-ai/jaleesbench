@@ -236,8 +236,10 @@ free text, what such a scenario would measure; (ii) cluster chapters by
 built on them would measure essentially the same thing), with no target
 cluster count; and (iii) author one scenario per scenario-worthy cluster from a
 representative chapter chosen by hadith weight and plain-case suitability. On
-the June 2026 map this yields \textbf{140 scenarios} from 369 mapped chapters /
-143 clusters (four etiquette-only clusters excluded).
+the June 2026 map this yields \textbf{140 scenarios}: 139 authored one per
+scenario-worthy cluster (369 mapped chapters / 143 clusters, of which four
+etiquette-leaning clusters are excluded), plus one (JLS-140) authored from
+chapter 370, outside the cluster map.
 
 \subsection{Scenario form and the universal/intrinsic
 distinction}\label{sec:scenarioform}
@@ -558,7 +560,9 @@ state}\label{sec:by-theme}
 
 Each scenario is tagged with the conduct pillar(s) it exercises (Ibn al-Qayyim's
 patience, restraint, courage, and justice, plus cross-cutting) and the state(s)
-of the heart it engages (al-Ghazali's stations; \cref{app:guide}).
+of the heart it engages (operational codes adapted from al-Ghazali's
+stations --- the tagging set merges, splits, and omits a few of the classical
+ten; \cref{app:guide} lists the faithful ten).
 \cref{fig:virtues,fig:hearts} break the Faith unstated Jalees Score down along these
 two axes. The system ranking is preserved within almost every cell, the
 deficit is broad, not localised to a few themes, but its \emph{depth} varies
@@ -598,8 +602,8 @@ cross-cutting virtues are the hardest.}
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{figures/fig_hearts}
-\caption{Faith unstated Jalees Score (after pressure) by heart state (al-Ghazali's
-stations), same layout as \cref{fig:virtues}. Counsel is best where it turns the
+\caption{Faith unstated Jalees Score (after pressure) by heart state (codes
+adapted from al-Ghazali's stations), same layout as \cref{fig:virtues}. Counsel is best where it turns the
 person toward God (repentance, fear-and-hope, vigilance) and worst on
 love-and-contentment, the state with the lowest field mean.}
 \label{fig:hearts}
@@ -680,17 +684,21 @@ Across 50,400 dual-judged cells, exact band agreement is 67\% (95\% CI
 73/88, reflecting the
 harder, more ambiguous terrain of the full bank (etiquette thresholds,
 gray-area permissibility, register under distress). Gemini is the
-stricter judge throughout.
+stricter judge throughout. One post-processing step applies before all
+reported numbers: the 141 cells where the judges disagreed by two or more
+bands were re-judged with the identical prompt, and the re-judgments replace
+the originals. The effect on agreement is negligible (first-pass: 67.5\%
+exact, 85.1\% within-one; post-replacement: 67.4\%/85.0\%).
 
 Two cautions on judge independence. First, agreement is not uniform:
 per-subject exact-band agreement ranges from about 75\% (Ansari, GPT-5.5,
 Inkling)
 down to 50--60\% on the hardest subjects (Qwen3-235B, Claude Sonnet 4.6),
-tracking scenario difficulty rather than any one system. Second, three subjects
-share a model family with a judge, Claude Sonnet 5 and Claude Sonnet 4.6 with
-the Opus judge,
-Gemini 3.5 Flash with the Gemini judge, raising a conflict-of-interest
-question. The dominant effect is global: the Opus judge is more generous than
+tracking scenario difficulty rather than any one system. Second, four subjects
+share a model family with a judge: Claude Sonnet 5 and Claude Sonnet 4.6 with
+the Opus judge, and Gemini 3.5 Flash --- and therefore also Ansari, which runs
+on Gemini 3.5 Flash --- with the Gemini judge, raising a conflict-of-interest
+question that touches the top-scoring system. The dominant effect is global: the Opus judge is more generous than
 Gemini for \emph{all} ten subjects (mean +0.22 on the −1\ldots+1 scale).
 Against that baseline each family's own judge is relatively kinder to its
 sibling: Opus rates Claude Sonnet 4.6 +0.37 above Gemini (its
@@ -848,11 +856,16 @@ single response per cell, so run-to-run stochasticity is not captured.
 Systems and judges ran at \textbf{default configuration}; \cref{sec:reasoning} shows that enabling reasoning moves the
 Jalees Score by ≤0.05 on three subjects spanning the ranking, though we did
 not sweep all ten. Judges share band definitions and proof texts but no
-per-scenario exemplar anchors; the 66/85 agreement is the calibration
+per-scenario exemplar anchors; the 67/85 agreement is the calibration
 measurement. The \emph{Faith unstated} framing is meaningful only for universal
 scenarios. The scenario bank, proof-text selection, and a sample of judged
 sittings have not yet undergone formal scholar review, which must precede
-any normative claim. Riyāḍ al-Ṣāliḥīn is among the most widely digitised
+any normative claim. The bank also carries a demographic skew we have not
+yet corrected: askers identifiable by gender run roughly five to one male
+(20 husbands asking about wives against 4 wives asking about husbands),
+the named characters are uniformly male and Arab- or South-Asian-coded, and
+no scenario features a convert --- counsel to women, converts, and other
+communities is correspondingly under-tested. Riyāḍ al-Ṣāliḥīn is among the most widely digitised
 hadith compilations, so its texts are certainly in every subject's training
 data; the disguised-scenario design (\cref{sec:scenarioform}) mitigates but does not eliminate
 the risk that a system scores well by recognising the source rather than by
