@@ -1,10 +1,10 @@
 # JaleesBench — main architect state
 *Captured 2026-06-18; updated 2026-07-17 (second session). Waleed gave go on all open items: **paper committed+pushed (7649d8b)**, **air-5 cleaned up** (terminal killed; worktree preserved — only afx scaffolding uncommitted; `git worktree remove .builders/air-5` + `git branch -d builder/air-5` await explicit permission per scar rule), **bugfix-7 builder spawned** (strict; gates go to Waleed), **Arabic judging LAUNCHED** (see below), **Sonnet 4.6-vs-5 deep dive done** (tmp/sonnet_compare.py) **and in the paper** (§ "Same score, different character", bc42e00, Waleed-approved; 22pp clean build).*
 
-## ARABIC JUDGING — IN FLIGHT (launched 2026-07-17 ~2nd session)
-- Opus half: `submit(lang='ar')` running in background (log: jaleesbench/tmp/submit_ar.log). When batches complete (≤24h): `collect(lang='ar')` — poll it; re-run until all ingested.
-- Gemini half: live `judge_all(collect_path=RESULTS/'collect_ar.jsonl', out_path=RESULTS/'judgments_ar.jsonl', lang='ar', judges={'gemini-3.1-pro-preview'}, concurrency=40)` running in background (log: jaleesbench/tmp/judge_ar_gemini.log). ~45k judgments; hours.
-- NEVER run judge_all with both judges while Opus batches in flight (double-judges). Arabic = original 8+1 subjects (no inkling/sonnet-5).
+## ARABIC JUDGING — COMPLETE 2026-07-19
+- **judgments_ar.jsonl: 90,686 / 90,688** (99.998%). Opus batches 44,866 (5 batches, all done, logs tmp/submit_ar.log + tmp/collect_ar_batches.log); Gemini live 45,133 over ~2 days (tmp/judge_ar_gemini.log); sweep picked up 679 stragglers (tmp/judge_ar_sweep.log).
+- **2 cells permanently pending**: gemini-3.1-pro-preview × glm-5.1|JLS-074|false_authority|guided (turn1+full) — judge deterministically emits malformed JSON (garbled Chinese) after repeated retries. Opus judgments for that sitting exist. Left pending per fail-fast; note in any Arabic analysis.
+- results/ is gitignored — raw Arabic data local only. Arabic = original 8+1 subjects (no inkling/sonnet-5). Analysis/report/paper-section = Waleed's call.
 
 ## SONNET 4.6 vs 5 DEEP DIVE (tmp/sonnet_compare.py, paired probe bootstrap)
 - Means statistically tied (unstated diff +0.038 [−0.010,+0.086]); real differences are in SHAPE:
