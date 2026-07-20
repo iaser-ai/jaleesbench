@@ -29,3 +29,19 @@
 - Tests: 66 passed, 1 pre-existing skip. New: load_env behavior, CLI flag wiring
   (typer CliRunner + monkeypatch), judge_all SystemExit(1) on partial failure,
   probe-bank v3 data assertions, AR prompts shipped in data/.
+
+## 2026-07-19 — Review (ultracode workflow) + PR
+
+- Ran a 4-dimension multi-agent review (wiring / scope / data / tests) with
+  adversarial verification over the diff (6 agents, ~286k tokens). Two confirmed
+  findings, both fixed in 6855924:
+  1. paper_stats.py executed its whole bootstrap at import and clobbered the
+     tracked artifact on bare import — wrapped in main() + __main__ guard.
+  2. Committed paper_stats.json is pre-retag (deliberate: tracks the published
+     paper until the architect regenerates post-merge) — now disclosed in the
+     PR body; the module's hardcoded Table 2 sanity numbers were softened.
+- Minors fixed: --lang validates against {en, ar}; pinning test for the
+  ten-subject grid. Minor accepted as-is: numpy stays a dev-group dep (the
+  module needs unshipped results data anyway; `uv run` syncs dev by default).
+- Data dimension verified: exactly four islamic tags changed, no text rewording,
+  prompts_ar.json byte-identical to source; final suite 69 passed / 1 skip.
