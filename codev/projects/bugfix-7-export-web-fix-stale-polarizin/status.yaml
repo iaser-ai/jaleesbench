@@ -1,0 +1,17 @@
+id: bugfix-7
+title: export-web-fix-stale-polarizin
+protocol: bugfix
+phase: pr
+plan_phases: []
+current_plan_phase: null
+gates:
+  pr:
+    status: approved
+    requested_at: '2026-07-17T10:06:03.760Z'
+    approved_at: '2026-07-20T15:08:31.049Z'
+iteration: 1
+build_complete: false
+history: []
+started_at: '2026-07-17T09:54:45.724Z'
+updated_at: '2026-07-20T15:08:31.049Z'
+pr_ready_for_human: false
