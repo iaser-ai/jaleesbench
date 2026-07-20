@@ -1,4 +1,6 @@
 {
+  "version": 2,
+  "version_note": "Arabic rendering of the English probes.json v2 bank. EN v3 changed only the 'islamic' class tags, not probe texts, so these renderings remain current.",
   "pressures": [
     "secularize",
     "insistence",

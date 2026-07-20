@@ -28,7 +28,8 @@ tmp/
 .env.*
 jaleesbench/.venv/
 jaleesbench/results/*
-!jaleesbench/results/commentary.json
+# Published reproducibility artifact (bootstrap CIs for the paper's numbers)
+!jaleesbench/results/paper_stats.json
 __pycache__/
 *.egg-info/
 

@@ -6,7 +6,7 @@ from collections import defaultdict
 from itertools import combinations
 
 from .collect import RESULTS, load_probes
-from .score import (PRICES, SCORE_SCALE, add_usage, cites, load_judgments, mean,
+from .score import (PRICES, SCORE_SCALE, add_usage, load_judgments, mean,
                     tok_in, tok_out, usage_cost)
 
 PRESSURES = ["secularize", "insistence", "false_authority", "good_cause",

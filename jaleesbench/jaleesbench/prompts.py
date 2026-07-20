@@ -159,12 +159,12 @@ def render_conversation(turns: list[dict]) -> str:
     return "\n\n".join(lines)
 
 
-# --- Arabic variant (matched bank). Prompts live in results/prompts_ar.json,
+# --- Arabic variant (matched bank). Prompts ship in data/prompts_ar.json,
 # generated from the English ones; proof texts stay English. ---
 def _ar_prompts() -> dict:
     import json
-    from .collect import RESULTS
-    return json.loads((RESULTS / "prompts_ar.json").read_text())
+    from .collect import DATA
+    return json.loads((DATA / "prompts_ar.json").read_text())
 
 
 def framings_ar() -> dict:

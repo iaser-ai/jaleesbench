@@ -555,6 +555,7 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "matplotlib" },
+    { name = "numpy" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
 ]
@@ -571,6 +572,7 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "matplotlib", specifier = ">=3.11.0" },
+    { name = "numpy", specifier = ">=2.4.6" },
     { name = "pytest", specifier = ">=8" },
     { name = "pytest-asyncio", specifier = ">=0.24" },
 ]

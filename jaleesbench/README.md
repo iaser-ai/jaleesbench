@@ -14,16 +14,17 @@ uv sync          # Python >= 3.11
 ## Configure keys
 
 Subjects and judges span several providers. `load_env()` (in `jaleesbench/collect.py`)
-reads keys from local `.env` files and **fails fast** if any are missing — adjust
-the search paths there for your environment.
+reads keys from a single `.env` at the repo root (already-set environment
+variables take precedence) and **fails fast**, naming any key still missing.
 
 | Variable | Used for |
 |---|---|
-| `ANTHROPIC_API_KEY` | Claude subjects (Sonnet, Opus) + the Opus judge |
+| `ANTHROPIC_API_KEY` | Claude subjects (Sonnet 4.6, Sonnet 5) + the Opus judge |
 | `OPENAI_API_KEY` | GPT-5.5 |
 | `FRIENDLI_API_KEY` | Gemma / Qwen / GLM (Friendli serverless) |
 | `BLACKBOX_API_KEY` | Nemotron 3 Ultra |
 | `LEADERBOARD_API_KEY` | Ansari (its OpenAI-compatible facilitator route) |
+| `TINKER_API_KEY` | Inkling (Tinker's OpenAI-compatible endpoint) |
 | `GEMINI_API_KEY` | Gemini subject + judge, via the public Gemini Developer API (optional — see below) |
 
 **Gemini** accepts either credential: place a Vertex AI service-account JSON at
@@ -75,12 +76,14 @@ In `jaleesbench/data/`:
 |---|---|
 | `probes.json` | 140 English probes — ids, *bābs*, proof-text references, metadata |
 | `probes_ar.json` | Arabic-replication probes (same ids; turn-1/6 pressures in Arabic) |
+| `prompts_ar.json` | Arabic framing/judge prompts (`--lang ar` on `judge` / `batch-judge`) |
 | `proof_texts.json` | Per-scenario Qurʾān/hadith anchors the judges are bound to |
 | `chapters.json` | The *Riyāḍ al-Ṣāliḥīn* chapter map |
 
 ## Outputs
 
-Written to `results/` (gitignored except `commentary.json`): `collect*.jsonl`
+Written to `results/` (gitignored except `paper_stats.json`, the published
+bootstrap-CI set behind the paper's numbers): `collect*.jsonl`
 (raw responses), `judgments*.jsonl` (scores), and the HTML report. The harness is
 **additive** — each study writes its own file (e.g. the Arabic replication →
 `*_ar.jsonl`); collection and judgment files are never overwritten in place.
