@@ -1,0 +1,14 @@
+id: '9'
+title: bucket-a-b-mechanical-editoria
+protocol: air
+phase: implement
+plan_phases: []
+current_plan_phase: null
+gates:
+  pr:
+    status: pending
+iteration: 1
+build_complete: false
+history: []
+started_at: '2026-07-20T02:08:41.142Z'
+updated_at: '2026-07-20T02:08:41.143Z'
