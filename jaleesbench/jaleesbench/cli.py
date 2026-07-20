@@ -26,6 +26,8 @@ def judge(limit: int = typer.Option(None, help="Judge only the first N pending j
           lang: str = typer.Option("en", help="en | ar (ar reads collect_ar.jsonl, "
                                               "writes judgments_ar.jsonl)")):
     """Score collected sittings with both judges at both turns."""
+    if lang not in ("en", "ar"):
+        raise typer.BadParameter(f"unknown lang: {lang}")
     from .collect import RESULTS
     from .judge import judge_all
     paths = ({"collect_path": RESULTS / "collect_ar.jsonl",
@@ -60,6 +62,8 @@ def batch_judge(action: str = typer.Argument(..., help="submit | collect"),
                 lang: str = typer.Option("en", help="en | ar (ar uses the *_ar result files)")):
     """Judge via the providers' batch APIs (50% pricing). Live `judge` stays
     the fallback for anything a batch leaves behind."""
+    if lang not in ("en", "ar"):
+        raise typer.BadParameter(f"unknown lang: {lang}")
     from . import batching
     if action == "submit":
         batching.submit(limit=limit, lang=lang)

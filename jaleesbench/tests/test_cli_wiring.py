@@ -50,6 +50,12 @@ def test_judge_default_lang_en_default_files(monkeypatch):
     assert "collect_path" not in seen and "out_path" not in seen
 
 
+@pytest.mark.parametrize("cmd", [["judge"], ["batch-judge", "submit"]])
+def test_lang_rejects_unknown_values(cmd):
+    result = runner.invoke(app, [*cmd, "--lang", "arabic"])
+    assert result.exit_code != 0
+
+
 def test_batch_judge_lang_passthrough(monkeypatch):
     calls = []
     monkeypatch.setattr(batching, "submit",

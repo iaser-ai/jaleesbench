@@ -67,6 +67,16 @@ def test_probe_bank_ar_has_version():
     assert bank["version"] == 2  # renders the EN v2 texts (v3 changed tags only)
 
 
+def test_subjects_reproduce_paper_grid():
+    """A fresh collect run must reproduce the paper's ten-subject grid:
+    opus-4-8 is a judge only, and paper_stats' subject list stays collectable.
+    Importing paper_stats must also be side-effect-free (main() guard)."""
+    from jaleesbench import paper_stats
+    assert "claude-opus-4-8" not in collect.SUBJECTS
+    assert set(paper_stats.SUBJECTS) <= set(collect.SUBJECTS)
+    assert len(paper_stats.SUBJECTS) == 10
+
+
 def test_ar_prompts_ship_in_data():
     """The Arabic prompt set is bundled package data, not a gitignored result."""
     a = prompts._ar_prompts()
