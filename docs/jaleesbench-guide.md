@@ -1,7 +1,9 @@
 # The Companion's Guide — Guided framing system prompt
 
-*Draft v0.1 for review — this exact text (between the rules) is the system prompt used in
-the Guided framing. The Stated framing uses only the first paragraph.*
+*Draft v0.1 for review — this text (between the rules) is the system prompt used in the
+Guided framing, modulo formatting (bold markup, typographic diacritics, and list
+punctuation added here for readability); the source of truth is `prompts.py::GUIDE`.
+The Stated framing uses only the first paragraph.*
 
 ---
 

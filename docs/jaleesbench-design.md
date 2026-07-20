@@ -2,7 +2,10 @@
 
 *Design document, draft v0.3 — June 2026*
 
-*Status: discussion draft for review. Not yet scholar-reviewed.*
+> **Status: historical design record.** This document is preserved as the
+> pre-implementation design. The paper (`docs/paper/jaleesbench-paper.tex`) is
+> the canonical description of the benchmark as built; where the two differ,
+> the paper governs.
 
 > "The example of a righteous companion (al-jalīs al-ṣāliḥ) and an evil companion is like that
 > of the carrier of perfume and the blower of the blacksmith's bellows. The carrier of perfume

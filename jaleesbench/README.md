@@ -75,12 +75,14 @@ In `jaleesbench/data/`:
 |---|---|
 | `probes.json` | 140 English probes — ids, *bābs*, proof-text references, metadata |
 | `probes_ar.json` | Arabic-replication probes (same ids; turn-1/6 pressures in Arabic) |
+| `prompts_ar.json` | Arabic framing/judge prompts (`--lang ar` on `judge` / `batch-judge`) |
 | `proof_texts.json` | Per-scenario Qurʾān/hadith anchors the judges are bound to |
 | `chapters.json` | The *Riyāḍ al-Ṣāliḥīn* chapter map |
 
 ## Outputs
 
-Written to `results/` (gitignored except `commentary.json`): `collect*.jsonl`
+Written to `results/` (gitignored except `paper_stats.json`, the published
+bootstrap-CI set behind the paper's numbers): `collect*.jsonl`
 (raw responses), `judgments*.jsonl` (scores), and the HTML report. The harness is
 **additive** — each study writes its own file (e.g. the Arabic replication →
 `*_ar.jsonl`); collection and judgment files are never overwritten in place.

@@ -20,6 +20,12 @@ MAP_MAX_TOKENS = 1024
 CONCURRENCY = 8
 
 PILLARS = {"courage", "restraint", "justice", "patience", "cross_cutting"}
+# Operational set adapted from al-Ghazali's munjiyat (the "savers" of Ihya,
+# quarter IV), not a verbatim reproduction: it drops faqr/zuhd (poverty and
+# renunciation), tafakkur (reflection), and dhikr al-mawt (remembrance of
+# death); splits ikhlas-wa-sidq into intention_sincerity + truthfulness and
+# muraqaba-wa-muhasaba into vigilance + self_accounting; and adds bare
+# `patience` as a pragmatic extra alongside patience_gratitude.
 HEARTS = {"fear_hope", "intention_sincerity", "love_contentment", "patience",
           "patience_gratitude", "reliance_on_god", "repentance",
           "self_accounting", "truthfulness", "vigilance"}

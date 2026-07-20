@@ -48,10 +48,9 @@ SUBJECTS = {
                           "framings": ["unstated", "stated", "guided"]},
     "claude-sonnet-5": {"provider": "anthropic",
                         "framings": ["unstated", "stated", "guided"]},
-    # Opus 4.8 as a SUBJECT (also serves as a judge — self-judging conflict
-    # handled at the judging step).
-    "claude-opus-4-8": {"provider": "anthropic",
-                        "framings": ["unstated", "stated", "guided"]},
+    # (claude-opus-4-8 was collected as an exploratory extra subject but is not
+    # part of the paper's ten-subject grid — it stays a judge only, so a fresh
+    # run reproduces the published grid exactly.)
     # Ansari's underlying base model (per Waleed) — isolates Ansari's
     # retrieval/prompting value-add from raw model capability.
     "gemini-3.5-flash": {"provider": "gemini",
@@ -101,25 +100,25 @@ CONCURRENCY = 24  # interleaved across 8 providers (~3 in flight per provider)
 RETRIES = 2
 
 
+ENV_PATH = ROOT.parent.parent / ".env"  # repo-root .env
+REQUIRED_KEYS = ["ANTHROPIC_API_KEY", "OPENAI_API_KEY",
+                 "FRIENDLI_API_KEY", "BLACKBOX_API_KEY", "LEADERBOARD_API_KEY",
+                 "TINKER_API_KEY"]
+
+
 def load_env() -> None:
-    """Load keys from the repo-root .env, the iaser Gemini env, and shannon
-    (Friendli + Blackbox). Fail fast if missing."""
-    for env_path in [ROOT.parent.parent / ".env",
-                     Path("/Users/mwk/Development/iaser/tazkiya/.env"),
-                     Path("/Users/mwk/Development/cluesmith/shannon/.env"),
-                     Path("/Users/mwk/Development/cluesmith/ansari4/ansari-multisage/.env")]:
-        if not env_path.exists():
-            raise FileNotFoundError(f"env file missing: {env_path}")
-        for line in env_path.read_text().splitlines():
+    """Load keys from the repo-root .env (already-set env vars win). Fail fast
+    naming any key still missing."""
+    if ENV_PATH.exists():
+        for line in ENV_PATH.read_text().splitlines():
             line = line.strip()
             if line and not line.startswith("#") and "=" in line:
                 k, _, v = line.partition("=")
                 os.environ.setdefault(k.strip(), v.strip())
-    for key in ["ANTHROPIC_API_KEY", "OPENAI_API_KEY",
-                "FRIENDLI_API_KEY", "BLACKBOX_API_KEY", "LEADERBOARD_API_KEY",
-                "TINKER_API_KEY"]:
-        if not os.environ.get(key):
-            raise RuntimeError(f"{key} not set after loading env files")
+    missing = [k for k in REQUIRED_KEYS if not os.environ.get(k)]
+    if missing:
+        raise RuntimeError(f"missing keys (set them in the environment or "
+                           f"{ENV_PATH}): {', '.join(missing)}")
     # Gemini auth: a Vertex service account (preferred) OR a Gemini API key.
     if not VERTEX_SA.exists() and not os.environ.get("GEMINI_API_KEY"):
         raise RuntimeError(

@@ -165,6 +165,8 @@ async def judge_all(limit: int | None = None,
     if failed:
         print(f"  {failed} failed (left pending)")
     print(f"judged {completed} -> {out_path}")
+    if failed:
+        raise SystemExit(1)
 
 
 async def rejudge_disagreements(limit: int | None = None) -> None:

@@ -22,10 +22,15 @@ def smoke():
 
 
 @app.command()
-def judge(limit: int = typer.Option(None, help="Judge only the first N pending judgments")):
+def judge(limit: int = typer.Option(None, help="Judge only the first N pending judgments"),
+          lang: str = typer.Option("en", help="en | ar (ar reads collect_ar.jsonl, "
+                                              "writes judgments_ar.jsonl)")):
     """Score collected sittings with both judges at both turns."""
+    from .collect import RESULTS
     from .judge import judge_all
-    asyncio.run(judge_all(limit=limit))
+    paths = ({"collect_path": RESULTS / "collect_ar.jsonl",
+              "out_path": RESULTS / "judgments_ar.jsonl"} if lang == "ar" else {})
+    asyncio.run(judge_all(limit=limit, lang=lang, **paths))
 
 
 @app.command(name="map-chapters")
@@ -51,23 +56,27 @@ def draft_probes(limit: int = typer.Option(None, help="Draft only the first N pe
 
 @app.command(name="batch-judge")
 def batch_judge(action: str = typer.Argument(..., help="submit | collect"),
-                limit: int = typer.Option(None, help="Submit only the first N pending judgments")):
+                limit: int = typer.Option(None, help="Submit only the first N pending judgments"),
+                lang: str = typer.Option("en", help="en | ar (ar uses the *_ar result files)")):
     """Judge via the providers' batch APIs (50% pricing). Live `judge` stays
     the fallback for anything a batch leaves behind."""
     from . import batching
     if action == "submit":
-        batching.submit(limit=limit)
+        batching.submit(limit=limit, lang=lang)
     elif action == "collect":
-        batching.collect()
+        batching.collect(lang=lang)
     else:
         raise typer.BadParameter(f"unknown action: {action}")
 
 
 @app.command(name="detect-citations")
-def detect_citations(limit: int = typer.Option(None, help="Detect only the first N pending sittings")):
+def detect_citations(limit: int = typer.Option(None, help="Detect only the first N pending sittings"),
+                     turn1: bool = typer.Option(False, "--turn1",
+                                                help="Score only the first (pre-pressure) response "
+                                                     "-> citations_turn1.jsonl")):
     """LLM (Flash Lite on Vertex) citation detection -> citations_llm.jsonl."""
     from .citation import detect_all
-    asyncio.run(detect_all(limit=limit))
+    asyncio.run(detect_all(limit=limit, turn1=turn1))
 
 
 @app.command()

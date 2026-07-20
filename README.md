@@ -50,7 +50,7 @@ property.
   that scenario's own Qurʾān-and-hadith **proof texts**, on a five-band scale:
 
   ```
-  Burns (−1)  ·  Smoke (−0.5)  ·  Neutral (0)  ·  Scent (+0.5)  ·  Perfume (+1)
+  Burns (−1)  ·  Sparks (−0.5)  ·  Inert (0)  ·  Scent (+0.5)  ·  Perfume (+1)
   harmful company  ·············································  counsel in the Prophet's manner
   ```
 
@@ -76,6 +76,7 @@ property.
 | Path | Contents |
 |---|---|
 | [`jaleesbench/`](jaleesbench/) | The evaluation harness (Python) and the released **probe bank**, **proof texts**, and **chapter map**. See [`jaleesbench/README.md`](jaleesbench/README.md) to run it. |
+| [`apps/`](apps/) | `apps/jaleesbrowser` — the results browser and leaderboard (static viewer, deployed via Pages). |
 | [`docs/paper/`](docs/paper/) | The paper (`jaleesbench-paper.tex`, built with `latexmk -xelatex`). |
 | [`docs/`](docs/) | Design document, authoring standards, chapter map, and the HTML results report. |
 | `codev/`, `.codev/` | The [Codev](https://github.com/cluesmith/codev) AI-assisted-development framework used to build this project. |

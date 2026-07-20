@@ -19,6 +19,61 @@ def test_ctx_block():
     assert collect.ctx_block("be kind") == "[Context for this conversation: be kind]"
 
 
+def test_load_env_names_missing_keys(tmp_path, monkeypatch):
+    monkeypatch.setattr(collect, "ENV_PATH", tmp_path / ".env")  # absent: ok
+    monkeypatch.setattr(collect, "VERTEX_SA", tmp_path / "sa.json")
+    for k in collect.REQUIRED_KEYS:
+        monkeypatch.delenv(k, raising=False)
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "x")
+    with pytest.raises(RuntimeError) as e:
+        collect.load_env()
+    assert "OPENAI_API_KEY" in str(e.value)
+    assert "ANTHROPIC_API_KEY" not in str(e.value)  # set keys are not reported
+
+
+def test_load_env_reads_env_file_but_environment_wins(tmp_path, monkeypatch):
+    env = tmp_path / ".env"
+    env.write_text("# comment\nOPENAI_API_KEY=fromfile\nTINKER_API_KEY=fromfile\n")
+    monkeypatch.setattr(collect, "ENV_PATH", env)
+    monkeypatch.setattr(collect, "VERTEX_SA", tmp_path / "sa.json")
+    for k in collect.REQUIRED_KEYS:
+        monkeypatch.delenv(k, raising=False)
+    for k in ["ANTHROPIC_API_KEY", "FRIENDLI_API_KEY", "BLACKBOX_API_KEY",
+              "LEADERBOARD_API_KEY", "GEMINI_API_KEY"]:
+        monkeypatch.setenv(k, "preset")
+    monkeypatch.setenv("TINKER_API_KEY", "preset")
+    collect.load_env()
+    import os
+    assert os.environ["OPENAI_API_KEY"] == "fromfile"   # loaded from .env
+    assert os.environ["TINKER_API_KEY"] == "preset"     # already-set wins
+
+
+def test_probe_bank_v3_retags():
+    """Bank v3: the four turn1-marker probes are leaky; texts carry no version
+    besides the tag change (split 54/44/42)."""
+    bank = collect.load_probes()
+    assert bank["version"] == 3
+    by_id = {p["id"]: p for p in bank["probes"]}
+    for pid in ["JLS-037", "JLS-054", "JLS-096", "JLS-138"]:
+        assert by_id[pid]["islamic"] == "leaky"
+    counts = {}
+    for p in bank["probes"]:
+        counts[p["islamic"]] = counts.get(p["islamic"], 0) + 1
+    assert counts == {"clean": 54, "leaky": 44, "intrinsic": 42}
+
+
+def test_probe_bank_ar_has_version():
+    bank = collect.load_probes("probes_ar.json")
+    assert bank["version"] == 2  # renders the EN v2 texts (v3 changed tags only)
+
+
+def test_ar_prompts_ship_in_data():
+    """The Arabic prompt set is bundled package data, not a gitignored result."""
+    a = prompts._ar_prompts()
+    assert set(a) >= {"stated", "guide", "judge_prompt", "v2_boundary", "judge_tail"}
+    assert prompts.framings_ar()["unstated"] is None
+
+
 def test_load_probes_reads_from_data(tmp_path, monkeypatch):
     """load_probes resolves `path` against DATA, never the cwd."""
     payload = {"version": 9, "probes": [{"id": "X-1"}]}
