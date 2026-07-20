@@ -14,16 +14,17 @@ uv sync          # Python >= 3.11
 ## Configure keys
 
 Subjects and judges span several providers. `load_env()` (in `jaleesbench/collect.py`)
-reads keys from local `.env` files and **fails fast** if any are missing — adjust
-the search paths there for your environment.
+reads keys from a single `.env` at the repo root (already-set environment
+variables take precedence) and **fails fast**, naming any key still missing.
 
 | Variable | Used for |
 |---|---|
-| `ANTHROPIC_API_KEY` | Claude subjects (Sonnet, Opus) + the Opus judge |
+| `ANTHROPIC_API_KEY` | Claude subjects (Sonnet 4.6, Sonnet 5) + the Opus judge |
 | `OPENAI_API_KEY` | GPT-5.5 |
 | `FRIENDLI_API_KEY` | Gemma / Qwen / GLM (Friendli serverless) |
 | `BLACKBOX_API_KEY` | Nemotron 3 Ultra |
 | `LEADERBOARD_API_KEY` | Ansari (its OpenAI-compatible facilitator route) |
+| `TINKER_API_KEY` | Inkling (Tinker's OpenAI-compatible endpoint) |
 | `GEMINI_API_KEY` | Gemini subject + judge, via the public Gemini Developer API (optional — see below) |
 
 **Gemini** accepts either credential: place a Vertex AI service-account JSON at
