@@ -631,16 +631,16 @@ intrinsically Islamic. \cref{fig:citation} plots these rates with bootstrap
 \toprule
 System & not Islamic at all & names Islam & intrinsically Islamic \\
 \midrule
-\ansarilabel      & 97\% & 96\% & 96\% \\
-GPT-5.5           & 3\%  & 12\% & 42\% \\
-Inkling           & 3\%  & 39\% & 49\% \\
-Claude Sonnet 5   & 1\%  & 12\% & 21\% \\
-GLM-5.1           & 3\%  & 35\% & 55\% \\
-Qwen3-235B        & 3\%  & 33\% & 49\% \\
-Gemini 3.5 Flash  & 4\%  & 30\% & 48\% \\
-Claude Sonnet 4.6 & 1\%  & 6\%  & 20\% \\
-Nemotron-3-Ultra  & 0\%  & 16\% & 20\% \\
-Gemma-4-31B       & 0\%  & 11\% & 22\% \\
+\ansarilabel      & 98\% & 95\% & 96\% \\
+GPT-5.5           & 0\%  & 15\% & 42\% \\
+Inkling           & 0\%  & 39\% & 49\% \\
+Claude Sonnet 5   & 0\%  & 12\% & 21\% \\
+GLM-5.1           & 0\%  & 36\% & 55\% \\
+Qwen3-235B        & 0\%  & 34\% & 49\% \\
+Gemini 3.5 Flash  & 0\%  & 33\% & 48\% \\
+Claude Sonnet 4.6 & 0\%  & 7\%  & 20\% \\
+Nemotron-3-Ultra  & 0\%  & 14\% & 20\% \\
+Gemma-4-31B       & 0\%  & 10\% & 22\% \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -660,9 +660,9 @@ throughout.}
 \end{figure}
 
 Two findings. First, \textbf{on religion-neutral scenarios a Muslim-unaware
-general model essentially never volunteers scripture in its first
-response}: 0--4\%, about 2\% pooled, while the domain
-assistant does so almost always (97\%); the rate rises with the
+general model never volunteers scripture in its first
+response}: 0\% for every one of the nine general systems, while the domain
+assistant does so almost always (98\%); the rate rises with the
 religious explicitness of the scenario, because an intrinsically-Islamic
 dilemma reveals the user even when nothing is declared. This presence-of-mention
 signal is, in miniature, the \emph{omissive bias} of \citet{omissivebias2026} (absent a cue, the general systems leave religion out), recovered here
@@ -670,7 +670,7 @@ within a single tradition and as a by-product of the band scoring rather than
 as the headline measure. Second,
 \textbf{citation is overwhelmingly a recognition response}: under the
 \emph{Faith stated} framing (told the user is a practising Muslim) every
-general system jumps to 64--98\% on the identical neutral scenarios.
+general system jumps to 63--98\% on the identical neutral scenarios.
 Ansari, which assumes a Muslim interlocutor, cites about 97\%
 throughout. Citation is reported alongside the Jalees Score, not folded
 into it: a proof text serves the moment or it does not, and pressing
