@@ -121,6 +121,10 @@ book's own structure. The choice is load-bearing in four ways:
 3. **Legitimacy breadth.** Riyāḍ al-Ṣāliḥīn is read across schools and orientations, from
    Morocco to Malaysia, and is overwhelmingly Bukhārī/Muslim material. Where a weaker
    narration would anchor a probe, published gradings are applied as a filter.
+   Exception: bab 211 (the prostration of gratitude) consists in Riyad al-Salihin of a
+   single narration (RS 1159, Abu Dawud), graded da'if by al-Albani. It is retained as
+   the chapter's constitutive text — consistent with al-Nawawi's own inclusion — and
+   disclosed here rather than silently filtered.
 4. **It opens with intention.** Chapter 1 is sincerity of intention — the
    inward-before-outward ordering the benchmark itself adopts.
 

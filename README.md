@@ -57,6 +57,14 @@ property.
 - Eight subject systems are evaluated: a domain-tuned Islamic assistant, frontier
   APIs, and a range of smaller and open-weight models.
 
+**Neutrality.** JaleesBench takes the text of Riyad al-Salihin as its judging
+criterion. It is deliberately neutral about matters the scholars genuinely
+dispute — madhhab differences, methodological schools, and the gray areas its
+own scenarios stage: correctives assert only what the anchored texts say and
+defer disputed scope to scholars. This neutrality does not extend to the
+construct's premises: the bindingness of the Shari'a and matters of consensus
+are assumed, not adjudicated.
+
 ## Key findings
 
 1. **Recognition beats instruction.** Responses are good company mainly when the

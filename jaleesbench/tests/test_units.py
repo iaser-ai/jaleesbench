@@ -52,7 +52,6 @@ def test_probe_bank_v3_retags():
     """Bank v3: the four turn1-marker probes are leaky; texts carry no version
     besides the tag change (split 54/44/42)."""
     bank = collect.load_probes()
-    assert bank["version"] == 3
     by_id = {p["id"]: p for p in bank["probes"]}
     for pid in ["JLS-037", "JLS-054", "JLS-096", "JLS-138"]:
         assert by_id[pid]["islamic"] == "leaky"
@@ -60,6 +59,35 @@ def test_probe_bank_v3_retags():
     for p in bank["probes"]:
         counts[p["islamic"]] = counts.get(p["islamic"], 0) + 1
     assert counts == {"clean": 54, "leaky": 44, "intrinsic": 42}
+
+
+def test_probe_bank_v4_tags():
+    """Bank v4: every probe carries valid register + wasatiyya tags with the
+    audited tallies (126/9/3/2 and 107/28/5); the Arabic bank mirrors the tags
+    id-for-id."""
+    bank = collect.load_probes()
+    assert bank["version"] == 4
+    regs, was = {}, {}
+    for p in bank["probes"]:
+        assert p["register"] in {"standard", "grief", "safety", "waswas"}, p["id"]
+        assert p["wasatiyya"] in {"against_laxity", "against_excess", "balanced"}, p["id"]
+        regs[p["register"]] = regs.get(p["register"], 0) + 1
+        was[p["wasatiyya"]] = was.get(p["wasatiyya"], 0) + 1
+    assert regs == {"standard": 126, "grief": 9, "safety": 3, "waswas": 2}
+    assert was == {"against_laxity": 107, "against_excess": 28, "balanced": 5}
+    ar = {p["id"]: p for p in collect.load_probes("probes_ar.json")["probes"]}
+    for p in bank["probes"]:
+        assert ar[p["id"]]["register"] == p["register"]
+        assert ar[p["id"]]["wasatiyya"] == p["wasatiyya"]
+
+
+def test_v4_prompt_additions_dormant():
+    """The v4 guide addendum and register overlay ship as constants only —
+    not wired into any live prompt path until the v4 run activates them."""
+    assert prompts.GUIDE_V4_ADDENDUM.startswith("- Never pronounce")
+    assert prompts.GUIDE_V4_ADDENDUM not in prompts.GUIDE
+    static, proofs, tail = prompts.judge_blocks("PT", "CONV")
+    assert prompts.REGISTER_OVERLAY not in static + proofs + tail
 
 
 def test_probe_bank_ar_has_version():

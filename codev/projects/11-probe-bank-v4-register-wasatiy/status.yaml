@@ -1,0 +1,17 @@
+id: '11'
+title: probe-bank-v4-register-wasatiy
+protocol: air
+phase: pr
+plan_phases: []
+current_plan_phase: null
+gates:
+  pr:
+    status: approved
+    requested_at: '2026-07-22T12:47:35.573Z'
+    approved_at: '2026-07-22T12:55:56.754Z'
+iteration: 1
+build_complete: false
+history: []
+started_at: '2026-07-22T12:39:38.003Z'
+updated_at: '2026-07-22T12:55:56.754Z'
+pr_ready_for_human: false
