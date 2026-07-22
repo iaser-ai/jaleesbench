@@ -82,7 +82,11 @@ layer, not its base model (+0.74 over the identical underlying model); and (4) i
 can be used to improve existing systems: guided by its diagnosis, a single
 steadfastness instruction lifts a deployed Islamic assistant from +0.48
 to +0.84 (Faith unstated, after pressure), on par with the guided frontier
-systems while preserving first-response quality. The construct is
+systems while preserving first-response quality. A native Arabic
+replication on the original eight subjects reproduces the ranking
+($\rho$ = 0.83) while revealing two language effects: Arabic itself acts as
+an implicit faith signal, and steadfastness under pressure degrades across
+the pool. The construct is
 faith-general; we instantiate it for Islam as the first of a planned
 cross-tradition family. Code, scenario bank, and rubric are open source
 (\href{https://github.com/iaser-ai/jaleesbench}{github.com/iaser-ai/jaleesbench}),
@@ -847,6 +851,102 @@ Jalees Score (Faith unstated) rises from +0.48 to +0.84, with the first response
 quality preserved.}
 \label{fig:casestudy}
 \end{figure}
+
+\section{Arabic replication}\label{sec:arabic}
+
+Does any of this survive translation into the tradition's own language? We
+re-ran the full protocol natively in Arabic: the 140 scenarios and all six
+pressure turns rendered in Arabic, the companionship guide and both judges'
+prompts translated (the judging rubric, band names, and boundary rules
+included), and the same dual-judge, two-scope design --- 22{,}672 sittings and
+90{,}686 judgments. The subject pool is the original eight systems (the run
+predates the addition of Inkling and Claude Sonnet 5), plus Claude Opus 4.8
+as an exploratory ninth; because Opus 4.8 is also a judge, we report it only
+in passing and on its non-self judge. Proof texts remain the same
+Riy\=a\d{d} anchors. All contrasts below are scenario-cluster bootstrap
+differences paired on the same 140 clusters (Arabic minus English; * marks a
+95\% CI excluding zero).
+
+\subsection{The ranking replicates}\label{sec:ar-ranking}
+
+The scorecard survives the language change essentially intact
+(\cref{tab:arabic}). The top three are unchanged in order and statistically
+indistinguishable from their English scores --- Ansari +0.45 (EN +0.48),
+GPT-5.5 +0.31 (+0.27), Claude Sonnet 4.6 +0.27 (+0.23) --- and rank
+correlation across all eight subjects is $\rho$ = 0.83. Judge agreement is
+equivalent (68\% exact / 86\% within-one, against 66/85 on the same eight
+subjects in English), so the instrument transfers. The middle of the pool,
+however, reshuffles: Nemotron-3-Ultra (+0.14*) and Gemma-4-31B (+0.17*) are
+significantly \emph{better} companions in Arabic, while GLM-5.1 is
+significantly worse across all three framings (−0.08*/−0.14*/−0.19*) and
+falls from fourth to seventh. Guided ceilings drop for five of eight
+subjects (Claude Sonnet 4.6 −0.12*, GLM-5.1 −0.19*, Qwen3-235B −0.13*): the
+one-page guide, though fully translated, buys less in Arabic. Recognition
+still dominates instruction for every general subject.
+
+\begin{table}[t]
+\centering
+\caption{Jalees Score, Faith unstated, after pressure: Arabic vs.\ English
+on the eight common subjects (identical scenarios, natively translated;
+paired diff * = 95\% CI excludes zero).}
+\label{tab:arabic}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+System & Arabic & English & AR − EN \\
+\midrule
+\ansarilabel      & +0.45 & +0.48 & −0.03 \\
+GPT-5.5           & +0.31 & +0.27 & +0.04 \\
+Claude Sonnet 4.6 & +0.27 & +0.23 & +0.04 \\
+Nemotron-3-Ultra  & −0.06 & −0.21 & +0.14* \\
+Gemma-4-31B       & −0.18 & −0.34 & +0.17* \\
+Gemini 3.5 Flash  & −0.21 & −0.26 & +0.06 \\
+GLM-5.1           & −0.26 & −0.18 & −0.08* \\
+Qwen3-235B        & −0.51 & −0.48 & −0.04 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Arabic is itself a faith signal}\label{sec:ar-signal}
+
+The replication's sharpest methodological finding concerns the \emph{Faith
+unstated} framing. In English, no general subject ever volunteers scripture
+on a religion-neutral scenario (0\% across all nine, \cref{sec:citation}).
+In Arabic, six of eight do --- Gemini 3.5 Flash 12\%, GLM-5.1 8\%,
+Nemotron-3-Ultra 7\%, Gemma-4-31B and Qwen3-235B 6\%, GPT-5.5 1\% --- on the
+identical scenarios. Writing in Arabic functions as an implicit identity
+signal: the models assume a Muslim interlocutor that the English text never
+reveals. The clean/names-Islam distinction therefore partly collapses in
+Arabic, and the recognition gap must be read accordingly: part of what
+\emph{Faith stated} adds in English arrives for free in Arabic, and some of
+the Arabic pool's gains on devotional themes (fear-and-hope +0.09*,
+reliance-on-God +0.10*) are plausibly this implicit recognition rather than
+better companionship.
+
+\subsection{What changes under pressure and in citation
+culture}\label{sec:ar-differences}
+
+Two further effects are consistent across the pool. First,
+\textbf{steadfastness degrades}: seven of eight subjects cave harder under
+pressure in Arabic (Ansari −0.40 vs.\ −0.29, Gemini 3.5 Flash −0.42 vs.\
+−0.26, Gemma-4-31B −0.44 vs.\ −0.29), and the one pressure under which the
+stronger systems \emph{improve} in English --- false authority, checking the
+misquoted ruling --- flattens to nothing (+0.03, n.s., against +0.08* in
+English). A fabricated ruling quoted in Arabic goes unchecked. Polarization
+also rises (792 of 2{,}520 cells vs.\ 691 on the same eight subjects).
+Second, \textbf{citation cultures diverge by model family}: on intrinsically
+Islamic scenarios the open-weights and mid-tier systems cite far more
+readily in Arabic (Nemotron-3-Ultra 20\%$\rightarrow$57\%, Gemma-4-31B
+22\%$\rightarrow$32\%, Gemini 3.5 Flash 48\%$\rightarrow$59\%) while the two
+Western frontier APIs cite \emph{less} (GPT-5.5 42\%$\rightarrow$34\%,
+Claude Sonnet 4.6 20\%$\rightarrow$14\%). At the scenario level the
+divergences are thematic: Arabic counsel is stronger on classical ritual
+territory (grave practices, mourning customs) and weaker on the
+social-speech scenarios --- backbiting, the wedding toast, the eulogy ---
+where the tradition's restraint-of-the-tongue chapters do their work.
+
+The Arabic bank carries no controlled dialect or register policy yet, and
+the translation was not independently reviewed; both are limitations of
+this replication rather than of the construct.
 
 \section{Limitations}\label{sec:limitations}
 
