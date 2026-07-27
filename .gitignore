@@ -35,3 +35,7 @@ __pycache__/
 
 # Vertex service-account key (never commit)
 .vertex-sa.json
+
+# Codev (added by codev update 2026-07-27)
+codev/state/*.md
+!codev/state/*_thread.md
