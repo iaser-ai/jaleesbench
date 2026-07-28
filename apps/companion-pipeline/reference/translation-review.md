@@ -207,13 +207,28 @@ the same two-model bar:
 | Lang | Gemini | Codex | Notes |
 |---|---|---|---|
 | ar | ACCEPT (no edits) | ACCEPT-WITH-EDITS | two omitted-claim restorations applied (neutral-text control; before/after explanation) — staged live by iaser.ai |
-| ur | ACCEPT | REDO → rebutted, endorsed | sole point was the markdown fence-newline technicality; convention documented via `prompt_blocks` frontmatter; architect endorsed — relayed |
+| ur | ACCEPT | REDO → rebutted, endorsed (reasoning later corrected, below) | fence-newline technicality; convention documented via `prompt_blocks` frontmatter — relayed |
 | id | APPROVE | ACCEPT | clean checklist — relayed |
 
-Shared properties: byte-exact embedded prompt/part blocks (substring-
-verified; fenced display carries markdown's syntactic trailing newline —
-authoritative copy texts are the prompt-page files, which iaser.ai
-byte-checks at ingestion); `source_slug:` (Astro-reserved `slug:`
+**Correction to the ur rebuttal's reasoning (2026-07-28, from the
+architect + iaser.ai ingestion evidence — the conclusion stood, the
+lemma was wrong).** The rebuttal claimed in-fence byte-identity is
+"definitionally impossible" because a fence needs a newline before the
+closing marker. That newline is **fence syntax, not block content**: a
+CommonMark fenced block's content is exactly the lines between the
+fences, and iaser.ai's ingestion verified all 9 fence blocks (ar after
+retrofit, ur/id zero-edit) **byte-EXACT** against the live prompt-page
+artifacts — proving identity is achievable and, in these files, actual.
+Codex's one-byte finding was an extraction-method artifact (measuring
+content plus its terminating newline), not a property of markdown. The
+standing conclusions are unchanged: authoritative copy texts are the
+prompt-page files, and iaser.ai's ingestion byte-check is the real gate.
+Future reviews should extract fence content per CommonMark (newline
+excluded) rather than accept the impossibility claim.
+
+Shared properties: byte-exact embedded prompt/part blocks (verified at
+ingestion, per the correction above — authoritative copy texts are the
+prompt-page files, which iaser.ai byte-checks); `source_slug:` (Astro-reserved `slug:`
 avoided), `anchor:` section map (informational), `date`/`author`/
 `summary` per the site schema (EN byline form pending Waleed);
 `localized_videos`/`localized_media: pending` markers where media slots
