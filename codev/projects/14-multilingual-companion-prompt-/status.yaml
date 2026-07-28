@@ -42,7 +42,7 @@ gates:
   verify-approval:
     status: pending
 iteration: 2
-build_complete: false
+build_complete: true
 history:
   - iteration: 1
     plan_phase: land_pipeline
@@ -93,4 +93,4 @@ history:
         file: >-
           /Users/mwk/Development/fftn/taqwabench/.builders/spir-14/codev/projects/14-multilingual-companion-prompt-/14-translated_prompts-iter1-claude.txt
 started_at: '2026-07-28T11:21:24.136Z'
-updated_at: '2026-07-28T20:19:49.179Z'
+updated_at: '2026-07-28T20:20:02.580Z'
