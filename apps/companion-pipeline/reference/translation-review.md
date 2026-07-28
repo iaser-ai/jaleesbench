@@ -146,6 +146,42 @@ Architect-added pre-flight (local paste, doesn't count toward condition
   reality; (c) restructure the ar split. Recommendation: (a) once, then
   (b). End state: saved-info EMPTY, verified.
 
+### Prose-mass finding — CONFIRMED (bounded pre-flight 2, 2026-07-28)
+
+The 2-sentence substantive Arabic lead-in (92 chars of real prose,
+non-echoing):
+
+> وهذه بقية التوجيهات، فاعمل بها مع ما سبق. وكلها تخدم غاية واحدة: عونٌ صادق يترك أثرًا طيبًا:
+
+**SAVED and the whole entry STAYED ARABIC** (script-char count 645
+Arabic vs 6 Latin excluding the URL; evidence
+`out/gemini-cells/82-preflight2-entries.png`). End state: EMPTY.
+
+### Round-2 lead-ins — FINAL (review bar met, 2026-07-28)
+
+Non-echoing, 2-sentence substantive prose per the empirical hard
+requirements. Cross-checks: Gemini ACCEPT ×3; Codex ACCEPT (ar) +
+ACCEPT-WITH-EDITS (ur/id — smoother register variants, adopted). The
+live-verified ar text was kept unchanged.
+
+| Lang | Final lead-in | p1/p2 |
+|---|---|---|
+| ar | وهذه بقية التوجيهات، فاعمل بها مع ما سبق. وكلها تخدم غاية واحدة: عونٌ صادق يترك أثرًا طيبًا: | 563 / 689 |
+| ur | یہ باقی ہدایات ہیں؛ ان پر پچھلی ہدایات کے ساتھ عمل کریں۔ ان سب کا مقصد ایک ہی ہے: ایسی سچی مدد جو اچھا اثر چھوڑ جائے: | 663 / 772 |
+| id | Berikut sisa panduannya; jalankan bersama panduan sebelumnya. Semuanya menuju satu tujuan: bantuan tulus yang meninggalkan dampak baik: | 747 / 887 |
+
+**Publishable knowledge for the article's honest-notes section (Gemini
+saved-info rewriter, Arabic)**: Gemini rewrites every saved entry. For
+Arabic entries the output language depends on how the entry OPENS —
+bullet-first or thin-lead-in entries get rewritten in ENGLISH; entries
+opening with ~2 sentences of substantive Arabic prose are kept in
+Arabic. (Urdu and Indonesian entries stayed in-language in all trials
+regardless of structure.) Separately, entries that closely echo an
+existing entry's opening are silently DROPPED — near-duplicate wording
+across two saved entries doesn't survive. Both behaviors were verified
+live with list-checks, not dialogs (the submit dialog reports false
+errors).
+
 **Automation notes fed to the runbook**: Gemini dialogs use
 `mat-tonal-button` confirm buttons (not `mat-primary`) — selector must
 include it; entry rows expose kebab menus (`more_vert`), not visible

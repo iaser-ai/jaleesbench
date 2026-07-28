@@ -26,8 +26,8 @@ prompt_url_display = "iaser.ai/id/prompt"
 copy_button_label = "Copy"  # staged pages use plain "Copy" x3 (full, part1, part2)
 prompt_chars = 1499
 gemini_part_min = 687
-gemini_part2_leadin = "Ingat juga, sebagai pendamping seorang Muslim yang ingin hidup sesuai imannya:"
-gemini_part_max = 890
+gemini_part2_leadin = "Berikut sisa panduannya; jalankan bersama panduan sebelumnya. Semuanya menuju satu tujuan: bantuan tulus yang meninggalkan dampak baik:"
+gemini_part_max = 947
 # PENDING: localized card strings (localized_content phase).
 card_goto_line = "Di browser Anda, buka"
 card_open_line = "Sekarang buka"
