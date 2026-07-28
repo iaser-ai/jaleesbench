@@ -126,6 +126,13 @@ segments, big start shifts) are regressions.
   showing the OLD field value for a long time before flipping. Poll
   patiently (~3–4 min) before concluding a save failed — two false
   "did not persist" readings came from exactly this.
+- **Gemini saved-info automation specifics**: confirm buttons in its
+  dialogs are `mat-tonal-button` (NOT `mat-primary`) — include it in
+  selectors or clicks silently miss; entry rows expose kebab menus
+  (`more_vert` icon), not always-visible delete icons; the header's
+  Delete All button (+ tonal confirm) is the reliable bulk cleanup; the
+  entry rewriter paraphrases every saved entry and can even
+  language-switch (observed: Arabic part 2 rewritten into English).
 
 ## TTS notes
 

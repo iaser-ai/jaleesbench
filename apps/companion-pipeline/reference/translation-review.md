@@ -48,9 +48,39 @@ the cells are escalated rather than claimed.
 2026-07-28)**: the three Gemini cells close as the **first act of the
 recordings phase** — visible window, per-language, **Arabic first**,
 **before any mass recording** — so a rewriter rejection triggers
-translation-shortening before other takes are filmed. Waleed is manually
-checking his Gemini saved-info for stray test entries from the two
-attempts.
+translation-shortening before other takes are filmed.
+
+### Gemini cells CLOSED (2026-07-28, visible window, target-language UIs, Waleed observing)
+
+Amended-rule session (`?hl=ar/ur/id` active — mirrored RTL layouts for
+ar/ur; a prior English-UI attempt was voided). **All three cells PASS
+acceptance**: both parts saved as entries in every language, no error-13
+hard rejection anywhere. End state: saved-info EMPTY, screenshot-verified
+(evidence set in `out/gemini-cells/`; account left exactly as Waleed's
+chosen baseline — empty, EN entries deliberately not reinstalled).
+
+| Cell | Result | Rewriter behavior observed |
+|---|---|---|
+| ar | ACCEPTED (both parts) | part1 kept **verbatim Arabic**; **part2 was REWRITTEN INTO ENGLISH** ("Remember that: …", Ansari URL intact). Part1's first submit showed a retryable save error yet persisted. |
+| ur | ACCEPTED (both parts) | both kept **Urdu** (paraphrased/condensed; URL intact) |
+| id | ACCEPTED (both parts) | both kept **Indonesian** (part1 recast first-person "Saya adalah pendamping…"; part2 near-verbatim, URL intact) |
+
+**Open finding for the architect — Arabic part2 language flip.** Gemini's
+entry rewriter paraphrases every entry (known from EN), but for Arabic it
+*switched* part2 to English: an Arabic viewer's saved instruction would
+display half in English, and takes would show that on camera. Hypothesis:
+part1 opens with Arabic prose (survives in-language) while part2 begins
+with a bare bullet — a structure the rewriter apparently summarizes in
+English. Candidate fixes (any prompt-text change routes via the architect
+for iaser.ai re-vendor): add a one-line Arabic lead-in to part2, shift
+the split boundary, or re-test for stochastic variation. Decision
+pending; not acted on unilaterally.
+
+**Automation notes fed to the runbook**: Gemini dialogs use
+`mat-tonal-button` confirm buttons (not `mat-primary`) — selector must
+include it; entry rows expose kebab menus (`more_vert`), not visible
+delete icons; the header's **Delete All** button + its tonal confirm is
+the reliable bulk cleanup.
 
 **Prompt-page coordination (Q4/plan requirement)**: sent 2026-07-28. The
 iaser.ai workspace was not reachable via `afx send <ws>:architect` (all
