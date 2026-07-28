@@ -42,9 +42,15 @@ no ruling on disputed matters), URL intact, ﷺ present.
 ¹ No error-13 was observed on any submit across two attempts, but the
 automation could not reliably confirm dialog-close/entry state from a
 backgrounded window (the seed's documented Gemini visibility gotcha), so
-the cells are escalated rather than claimed. Closing evidence comes
-either from a visible-window retry or from the Phase 4 target-language
-recordings, whose on-camera flow IS the two-part paste.
+the cells are escalated rather than claimed.
+
+**Documented deviation from the 9/9 matrix criterion (architect decision,
+2026-07-28)**: the three Gemini cells close as the **first act of the
+recordings phase** — visible window, per-language, **Arabic first**,
+**before any mass recording** — so a rewriter rejection triggers
+translation-shortening before other takes are filmed. Waleed is manually
+checking his Gemini saved-info for stray test entries from the two
+attempts.
 
 **Operational discoveries** (fed back into the runbook):
 - **Claude read-after-write lag is minutes**, not seconds: a save that

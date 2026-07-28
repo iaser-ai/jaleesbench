@@ -156,3 +156,12 @@ validate_skeleton()). Phase 3 work:
 **WAITING ON ARCHITECT**: Gemini saved-info eyeball + choice on closing
 the 3 Gemini cells (visible-window retry now vs Phase 4 on-camera
 verification).
+
+## 2026-07-28 — Architect decision: Gemini cells defer to Phase 4 opener
+
+Option (b) ACCEPTED with condition: the 3 Gemini cells close as the FIRST
+act of Phase 4 (visible window, per-language, ar first) BEFORE any mass
+recording — a rewriter rejection must trigger translation-shortening
+before takes are filmed. Recorded as the documented deviation from the
+9/9 criterion in translation-review.md. Waleed checking his Gemini
+saved-info for strays himself. Phase 3 → porch done → 3-way review.
