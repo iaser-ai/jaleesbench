@@ -117,3 +117,12 @@ acceptable", which is the human listen test's call.
 **BLOCKED (by design) on human listen test**: architect asked to listen
 to out/spike/*.wav and pick a voice per language. Voice record table in
 apps/companion-pipeline/reference/tts-spike.md.
+
+## 2026-07-28 — Listen test DONE: Puck × 3; Urdu flight risk CLOSED
+
+Waleed (human ears, via Finder): **Puck for all three languages** —
+rationale: voice consistency with the shipped EN videos. Urdu quality on
+Gemini TTS accepted; NO fallback chain needed. Recorded in tts-spike.md;
+voice=Puck set in all three configs; cache prefixes renamed to
+{ar,ur,id}-puck1 so any future voice change can't reuse stale TTS cache.
+Phase 2 unblocked → porch done → 3-way review.

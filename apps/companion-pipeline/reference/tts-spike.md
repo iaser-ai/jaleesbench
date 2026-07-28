@@ -26,14 +26,14 @@ to the architect for the listen test.
 
 ## Listen-check results (the approval record)
 
+**Decided: Waleed, 2026-07-28, listen test via Finder (human ears).**
+
 | Language | Verdict | Chosen voice | Notes |
 |---|---|---|---|
-| ar | PENDING human listen test | — | |
-| ur | PENDING human listen test | — | Gemini produced audio; quality call pending. Fallback chain if rejected: ElevenLabs multilingual → Azure `ur-PK` → OpenAI TTS |
-| id | PENDING human listen test | — | |
+| ar | APPROVED | **Puck** | |
+| ur | APPROVED | **Puck** | Gemini TTS Urdu quality accepted — **no fallback chain needed**; flight risk closed |
+| id | APPROVED | **Puck** | |
 
-On approval: the chosen voice replaces the leading candidate in
-`languages/<lang>/config.toml` and this table is updated with who decided
-and when. On rejection of all Gemini candidates for a language: the spec's
-§Assumptions decision rule applies (fallback chain, then architect scope
-escalation); the escalation gets recorded here.
+Rationale: voice consistency with the shipped EN videos (Puck is the EN
+voice). All three `languages/<lang>/config.toml` files record
+`voice = "Puck"` accordingly.

@@ -2,10 +2,10 @@
 # later phases: prompt.txt (translated_prompts), vo/ + cards/
 # (localized_content). Loading fails fast until then, by design.
 #
-# voice: PENDING listen-test approval — Urdu is the flight risk (not in
-# Gemini TTS's documented language list); if no candidate passes, the
-# fallback chain (ElevenLabs -> Azure ur-PK -> OpenAI TTS) is evaluated
-# per the spec's decision rule.
+# voice: Puck — APPROVED by Waleed's listen test 2026-07-28 (consistency
+# with the shipped EN videos). Urdu flight risk CLOSED: Gemini TTS Urdu
+# quality accepted, no fallback chain needed. Record:
+# reference/tts-spike.md.
 lang = "ur"
 name = "Urdu"
 dir = "rtl"
@@ -13,9 +13,10 @@ dir = "rtl"
 [tts]
 engine = "gemini"
 model = "gemini-3.1-flash-tts-preview"
-voice = "Sulafat"  # PENDING listen test
+voice = "Puck"
 style = "Say this as a warm, confident, genuinely engaging tutorial narrator, speaking natural Urdu — clearly glad to share it, good energy and momentum, but respectful and grounded, not hyped: "
-cache_prefix = "ur1"
+# Prefix names the voice so a future voice change can't reuse stale cache.
+cache_prefix = "ur-puck1"
 
 [cards]
 # Urdu readers expect Nastaliq, not Naskh. Nastaliq's vertical metrics are
