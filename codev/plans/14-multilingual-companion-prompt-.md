@@ -53,7 +53,8 @@ yet decided, so no validation phase is included.**
     {"id": "tts_spike", "title": "TTS listen-test spike and per-language voice configs"},
     {"id": "translated_prompts", "title": "Translated prompts: produce, review, verify entry constraints"},
     {"id": "recordings", "title": "Target-language UI recordings (locale routes + 9 clips)"},
-    {"id": "localized_builds", "title": "Localized narration, cards, captions: build 9 videos + 9 srt"},
+    {"id": "localized_content", "title": "Localized VO scripts, cards, and spell-out tables (ar/ur/id)"},
+    {"id": "localized_builds", "title": "Build 9 videos + 9 srt with quality review and re-run proof"},
     {"id": "uploads", "title": "Private uploads with channel guard and captions"},
     {"id": "articles", "title": "Localized article sources and iaser.ai handoff packages"}
   ]
@@ -70,8 +71,20 @@ yet decided, so no validation phase is included.**
   language-dependent surface is entirely config/data, proving nothing broke
   via an EN parity rebuild.
 
+#### Seed access (prerequisite — the seed is NOT in this worktree)
+The authoritative seed is `tmp/companion-video-pipeline/` in the **main
+checkout** (`/Users/mwk/Development/fftn/taqwabench/tmp/companion-video-pipeline/`);
+`tmp/` is gitignored, so builder worktrees don't contain it. From the
+`.builders/<id>/` worktree it is readable at
+`../../tmp/companion-video-pipeline/`. Phase 1's first step copies the
+needed scripts + EN clips from that path into the repo (that copy IS the
+"landing"); if the path is missing, stop and ask the architect — do not
+reconstruct from memory.
+
 #### Deliverables
-- [ ] `apps/companion-pipeline/` uv project (Typer CLI, name `companion`):
+- [ ] `apps/companion-pipeline/` uv project (Typer CLI, name `companion`;
+      dependencies include `typer`, `playwright`, `httpx` — matching the
+      seed's imports — with `pytest` in the dev group):
 
 ```
 apps/companion-pipeline/
@@ -92,10 +105,16 @@ apps/companion-pipeline/
     en/config.toml                # engine, voice, style, dir, fonts, YT metadata
     en/prompt.txt                 # canonical prompt text (EN: GUIDE_MIN v3)
     en/vo/{chatgpt,claude,gemini}.toml   # segments: (offset, text) + intro/outro VO
-    en/cards/{intro,outro}.html   # card templates (+ per-language CSS block)
+    en/cards/{intro,outro}.html   # card TEMPLATES with product-name substitution
+                                  #   (6 renders per language: 3 assistants ×
+                                  #   intro/outro, as in the seed's cfgs()) +
+                                  #   per-language CSS block
     en/spellouts.toml             # TTS spell-outs + SRT readable-text mappings
   inputs/clips/en/                # committed EN reference recordings (~2 MB)
+  handoff/                        # COMMITTED deliverables staging (articles,
+                                  #   GIFs, prompt text) — Phase 8; not output
   out/                            # gitignored: tts cache, cards, videos, srt
+                                  #   (out/ is the ONLY ignored directory here)
 ```
 
 - [ ] EN language config reproducing the seed's VO text, offsets, cards,
@@ -217,7 +236,7 @@ Config-only changes; revert commit.
       language** (error-13 workaround).
 - [ ] Translated prompt text packaged for the iaser.ai prompt page and
       sent to that workspace's architect (handoff can be bundled with
-      Phase 7's package if they prefer — coordination message sent now
+      Phase 8's package if they prefer — coordination message sent now
       regardless, since the prompt page gates public usefulness).
 
 #### Implementation Details
@@ -273,7 +292,7 @@ until iaser.ai publishes translations.
 - [ ] 9 recordings committed under `inputs/clips/{ar,ur,id}/` (quality bar:
       clean cursor motion, correct viewport, verification frame appended —
       per README recording rules).
-- [ ] Screenshot/GIF source frames captured for Phase 7 articles.
+- [ ] Screenshot/GIF source frames captured for Phase 8 articles.
 
 #### Implementation Details
 - Follow the seed's recording rules (own window per page, viewport before
@@ -310,60 +329,93 @@ independently.
 
 ---
 
-### Phase 5: Localized narration, cards, captions: build 9 videos + 9 srt
-**Dependencies**: Phases 2 (voices), 4 (clips)
+### Phase 5: Localized VO scripts, cards, and spell-out tables (ar/ur/id)
+**Dependencies**: Phases 2 (voices), 4 (clips — offsets are timed against
+the new clips)
 
 #### Objectives
-- Translate and time the narration, localize cards, and build all 9 videos
-  and caption files to the north-star quality bar.
+- Author and review all localized *content* — VO scripts, cards,
+  spell-outs — as committed config, separately from the build/QA push so
+  content review lands incrementally.
 
 #### Deliverables
 - [ ] `languages/{ar,ur,id}/vo/*.toml` — translated VO scripts with
       per-clip segment offsets (retimed against the *new* clips, not EN
       offsets); translation review recorded (same bar as Phase 3).
-- [ ] Localized intro/outro cards: translated text, `dir="rtl"` + Noto
-      Naskh Arabic / Noto Nastaliq Urdu with per-language CSS overrides
-      (line-height/size — no vertical clipping).
-- [ ] Refined spell-out + SRT readable-text tables per language (listen
-      checks on each video's narration).
-- [ ] 9 videos (1080p) + 9 `.srt` built; collision check clean.
-- [ ] Full watch-through quality review per video (narration sync, card
-      timing, UI legibility, caption/BiDi rendering in a local player)
-      before Phase 6.
+- [ ] Localized intro/outro card templates: translated text, `dir="rtl"` +
+      Noto Naskh Arabic / Noto Nastaliq Urdu with per-language CSS
+      overrides (line-height/size — no vertical clipping), verified as
+      standalone card renders.
+- [ ] Initial spell-out + SRT readable-text tables per language (refined
+      further during Phase 6 listen checks).
 
 #### Implementation Details
 - VO timing: offsets derived per new clip (clips differ per language);
   clamping rules absorb TTS duration variance — verify, don't assume (spec
-  nice-to-know question resolved here).
+  nice-to-know question resolved across Phases 5–6).
 - Cards rendered per language via `cards.py` overrides; visual diff against
   EN composition for framing consistency.
-- Any narration that fails a listen check loops back through spell-out
-  fixes before sign-off.
+
+#### Acceptance Criteria
+- [ ] 3 languages × 3 videos of VO config committed with recorded reviews;
+      card renders for ar/ur/id pass RTL/font inspection.
+- [ ] Config validation green for all four languages.
+
+#### Test Plan
+- **Unit**: config validation over the new language files.
+- **Manual**: card render inspection; translation review records.
+
+#### Rollback Strategy
+Config/data-only; revert commit per language.
+
+#### Risks
+- **Risk**: narration text runs long vs clip length (ar/ur/id verbosity).
+  - **Mitigation**: write VO for concision now; Phase 6's timeline print +
+    outro-stretch rule catch what remains.
+
+---
+
+### Phase 6: Build 9 videos + 9 srt with quality review and re-run proof
+**Dependencies**: Phase 5
+
+#### Objectives
+- Build all 9 videos and caption files from config alone, to the
+  north-star quality bar, and prove clean-checkout re-runnability.
+
+#### Deliverables
+- [ ] 9 videos (1080p) + 9 `.srt` built; collision check clean.
+- [ ] Refined spell-out tables from listen checks on every video's
+      narration (loop: listen → fix spell-out → rebuild → re-listen).
+- [ ] Full watch-through quality review per video (narration sync, card
+      timing, UI legibility, caption/BiDi rendering in a local player)
+      before any upload.
+- [ ] Clean-checkout re-runnability demonstrated on at least one non-EN
+      language (spec criterion): fresh clone → README → build + captions.
 
 #### Acceptance Criteria
 - [ ] 9/9 videos + srt built from config alone (`companion build/captions
       --lang X`); zero collisions; quality review checklist recorded per
       video.
-- [ ] Clean-checkout re-runnability demonstrated on at least one non-EN
-      language (spec criterion): fresh clone → README → build + captions.
+- [ ] Re-run proof documented (commands + outcome) in phase notes.
 
 #### Test Plan
 - **Unit**: existing timing/caption tests exercised by 3 new configs; BiDi
   assertions on real ar/ur cue text.
-- **Manual**: 9 watch-throughs; RTL card renders inspected.
+- **Manual**: 9 watch-throughs; RTL caption rendering in a local player.
 
 #### Rollback Strategy
-Outputs are regenerable; config commits revertible per language.
+Outputs are regenerable; spell-out/config fixes are revertible commits.
 
 #### Risks
-- **Risk**: narration runs long vs clip length (ar/ur/id verbosity).
-  - **Mitigation**: outro-stretch rule + per-language VO editing for
-    concision; timeline print inspection per build.
+- **Risk**: TTS pronunciation defects surface late (novel words per
+  language).
+  - **Mitigation**: per-video listen checks with the spell-out loop before
+    the quality gate.
 
 ---
 
-### Phase 6: Private uploads with channel guard and captions
-**Dependencies**: Phase 5
+### Phase 7: Private uploads with channel guard and captions
+**Dependencies**: Phase 6
 
 #### Objectives
 - All 9 videos live as **Private** on the iaser-ai channel with correct
@@ -408,8 +460,8 @@ resume per the runbook.
 
 ---
 
-### Phase 7: Localized article sources and iaser.ai handoff packages
-**Dependencies**: Phase 6 (video IDs), Phase 4 (GIF/screenshot sources)
+### Phase 8: Localized article sources and iaser.ai handoff packages
+**Dependencies**: Phase 7 (video IDs), Phase 4 (GIF/screenshot sources)
 
 #### Objectives
 - Deliver publish-ready localized articles (+ prompt text) to the iaser.ai
@@ -426,16 +478,22 @@ resume per the runbook.
       translation review recorded (Phase 3 bar).
 - [ ] Translated prompt text included for the prompt page (if not already
       handed off in Phase 3).
+- [ ] Pinned EN article snapshot committed at
+      `apps/companion-pipeline/handoff/article/en-reference.md` (fetched
+      once at phase start) — the translation source, immune to live-site
+      drift mid-implementation.
 - [ ] Handoff sent via `afx send` to the iaser.ai workspace architect;
       **acknowledgement received and recorded**.
 
 #### Implementation Details
-- `handoff/` staging lives inside `apps/companion-pipeline/` outputs
-  hierarchy but IS committed (it's a deliverable, not a regenerable build
-  artifact — GIFs are curated selections).
-- Article translation derives from the EN article's current live content
-  (fetched at execution time), adapted where language-specific (paste
-  instructions, prompt text, RTL notes).
+- Handoff staging is `apps/companion-pipeline/handoff/` — a **committed**
+  directory, sibling of (not inside) the gitignored `out/`; it holds
+  deliverables (curated GIFs, article sources, prompt text), never
+  regenerable build artifacts.
+- Article translation derives from the pinned EN snapshot above, adapted
+  where language-specific (paste instructions, prompt text, RTL notes).
+  If the live EN article changes materially before handoff, refresh the
+  snapshot deliberately in a visible commit — never implicitly.
 
 #### Acceptance Criteria
 - [ ] 3 packages complete per the agreed format; acknowledgement from the
@@ -457,11 +515,12 @@ Handoff is additive; corrections ship as package updates + re-send.
 ```
 Phase 1 ──→ Phase 2 ──────────────┐
    │                              ▼
-   └──────→ Phase 3 ──→ Phase 4 ──→ Phase 5 ──→ Phase 6 ──→ Phase 7
-                          (Phase 4 also feeds Phase 7's GIFs)
+   └──────→ Phase 3 ──→ Phase 4 ──→ Phase 5 ──→ Phase 6 ──→ Phase 7 ──→ Phase 8
+                          (Phase 4 also feeds Phase 8's GIFs)
 ```
 (Phases 2 and 3 are independent of each other; executed sequentially in
-the listed order.)
+the listed order. Phase 5 = localized content, Phase 6 = builds/QA,
+Phase 7 = uploads, Phase 8 = articles.)
 
 ## Resource Requirements
 ### Development Resources
@@ -478,14 +537,14 @@ the listed order.)
 
 ## Integration Points
 ### External Systems
-- **Gemini TTS API** — Phase 2/5; fallback chain per decision rule.
+- **Gemini TTS API** — Phases 2/6; fallback chain per decision rule.
 - **Assistant products (ChatGPT/Claude/Gemini)** — Phases 3/4; UI drift
   handled as encountered; no fallback (escalate).
-- **YouTube Studio (browser automation)** — Phase 6; wedge-recovery
+- **YouTube Studio (browser automation)** — Phase 7; wedge-recovery
   runbook; drafts resume.
 
 ### Internal Systems
-- **iaser.ai workspace** — Phases 3/7 handoffs via `afx send`; boundary =
+- **iaser.ai workspace** — Phases 3/8 handoffs via `afx send`; boundary =
   acknowledged handoff.
 - **JaleesBench harness/Arabic arm** — only if the plan-gate validation
   decision adds a phase.
@@ -512,9 +571,10 @@ escalations pause only the affected language.
    resolved.
 3. **After Phase 3**: 9-cell entry matrix complete; translations reviewed.
 4. **After Phase 4**: 9 clips pass take-level review.
-5. **After Phase 5**: 9 watch-throughs pass; clean-checkout re-run shown.
-6. **After Phase 6**: 9 Private uploads verified; IDs with architect.
-7. **After Phase 7**: handoffs acknowledged.
+5. **After Phase 5**: VO/card configs reviewed; RTL card renders pass.
+6. **After Phase 6**: 9 watch-throughs pass; clean-checkout re-run shown.
+7. **After Phase 7**: 9 Private uploads verified; IDs with architect.
+8. **After Phase 8**: handoffs acknowledged.
 
 ## Monitoring and Observability
 N/A — offline batch pipeline with human review at every stage. The
@@ -523,7 +583,7 @@ fail-fast config validation.
 
 ## Documentation Updates Required
 - [ ] `apps/companion-pipeline/README.md` (runbook — created Phase 1,
-      updated through Phase 6 with locale routes + upload gotchas)
+      updated through Phase 7 with locale routes + upload gotchas)
 - [ ] arch docs (hot/cold tiers) at Review phase per protocol
 - [ ] Review doc `codev/reviews/14-multilingual-companion-prompt-.md`
 
@@ -534,7 +594,28 @@ fail-fast config validation.
 - [ ] Verify phase after PR merge (porch)
 
 ## Expert Review
-*(populated by porch 3-way consultation)*
+**Date**: 2026-07-28 · **Models**: Gemini (APPROVE), Codex
+(REQUEST_CHANGES), Claude (APPROVE with observations)
+
+**Key feedback and adjustments** (all accepted):
+- Seed not present in builder worktrees (`tmp/` gitignored) — Phase 1 now
+  states the authoritative main-checkout path, the worktree-relative
+  access path, and a stop-and-ask rule if missing (Codex, Claude).
+- `handoff/` vs gitignored `out/` contradiction — handoff is now
+  explicitly a committed sibling directory; `out/` is the only ignored
+  path (Codex).
+- Original Phase 5 too large for one atomic commit — split into Phase 5
+  (localized content: VO/cards/spell-outs) and Phase 6 (builds + QA +
+  re-run proof) (Codex).
+- EN article fetched live would drift — Phase 8 pins a committed EN
+  snapshot as the translation source; refreshes are deliberate commits
+  (Codex).
+- Playwright named as an explicit dependency alongside Typer (Claude).
+- Card templates' product-name substitution made explicit — 6 renders per
+  language, matching the seed's `cfgs()` (Claude).
+- Claude verified against the seed code that the shared-`timing.py`
+  extraction, TTS adapter shape, and new channel preflight are the right
+  moves; ffmpeg filtergraph is ported, not redesigned.
 
 ## Approval
 - [ ] Plan-approval gate (includes the translated-prompt validation
@@ -545,6 +626,7 @@ fail-fast config validation.
 | Date | Change | Reason | Author |
 |------|--------|--------|--------|
 | 2026-07-28 | Initial draft | — | builder spir-14 |
+| 2026-07-28 | Seed-access prerequisite; handoff/ path fixed; Phase 5 split (now 8 phases); EN article snapshot pinned; deps named | 3-way plan review round 1 | builder spir-14 |
 
 ## Notes
 - Phase commits use `[Spec 14][Phase: <id>] type: description`; one atomic
