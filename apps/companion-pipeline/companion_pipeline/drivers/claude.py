@@ -93,15 +93,15 @@ def record(cfg: LanguageConfig) -> None:
         left.set_viewport_size({"width": 657, "height": 765})
         left.wait_for_timeout(2800)
         s.ensure_cursor(left)
-        btn = left.locator("button:has-text('Copy prompt')").first
+        copy_sel = f"button:has-text('{cfg.copy_button_label}')"
+        btn = left.locator(copy_sel).first
         btn.scroll_into_view_if_needed()
         left.evaluate("window.scrollBy(0,-140)")
         left.wait_for_timeout(800)
 
         # LEFT: copy
         clip = copy_from_prompt_page(
-            s, left, "button:has-text('Copy prompt')", cfg.prompt_chars,
-            "prompt")
+            s, left, copy_sel, cfg.prompt_chars, "prompt")
         print(f"copied at {time.time()-t0:.1f}s")
 
         # RIGHT card: open Claude (overlay — no navigation)

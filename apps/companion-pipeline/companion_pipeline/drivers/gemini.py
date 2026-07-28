@@ -164,7 +164,8 @@ def record(cfg: LanguageConfig) -> None:
         left.evaluate("window.scrollBy(0,-160)")
         left.wait_for_timeout(900)
 
-        copy_btns = left.locator("pre button, button:has-text('Copy')")
+        copy_btns = left.locator(
+            f"pre button, button:has-text('{cfg.copy_button_label}')")
         print("copy buttons:", copy_btns.count())
 
         # LEFT: copy Part 1

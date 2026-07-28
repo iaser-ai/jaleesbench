@@ -183,6 +183,17 @@ google-chrome --user-data-dir=<rec-profile> --remote-debugging-port=9222 --lang=
 and pin Gemini pages with `?hl=<code>`. RTL UIs mirror layouts — drivers
 must keep using role/label-based locators, never coordinates.
 
+## Localized prompt pages (recording sources)
+
+Live (unlisted) per-language pages, staged and byte-verified by iaser.ai
+against `handoff/prompt-page/`: `iaser.ai/{ar,ur,id}/prompt`. Structure:
+3 `<pre>` blocks (full prompt, Gemini part 1, part 2) with plain
+**"Copy"** buttons (config `copy_button_label`; the EN page uses "Copy
+prompt"). Each copy button flashes the copied char count on click —
+**capture that flash in takes as the on-camera honesty check**; the
+driver-level clipboard assert stays. Translation revisions route through
+the architect for iaser.ai re-vendor + re-verify.
+
 ## Adding a language
 
 1. `languages/<lang>/`: `config.toml` (dir, voice, style, recording

@@ -21,8 +21,9 @@ cache_prefix = "id-puck1"
 css = ""
 
 [recording]
-prompt_url = "https://s.iaser.ai/prompt"
-prompt_url_display = "s.iaser.ai/prompt"
+prompt_url = "https://iaser.ai/id/prompt"
+prompt_url_display = "iaser.ai/id/prompt"
+copy_button_label = "Copy"  # staged pages use plain "Copy" x3 (full, part1, part2)
 prompt_chars = 1499
 gemini_part_min = 687
 gemini_part_max = 811

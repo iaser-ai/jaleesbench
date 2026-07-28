@@ -63,6 +63,7 @@ class LanguageConfig:
     prompt: str
     prompt_url: str
     prompt_url_display: str   # short form shown on recorded cards
+    copy_button_label: str    # prompt page's copy-button text
     prompt_chars: int
     gemini_part_min: int      # expected char bounds for the two-part paste
     gemini_part_max: int
@@ -222,6 +223,8 @@ def load_language(lang: str) -> LanguageConfig:
         prompt_url=_need(rec, "prompt_url", f"{ctx}.recording"),
         prompt_url_display=_need(rec, "prompt_url_display",
                                  f"{ctx}.recording"),
+        copy_button_label=_need(rec, "copy_button_label",
+                                f"{ctx}.recording"),
         prompt_chars=int(_need(rec, "prompt_chars", f"{ctx}.recording")),
         gemini_part_min=int(_need(rec, "gemini_part_min",
                                   f"{ctx}.recording")),
