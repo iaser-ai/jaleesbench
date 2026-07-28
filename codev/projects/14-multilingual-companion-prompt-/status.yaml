@@ -1,7 +1,7 @@
 id: '14'
 title: multilingual-companion-prompt-
 protocol: spir
-phase: specify
+phase: plan
 plan_phases: []
 current_plan_phase: null
 gates:
@@ -16,7 +16,7 @@ gates:
   verify-approval:
     status: pending
 iteration: 1
-build_complete: true
+build_complete: false
 history: []
 started_at: '2026-07-28T11:21:24.136Z'
-updated_at: '2026-07-28T11:40:09.031Z'
+updated_at: '2026-07-28T11:43:02.938Z'
