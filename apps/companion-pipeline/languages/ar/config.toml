@@ -37,5 +37,23 @@ card_goto_line = "في متصفحك، اذهب إلى"
 card_open_line = "الآن افتح"
 account_label = "waleedkadous"
 
+# Gemini UI labels under ?hl=ar — observed live during the verification
+# sessions (2026-07-28). Other assistants' ar labels are investigated at
+# recording-session start (drivers fall back to locale-independent
+# selectors where possible).
+[recording.chatgpt_ui]
+# Observed live under the ar Accept-Language session (2026-07-28).
+# save/toast are best-guess until the first off-camera reset validates
+# them (that happens before any camera rolls).
+personalization = "التخصيص"
+ci_placeholder_substr = "تفضيلات إضافية"
+save = "حفظ"
+toast_substr = "التعليمات المخصصة"
+
+[recording.gemini_ui]
+add = "إضافة"
+submit = "إرسال"
+delete_all = "حذف الكل"
+
 [youtube]
 video_language = "Arabic"

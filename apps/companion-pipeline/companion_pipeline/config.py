@@ -73,6 +73,13 @@ class LanguageConfig:
     # openings (observed: Arabic part 2 rewritten into English). Empty
     # for EN (shipped without it).
     gemini_part2_leadin: str
+    # Gemini UI labels for the recording driver (localized per ?hl=).
+    # Keys: add, submit, delete_all. Verified live per language before
+    # takes; the driver also uses locale-independent fallbacks.
+    gemini_ui: dict[str, str]
+    # ChatGPT UI labels for the recording driver (localized). Keys:
+    # personalization, ci_placeholder_substr, save, toast_substr.
+    chatgpt_ui: dict[str, str]
     card_goto_line: str       # recorded card text: "In your browser, go to"
     card_open_line: str       # recorded card text: "Now open"
     account_label: str
@@ -238,6 +245,14 @@ def load_language(lang: str) -> LanguageConfig:
                                   f"{ctx}.recording")),
         gemini_part2_leadin=_need(rec, "gemini_part2_leadin",
                                   f"{ctx}.recording"),
+        gemini_ui=rec.get("gemini_ui",
+                          {"add": "Add", "submit": "Submit",
+                           "delete_all": "Delete all"}),
+        chatgpt_ui=rec.get("chatgpt_ui", {
+            "personalization": "Personalization",
+            "ci_placeholder_substr": "Additional behavior",
+            "save": "Save",
+            "toast_substr": "Custom instructions updated"}),
         card_goto_line=_need(rec, "card_goto_line", f"{ctx}.recording"),
         card_open_line=_need(rec, "card_open_line", f"{ctx}.recording"),
         account_label=_need(rec, "account_label", f"{ctx}.recording"),

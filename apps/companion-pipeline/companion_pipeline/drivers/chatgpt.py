@@ -16,22 +16,27 @@ from ..config import LanguageConfig
 from ..recorder import Session
 from .common import CARD_JS, OVERLAY_JS, OVERLAY_OFF_JS, copy_from_prompt_page
 
-CI_FIELD = "textarea[placeholder*='Additional behavior']"
+def ci_field(cfg):
+    """Custom-instructions textarea, by localized placeholder substring."""
+    return ("textarea[placeholder*="
+            f"'{cfg.chatgpt_ui['ci_placeholder_substr']}']")
 
 
-def visible_save(page):
-    saves = page.evaluate("""() =>
+def visible_save(page, cfg):
+    label = cfg.chatgpt_ui["save"]
+    saves = page.evaluate("""(label) =>
       [...document.querySelectorAll('button')]
-        .filter(b => (b.textContent||'').trim() === 'Save')
+        .filter(b => (b.textContent||'').trim() === label)
         .map(b => { const x = b.getBoundingClientRect();
           return {x: x.x + x.width/2, y: x.y + x.height/2,
-                  w: x.width, h: x.height}; })""")
+                  w: x.width, h: x.height}; })""", label)
     vis = [b for b in saves if b["w"] > 0 and b["h"] > 0 and b["y"] > 0]
     return vis[0] if vis else None
 
 
 def record(cfg: LanguageConfig) -> None:
     name = f"copypaste-chatgpt-{cfg.lang}"
+    CI_FIELD = ci_field(cfg)
     with Session() as s:
         left = next(p for p in s.ctx.pages if "iaser.ai" in p.url)
         right = next(p for p in s.ctx.pages if "chatgpt.com" in p.url)
@@ -64,7 +69,7 @@ def record(cfg: LanguageConfig) -> None:
             right.keyboard.press("Meta+a")
             right.keyboard.press("Delete")
             right.wait_for_timeout(1000)
-            sv = visible_save(right)
+            sv = visible_save(right, cfg)
             assert sv, "no Save while clearing"
             right.mouse.click(sv["x"], sv["y"])
             right.wait_for_timeout(2000)
@@ -115,7 +120,7 @@ def record(cfg: LanguageConfig) -> None:
         s.move_click(right, "[data-testid='open-sidebar-button']",
                      after_ms=1100)
         s.move_click(right, f"text={cfg.account_label}", after_ms=1200)
-        s.move_click(right, "text=Personalization", after_ms=2200)
+        s.move_click(right, f"text={cfg.chatgpt_ui['personalization']}", after_ms=2200)
 
         # scroll to the Custom instructions field
         ci = right.locator(CI_FIELD).first
@@ -132,19 +137,19 @@ def record(cfg: LanguageConfig) -> None:
 
         # Save: recompute coordinates at click time (layout settles)
         right.wait_for_timeout(900)
-        sv = visible_save(right)
+        sv = visible_save(right, cfg)
         assert sv, "no visible Save button after paste"
         right.evaluate("([x,y]) => window.__jbCursorTo(x,y)",
                        [sv["x"], sv["y"]])
         right.wait_for_timeout(650)
-        sv = visible_save(right) or sv
+        sv = visible_save(right, cfg) or sv
         right.evaluate("([x,y]) => window.__jbClickPulse(x,y)",
                        [sv["x"], sv["y"]])
         right.wait_for_timeout(250)
         right.mouse.click(sv["x"], sv["y"])
 
         # end on the green confirmation toast, held long enough to read
-        right.locator("text=Custom instructions updated").first.wait_for(
+        right.locator(f"text={cfg.chatgpt_ui['toast_substr']}").first.wait_for(
             state="visible", timeout=10000)
         print(f"toast at {time.time()-t0:.1f}s")
         right.wait_for_timeout(3000)

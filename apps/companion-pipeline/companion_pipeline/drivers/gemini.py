@@ -57,13 +57,13 @@ def trusted_click(s, page, sel, after_ms=1000):
     page.wait_for_timeout(after_ms)
 
 
-def ensure_visible(s, right):
+def ensure_visible(s, right, cfg):
     """The app sometimes hides the whole saved-info panel; recover with a
-    foregrounded reload."""
+    foregrounded reload. Locale-robust: the Add button is found by its
+    stable class, not its (localized) label."""
     for attempt in range(3):
         ok = right.evaluate("""() => {
-          const b = [...document.querySelectorAll('button')]
-            .find(x => (x.textContent||'').includes('Add'));
+          const b = document.querySelector('button.create-memory-button');
           return !!(b && getComputedStyle(b).visibility === 'visible');
         }""")
         print(f"  saved-info visible: {ok} (attempt {attempt})")
@@ -77,12 +77,21 @@ def ensure_visible(s, right):
     raise RuntimeError("saved-info page stuck hidden")
 
 
-def paste_entry(s, right, text, label):
-    """Add -> paste -> Submit one instruction entry."""
-    ensure_visible(s, right)
-    trusted_click(s, right, "button:has-text('Add')", after_ms=1200)
-    right.locator("button:has-text('Submit')").first.wait_for(
-        state="visible", timeout=10000)
+def paste_entry(s, right, cfg, text, label):
+    """Add -> paste -> Submit one instruction entry (localized UI).
+
+    TAKE-QUALITY GUARD (verification lessons): after Submit the dialog
+    must close on camera. Gemini sometimes shows a retryable error dialog
+    even when the entry saved — that ruins the take visually, so we ABORT
+    loudly rather than fight it mid-recording; the operator cleans up and
+    retakes. Dialog buttons are selected by localized TEXT (config
+    [recording.gemini_ui]) because button order varies per dialog type.
+    """
+    ensure_visible(s, right, cfg)
+    trusted_click(s, right, "button.create-memory-button", after_ms=1200)
+    submit_sel = (".cdk-overlay-container "
+                  f"button:has-text('{cfg.gemini_ui['submit']}')")
+    right.locator(submit_sel).first.wait_for(state="visible", timeout=10000)
     sel = ("textarea" if right.locator("textarea").count()
            else "[contenteditable='true']")
     s.highlight(right, sel, hold_ms=700)
@@ -90,8 +99,18 @@ def paste_entry(s, right, text, label):
     right.wait_for_timeout(300)
     right.keyboard.insert_text(text)
     right.wait_for_timeout(1400)
-    trusted_click(s, right, "button:has-text('Submit')", after_ms=2200)
-    print(f"{label} submitted")
+    trusted_click(s, right, submit_sel, after_ms=1000)
+    try:
+        right.wait_for_function(
+            "() => !document.querySelector('.cdk-overlay-backdrop')",
+            timeout=25000)
+    except Exception:
+        raise RuntimeError(
+            f"TAKE ABORT ({label}): submit dialog did not close on camera "
+            "(likely the false-error dialog). Stop recording, verify the "
+            "entry list (the entry may HAVE saved), clean up, retake.")
+    right.wait_for_timeout(1500)
+    print(f"{label} submitted, dialog closed")
 
 
 def _copy_part(s, left, copy_btns, idx: int, cfg: LanguageConfig,
@@ -131,11 +150,11 @@ def record(cfg: LanguageConfig) -> None:
         # (viewport BEFORE navigation: the page decides visible-vs-hidden
         # at load time and never re-evaluates on resize)
         right.set_viewport_size({"width": 1000, "height": 765})
-        right.goto("https://gemini.google.com/saved-info")
+        right.goto("https://gemini.google.com/saved-info"
+                   f"?hl={cfg.lang}")
         right.wait_for_timeout(3500)
         assert right.evaluate("""() => {
-          const b = [...document.querySelectorAll('button')]
-            .find(x => (x.textContent||'').includes('Add'));
+          const b = document.querySelector('button.create-memory-button');
           return b && getComputedStyle(b).visibility === 'visible';
         }"""), "saved-info page not visible at this viewport"
         right.evaluate(OVERLAY_JS, ["", None])
@@ -185,7 +204,7 @@ def record(cfg: LanguageConfig) -> None:
         right.wait_for_timeout(600)
 
         # first entry
-        paste_entry(s, right, part1, "part1")
+        paste_entry(s, right, cfg, part1, "part1")
 
         # LEFT: copy Part 2
         left.bring_to_front()
@@ -197,7 +216,7 @@ def record(cfg: LanguageConfig) -> None:
         # RIGHT: second entry
         right.bring_to_front()
         right.wait_for_timeout(400)
-        paste_entry(s, right, part2, "part2")
+        paste_entry(s, right, cfg, part2, "part2")
 
         # hold on the final state; glide cursor away to keep frames flowing
         for gx, gy in ((420, 420), (520, 300), (560, 220)):
@@ -207,7 +226,8 @@ def record(cfg: LanguageConfig) -> None:
         s.stop_dual()
 
         # ---- verify (loosely: Gemini paraphrases entries) ----------------
-        right.goto("https://gemini.google.com/saved-info")
+        right.goto("https://gemini.google.com/saved-info"
+                   f"?hl={cfg.lang}")
         right.wait_for_timeout(3500)
         body = right.evaluate("document.body.innerText")
         print("entries mention companion:", "companion" in body)
