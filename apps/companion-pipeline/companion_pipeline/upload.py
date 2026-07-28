@@ -14,14 +14,15 @@ CHANNEL_ID = "UCF1yEgoyLfbgTUpeMn2ruqA"  # iaser-ai
 STUDIO = f"https://studio.youtube.com/channel/{CHANNEL_ID}"
 
 
-def connect(cdp_url: str = "http://localhost:9222"):
+def connect(cdp_url: str | None = None):
     """Attach to the rec-profile Chrome; return (playwright, page).
 
     pages[0] over CDP is not stable — callers must verify pg.url before
     acting (seed gotcha).
     """
+    from .recorder import CDP_URL
     pw = sync_playwright().start()
-    b = pw.chromium.connect_over_cdp(cdp_url)
+    b = pw.chromium.connect_over_cdp(cdp_url or CDP_URL)
     ctx = b.contexts[0]
     pg = ctx.pages[0] if ctx.pages else ctx.new_page()
     return pw, pg

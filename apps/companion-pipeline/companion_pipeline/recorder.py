@@ -20,6 +20,7 @@ Usage from driver modules:
 """
 
 import base64
+import os
 import subprocess
 import time
 from pathlib import Path
@@ -30,6 +31,13 @@ from .config import OUT_DIR
 
 RECORDINGS_DIR = OUT_DIR / "recordings"
 
+# The recording Chrome is identified by a substring of its
+# --user-data-dir; override when your profile directory isn't named
+# "rec-profile" (see README setup).
+REC_PROFILE_MATCH = os.environ.get("COMPANION_REC_PROFILE_MATCH",
+                                   "rec-profile")
+CDP_URL = os.environ.get("COMPANION_CDP_URL", "http://localhost:9222")
+
 
 def hide_chrome():
     """Re-hide the recording Chrome (macOS un-hides an app whenever a new
@@ -38,7 +46,7 @@ def hide_chrome():
     visible-but-backgrounded during long sessions."""
     try:
         pid = subprocess.run(
-            ["pgrep", "-f", "user-data-dir=.*rec-profile"],
+            ["pgrep", "-f", f"user-data-dir=.*{REC_PROFILE_MATCH}"],
             capture_output=True, text=True).stdout.split()
         if pid:
             subprocess.run(
@@ -89,7 +97,7 @@ CURSOR_JS = """
 
 
 class Session:
-    def __init__(self, cdp_url: str = "http://localhost:9222"):
+    def __init__(self, cdp_url: str = CDP_URL):
         self._pw = sync_playwright().start()
         self.browser = self._pw.chromium.connect_over_cdp(cdp_url)
         self.ctx = self.browser.contexts[0]

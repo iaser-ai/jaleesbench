@@ -54,6 +54,12 @@ handoff/                  committed deliverables staging (articles, GIFs)
   google-chrome --user-data-dir=<rec-profile> --remote-debugging-port=9222
   ```
 
+  The macOS re-hide helper finds this Chrome by matching a substring of
+  its `--user-data-dir`; the default match is `rec-profile`, so either
+  name your profile directory accordingly or set
+  `COMPANION_REC_PROFILE_MATCH=<substring>`. A non-default CDP port/host
+  is set with `COMPANION_CDP_URL` (default `http://localhost:9222`).
+
   The profile must be logged into the assistant products being recorded
   (chatgpt.com, claude.ai, gemini.google.com) and into the Google account
   owning the iaser-ai YouTube channel. The profile directory stays outside
@@ -67,9 +73,14 @@ uv run companion build --lang en                # TTS + assemble all 3 videos
 uv run companion build --lang en --video chatgpt
 uv run companion captions --lang en             # .srt for all 3
 uv run companion record --lang en --video gemini   # one take (CDP Chrome)
-uv run companion upload --lang en               # guarded Studio upload
+uv run companion upload --lang en               # NOT YET IMPLEMENTED (see below)
 uv run pytest -q                                # unit tests
 ```
+
+`companion upload` is a placeholder until the uploads plan phase lands the
+automated flow — it exits with an error pointing at the manual Studio flow
+documented below. The channel preflight guard
+(`companion_pipeline.upload.preflight_channel()`) is already real.
 
 Outputs land in `out/videos/<lang>/`. The build prints the narration
 timeline — **inspect it for `***` collision markers** (a pushed segment

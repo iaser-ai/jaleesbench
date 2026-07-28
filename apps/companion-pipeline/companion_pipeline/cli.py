@@ -62,12 +62,15 @@ def record(lang: str = typer.Option(...),
 @app.command()
 def upload(lang: str = typer.Option(...),
            video: str = typer.Option(None)):
-    """Upload built videos Private to the iaser-ai channel (guarded)."""
+    """NOT YET IMPLEMENTED — the guarded upload flow ships in the uploads
+    plan phase. Use the README's manual Studio flow meanwhile."""
     load_language(lang)
-    raise typer.Exit(  # implemented in the uploads plan phase
-        "upload flow ships in the uploads plan phase; use the README's "
-        "manual Studio flow meanwhile. The channel preflight guard lives "
-        "in companion_pipeline/upload.py.")
+    typer.echo(
+        "companion upload is not implemented yet: the automated flow ships "
+        "in the uploads plan phase. Use the README's manual Studio flow; "
+        "the channel preflight guard is available as "
+        "companion_pipeline.upload.preflight_channel().", err=True)
+    raise typer.Exit(code=2)
 
 
 @app.command()
