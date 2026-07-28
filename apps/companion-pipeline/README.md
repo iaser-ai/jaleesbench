@@ -164,6 +164,25 @@ Gotchas:
   with every field saved — resume via "Edit draft".
 - `pages[0]` over CDP is not stable; verify `pg.url` before acting.
 
+## Target-language UI routes (per assistant)
+
+Verified 2026-07-28 (read-only probes against the live products):
+
+| Assistant | Route to ar/ur/id UI | Status |
+|---|---|---|
+| Gemini | `?hl=<code>` on the URL (e.g. `gemini.google.com/app?hl=ur`) | **VERIFIED** — ar/ur render full RTL-mirrored UIs (`lang`/`dir` set), id renders Indonesian |
+| ChatGPT | ignores `?hl`; use Settings → Language (account setting — temporary write, restore after) or leave on Auto-detect and relaunch the recording Chrome with `--lang=<code>` | route identified; verify at recording time |
+| Claude | ignores `?hl`; follows browser language — relaunch the recording Chrome with `--lang=<code>` | route identified; verify at recording time |
+
+Per-language recording sessions therefore launch Chrome as:
+
+```bash
+google-chrome --user-data-dir=<rec-profile> --remote-debugging-port=9222 --lang=<code>
+```
+
+and pin Gemini pages with `?hl=<code>`. RTL UIs mirror layouts — drivers
+must keep using role/label-based locators, never coordinates.
+
 ## Adding a language
 
 1. `languages/<lang>/`: `config.toml` (dir, voice, style, recording

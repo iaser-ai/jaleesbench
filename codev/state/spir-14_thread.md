@@ -176,3 +176,26 @@ Cross-workspace lesson for the cohort: **builders cannot afx-send to
 other workspaces** (NOT_FOUND even for active ones — 'iaser.ai' was
 active) — route cross-workspace messages through your architect, who
 relayed the prompt-page notice verbatim.
+
+## 2026-07-28 — Phase 3 unanimously approved (iter 2); Phase 4 recordings
+## opened with locale-route probes; TWO DEPENDENCIES SURFACED
+
+Phase 3 closed 3×APPROVE. iaser.ai architect logged the prompt-page
+notice and added two Phase 8 package-format requirements (localized
+section slugs; explicit per-language YouTube-ID statements) — recorded
+in plan + handoff/README.
+
+Phase 4 probes (read-only, no settings writes, no screen takeover):
+**Gemini ?hl= VERIFIED for ar/ur/id** — ar+ur render full RTL-mirrored
+UIs. ChatGPT/Claude ignore ?hl → route = relaunch rec-Chrome with
+--lang=<code> (+ possibly ChatGPT account language setting, temporary
+with restore). README updated with the route table + per-language
+launch command.
+
+**WAITING ON ARCHITECT for two things**:
+1. Visible-window session go-ahead for the Gemini-cells closure (first
+   act per the Phase 3 deferral condition — ar first, before any takes).
+2. Prompt-page staging: on-camera takes copy the translated prompt from
+   the LIVE page (drivers assert clipboard == prompt_chars); iaser.ai
+   must stage/publish per-language prompt pages (even unlisted paths)
+   before recording — relay request sent.
