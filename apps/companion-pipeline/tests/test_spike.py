@@ -49,18 +49,22 @@ def test_skeleton_core_passes_validation(code):
     assert "cards/intro.html" in missing      # localized_content phase
 
 
-@pytest.mark.parametrize("code", ["ar", "ur", "id"])
+@pytest.mark.parametrize("code", ["ar", "ur", "id", "en"])
 def test_translated_prompt_fits_entry_limits(code):
     # ChatGPT's custom-instructions field caps at ~1,500 chars (EN
-    # GUIDE_MIN was sized to 1,492 for exactly this reason).
+    # GUIDE_MIN was sized to 1,492 for exactly this reason). EXACT file
+    # content — no stripping: recording drivers and the prompt page copy
+    # the file byte-for-byte, so a trailing newline is an off-by-one bug.
     import tomllib
     from companion_pipeline.config import LANGUAGES_DIR
-    text = (LANGUAGES_DIR / code / "prompt.txt").read_text(
-        encoding="utf-8").rstrip("\n")
+    text = (LANGUAGES_DIR / code / "prompt.txt").read_text(encoding="utf-8")
+    assert not text.endswith("\n"), "prompt.txt must not end with a newline"
     assert 0 < len(text) <= 1500
     with open(LANGUAGES_DIR / code / "config.toml", "rb") as f:
         raw = tomllib.load(f)
     assert raw["recording"]["prompt_chars"] == len(text)
+    if code == "en":
+        return
     # URL and honorific survive translation byte-for-byte
     assert ("https://api.askansari.ai/api/v2/mcp-complete"
             "?q=your+question&src=jbprompt") in text
@@ -92,6 +96,20 @@ def test_skeleton_validation_rejects_broken_core(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "LANGUAGES_DIR", langs)
     with pytest.raises(ConfigError, match="voice"):
         validate_skeleton("ar")
+
+
+@pytest.mark.parametrize("code", ["ar", "ur", "id"])
+def test_handoff_prompt_package_integrity(code):
+    # The prompt-page handoff must be byte-identical to the canonical
+    # prompt, and the two Gemini parts must reassemble into it exactly.
+    from companion_pipeline.config import LANGUAGES_DIR, PIPELINE_ROOT
+    canonical = (LANGUAGES_DIR / code / "prompt.txt").read_text(
+        encoding="utf-8")
+    hand = PIPELINE_ROOT / "handoff" / "prompt-page" / code
+    assert (hand / "prompt.txt").read_text(encoding="utf-8") == canonical
+    p1 = (hand / "gemini-part1.txt").read_text(encoding="utf-8")
+    p2 = (hand / "gemini-part2.txt").read_text(encoding="utf-8")
+    assert p1 + "\n" + p2 == canonical
 
 
 def test_rtl_skeletons_declare_direction_and_fonts():

@@ -182,6 +182,15 @@ def load_language(lang: str) -> LanguageConfig:
     core = _parse_core(base, ctx)
     rec, yt = core["rec"], core["yt"]
 
+    prompt = _read(base / "prompt.txt", ctx)
+    declared = int(_need(rec, "prompt_chars", f"{ctx}.recording"))
+    if len(prompt) != declared:
+        raise ConfigError(
+            f"[{ctx}] prompt.txt is {len(prompt)} chars but config.toml "
+            f"declares prompt_chars = {declared} — the file is copied "
+            f"byte-for-byte by recording drivers and the prompt page, so "
+            f"these must match exactly (watch for trailing newlines)")
+
     videos: dict[str, VideoConfig] = {}
     for name in VIDEOS:
         vctx = f"{ctx}/vo/{name}"
@@ -209,7 +218,7 @@ def load_language(lang: str) -> LanguageConfig:
         direction=core["direction"],
         tts=core["tts"],
         card_css=core["card_css"],
-        prompt=_read(base / "prompt.txt", ctx),
+        prompt=prompt,
         prompt_url=_need(rec, "prompt_url", f"{ctx}.recording"),
         prompt_url_display=_need(rec, "prompt_url_display",
                                  f"{ctx}.recording"),

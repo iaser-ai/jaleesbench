@@ -52,6 +52,12 @@ translation-shortening before other takes are filmed. Waleed is manually
 checking his Gemini saved-info for stray test entries from the two
 attempts.
 
+**Prompt-page coordination (Q4/plan requirement)**: sent 2026-07-28. The
+iaser.ai workspace was not reachable via `afx send <ws>:architect` (all
+name variants NOT_FOUND — workspace not active in Tower), so the
+coordination message was relayed through the taqwabench architect with
+the package location and integration notes. Acknowledgement pending.
+
 **Operational discoveries** (fed back into the runbook):
 - **Claude read-after-write lag is minutes**, not seconds: a save that
   "didn't persist" shows the OLD value across many reloads, then flips.
