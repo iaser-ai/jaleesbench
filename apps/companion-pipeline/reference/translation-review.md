@@ -198,6 +198,29 @@ across two saved entries doesn't survive. Both behaviors were verified
 live with list-checks, not dialogs (the submit dialog reports false
 errors).
 
+### Article translations (pull-forward per Waleed's directive, 2026-07-28)
+
+Full article translations (`handoff/article/{ar,ur,id}/index.md`) from
+the pinned EN snapshot (`handoff/article/en-reference.md`), each through
+the same two-model bar:
+
+| Lang | Gemini | Codex | Notes |
+|---|---|---|---|
+| ar | ACCEPT (no edits) | ACCEPT-WITH-EDITS | two omitted-claim restorations applied (neutral-text control; before/after explanation) — staged live by iaser.ai |
+| ur | ACCEPT | REDO → rebutted, endorsed | sole point was the markdown fence-newline technicality; convention documented via `prompt_blocks` frontmatter; architect endorsed — relayed |
+| id | APPROVE | ACCEPT | clean checklist — relayed |
+
+Shared properties: byte-exact embedded prompt/part blocks (substring-
+verified; fenced display carries markdown's syntactic trailing newline —
+authoritative copy texts are the prompt-page files, which iaser.ai
+byte-checks at ingestion); `source_slug:` (Astro-reserved `slug:`
+avoided), `anchor:` section map (informational), `date`/`author`/
+`summary` per the site schema (EN byline form pending Waleed);
+`localized_videos`/`localized_media: pending` markers where media slots
+in after recordings; per-language honest-notes passages on Gemini's
+rewriter (ar carries the language-flip note; ur/id the paraphrase +
+false-error caveats).
+
 **Automation notes fed to the runbook**: Gemini dialogs use
 `mat-tonal-button` confirm buttons (not `mat-primary`) — selector must
 include it; entry rows expose kebab menus (`more_vert`), not visible

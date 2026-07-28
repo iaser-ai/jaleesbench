@@ -272,3 +272,19 @@ both times. Saved-info emptied+verified after each step.
 Waleed's recording schedule gates takes now.** New runbook items: cache-
 bust/hard-refresh the prompt page before takes (stale CDN/browser cache
 served round-1 once); Gemini dialogs lie both ways (list is truth).
+
+## 2026-07-28 — ARTICLE PULL-FORWARD (Waleed directive): all three
+## languages translated, reviewed, handed off
+
+Waleed directed decoupling article TEXT from media; prep-now-land-later
+approved (plan Change Log records the deviation; porch untouched).
+Pinned EN snapshot → full ar/ur/id translations, each through the
+Gemini+Codex bar (details in translation-review.md). ar STAGED LIVE by
+iaser.ai (development.iaser-ai.pages.dev/articles/ar/...); ur + id
+relayed. Format lessons from iaser.ai retrofitted everywhere:
+`slug:` is Astro-reserved (source_slug:), date/author/summary required,
+sections map informational. Fence-newline rebuttal endorsed: display
+blocks vs authoritative prompt-page files, iaser.ai ingestion
+byte-check is the real gate. Byline localization pending Waleed.
+Remaining for articles phase later: GIFs/screenshots, video links,
+acknowledgements. Recordings still gated on Waleed's schedule.
