@@ -170,6 +170,22 @@ live-verified ar text was kept unchanged.
 | ur | یہ باقی ہدایات ہیں؛ ان پر پچھلی ہدایات کے ساتھ عمل کریں۔ ان سب کا مقصد ایک ہی ہے: ایسی سچی مدد جو اچھا اثر چھوڑ جائے: | 663 / 772 |
 | id | Berikut sisa panduannya; jalankan bersama panduan sebelumnya. Semuanya menuju satu tujuan: bantuan tulus yang meninggalkan dampak baik: | 747 / 887 |
 
+### Condition-3 counting retest — PASSED ×2 (2026-07-28); 9-cell surface CLOSED
+
+Live page (`iaser.ai/ar/prompt`, round-2 re-vendor; cache-busted after a
+stale-cache first load served round-1 content — recording sessions should
+hard-refresh the prompt page before takes):
+
+| Attempt | Copies byte-exact | Both parts saved (list-verified) | part2 stays Arabic |
+|---|---|---|---|
+| 1 | 563 / 689 ✓ | ✓ | **YES** (602 ar : 12 latin) |
+| 2 | 563 / 689 ✓ | ✓ | **YES** (651 ar : 0 latin) |
+
+Saved-info emptied + verified after each attempt. With this, the full
+verification surface is closed: **ChatGPT 3/3, Claude 3/3, Gemini 3/3**
+(target-language UIs) plus the ar hardening retest ×2 from the live
+page. Only the recording schedule gates takes.
+
 **Publishable knowledge for the article's honest-notes section (Gemini
 saved-info rewriter, Arabic)**: Gemini rewrites every saved entry. For
 Arabic entries the output language depends on how the entry OPENS —

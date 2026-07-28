@@ -256,3 +256,19 @@ Saved-info left EMPTY, verified.
 
 Cohort lesson: with black-box UI automation, VERIFY EFFECTS not dialogs
 — Gemini's dialogs lie in both directions.
+
+## 2026-07-28 — 9-CELL VERIFICATION SURFACE CLOSED
+
+Pre-flight chain resolved the ar-part2 problem end to end:
+(0a) short non-echoing lead-in: saves but goes English → (0b) 2-sentence
+substantive prose lead-in: saves AND stays Arabic (prose-mass finding —
+publishable article knowledge, documented) → (1) round-2 lead-ins for
+all three languages cross-checked (ur/id got Codex register variants) →
+(2) iaser.ai re-vendored byte-exact → (3) counting retest ×2 from the
+live page PASSED: copies byte-exact, saves list-verified, part2 Arabic
+both times. Saved-info emptied+verified after each step.
+
+**Matrix: ChatGPT 3/3 · Claude 3/3 · Gemini 3/3 (+ar hardening ×2). Only
+Waleed's recording schedule gates takes now.** New runbook items: cache-
+bust/hard-refresh the prompt page before takes (stale CDN/browser cache
+served round-1 once); Gemini dialogs lie both ways (list is truth).
