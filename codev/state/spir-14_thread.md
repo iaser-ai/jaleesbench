@@ -215,3 +215,25 @@ re-vendor. 59 tests green.
 check + explicit go. Remaining Phase 4 work (Gemini cells closure →
 per-language recording sessions with Chrome --lang relaunches) is
 screen-dependent and waits.
+
+## 2026-07-28 — Gemini cells CLOSED (2nd session, amended rule); one
+## finding escalated
+
+First visible session ran under EN UI → HARD STOP from architect →
+amended rule: verification must rehearse take conditions (?hl= UIs);
+EN-UI cells VOID. No fault assigned; account was verified clean.
+
+Second session (?hl=ar/ur/id, RTL mirrored, Waleed observing):
+**ALL THREE CELLS PASS** — two-part paste accepted in every language,
+no error-13. End state EMPTY (Delete All + tonal confirm), screenshot-
+verified. EN entries NOT reinstalled (Waleed's explicit baseline).
+
+FINDING escalated: Gemini's rewriter LANGUAGE-SWITCHED Arabic part2
+into English (ur/id stayed in-language; ar part1 verbatim). Hypothesis:
+bare-bullet openings get English summarization; Arabic prose lead-ins
+survive. Recommended fix (b): Arabic lead-in line for part2 → via
+architect → iaser.ai re-vendor. Automation gotchas recorded in README
+(mat-tonal-button confirms, kebab rows, Delete All).
+
+Waiting: architect decision on the ar-part2 fix + recording-session
+scheduling (--lang Chrome relaunches).
