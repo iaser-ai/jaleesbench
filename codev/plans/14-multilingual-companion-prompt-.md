@@ -618,9 +618,12 @@ fail-fast config validation.
   moves; ffmpeg filtergraph is ported, not redesigned.
 
 ## Approval
-- [ ] Plan-approval gate (includes the translated-prompt validation
-      decision — options in spec § Open Questions)
-- [ ] Expert AI consultation complete
+- [x] Plan-approval gate **APPROVED (Waleed, 2026-07-28)**. Validation
+      decision: **Option 1 — no bench validation of translated prompts in
+      this project** (spot-checks only; follow-up project if warranted).
+      No validation phase added; plan proceeds as drafted. Gate record on
+      issue #14.
+- [x] Expert AI consultation complete (round 1; all feedback incorporated)
 
 ## Change Log
 | Date | Change | Reason | Author |
