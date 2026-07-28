@@ -122,6 +122,10 @@ segments, big start shifts) are regressions.
   composite depends on every captured frame having the same geometry.
 - The two-part Gemini paste exists because Gemini's entry rewriter rejects
   the full prompt (error 13). Re-verify per language.
+- **Claude read-after-write lag is minutes**: after Save, reloads keep
+  showing the OLD field value for a long time before flipping. Poll
+  patiently (~3–4 min) before concluding a save failed — two false
+  "did not persist" readings came from exactly this.
 
 ## TTS notes
 

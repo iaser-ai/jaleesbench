@@ -126,3 +126,33 @@ Gemini TTS accepted; NO fallback chain needed. Recorded in tts-spike.md;
 voice=Puck set in all three configs; cache prefixes renamed to
 {ar,ur,id}-puck1 so any future voice change can't reuse stale TTS cache.
 Phase 2 unblocked → porch done → 3-way review.
+
+## 2026-07-28 — Phase 3 translated_prompts: translations done, matrix 6/9,
+## Gemini cells escalated
+
+Phase 2 approved (Gemini/Claude APPROVE, Codex COMMENT → resolved with
+validate_skeleton()). Phase 3 work:
+
+- Translations of GUIDE_MIN v3: ar 1,160 / ur 1,318 / id 1,499 chars —
+  all ≤1,500. Drafted by builder, cross-checked independently by Gemini
+  AND Codex (consult general mode), all reconciled edits applied
+  (record: apps/companion-pipeline/reference/translation-review.md).
+  Notable: Urdu عطر فروش idiom, id re-trimmed twice to fit budget.
+- Configs updated with real prompt_chars + gemini part bounds; prompt-page
+  handoff package built (handoff/prompt-page/ with per-language prompt +
+  two-part split files).
+- LIVE entry matrix vs real assistant UIs: ChatGPT 3/3 PASS, Claude 3/3
+  PASS, Gemini 3 cells INCONCLUSIVE (no error-13 seen, but backgrounded-
+  window automation couldn't confirm entries — the seed's documented
+  visibility gotcha; 2 attempts, stopped per the 2-strikes rule).
+- DISCOVERY for the runbook: Claude read-after-write lag is MINUTES —
+  false persistence failures until you poll ~3-4 min.
+- ACCOUNT STATE (rule honored): ChatGPT restored EN 1,492 ✓ verified;
+  Claude restored EN 1,492 ✓ verified (after a mid-run state where the
+  id translation had propagated — caught and corrected); Gemini
+  saved-info needs MANUAL verification (expected 2 EN entries; strays
+  possible from the two attempts).
+
+**WAITING ON ARCHITECT**: Gemini saved-info eyeball + choice on closing
+the 3 Gemini cells (visible-window retry now vs Phase 4 on-camera
+verification).

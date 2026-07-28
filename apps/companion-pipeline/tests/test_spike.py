@@ -41,12 +41,40 @@ def test_skeleton_language_fails_fast_naming_missing_piece(code):
 @pytest.mark.parametrize("code", ["ar", "ur", "id"])
 def test_skeleton_core_passes_validation(code):
     # The plan's "config skeletons pass validation" criterion: the core
-    # (config.toml + spellouts.toml) must be fully valid, with only the
-    # later-phase assets reported as missing.
+    # (config.toml + spellouts.toml) must be fully valid, with only
+    # not-yet-delivered phase assets reported as missing.
     missing = validate_skeleton(code)
-    assert "prompt.txt" in missing            # translated_prompts phase
+    assert "prompt.txt" not in missing        # delivered: translated_prompts
     assert "vo/chatgpt.toml" in missing       # localized_content phase
     assert "cards/intro.html" in missing      # localized_content phase
+
+
+@pytest.mark.parametrize("code", ["ar", "ur", "id"])
+def test_translated_prompt_fits_entry_limits(code):
+    # ChatGPT's custom-instructions field caps at ~1,500 chars (EN
+    # GUIDE_MIN was sized to 1,492 for exactly this reason).
+    import tomllib
+    from companion_pipeline.config import LANGUAGES_DIR
+    text = (LANGUAGES_DIR / code / "prompt.txt").read_text(
+        encoding="utf-8").rstrip("\n")
+    assert 0 < len(text) <= 1500
+    with open(LANGUAGES_DIR / code / "config.toml", "rb") as f:
+        raw = tomllib.load(f)
+    assert raw["recording"]["prompt_chars"] == len(text)
+    # URL and honorific survive translation byte-for-byte
+    assert ("https://api.askansari.ai/api/v2/mcp-complete"
+            "?q=your+question&src=jbprompt") in text
+    assert "ﷺ" in text
+    # the 3+3 bullet split for Gemini's two-part paste stays within the
+    # configured clipboard bounds
+    bullets = text.split("\n- ")
+    assert len(bullets) == 7  # header + 6 bullets, mirroring EN
+    p1 = bullets[0] + "\n- " + "\n- ".join(bullets[1:4])
+    p2 = "- " + "\n- ".join(bullets[4:])
+    lo = raw["recording"]["gemini_part_min"]
+    hi = raw["recording"]["gemini_part_max"]
+    assert lo < len(p1) < hi
+    assert lo < len(p2) < hi
 
 
 def test_complete_language_has_nothing_missing():

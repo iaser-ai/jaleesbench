@@ -31,10 +31,9 @@ css = """
 [recording]
 prompt_url = "https://s.iaser.ai/prompt"
 prompt_url_display = "s.iaser.ai/prompt"
-# PENDING: set from the reviewed Urdu translation (translated_prompts).
-prompt_chars = 0
-gemini_part_min = 0
-gemini_part_max = 0
+prompt_chars = 1318
+gemini_part_min = 594
+gemini_part_max = 723
 # PENDING: localized card strings (localized_content phase).
 card_goto_line = "اپنے براؤزر میں جائیں"
 card_open_line = "اب کھولیں"
