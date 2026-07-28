@@ -237,3 +237,22 @@ architect → iaser.ai re-vendor. Automation gotchas recorded in README
 
 Waiting: architect decision on the ar-part2 fix + recording-session
 scheduling (--lang Chrome relaunches).
+
+## 2026-07-28 — Lead-ins reviewed+re-vendored; condition-3 retest BLOCKED
+## by a NEW Gemini behavior; escalated
+
+Lead-ins passed review (Gemini+Codex; Codex's canonical-echo variants
+adopted) → iaser.ai re-vendored byte-exact → condition-3 retest ran.
+Results: live-page copies byte-exact (re-vendor solid); ar part1 saves
+IN ARABIC near-verbatim. TWO new Gemini gotchas: (1) submit dialog shows
+FALSE retryable errors while the entry actually saved (blind retries →
+duplicates; only the LIST is truth — runbook updated); (2) BLOCKER:
+part2 WITH the lead-in is silently dropped every time (5 list-verified
+attempts) — hypothesis: the canonical-echo lead-in makes Gemini dedupe
+part2 against part1. The very property the review selected for is the
+trap. Proposed non-echoing rewording (وتذكّر أيضًا هذه التوجيهات:) —
+re-enters conditions (1)-(3). ur/id lead-ins share the echo property.
+Saved-info left EMPTY, verified.
+
+Cohort lesson: with black-box UI automation, VERIFY EFFECTS not dialogs
+— Gemini's dialogs lie in both directions.
