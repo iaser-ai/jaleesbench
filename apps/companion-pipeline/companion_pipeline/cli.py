@@ -91,14 +91,15 @@ def all(lang: str = typer.Option(..., help="Language code, e.g. en")):
 @app.command()
 def languages():
     """List language configs (incomplete ones show what's missing)."""
-    from .config import ConfigError, available_languages
+    from .config import available_languages, validate_skeleton
     for code in available_languages():
-        try:
-            cfg = load_language(code)
+        missing = validate_skeleton(code)  # raises if the core is invalid
+        cfg = None if missing else load_language(code)
+        if cfg:
             print(f"{code}  {cfg.name}  dir={cfg.direction}  "
                   f"voice={cfg.tts.voice} ({cfg.tts.engine})")
-        except ConfigError as e:
-            print(f"{code}  INCOMPLETE — {e}")
+        else:
+            print(f"{code}  skeleton OK — awaiting {', '.join(missing)}")
 
 
 @app.command("spike-tts")

@@ -3,7 +3,7 @@
 import pytest
 
 from companion_pipeline.config import (
-    ConfigError, available_languages, load_language)
+    ConfigError, available_languages, load_language, validate_skeleton)
 from companion_pipeline.spike import CANDIDATE_VOICES, SAMPLE_TEXTS, run_spike
 
 
@@ -36,6 +36,34 @@ def test_skeleton_language_fails_fast_naming_missing_piece(code):
     # the localized_content / translated_prompts phases).
     with pytest.raises(ConfigError, match="missing required file"):
         load_language(code)
+
+
+@pytest.mark.parametrize("code", ["ar", "ur", "id"])
+def test_skeleton_core_passes_validation(code):
+    # The plan's "config skeletons pass validation" criterion: the core
+    # (config.toml + spellouts.toml) must be fully valid, with only the
+    # later-phase assets reported as missing.
+    missing = validate_skeleton(code)
+    assert "prompt.txt" in missing            # translated_prompts phase
+    assert "vo/chatgpt.toml" in missing       # localized_content phase
+    assert "cards/intro.html" in missing      # localized_content phase
+
+
+def test_complete_language_has_nothing_missing():
+    assert validate_skeleton("en") == []
+
+
+def test_skeleton_validation_rejects_broken_core(tmp_path, monkeypatch):
+    import shutil
+    from companion_pipeline import config
+    langs = tmp_path / "languages"
+    langs.mkdir()
+    shutil.copytree(config.LANGUAGES_DIR / "ar", langs / "ar")
+    cfg = langs / "ar" / "config.toml"
+    cfg.write_text(cfg.read_text().replace('voice = "Puck"', ""))
+    monkeypatch.setattr(config, "LANGUAGES_DIR", langs)
+    with pytest.raises(ConfigError, match="voice"):
+        validate_skeleton("ar")
 
 
 def test_rtl_skeletons_declare_direction_and_fonts():

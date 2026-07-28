@@ -112,13 +112,11 @@ def available_languages() -> list[str]:
                   if (p / "config.toml").exists())
 
 
-def load_language(lang: str) -> LanguageConfig:
-    base = LANGUAGES_DIR / lang
-    if not base.is_dir():
-        raise ConfigError(
-            f"unknown language {lang!r} — expected directory {base} "
-            f"(available: {', '.join(available_languages()) or 'none'})")
-    ctx = lang
+def _parse_core(base: Path, ctx: str) -> dict:
+    """Validate + parse the phase-independent core of a language: what
+    config.toml and spellouts.toml must contain from the moment a language
+    skeleton exists. Later-phase assets (prompt.txt, vo/, cards/) are NOT
+    required here — load_language() layers those on top."""
     cfg = _load_toml(base / "config.toml", ctx)
 
     direction = _need(cfg, "dir", ctx)
@@ -137,6 +135,52 @@ def load_language(lang: str) -> LanguageConfig:
 
     rec = _need(cfg, "recording", ctx)
     yt = _need(cfg, "youtube", ctx)
+
+    sp = _load_toml(base / "spellouts.toml", f"{ctx}/spellouts")
+    spellouts = tuple(
+        (_need(r, "spoken", f"{ctx}/spellouts"),
+         _need(r, "written", f"{ctx}/spellouts"))
+        for r in sp.get("replacements", []))
+
+    return {
+        "name": _need(cfg, "name", ctx),
+        "direction": direction,
+        "tts": tts,
+        "card_css": cfg.get("cards", {}).get("css", ""),
+        "rec": rec,
+        "yt": yt,
+        "spellouts": spellouts,
+    }
+
+
+def _lang_base(lang: str) -> Path:
+    base = LANGUAGES_DIR / lang
+    if not base.is_dir():
+        raise ConfigError(
+            f"unknown language {lang!r} — expected directory {base} "
+            f"(available: {', '.join(available_languages()) or 'none'})")
+    return base
+
+
+def validate_skeleton(lang: str) -> list[str]:
+    """Validate a language's core config without requiring later-phase
+    assets. Returns the later-phase files still missing (empty when the
+    language is complete). Raises ConfigError when the core itself is
+    invalid — a skeleton must always have a fully valid core."""
+    base = _lang_base(lang)
+    _parse_core(base, lang)
+    later_phase = [base / "prompt.txt",
+                   *(base / "vo" / f"{v}.toml" for v in VIDEOS),
+                   base / "cards" / "intro.html",
+                   base / "cards" / "outro.html"]
+    return [str(p.relative_to(base)) for p in later_phase if not p.exists()]
+
+
+def load_language(lang: str) -> LanguageConfig:
+    base = _lang_base(lang)
+    ctx = lang
+    core = _parse_core(base, ctx)
+    rec, yt = core["rec"], core["yt"]
 
     videos: dict[str, VideoConfig] = {}
     for name in VIDEOS:
@@ -159,18 +203,12 @@ def load_language(lang: str) -> LanguageConfig:
             segments=segs,
         )
 
-    sp = _load_toml(base / "spellouts.toml", f"{ctx}/spellouts")
-    spellouts = tuple(
-        (_need(r, "spoken", f"{ctx}/spellouts"),
-         _need(r, "written", f"{ctx}/spellouts"))
-        for r in sp.get("replacements", []))
-
     return LanguageConfig(
         lang=lang,
-        name=_need(cfg, "name", ctx),
-        direction=direction,
-        tts=tts,
-        card_css=cfg.get("cards", {}).get("css", ""),
+        name=core["name"],
+        direction=core["direction"],
+        tts=core["tts"],
+        card_css=core["card_css"],
         prompt=_read(base / "prompt.txt", ctx),
         prompt_url=_need(rec, "prompt_url", f"{ctx}.recording"),
         prompt_url_display=_need(rec, "prompt_url_display",
@@ -185,7 +223,7 @@ def load_language(lang: str) -> LanguageConfig:
         account_label=_need(rec, "account_label", f"{ctx}.recording"),
         youtube_language=_need(yt, "video_language", f"{ctx}.youtube"),
         videos=videos,
-        spellouts=spellouts,
+        spellouts=core["spellouts"],
         intro_card_html=_read(base / "cards" / "intro.html", ctx),
         outro_card_html=_read(base / "cards" / "outro.html", ctx),
     )
