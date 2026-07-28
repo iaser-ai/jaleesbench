@@ -2,24 +2,28 @@
 title: "ایک آزمودہ پرامپٹ جو آپ کے اے آئی کو آپ کے دین کا بہتر ساتھی بنائے"
 subtitle: "جلیس بنچ کی رہنما صیاغت، ایک ایسے پیراگراف میں سمٹی ہوئی جسے آپ ChatGPT، Claude یا Gemini میں چسپاں کر سکیں"
 lang: ur
+date: 2026-07-28
+author: "Dr. Waleed Kadous"  # EN byline form until Waleed decides on localization
+summary: "ایک باعمل مسلمان کے لیے مثالی اے آئی ساتھی وہ معاون ہے جو اسی کام کے لیے بنایا گیا ہو۔ لیکن اگر آپ ChatGPT، Claude یا Gemini استعمال کرتے ہیں، تب بھی ہماری تحقیق بتاتی ہے کہ ایک چھوٹی سی ترتیب کی تبدیلی سے آپ انہیں بہتر روحانی صحبت بنا سکتے ہیں — اُس جلیسِ صالح سے قریب تر جس کا ذکر نبی ﷺ نے فرمایا۔"
 dir: rtl
-slug: jaleesbench-companion-prompt
+source_slug: jaleesbench-companion-prompt
 translation_of: /articles/jaleesbench-companion-prompt
+prompt_blocks: "display-only — markdown fencing adds a syntactic trailing newline; the AUTHORITATIVE byte-exact copy texts are the prompt_page files (handoff/prompt-page/<lang>/)"
 prompt_page: /ur/prompt
 localized_videos: pending  # اردو ویڈیوز زیرِ تیاری — ہر زبان کے یوٹیوب شناختی نمبر ریکارڈنگ مکمل ہونے پر شامل ہوں گے
 localized_media: pending   # اردو انٹرفیس کے اسکرین شاٹ/GIF ریکارڈنگ مکمل ہونے پر شامل ہوں گے
 sections:
-  - { en_slug: the-prompt, heading: "پرامپٹ", slug: "پرامپٹ" }
-  - { en_slug: how-to-set-it-up, heading: "ترتیب کا طریقہ", slug: "ترتیب-کا-طریقہ" }
-  - { en_slug: chatgpt, heading: "ChatGPT", slug: "chatgpt" }
-  - { en_slug: claude, heading: "Claude", slug: "claude" }
-  - { en_slug: gemini, heading: "Gemini", slug: "gemini" }
-  - { en_slug: one-off-fallback, heading: "ایک بار کا متبادل", slug: "ایک-بار-کا-متبادل" }
-  - { en_slug: about-the-ansari-line, heading: "انصاری والی سطر کے بارے میں", slug: "انصاری-سطر" }
-  - { en_slug: check-that-its-working, heading: "تصدیق کریں کہ یہ کام کر رہا ہے", slug: "تصدیق" }
-  - { en_slug: where-it-comes-from, heading: "یہ پرامپٹ کہاں سے آیا", slug: "کہاں-سے-آیا" }
-  - { en_slug: does-the-short-version-still-work, heading: "کیا مختصر نسخہ بھی کام کرتا ہے؟", slug: "مختصر-نسخہ" }
-  - { en_slug: what-this-prompt-is-not, heading: "یہ پرامپٹ کیا نہیں ہے", slug: "یہ-کیا-نہیں-ہے" }
+  - { en_slug: the-prompt, heading: "پرامپٹ", anchor: "پرامپٹ" }
+  - { en_slug: how-to-set-it-up, heading: "ترتیب کا طریقہ", anchor: "ترتیب-کا-طریقہ" }
+  - { en_slug: chatgpt, heading: "ChatGPT", anchor: "chatgpt" }
+  - { en_slug: claude, heading: "Claude", anchor: "claude" }
+  - { en_slug: gemini, heading: "Gemini", anchor: "gemini" }
+  - { en_slug: one-off-fallback, heading: "ایک بار کا متبادل", anchor: "ایک-بار-کا-متبادل" }
+  - { en_slug: about-the-ansari-line, heading: "انصاری والی سطر کے بارے میں", anchor: "انصاری-سطر" }
+  - { en_slug: check-that-its-working, heading: "تصدیق کریں کہ یہ کام کر رہا ہے", anchor: "تصدیق" }
+  - { en_slug: where-it-comes-from, heading: "یہ پرامپٹ کہاں سے آیا", anchor: "کہاں-سے-آیا" }
+  - { en_slug: does-the-short-version-still-work, heading: "کیا مختصر نسخہ بھی کام کرتا ہے؟", anchor: "مختصر-نسخہ" }
+  - { en_slug: what-this-prompt-is-not, heading: "یہ پرامپٹ کیا نہیں ہے", anchor: "یہ-کیا-نہیں-ہے" }
 ---
 
 **خلاصہ:** ایک باعمل مسلمان کے لیے مثالی اے آئی ساتھی وہ معاون ہے جو اسی کام کے لیے بنایا گیا ہو — اسلامی اے آئی معاونات جیسے انصاری (Ansari)، Islamify یا DeenBuddy اپنے جوابات شروع ہی سے اسلامی مصادر پر قائم کرتے ہیں۔ لیکن اگر آپ ChatGPT، Claude یا Gemini استعمال کرتے ہیں، تب بھی ہماری تحقیق بتاتی ہے کہ ایک چھوٹی سی ترتیب کی تبدیلی سے آپ انہیں بہتر روحانی صحبت بنا سکتے ہیں — اُس جلیسِ صالح سے قریب تر جس کا ذکر نبی ﷺ نے فرمایا۔ یہ مشکل نہیں؛ نیچے ہم پہلے کی حالت، ترتیب کی تبدیلی، اور بعد کی حالت دکھاتے ہیں۔

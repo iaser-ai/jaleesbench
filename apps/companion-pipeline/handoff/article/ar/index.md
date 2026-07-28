@@ -2,24 +2,28 @@
 title: "موجِّه مُختبَر يجعل مساعدك الذكي رفيقًا أفضل لدينك"
 subtitle: "صياغة جليس بنش الموجَّهة، مختصرةً في فقرة تلصقها في ChatGPT أو Claude أو Gemini"
 lang: ar
+date: 2026-07-28
+author: "Dr. Waleed Kadous"  # EN byline form until Waleed decides on localization
+summary: "الرفيق الذكي المثالي للمسلم الملتزم هو مساعدٌ بُني لهذه المهمة أصلًا. لكن حتى لو كنت تستخدم ChatGPT أو Claude أو Gemini، يُظهر بحثنا أن بإمكانك جعلها صحبةً روحيةً أفضل — أقرب إلى الجليس الصالح الذي وصفه النبي ﷺ — بتعديل صغير في الإعدادات."
 dir: rtl
-slug: jaleesbench-companion-prompt
+source_slug: jaleesbench-companion-prompt
 translation_of: /articles/jaleesbench-companion-prompt
+prompt_blocks: "display-only — markdown fencing adds a syntactic trailing newline; the AUTHORITATIVE byte-exact copy texts are the prompt_page files (handoff/prompt-page/<lang>/)"
 prompt_page: /ar/prompt
 localized_videos: pending  # فيديوهات معرَّبة قادمة — تُدرَج معرِّفات يوتيوب لكل لغة عند اكتمال التسجيلات
 localized_media: pending   # لقطات الشاشة/صور GIF بواجهات عربية تُدرَج عند اكتمال التسجيلات
 sections:
-  - { en_slug: the-prompt, heading: "الموجِّه", slug: "الموجه" }
-  - { en_slug: how-to-set-it-up, heading: "طريقة الإعداد", slug: "طريقة-الإعداد" }
-  - { en_slug: chatgpt, heading: "ChatGPT", slug: "chatgpt" }
-  - { en_slug: claude, heading: "Claude", slug: "claude" }
-  - { en_slug: gemini, heading: "Gemini", slug: "gemini" }
-  - { en_slug: one-off-fallback, heading: "البديل لمرّة واحدة", slug: "بديل-لمرة-واحدة" }
-  - { en_slug: about-the-ansari-line, heading: "عن سطر أنصاري", slug: "سطر-أنصاري" }
-  - { en_slug: check-that-its-working, heading: "تأكّد أنه يعمل", slug: "تأكد-أنه-يعمل" }
-  - { en_slug: where-it-comes-from, heading: "من أين جاء هذا الموجِّه", slug: "من-أين-جاء" }
-  - { en_slug: does-the-short-version-still-work, heading: "هل ما تزال النسخة المختصرة تعمل؟", slug: "النسخة-المختصرة" }
-  - { en_slug: what-this-prompt-is-not, heading: "ما ليس هذا الموجِّه", slug: "ما-ليس-هذا-الموجه" }
+  - { en_slug: the-prompt, heading: "الموجِّه", anchor: "الموجه" }
+  - { en_slug: how-to-set-it-up, heading: "طريقة الإعداد", anchor: "طريقة-الإعداد" }
+  - { en_slug: chatgpt, heading: "ChatGPT", anchor: "chatgpt" }
+  - { en_slug: claude, heading: "Claude", anchor: "claude" }
+  - { en_slug: gemini, heading: "Gemini", anchor: "gemini" }
+  - { en_slug: one-off-fallback, heading: "البديل لمرّة واحدة", anchor: "بديل-لمرة-واحدة" }
+  - { en_slug: about-the-ansari-line, heading: "عن سطر أنصاري", anchor: "سطر-أنصاري" }
+  - { en_slug: check-that-its-working, heading: "تأكّد أنه يعمل", anchor: "تأكد-أنه-يعمل" }
+  - { en_slug: where-it-comes-from, heading: "من أين جاء هذا الموجِّه", anchor: "من-أين-جاء" }
+  - { en_slug: does-the-short-version-still-work, heading: "هل ما تزال النسخة المختصرة تعمل؟", anchor: "النسخة-المختصرة" }
+  - { en_slug: what-this-prompt-is-not, heading: "ما ليس هذا الموجِّه", anchor: "ما-ليس-هذا-الموجه" }
 ---
 
 **الخلاصة:** الرفيق الذكي المثالي للمسلم الملتزم هو مساعدٌ بُني لهذه المهمة أصلًا — فمساعدات الذكاء الاصطناعي الإسلامية مثل أنصاري (Ansari) وIslamify وDeenBuddy تؤسِّس أجوبتها على المصادر الإسلامية من البداية. لكن حتى لو كنت تستخدم ChatGPT أو Claude أو Gemini، يُظهر بحثنا أن بإمكانك جعلها صحبةً روحيةً أفضل — أقرب إلى الجليس الصالح الذي وصفه النبي ﷺ — بتعديل صغير في الإعدادات. الأمر ليس صعبًا، وفيما يلي نعرض لك الحال قبل التعديل، وخطوات التعديل، والحال بعده.
