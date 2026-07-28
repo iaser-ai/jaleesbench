@@ -133,6 +133,13 @@ segments, big start shifts) are regressions.
   Delete All button (+ tonal confirm) is the reliable bulk cleanup; the
   entry rewriter paraphrases every saved entry and can even
   language-switch (observed: Arabic part 2 rewritten into English).
+- **Gemini submit dialogs LIE in both directions**: a "retryable error"
+  dialog can appear when the entry actually SAVED (blind retries create
+  duplicates), and a clean dialog-close can hide a silent drop (the
+  rewriter appears to dedupe entries that closely echo an existing one).
+  The ONLY save signal is the entry list itself — reload and check it
+  grew before retrying, and select dialog buttons by TEXT (button order
+  varies between dialog types).
 
 ## TTS notes
 

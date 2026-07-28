@@ -99,6 +99,32 @@ the architect to iaser.ai for re-vendor + byte-exact re-verify; THEN the
 ar cells retest under `?hl=ar` copying from the live page, **≥2 attempts**,
 part 2 must survive in Arabic both times.
 
+### Condition-3 retest attempt (2026-07-28, live page, ?hl=ar) — BLOCKED on a new finding
+
+- **Live-page copy step: VERIFIED byte-exact repeatedly** (part1 563,
+  part2-with-lead-in 635) — the iaser.ai re-vendor is solid.
+- **part1: saves in Arabic near-verbatim** (evidence screenshots), BUT
+  Gemini's submit dialog frequently shows a **false retryable error while
+  the entry actually saved server-side** — blind retries create
+  duplicates. Truth is the LIST, never the dialog (runbook updated; the
+  final flow verifies by list growth).
+- **NEW FINDING — part2 WITH the lead-in never saves**: five submits,
+  list-truth verified, silently dropped every time; the lead-in-less
+  part2 had saved fine alongside part1 earlier the same day. Working
+  hypothesis: the lead-in **echoes part1's opening** (وأنت رفيقٌ لمسلمٍ
+  ملتزم), and Gemini's rewriter dedupes/discards the entry as a
+  near-duplicate of the existing part1. The canonical-echo property was
+  exactly what the review selected for — it appears to be the trap.
+  (Same-day write volume means rate-limiting can't be fully excluded,
+  but part1 succeeding immediately before part2's failures points at
+  content, not rate.)
+- **End state: saved-info EMPTY**, verified + screenshot
+  (`out/gemini-cells/71-empty-final.png`).
+- Escalated: lead-in likely needs rewording to NOT echo part1 (e.g. a
+  bare continuation phrase such as وتذكّر أيضًا هذه التوجيهات:) — which
+  re-enters conditions (1) review and (2) re-vendor; ur/id lead-ins share
+  the echo property and should be re-examined in the same pass.
+
 **Automation notes fed to the runbook**: Gemini dialogs use
 `mat-tonal-button` confirm buttons (not `mat-primary`) — selector must
 include it; entry rows expose kebab menus (`more_vert`), not visible
