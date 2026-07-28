@@ -638,6 +638,7 @@ fail-fast config validation.
 |------|--------|--------|--------|
 | 2026-07-28 | Initial draft | — | builder spir-14 |
 | 2026-07-28 | Seed-access prerequisite; handoff/ path fixed; Phase 5 split (now 8 phases); EN article snapshot pinned; deps named | 3-way plan review round 1 | builder spir-14 |
+| 2026-07-28 | **Architect-approved deviation (Waleed directive): article-TEXT work pulled forward into the recordings phase's schedule slack** — EN snapshot pinned + per-language article translation/review/handoff run now (ar first, piecewise via architect relay; video-links line omitted with 'localized videos pending' note). Phase 8 becomes completion+verification (GIFs, video links, acknowledgements). Phase structure and porch state unchanged. | Waleed directive relayed 2026-07-28; prep-now-land-later approved | builder spir-14 |
 
 ## Notes
 - Phase commits use `[Spec 14][Phase: <id>] type: description`; one atomic
