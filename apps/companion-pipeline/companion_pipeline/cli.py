@@ -74,6 +74,21 @@ def upload(lang: str = typer.Option(...),
 
 
 @app.command()
+def all(lang: str = typer.Option(..., help="Language code, e.g. en")):
+    """Run the full automatable chain for a language: build + captions for
+    all three videos. (record and upload are excluded — they need a live,
+    logged-in CDP Chrome; run them explicitly.)"""
+    from .assemble import build_video
+    from .captions import build_srt
+    cfg = load_language(lang)
+    for v in VIDEOS:
+        print(f"=== build {lang}/{v} ===")
+        build_video(cfg, v)
+        print(f"=== captions {lang}/{v} ===")
+        build_srt(cfg, v)
+
+
+@app.command()
 def languages():
     """List available language configs."""
     from .config import available_languages
