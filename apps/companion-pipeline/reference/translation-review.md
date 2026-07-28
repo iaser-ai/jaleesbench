@@ -76,6 +76,29 @@ for iaser.ai re-vendor): add a one-line Arabic lead-in to part2, shift
 the split boundary, or re-test for stochastic variation. Decision
 pending; not acted on unilaterally.
 
+### Part-2 lead-ins (fix for the Arabic language flip — architect decision (b), 2026-07-28)
+
+Per-language prose lead-in prepended to **Gemini part 2 only** (config
+`gemini_part2_leadin`; never part of the canonical prompt — ChatGPT/
+Claude cells remain valid). Applied proactively to ur/id too (their
+part 2 also opened with a bare bullet). Review bar met: candidates
+drafted by the builder, independently reviewed by Gemini (ACCEPT ×2,
+ACCEPT-WITH-EDITS for ur grammar mood) and Codex (ACCEPT-WITH-EDITS ×3,
+canonical-register fidelity); Codex's variants adopted — they echo each
+language's canonical opening exactly and resolve Gemini's ur concern.
+Raw reviews: `codev/projects/.../leadin-review-{gemini,codex}.txt`.
+
+| Lang | Final lead-in | Part sizes (p1/p2) |
+|---|---|---|
+| ar | وتذكّر أيضًا، وأنت رفيقٌ لمسلمٍ ملتزم: | 563 / 635 |
+| ur | یہ بھی یاد رکھیں، آپ ایک ایسے مسلمان کے ساتھی ہیں جو اپنے دین کے مطابق جینا چاہتا ہے: | 663 / 740 |
+| id | Ingat juga, sebagai pendamping seorang Muslim yang ingin hidup sesuai imannya: | 747 / 830 |
+
+Sequenced next (architect conditions 2–3): revised part files route via
+the architect to iaser.ai for re-vendor + byte-exact re-verify; THEN the
+ar cells retest under `?hl=ar` copying from the live page, **≥2 attempts**,
+part 2 must survive in Arabic both times.
+
 **Automation notes fed to the runbook**: Gemini dialogs use
 `mat-tonal-button` confirm buttons (not `mat-primary`) — selector must
 include it; entry rows expose kebab menus (`more_vert`), not visible

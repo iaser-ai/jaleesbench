@@ -67,6 +67,12 @@ class LanguageConfig:
     prompt_chars: int
     gemini_part_min: int      # expected char bounds for the two-part paste
     gemini_part_max: int
+    # Prose line prepended to Gemini part 2 ONLY (not part of the
+    # canonical prompt): Gemini's entry rewriter keeps entries in-language
+    # when they open with prose but can language-switch bare-bullet
+    # openings (observed: Arabic part 2 rewritten into English). Empty
+    # for EN (shipped without it).
+    gemini_part2_leadin: str
     card_goto_line: str       # recorded card text: "In your browser, go to"
     card_open_line: str       # recorded card text: "Now open"
     account_label: str
@@ -230,6 +236,8 @@ def load_language(lang: str) -> LanguageConfig:
                                   f"{ctx}.recording")),
         gemini_part_max=int(_need(rec, "gemini_part_max",
                                   f"{ctx}.recording")),
+        gemini_part2_leadin=_need(rec, "gemini_part2_leadin",
+                                  f"{ctx}.recording"),
         card_goto_line=_need(rec, "card_goto_line", f"{ctx}.recording"),
         card_open_line=_need(rec, "card_open_line", f"{ctx}.recording"),
         account_label=_need(rec, "account_label", f"{ctx}.recording"),
@@ -239,6 +247,23 @@ def load_language(lang: str) -> LanguageConfig:
         intro_card_html=_read(base / "cards" / "intro.html", ctx),
         outro_card_html=_read(base / "cards" / "outro.html", ctx),
     )
+
+
+def gemini_parts(cfg: LanguageConfig) -> tuple[str, str]:
+    """The two Gemini saved-info paste blocks: header + first three
+    bullets, then (optional prose lead-in +) the last three bullets.
+    Single source of truth — the prompt page's part blocks, the recording
+    driver's clipboard asserts, and the tests all derive from this."""
+    bullets = cfg.prompt.split("\n- ")
+    if len(bullets) != 7:
+        raise ConfigError(
+            f"[{cfg.lang}] prompt must be header + 6 bullets for the "
+            f"two-part split, found {len(bullets) - 1} bullets")
+    p1 = bullets[0] + "\n- " + "\n- ".join(bullets[1:4])
+    tail = "- " + "\n- ".join(bullets[4:])
+    p2 = (cfg.gemini_part2_leadin + "\n" + tail
+          if cfg.gemini_part2_leadin else tail)
+    return p1, p2
 
 
 def gemini_api_key() -> str:

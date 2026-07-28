@@ -69,12 +69,16 @@ def test_translated_prompt_fits_entry_limits(code):
     assert ("https://api.askansari.ai/api/v2/mcp-complete"
             "?q=your+question&src=jbprompt") in text
     assert "ﷺ" in text
-    # the 3+3 bullet split for Gemini's two-part paste stays within the
+    # the two-part split (with the part-2 prose lead-in) stays within the
     # configured clipboard bounds
     bullets = text.split("\n- ")
     assert len(bullets) == 7  # header + 6 bullets, mirroring EN
+    leadin = raw["recording"]["gemini_part2_leadin"]
+    assert leadin, ("ar/ur/id part 2 must carry a prose lead-in — "
+                    "Gemini's rewriter language-switches bare-bullet "
+                    "openings (observed for Arabic)")
     p1 = bullets[0] + "\n- " + "\n- ".join(bullets[1:4])
-    p2 = "- " + "\n- ".join(bullets[4:])
+    p2 = leadin + "\n" + "- " + "\n- ".join(bullets[4:])
     lo = raw["recording"]["gemini_part_min"]
     hi = raw["recording"]["gemini_part_max"]
     assert lo < len(p1) < hi
@@ -101,15 +105,22 @@ def test_skeleton_validation_rejects_broken_core(tmp_path, monkeypatch):
 @pytest.mark.parametrize("code", ["ar", "ur", "id"])
 def test_handoff_prompt_package_integrity(code):
     # The prompt-page handoff must be byte-identical to the canonical
-    # prompt, and the two Gemini parts must reassemble into it exactly.
+    # prompt, and the two Gemini part files must equal the shared split
+    # (part 2 = prose lead-in + last three bullets; the lead-in exists
+    # ONLY in the parts rendering, never in the canonical prompt).
+    import tomllib
     from companion_pipeline.config import LANGUAGES_DIR, PIPELINE_ROOT
     canonical = (LANGUAGES_DIR / code / "prompt.txt").read_text(
         encoding="utf-8")
+    with open(LANGUAGES_DIR / code / "config.toml", "rb") as f:
+        leadin = tomllib.load(f)["recording"]["gemini_part2_leadin"]
     hand = PIPELINE_ROOT / "handoff" / "prompt-page" / code
     assert (hand / "prompt.txt").read_text(encoding="utf-8") == canonical
     p1 = (hand / "gemini-part1.txt").read_text(encoding="utf-8")
     p2 = (hand / "gemini-part2.txt").read_text(encoding="utf-8")
-    assert p1 + "\n" + p2 == canonical
+    assert p2.startswith(leadin + "\n")
+    assert leadin not in canonical
+    assert p1 + "\n" + p2.removeprefix(leadin + "\n") == canonical
 
 
 def test_rtl_skeletons_declare_direction_and_fonts():

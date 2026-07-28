@@ -28,6 +28,7 @@ copy_button_label = "Copy prompt"
 prompt_chars = 1492
 # Gemini two-part paste: expected clipboard size bounds per part.
 gemini_part_min = 700
+gemini_part2_leadin = ""
 gemini_part_max = 800
 # On-screen card text recorded into the clip (localized per language).
 card_goto_line = "In your browser, go to"

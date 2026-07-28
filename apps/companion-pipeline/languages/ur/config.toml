@@ -33,8 +33,9 @@ prompt_url = "https://iaser.ai/ur/prompt"
 prompt_url_display = "iaser.ai/ur/prompt"
 copy_button_label = "Copy"  # staged pages use plain "Copy" x3 (full, part1, part2)
 prompt_chars = 1318
-gemini_part_min = 594
-gemini_part_max = 723
+gemini_part_min = 603
+gemini_part2_leadin = "یہ بھی یاد رکھیں، آپ ایک ایسے مسلمان کے ساتھی ہیں جو اپنے دین کے مطابق جینا چاہتا ہے:"
+gemini_part_max = 800
 # PENDING: localized card strings (localized_content phase).
 card_goto_line = "اپنے براؤزر میں جائیں"
 card_open_line = "اب کھولیں"
