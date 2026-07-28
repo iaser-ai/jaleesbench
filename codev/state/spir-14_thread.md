@@ -199,3 +199,19 @@ launch command.
    the LIVE page (drivers assert clipboard == prompt_chars); iaser.ai
    must stage/publish per-language prompt pages (even unlisted paths)
    before recording — relay request sent.
+
+## 2026-07-28 — Prompt pages STAGED (iaser.ai); wired into pipeline;
+## HOLD on takes until Waleed's explicit go
+
+iaser.ai staged + byte-verified unlisted pages: iaser.ai/{ar,ur,id}/prompt
+(3 pre blocks each: full + gemini part1/2; plain 'Copy' buttons ×3 —
+NOT 'Copy prompt' like EN — and each flashes the copied char count:
+that flash is the on-camera honesty check for takes). Probed read-only,
+wired into configs (real URLs, copy_button_label now config-driven) and
+drivers. Translation revisions route through the architect for their
+re-vendor. 59 tests green.
+
+**HOLD**: no visible-window session, no takes, until Waleed's baseline
+check + explicit go. Remaining Phase 4 work (Gemini cells closure →
+per-language recording sessions with Chrome --lang relaunches) is
+screen-dependent and waits.
