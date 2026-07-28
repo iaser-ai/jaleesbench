@@ -1,0 +1,4 @@
+# Regenerable build artifacts only — inputs/, languages/, reference/, and
+# handoff/ are committed. out/ (plus the local venv) is all that's ignored.
+out/
+.venv/

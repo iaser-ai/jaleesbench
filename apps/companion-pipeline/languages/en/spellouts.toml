@@ -1,0 +1,9 @@
+# Spoken spell-outs -> written form for captions. Applied in order:
+# keep longer patterns first so substrings don't clobber them.
+[[replacements]]
+spoken = "s dot I-A-S-E-R dot A-I, slash prompt"
+written = "s.iaser.ai/prompt"
+
+[[replacements]]
+spoken = "I-A-S-E-R dot A-I"
+written = "iaser.ai"

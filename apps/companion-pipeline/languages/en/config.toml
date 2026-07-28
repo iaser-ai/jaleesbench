@@ -1,0 +1,39 @@
+# English — the reference config, reproduced verbatim from the EN seed.
+# EN output parity against the shipped videos is the pipeline's standing
+# regression test: do not edit VO text or offsets here without re-checking
+# parity (see README).
+lang = "en"
+name = "English"
+dir = "ltr"
+
+[tts]
+engine = "gemini"
+model = "gemini-3.1-flash-tts-preview"
+voice = "Puck"
+# Style prefix prepended to every narration segment.
+style = "Say this as a warm, confident, genuinely engaging tutorial narrator — clearly glad to share it, good energy and momentum, but respectful and grounded, not hyped: "
+# Cache key prefix ("puck3" matches the seed, so an existing seed TTS cache
+# would still be valid). Bump to force re-generation of all segments.
+cache_prefix = "puck3"
+
+[cards]
+# Per-language CSS overrides appended to the base card stylesheet.
+# EN needs none; RTL languages set fonts/line-height/direction here.
+css = ""
+
+[recording]
+prompt_url = "https://s.iaser.ai/prompt"
+prompt_url_display = "s.iaser.ai/prompt"
+prompt_chars = 1492
+# Gemini two-part paste: expected clipboard size bounds per part.
+gemini_part_min = 700
+gemini_part_max = 800
+# On-screen card text recorded into the clip (localized per language).
+card_goto_line = "In your browser, go to"
+card_open_line = "Now open"
+# The ChatGPT sidebar account entry the driver clicks (operator-specific).
+account_label = "waleedkadous"
+
+[youtube]
+# Studio "Video language" — must be set or the captions row is locked.
+video_language = "English"

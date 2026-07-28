@@ -73,3 +73,25 @@ snapshot). Commit `45d1654`.
 **NOW AT GATE: plan-approval. Waiting for human. The gate also carries
 the JaleesBench-validation decision (recommend: light validation for ar,
 spot-checks for ur/id).**
+
+## 2026-07-28 — Plan approved (option 1); Phase 1 land_pipeline built
+
+Waleed approved plan-approval; validation decision = option 1 (no bench
+validation this project). Implementation started.
+
+Phase 1 done in the worktree: `apps/companion-pipeline/` uv project —
+seed's ~1,480 lines ported into config-driven modules (shared `timing.py`
+used by BOTH assembly and captions; fail-fast `config.py`; TTS adapter;
+cards with per-language CSS + dir; BiDi caption wrapping; recorder +
+3 drivers parameterized by language config; upload channel-guard
+foundation). EN config verbatim from seed; 3 EN clips + shipped srt
+committed as inputs/parity baseline.
+
+**EN parity rebuild PASSED**: rebuilt youtube-chatgpt.mp4 (1080p h264,
+69.1s) + srt — 9/9 cues, identical text, starts within ~0.2–1.0s of
+shipped (TTS drift only; even the same two clamped segments). 29 pipeline
+unit tests + 73 jaleesbench tests green.
+
+Discovery worth noting: the shipped EN chatgpt timeline itself contains
+two clamp-pushed segments (offsets 8.3/12.3 vs a ~19s intro VO) — the
+`***` markers are working as designed, not a regression.

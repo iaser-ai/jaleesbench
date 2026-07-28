@@ -1,0 +1,27 @@
+# VO text and offsets verbatim from the EN seed (build_video.py cfgs()).
+clip = "copypaste-claude-final.mp4"
+product = "Claude"
+others = "ChatGPT and Gemini"
+
+intro_vo = "Assalamu alaikum! Would you like to make Claude a better Islamic companion to you? Here's a simple setting change you can make to help it do exactly that — backed by real research from I-A-S-E-R dot A-I, an organization dedicated to making sure AI benefits Muslims."
+outro_vo = "To read the research, and get versions for ChatGPT and Gemini, visit s dot I-A-S-E-R dot A-I, slash prompt."
+
+[[segments]]
+offset = 0.5
+text = "In your browser, go to s dot I-A-S-E-R dot A-I, slash prompt."
+
+[[segments]]
+offset = 8.3
+text = "Scroll to the prompt, and click Copy prompt."
+
+[[segments]]
+offset = 12.3
+text = "Now open Claude. Open the sidebar, click your account, and choose Settings."
+
+[[segments]]
+offset = 24.5
+text = "Find Instructions for Claude... click in... paste... and hit Save changes."
+
+[[segments]]
+offset = 32.8
+text = "And that's it. Claude keeps these instructions in mind across all your chats."

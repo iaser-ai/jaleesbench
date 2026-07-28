@@ -1,0 +1,44 @@
+1
+00:00:00,400 --> 00:00:01,656
+Assalamu alaikum!
+
+2
+00:00:01,656 --> 00:00:06,383
+Would you like to make Gemini a better Islamic companion to you?
+
+3
+00:00:06,383 --> 00:00:19,160
+Here's a simple setting change you can make to help it do exactly that — backed by real research from iaser.ai, an organization dedicated to making sure AI benefits Muslims.
+
+4
+00:00:20,260 --> 00:00:28,100
+In your browser, go to s.iaser.ai/prompt.
+
+5
+00:00:28,560 --> 00:00:33,040
+Scroll to the Gemini section, and copy Part 1.
+
+6
+00:00:33,290 --> 00:00:41,610
+Now open Gemini. In Settings, choose Personal Intelligence — that takes you to Your instructions for Gemini.
+
+7
+00:00:41,860 --> 00:00:46,460
+Click Add... paste Part 1... and Submit.
+
+8
+00:00:48,060 --> 00:00:51,140
+Back on the page, copy Part 2.
+
+9
+00:00:52,260 --> 00:00:56,940
+Then Add again... paste Part 2... and Submit.
+
+10
+00:01:02,960 --> 00:01:09,000
+Done — Gemini takes the prompt in two short parts; the article explains why.
+
+11
+00:01:09,600 --> 00:01:19,200
+To read the research, and get versions for ChatGPT and Claude, visit s.iaser.ai/prompt.
+
