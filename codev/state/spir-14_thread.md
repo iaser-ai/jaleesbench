@@ -300,3 +300,28 @@ Directive-to-production in under half a day.
 Project state: fully blocked-on-Waleed — recordings next; then localized
 video links + screenshots/GIFs replace the pending markers (through the
 architect as they come); acknowledgements close the articles phase.
+
+## 2026-07-28 — AR RECORDING SESSION: rig up, drivers localized, takes
+## held on page chrome; CLAUDE Q3 AMENDMENT
+
+GO received; rec Chrome relaunched with ar locale (Accept-Language
+profile edit, original backed up). ChatGPT UI → ARABIC (verified),
+Gemini → ar RTL via ?hl=. Drivers localized (config-driven labels:
+gemini_ui + chatgpt_ui tables; take-abort guard; ?hl pinning). Take
+source = PUBLIC iaser.ai/{lang}/prompt pages (byte-verified; member-page
+question mooted; short links dropped).
+
+TWO ESCALATIONS RESOLVED:
+1. Prompt-page EN staging banner would be on camera → iaser.ai producing
+   clean public target-language chrome (all three languages); awaiting
+   their ping.
+2. **CLAUDE HAS NO ar/ur/id UI** (21 languages, none of ours;
+   Accept-Language ignored; verified live). Waleed amended Q3 for Claude
+   cells: EN UI + translated prompt + target-language narration bridging
+   — recorded in plan Change Log; Claude VO scripts must bridge the EN
+   interface.
+
+Account state: only the profile Accept-Language changed (backed up);
+no assistant settings written; Claude language dropdown opened
+read-only. ChatGPT+Gemini ar takes GO the moment the page chrome
+clears.

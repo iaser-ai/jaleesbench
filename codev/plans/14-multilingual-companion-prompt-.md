@@ -638,6 +638,7 @@ fail-fast config validation.
 |------|--------|--------|--------|
 | 2026-07-28 | Initial draft | — | builder spir-14 |
 | 2026-07-28 | Seed-access prerequisite; handoff/ path fixed; Phase 5 split (now 8 phases); EN article snapshot pinned; deps named | 3-way plan review round 1 | builder spir-14 |
+| 2026-07-28 | **Waleed-approved gate-decision amendment (Q3, Claude cells only): Claude recordings use the ENGLISH UI with the translated prompt, for all three languages, with target-language narration bridging the interface.** Basis, verified live 2026-07-28: Claude offers 21 interface languages — none of ar/ur/id — and ignores Accept-Language; no target-language Claude UI route exists. VO scripts for the Claude videos (localized_content phase) must bridge the EN interface (e.g. narrate the field's Arabic meaning while the screen shows English labels). ChatGPT/Gemini cells unaffected. | Claude UI gap escalation; Waleed chose option (a) | builder spir-14 |
 | 2026-07-28 | **Architect-approved deviation (Waleed directive): article-TEXT work pulled forward into the recordings phase's schedule slack** — EN snapshot pinned + per-language article translation/review/handoff run now (ar first, piecewise via architect relay; video-links line omitted with 'localized videos pending' note). Phase 8 becomes completion+verification (GIFs, video links, acknowledgements). Phase structure and porch state unchanged. | Waleed directive relayed 2026-07-28; prep-now-land-later approved | builder spir-14 |
 
 ## Notes
