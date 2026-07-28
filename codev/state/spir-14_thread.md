@@ -27,3 +27,25 @@ Key spec-shaping observations:
 
 Next: write `codev/specs/14-multilingual-companion-prompt-.md`, then
 `porch done 14` → 3-way consultation → spec-approval gate.
+
+## 2026-07-28 — Spec drafted, reviewed, at spec-approval gate
+
+Spec written and taken through the 3-way: Gemini APPROVE, Codex
+REQUEST_CHANGES, Claude COMMENT. All feedback incorporated (commit
+`cbd83e2`); rebuttal at
+`codev/projects/14-multilingual-companion-prompt-/14-specify-iter1-rebuttals.md`.
+
+Notable additions from review: Urdu-TTS failure decision rule with named
+fallback providers (ElevenLabs / Azure / OpenAI); storage policy (EN clips
+committed directly ~2 MB, outputs gitignored, no git-lfs); secrets/
+machine-locality hygiene requirements; mechanical YouTube channel preflight
+guard; article handoff package format; BiDi marks + Nastaliq card CSS for
+RTL; tightened re-runnability criterion (full non-EN build from clean
+checkout).
+
+Six open questions stay OPEN with proposals for the human at the gate —
+Q1 (prompt stays English) / Q3 (UIs recorded in English) / Q6 (reuse EN
+clips) are coupled and decided together; gate decisions get folded into
+§4/§6 before planning.
+
+**NOW AT GATE: spec-approval. Waiting for human.**
