@@ -165,3 +165,14 @@ recording — a rewriter rejection must trigger translation-shortening
 before takes are filmed. Recorded as the documented deviation from the
 9/9 criterion in translation-review.md. Waleed checking his Gemini
 saved-info for strays himself. Phase 3 → porch done → 3-way review.
+
+Review round 1 on Phase 3: Gemini APPROVE; Codex REQUEST_CHANGES with a
+REAL catch — my prompt.txt files carried trailing newlines (byte-for-byte
+copies would be 1161/1319/1500, blowing id's fit claim). Fixed: files
+byte-exact; load_language now validates prompt_chars == len(prompt);
+tests assert exactness + handoff-package byte-identity (59 green).
+
+Cross-workspace lesson for the cohort: **builders cannot afx-send to
+other workspaces** (NOT_FOUND even for active ones — 'iaser.ai' was
+active) — route cross-workspace messages through your architect, who
+relayed the prompt-page notice verbatim.
