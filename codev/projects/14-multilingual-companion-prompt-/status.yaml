@@ -8,10 +8,10 @@ plan_phases:
     status: complete
   - id: tts_spike
     title: TTS listen-test spike and per-language voice configs
-    status: in_progress
+    status: complete
   - id: translated_prompts
     title: 'Translated prompts: produce, review, verify entry constraints'
-    status: pending
+    status: in_progress
   - id: recordings
     title: Target-language UI recordings (locale routes + 9 clips)
     status: pending
@@ -27,7 +27,7 @@ plan_phases:
   - id: articles
     title: Localized article sources and iaser.ai handoff packages
     status: pending
-current_plan_phase: tts_spike
+current_plan_phase: translated_prompts
 gates:
   spec-approval:
     status: approved
@@ -42,7 +42,7 @@ gates:
   verify-approval:
     status: pending
 iteration: 1
-build_complete: true
+build_complete: false
 history:
   - iteration: 1
     plan_phase: land_pipeline
@@ -77,4 +77,4 @@ history:
         file: >-
           /Users/mwk/Development/fftn/taqwabench/.builders/spir-14/codev/projects/14-multilingual-companion-prompt-/14-land_pipeline-iter2-claude.txt
 started_at: '2026-07-28T11:21:24.136Z'
-updated_at: '2026-07-28T19:43:26.504Z'
+updated_at: '2026-07-28T19:47:15.029Z'
