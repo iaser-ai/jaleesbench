@@ -125,6 +125,27 @@ part 2 must survive in Arabic both times.
   re-enters conditions (1) review and (2) re-vendor; ur/id lead-ins share
   the echo property and should be re-examined in the same pass.
 
+### Step-(0) pre-flight of the non-echoing lead-in (2026-07-28) — split verdict
+
+Architect-added pre-flight (local paste, doesn't count toward condition
+3): part1 + reworded part2 (وتذكّر أيضًا هذه التوجيهات:).
+
+- **SAVES: YES** — list-verified alongside part1. **Dedupe hypothesis
+  CONFIRMED**: echoing lead-in → silently dropped; non-echoing → saves.
+- **STAYS ARABIC: NO** — the rewriter translated the entire entry to
+  English; it opens with "Remember the following guidelines:" — the
+  literal translation of the lead-in (evidence:
+  `out/gemini-cells/80-preflight-entries.png`).
+- Cross-trial pattern: ar part1 (long prose opening) always stays
+  Arabic; ar part2 goes English under bare-bullet AND short-lead-in
+  openings; ur/id bullet-open part2s stayed in-language. The instability
+  is **Arabic-specific** and possibly stochastic.
+- Escalated with options: (a) one bounded pre-flight of a longer
+  substantive 2-sentence Arabic lead-in ("prose mass" hypothesis);
+  (b) accept the behavior and disclose it in the ar article — takes show
+  reality; (c) restructure the ar split. Recommendation: (a) once, then
+  (b). End state: saved-info EMPTY, verified.
+
 **Automation notes fed to the runbook**: Gemini dialogs use
 `mat-tonal-button` confirm buttons (not `mat-primary`) — selector must
 include it; entry rows expose kebab menus (`more_vert`), not visible
