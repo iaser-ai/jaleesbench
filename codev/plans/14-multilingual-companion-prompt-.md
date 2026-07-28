@@ -490,6 +490,14 @@ resume per the runbook.
   directory, sibling of (not inside) the gitignored `out/`; it holds
   deliverables (curated GIFs, article sources, prompt text), never
   regenerable build artifacts.
+- **Package-format additions from the iaser.ai architect (2026-07-28,
+  relayed via taqwabench architect after the Phase 3 prompt-page
+  notice)**: (1) each package includes **per-language section
+  headings/slugs** so their pages get localized anchors; (2) each package
+  **explicitly states that videos/GIFs are fully localized variants with
+  per-language YouTube IDs** — their "Watch it in video" line localizes
+  based on that. Their article template is LTR-only today; RTL page work
+  is scoped on their side, not ours.
 - Article translation derives from the pinned EN snapshot above, adapted
   where language-specific (paste instructions, prompt text, RTL notes).
   If the live EN article changes materially before handoff, refresh the
