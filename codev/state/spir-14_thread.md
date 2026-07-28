@@ -49,3 +49,27 @@ clips) are coupled and decided together; gate decisions get folded into
 §4/§6 before planning.
 
 **NOW AT GATE: spec-approval. Waiting for human.**
+
+## 2026-07-28 — Gate approved with binding decisions; spec revised; plan at gate
+
+Waleed approved spec-approval with all six questions DECIDED (issue #14
+gate comment): translated prompts per language; Gemini TTS default;
+fresh target-language UI recordings (investigate `?hl=` routes); articles
+handed off as proposed; browser-automation uploads; north star =
+highest-quality videos. Spec rewritten to the SPIR template with decisions
+folded in (commit `663b931`). New requirement surfaced by Q1: translated
+prompts must fit ~1,500-char entry fields. One question deliberately open
+for the plan gate: JaleesBench validation of translated prompts (3 costed
+options in spec).
+
+Plan drafted (8 phases after review split): land pipeline w/ EN parity →
+TTS spike → translated prompts → 9 recordings → localized content →
+9 builds + QA → guarded uploads → article handoffs. 3-way review: Gemini
+APPROVE, Claude APPROVE, Codex REQUEST_CHANGES — all four Codex points
+fixed (seed-access prerequisite incl. `../../tmp/` path from worktree,
+handoff/ vs out/ contradiction, Phase-5 split, pinned EN article
+snapshot). Commit `45d1654`.
+
+**NOW AT GATE: plan-approval. Waiting for human. The gate also carries
+the JaleesBench-validation decision (recommend: light validation for ar,
+spot-checks for ur/id).**
