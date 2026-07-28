@@ -3,7 +3,7 @@ title: "Prompt Teruji agar AI Anda Menjadi Pendamping yang Lebih Baik bagi Iman 
 subtitle: "Kerangka terpandu JaleesBench, diringkas menjadi satu paragraf yang bisa Anda tempel di ChatGPT, Claude, atau Gemini"
 lang: id
 date: 2026-07-28
-author: "Dr. Waleed Kadous"  # EN byline form until Waleed decides on localization
+author: "Dr. Waleed Kadous"  # Waleed-approved: id keeps the EN byline form (2026-07-28)
 summary: "Pendamping AI yang ideal bagi seorang Muslim yang taat adalah asisten yang memang dibangun untuk tugas itu. Namun sekalipun Anda memakai ChatGPT, Claude, atau Gemini, riset kami menunjukkan Anda bisa menjadikannya teman rohani yang lebih baik — lebih dekat kepada pendamping saleh yang digambarkan Nabi ﷺ — dengan satu perubahan kecil di pengaturan."
 dir: ltr
 source_slug: jaleesbench-companion-prompt

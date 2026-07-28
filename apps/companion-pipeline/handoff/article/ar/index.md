@@ -3,7 +3,7 @@ title: "موجِّه مُختبَر يجعل مساعدك الذكي رفيقً�
 subtitle: "صياغة جليس بنش الموجَّهة، مختصرةً في فقرة تلصقها في ChatGPT أو Claude أو Gemini"
 lang: ar
 date: 2026-07-28
-author: "Dr. Waleed Kadous"  # EN byline form until Waleed decides on localization
+author: "وليد قادوس"  # Waleed-approved localized byline (2026-07-28)
 summary: "الرفيق الذكي المثالي للمسلم الملتزم هو مساعدٌ بُني لهذه المهمة أصلًا. لكن حتى لو كنت تستخدم ChatGPT أو Claude أو Gemini، يُظهر بحثنا أن بإمكانك جعلها صحبةً روحيةً أفضل — أقرب إلى الجليس الصالح الذي وصفه النبي ﷺ — بتعديل صغير في الإعدادات."
 dir: rtl
 source_slug: jaleesbench-companion-prompt

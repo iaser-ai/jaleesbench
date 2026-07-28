@@ -3,7 +3,7 @@ title: "ایک آزمودہ پرامپٹ جو آپ کے اے آئی کو آپ ک
 subtitle: "جلیس بنچ کی رہنما صیاغت، ایک ایسے پیراگراف میں سمٹی ہوئی جسے آپ ChatGPT، Claude یا Gemini میں چسپاں کر سکیں"
 lang: ur
 date: 2026-07-28
-author: "Dr. Waleed Kadous"  # EN byline form until Waleed decides on localization
+author: "وليد قادوس"  # Waleed-approved localized byline (2026-07-28)
 summary: "ایک باعمل مسلمان کے لیے مثالی اے آئی ساتھی وہ معاون ہے جو اسی کام کے لیے بنایا گیا ہو۔ لیکن اگر آپ ChatGPT، Claude یا Gemini استعمال کرتے ہیں، تب بھی ہماری تحقیق بتاتی ہے کہ ایک چھوٹی سی ترتیب کی تبدیلی سے آپ انہیں بہتر روحانی صحبت بنا سکتے ہیں — اُس جلیسِ صالح سے قریب تر جس کا ذکر نبی ﷺ نے فرمایا۔"
 dir: rtl
 source_slug: jaleesbench-companion-prompt

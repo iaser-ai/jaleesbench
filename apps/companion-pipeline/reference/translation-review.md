@@ -230,7 +230,10 @@ Shared properties: byte-exact embedded prompt/part blocks (verified at
 ingestion, per the correction above — authoritative copy texts are the
 prompt-page files, which iaser.ai byte-checks); `source_slug:` (Astro-reserved `slug:`
 avoided), `anchor:` section map (informational), `date`/`author`/
-`summary` per the site schema (EN byline form pending Waleed);
+`summary` per the site schema — **byline decision (Waleed, 2026-07-28):
+Arabic and Urdu use وليد قادوس (his exact form); Indonesian keeps
+"Dr. Waleed Kadous"; handoff packages carry these so re-ingest cannot
+regress the live bylines**;
 `localized_videos`/`localized_media: pending` markers where media slots
 in after recordings; per-language honest-notes passages on Gemini's
 rewriter (ar carries the language-flip note; ur/id the paraphrase +

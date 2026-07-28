@@ -288,3 +288,15 @@ blocks vs authoritative prompt-page files, iaser.ai ingestion
 byte-check is the real gate. Byline localization pending Waleed.
 Remaining for articles phase later: GIFs/screenshots, video links,
 acknowledgements. Recordings still gated on Waleed's schedule.
+
+## 2026-07-28 — ALL THREE LOCALIZED ARTICLES PUBLISHED (production)
+
+Waleed approved; live at iaser.ai/articles/{ar,ur,id}/jaleesbench-
+companion-prompt, selector on EN, post-publish verification clean
+(bylines, 9/9 byte-exact blocks, CI green). Byline decision retrofitted
+into handoff packages: ar+ur = وليد قادوس, id = Dr. Waleed Kadous.
+Directive-to-production in under half a day.
+
+Project state: fully blocked-on-Waleed — recordings next; then localized
+video links + screenshots/GIFs replace the pending markers (through the
+architect as they come); acknowledgements close the articles phase.
