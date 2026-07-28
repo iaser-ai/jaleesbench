@@ -1,0 +1,10 @@
+# SEED (tts_spike phase) — refined during the build phases' listen checks.
+# Spoken VO forms -> written caption forms; exact spoken phrasing is
+# settled when the reviewed VO scripts land (localized_content phase).
+[[replacements]]
+spoken = "s titik i-a-s-e-r titik a-i, garis miring prompt"
+written = "s.iaser.ai/prompt"
+
+[[replacements]]
+spoken = "i-a-s-e-r titik a-i"
+written = "iaser.ai"

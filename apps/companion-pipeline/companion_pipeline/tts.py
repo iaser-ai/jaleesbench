@@ -22,17 +22,21 @@ def _cache_dir(lang: str) -> Path:
     return d
 
 
-def _gemini_synth(text: str, cfg: LanguageConfig, wav: Path) -> None:
+def gemini_generate(text: str, style: str, voice: str, model: str,
+                    wav: Path) -> Path:
+    """One Gemini TTS call -> wav at 24 kHz mono. Shared by the normal
+    build path and the voice listen-test spike, so the spike exercises the
+    exact code that production narration uses."""
     url = ("https://generativelanguage.googleapis.com/v1beta/models/"
-           f"{cfg.tts.model}:generateContent?key={gemini_api_key()}")
+           f"{model}:generateContent?key={gemini_api_key()}")
     resp = httpx.post(
         url,
         json={
-            "contents": [{"parts": [{"text": cfg.tts.style + text}]}],
+            "contents": [{"parts": [{"text": style + text}]}],
             "generationConfig": {
                 "responseModalities": ["AUDIO"],
                 "speechConfig": {"voiceConfig": {
-                    "prebuiltVoiceConfig": {"voiceName": cfg.tts.voice}}}},
+                    "prebuiltVoiceConfig": {"voiceName": voice}}}},
         },
         timeout=120.0,
     )
@@ -52,6 +56,11 @@ def _gemini_synth(text: str, cfg: LanguageConfig, wav: Path) -> None:
     subprocess.run(
         ["ffmpeg", "-y", "-loglevel", "error", "-f", "s16le", "-ar", "24000",
          "-ac", "1", "-i", str(raw), str(wav)], check=True)
+    return wav
+
+
+def _gemini_synth(text: str, cfg: LanguageConfig, wav: Path) -> None:
+    gemini_generate(text, cfg.tts.style, cfg.tts.voice, cfg.tts.model, wav)
 
 
 ENGINES = {"gemini": _gemini_synth}

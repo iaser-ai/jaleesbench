@@ -95,3 +95,25 @@ unit tests + 73 jaleesbench tests green.
 Discovery worth noting: the shipped EN chatgpt timeline itself contains
 two clamp-pushed segments (offsets 8.3/12.3 vs a ~19s intro VO) — the
 `***` markers are working as designed, not a regression.
+
+## 2026-07-28 — Phase 1 unanimously approved (3 review iterations);
+## Phase 2 tts_spike: samples generated, WAITING ON HUMAN LISTEN TEST
+
+Phase 1 took 3 review iterations (Codex found real items each round:
+env-configurable rec-profile/CDP, honest upload stub, `all` command,
+fail-fast config tests, handoff scaffold — all fixed; final round
+unanimous APPROVE). Porch advanced to tts_spike.
+
+Phase 2 work done: `companion spike-tts` command (runs through the real
+tts.gemini_generate path); ar/ur/id config skeletons (RTL dirs, Naskh/
+Nastaliq card CSS with tall line-heights, per-language style prompts,
+seeded spellouts; PENDING markers on voice + prompt-dependent fields);
+12 samples generated (3 langs × Sulafat/Achird/Charon/Puck).
+
+**KEY FINDING: Gemini TTS produced Urdu audio without error** — the
+flight risk has narrowed from "may not work at all" to "is the quality
+acceptable", which is the human listen test's call.
+
+**BLOCKED (by design) on human listen test**: architect asked to listen
+to out/spike/*.wav and pick a voice per language. Voice record table in
+apps/companion-pipeline/reference/tts-spike.md.

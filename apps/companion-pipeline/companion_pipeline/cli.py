@@ -90,9 +90,27 @@ def all(lang: str = typer.Option(..., help="Language code, e.g. en")):
 
 @app.command()
 def languages():
-    """List available language configs."""
-    from .config import available_languages
+    """List language configs (incomplete ones show what's missing)."""
+    from .config import ConfigError, available_languages
     for code in available_languages():
-        cfg = load_language(code)
-        print(f"{code}  {cfg.name}  dir={cfg.direction}  "
-              f"voice={cfg.tts.voice} ({cfg.tts.engine})")
+        try:
+            cfg = load_language(code)
+            print(f"{code}  {cfg.name}  dir={cfg.direction}  "
+                  f"voice={cfg.tts.voice} ({cfg.tts.engine})")
+        except ConfigError as e:
+            print(f"{code}  INCOMPLETE — {e}")
+
+
+@app.command("spike-tts")
+def spike_tts(lang: str = typer.Option(None, help="ar|ur|id (default: "
+                                       "all three)"),
+              voices: str = typer.Option(None, help="comma-separated "
+                                         "candidate voices (default: the "
+                                         "spike's candidate set)")):
+    """Listen-test spike: generate lang x voice narration samples into
+    out/spike/ for human evaluation (plan phase tts_spike)."""
+    from .spike import CANDIDATE_VOICES, SAMPLE_TEXTS, run_spike
+    langs = (lang,) if lang else tuple(SAMPLE_TEXTS)
+    vv = tuple(v.strip() for v in voices.split(",")) if voices \
+        else CANDIDATE_VOICES
+    run_spike(langs, vv)

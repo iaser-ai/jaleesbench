@@ -1,0 +1,11 @@
+# SEED (tts_spike phase) — refined during the build phases' listen checks.
+# Spoken VO forms -> written caption forms. The URL is expected to be
+# spoken letter-by-letter in Arabic VO; exact spoken phrasing is settled
+# when the reviewed VO scripts land (localized_content phase).
+[[replacements]]
+spoken = "إس دوت آي إيه إس إي آر دوت إيه آي، سلاش برومبت"
+written = "s.iaser.ai/prompt"
+
+[[replacements]]
+spoken = "آي إيه إس إي آر دوت إيه آي"
+written = "iaser.ai"
