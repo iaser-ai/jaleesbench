@@ -13,7 +13,7 @@ import time
 from ..config import LanguageConfig
 from ..recorder import Session
 from .common import (CARD_JS, OVERLAY_JS, OVERLAY_OFF_JS,
-                     copy_from_prompt_page, stable_value)
+                     copy_block, stable_value)
 
 
 def record(cfg: LanguageConfig) -> None:
@@ -91,22 +91,23 @@ def record(cfg: LanguageConfig) -> None:
         t0 = time.time()
         left.bring_to_front()
 
-        # LEFT card: go to the short link
-        left.evaluate(CARD_JS, [cfg.card_goto_line, cfg.prompt_url_display])
+        # LEFT card: go to the ARTICLE — that is where a real reader lands
+        left.evaluate(CARD_JS, [cfg.card_goto_line, cfg.article_url_display])
         left.wait_for_timeout(3200)
-        left.goto(cfg.prompt_url)
+        # enter at this assistant's own section, then scroll up to the
+        # prompt block as a reader following the setup steps would
+        left.goto(f"{cfg.article_url}#claude-")
         left.set_viewport_size({"width": 657, "height": 765})
         left.wait_for_timeout(2800)
         s.ensure_cursor(left)
-        copy_sel = f"button:has-text('{cfg.copy_button_label}')"
-        btn = left.locator(copy_sel).first
+        copy_sel = f"button:has-text('{cfg.article_copy_button_label}')"
+        btn = left.locator(copy_sel).first     # block 0 = the full prompt
         btn.scroll_into_view_if_needed()
         left.evaluate("window.scrollBy(0,-140)")
-        left.wait_for_timeout(800)
+        left.wait_for_timeout(1200)
 
         # LEFT: copy
-        clip = copy_from_prompt_page(
-            s, left, copy_sel, cfg.prompt_chars, "prompt")
+        clip = copy_block(s, left, copy_sel, cfg.prompt_chars, "prompt")
         print(f"copied at {time.time()-t0:.1f}s")
 
         # RIGHT card: open Claude (overlay — no navigation)

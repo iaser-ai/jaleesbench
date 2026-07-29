@@ -134,6 +134,17 @@ class Session:
             except Exception:
                 pass
 
+    def window_count(self) -> int:
+        """Distinct browser windows currently open (rig baseline is 1)."""
+        wins = set()
+        for page in list(self.ctx.pages):
+            try:
+                wins.add(self.ctx.new_cdp_session(page).send(
+                    "Browser.getWindowForTarget")["windowId"])
+            except Exception:
+                pass
+        return len(wins)
+
     # -- pages -------------------------------------------------------------
     def new_page(self, url: str):
         page = self.ctx.new_page()

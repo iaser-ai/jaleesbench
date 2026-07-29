@@ -63,7 +63,16 @@ class LanguageConfig:
     prompt: str
     prompt_url: str
     prompt_url_display: str   # short form shown on recorded cards
-    copy_button_label: str    # prompt page's copy-button text
+    copy_button_label: str    # PROMPT PAGE's copy-button text
+    # Takes open on the official article — that is what a real reader
+    # lands on — so the article is a second copy SOURCE with its own
+    # button label. The two pages are localized independently (the
+    # prompt pages localize their buttons; the articles, as of
+    # 2026-07-29, still render an English "Copy prompt"), so these must
+    # stay separate keys rather than one overloaded label.
+    article_url: str
+    article_url_display: str
+    article_copy_button_label: str
     prompt_chars: int
     gemini_part_min: int      # expected char bounds for the two-part paste
     gemini_part_max: int
@@ -253,6 +262,11 @@ def load_language(lang: str, *,
                                  f"{ctx}.recording"),
         copy_button_label=_need(rec, "copy_button_label",
                                 f"{ctx}.recording"),
+        article_url=_need(rec, "article_url", f"{ctx}.recording"),
+        article_url_display=_need(rec, "article_url_display",
+                                  f"{ctx}.recording"),
+        article_copy_button_label=_need(rec, "article_copy_button_label",
+                                        f"{ctx}.recording"),
         prompt_chars=int(_need(rec, "prompt_chars", f"{ctx}.recording")),
         gemini_part_min=int(_need(rec, "gemini_part_min",
                                   f"{ctx}.recording")),

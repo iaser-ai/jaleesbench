@@ -119,7 +119,9 @@ def paste_entry(s, right, cfg, text, label):
             f"TAKE ABORT ({label}): submit dialog did not close on camera "
             "(likely the false-error dialog). Stop recording, verify the "
             "entry list (the entry may HAVE saved), clean up, retake.\n"
-            f"DIALOG TEXT: {dlg[:600]}")
+            f"DIALOG TEXT: {dlg[:600]}\n"
+            f"windows open: {s.window_count()} (rig baseline is 1 + the "
+            f"2 take windows; Session.close() reclaims them on the way out)")
     right.wait_for_timeout(1500)
     print(f"{label} submitted, dialog closed")
 
@@ -180,11 +182,24 @@ def record(cfg: LanguageConfig) -> None:
         t0 = time.time()
         left.bring_to_front()
 
-        left.evaluate(CARD_JS, [cfg.card_goto_line, cfg.prompt_url_display])
+        # Enter on the ARTICLE at the Gemini section, then take the
+        # article's own link across to the prompt page. That hop is the
+        # documented user flow for Gemini (the two-part paste lives on the
+        # prompt page), so it belongs ON camera rather than being skipped.
+        left.evaluate(CARD_JS, [cfg.card_goto_line, cfg.article_url_display])
         left.wait_for_timeout(3200)
-        left.goto(cfg.prompt_url)
+        left.goto(f"{cfg.article_url}#gemini-")
         left.set_viewport_size({"width": 1000, "height": 765})
-        left.wait_for_timeout(2800)
+        left.wait_for_timeout(2600)
+        s.ensure_cursor(left)
+
+        link_sel = f"a[href='/{cfg.lang}/prompt']"
+        assert left.locator(link_sel).count(), \
+            f"article has no link to /{cfg.lang}/prompt to follow on camera"
+        s.move_click(left, link_sel, after_ms=1200)
+        left.wait_for_url(f"**/{cfg.lang}/prompt", timeout=20000)
+        left.set_viewport_size({"width": 1000, "height": 765})
+        left.wait_for_timeout(2400)
         s.ensure_cursor(left)
 
         # scroll to the Gemini section's Part 1 block (block #2 on page)

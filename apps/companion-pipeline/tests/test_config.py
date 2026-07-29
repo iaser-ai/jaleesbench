@@ -119,6 +119,24 @@ def test_missing_card_template_fails_fast(broken_lang):
         load_language("xy")
 
 
+def test_missing_article_key_fails_fast(broken_lang):
+    cfg = broken_lang / "config.toml"
+    cfg.write_text(cfg.read_text().replace("article_url =", "unused ="))
+    with pytest.raises(ConfigError, match="article_url"):
+        load_language("xy")
+
+
+def test_ui_labels_merge_over_defaults(broken_lang):
+    """A partially-localized ui section must fall back, not KeyError:
+    labels are discovered live a few at a time."""
+    cfg = broken_lang / "config.toml"
+    cfg.write_text(cfg.read_text()
+                   + '\n[recording.gemini_ui]\nsubmit = "Kirim"\n')
+    c = load_language("xy")
+    assert c.gemini_ui["submit"] == "Kirim"
+    assert c.gemini_ui["delete_all"] == "Delete all"   # default survives
+
+
 def test_recording_load_skips_later_phase_assets(broken_lang):
     """Clips are recorded a phase before VO and cards exist."""
     (broken_lang / "vo" / "claude.toml").unlink()

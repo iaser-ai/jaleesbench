@@ -28,6 +28,12 @@ css = """
 prompt_url = "https://iaser.ai/ar/prompt"
 prompt_url_display = "iaser.ai/ar/prompt"
 copy_button_label = "نسخ"  # public pages localize the button x3 (full, part1, part2)
+article_url = "https://iaser.ai/articles/ar/jaleesbench-companion-prompt"
+article_url_display = "iaser.ai/articles/ar/jaleesbench-companion-prompt"
+# Takes ENTER on the article (the real reader path). Localized by
+# iaser.ai 2026-07-29; kept as its own key because the article and
+# the prompt page are localized independently and diverged once.
+article_copy_button_label = "نسخ"
 prompt_chars = 1160
 gemini_part_min = 503
 gemini_part2_leadin = "وهذه بقية التوجيهات، فاعمل بها مع ما سبق. وكلها تخدم غاية واحدة: عونٌ صادق يترك أثرًا طيبًا:"

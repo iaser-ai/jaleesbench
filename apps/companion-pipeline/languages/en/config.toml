@@ -25,6 +25,12 @@ css = ""
 prompt_url = "https://s.iaser.ai/prompt"
 prompt_url_display = "s.iaser.ai/prompt"
 copy_button_label = "Copy prompt"
+article_url = "https://iaser.ai/articles/jaleesbench-companion-prompt"
+article_url_display = "iaser.ai/articles/jaleesbench-companion-prompt"
+# Takes ENTER on the article (the real reader path). iaser.ai has
+# not localized this button yet — it renders EN "Copy prompt" on
+# every localized article; flip this key when they ship the fix.
+article_copy_button_label = "Copy prompt"
 prompt_chars = 1492
 # Gemini two-part paste: expected clipboard size bounds per part.
 gemini_part_min = 700

@@ -3,6 +3,10 @@ EN seed's clip_copypaste*.py)."""
 
 import subprocess
 
+# Written to the clipboard before a copy click so a stale read is a loud
+# failure instead of a plausible wrong payload.
+_SENTINEL = "__jb_clipboard_sentinel__"
+
 # Card rendered by navigating an about:blank page (left half).
 CARD_JS = """([line1, line2]) => {
   document.body.style.cssText = 'margin:0;background:#0d0d0d;display:flex;'
@@ -69,18 +73,31 @@ def stable_value(page, loc, rounds: int = 4):
     return last
 
 
-def copy_from_prompt_page(s, left, button_sel: str, expected_chars: int,
-                          label: str) -> str:
-    """Highlight + click a copy button on the prompt page, verify the
-    clipboard holds the expected payload."""
+def copy_block(s, left, button_sel: str, expected_chars: int,
+               label: str) -> str:
+    """Highlight + click a copy button (article OR prompt page) and verify
+    the clipboard holds the expected payload.
+
+    Set the clipboard to a sentinel first: reading it too soon after the
+    click otherwise returns the PREVIOUS payload, which reads as a
+    plausible-but-wrong result rather than a failure.
+    """
+    subprocess.run(["pbcopy"], input=_SENTINEL, text=True)
     left.bring_to_front()
     left.wait_for_timeout(300)
     s.highlight(left, button_sel, hold_ms=800)
     s.move_click(left, button_sel, after_ms=1400)
     text = clipboard()
+    for _ in range(10):
+        if text != _SENTINEL:
+            break
+        left.wait_for_timeout(300)
+        text = clipboard()
     print(f"{label} copied: {len(text)} chars")
+    if text == _SENTINEL:
+        raise RuntimeError(f"{label}: copy button never wrote the clipboard")
     if len(text) != expected_chars:
         raise RuntimeError(
             f"{label}: clipboard holds {len(text)} chars, expected "
-            f"{expected_chars} — is the deployed prompt page current?")
+            f"{expected_chars} — is the deployed page current?")
     return text
