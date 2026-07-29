@@ -392,3 +392,54 @@ session end).
 **Takes are now unblocked.** Next: ChatGPT ar → review → Gemini ar →
 review → Claude ar (EN UI per Q3 amendment; re-check its language list
 first). Awaiting Waleed's go for the live session.
+
+## 2026-07-29 — AR RECORDING SESSION COMPLETE: 3/3 clips, one open
+## quality call (Gemini closing toast)
+
+Architect relayed GO (Waleed's earlier green light stands). All three ar
+clips are in the can and committed to `inputs/clips/ar/`.
+
+**Clips**: chatgpt 33.7s (copy flash `تم النسخ ✓ (1160)` on camera, ends on
+the green `تم تحديث التعليمات المخصصة` toast, persisted 1160) · claude 34.0s
+(EN UI per Q3, ends on Saved, persisted 1160) · gemini 46.3s (both entries
+saved **in Arabic** — 1034 ar vs 70 latin chars, the latin being the URL —
+so the Arabic-part-2-rewritten-into-English failure did NOT recur).
+
+**OPEN DECISION**: the gemini clip carries a Gemini-side error toast
+(`تعذّر عرض المحادثات الأخيرة`) through its entire closing hold. Functionally
+perfect, cosmetically blemished on the frame the clip lingers on. I used
+both attempts on that step (abort + this take), so per the ~2-take rule I
+stopped rather than burn a third. Waleed's call: accept, or retake next
+session.
+
+**Three defects found and fixed this session:**
+1. **Split-screen halves shared one window.** The drivers reused the rig's
+   tabs, so only one half could be foreground and the backgrounded half
+   rendered at window size — the first chatgpt take shipped a visibly
+   shrunken, letterboxed right half. Added `Session.new_window()`
+   (`window.open` + explicit geometry). NOTE: raw CDP
+   `Target.createTarget` opens a window but an already-connected Playwright
+   session never attaches to it — the popup route is the one that works.
+2. **Claude reset verify was ~45s against a MINUTES-long lag** — it aborted
+   a take whose reset had actually succeeded (field flipped minutes later).
+   Budget raised to ~4 min. Third false "did not persist" from this cause.
+3. **ar chatgpt_ui labels**: `save` only renders when the field is DIRTY
+   (clean-state probes miss it — my first check was a false alarm, config
+   was right); `toast_substr` tightened to the full phrase because the
+   short form also matches the always-visible section button.
+
+Gemini's take-abort guard now captures the dialog text (the first abort was
+blind; the entry list confirmed part1 saved / part2 did not — dialog told
+the truth that time).
+
+### ACCOUNT-STATE LEDGER (ar session)
+| Item | End state |
+|---|---|
+| Gemini saved-info | **EMPTY** — Delete All + tonal confirm, list-verified + screenshot |
+| ChatGPT custom instructions | **RESTORED** to pre-session EN 1,492 (verified 1492) |
+| Claude instructions | **RESTORED** to pre-session EN 1,492 (verified after patient poll) |
+| Profile `intl.accept_languages` | **STILL ACTIVE** `ar,en-US,en` — backup in profile; restore when the rig closes |
+| Assistant settings otherwise | untouched |
+
+Rig left up (PID 44776, ar locale). Next: ur session, then id — re-check
+Claude's language list each time (still no ar/ur/id: re-verified today).
