@@ -566,3 +566,44 @@ ur article. (4) Escalate to Google with the minimal repro.
 Account state: Gemini saved-info EMPTY + verified; ChatGPT/Claude hold the
 ur prompt (1318) with pre-session EN 1,492 saved for both; Accept-Language
 ur; rig 1 window / 4 tabs.
+
+## 2026-07-29 (later) — RIG IS DOWN; landed two fixes that needed no rig
+
+Resumed into the recordings phase. Asset position unchanged: **2 of 9**
+(chatgpt-ur, claude-ur). Sent the architect the gemini-ur decision request
+(4 options, recommending the split-boundary shift — zero wording change).
+
+**Recording is blocked on the rig, not on a decision.** No Chrome on CDP
+9222, and I can't find the rec-profile directory anywhere under `$HOME`
+or `/tmp` — so I can't relaunch it myself, and it has to be the profile
+that's logged into Waleed's assistant accounts anyway. Both remaining
+tracks (ar retakes x3, id x3) need it.
+
+Did the rig-independent work instead:
+
+1. **`load_language` now refuses a non-EN language with NO assistant-UI
+   sections.** Partial sections still merge over the EN defaults — that's
+   the legal shape, labels get read live a few at a time — but *wholly
+   absent* is a different thing: it means nobody has recced that assistant
+   in that language, and the silent EN fallback is precisely what killed
+   the first ur take. `id` is what this catches today: it has neither
+   `chatgpt_ui` nor `gemini_ui`, so an id take would have failed the same
+   way ur did. Now it fails at load with an error naming the section.
+   The `broken_lang` fixture had to grow the sections (it clones EN, which
+   carries none, as a non-EN language); tests 66/66.
+
+2. **Take log corrected.** It asserted the three ar clips were accepted.
+   They are not — the article-source directive superseded them. It now
+   leads with a 2-of-9 status table, marks ar for retake, keeps the trim
+   write-up as technique-only, and records gemini-ur as BLOCKED rather
+   than unshot. Also added the UI-recon step to "Adding a language" with
+   the three discovery gotchas (dirty-field `save`, Cancel-first DOM
+   order, non-empty-list `delete_all`, menu-item vs tab-label divergence).
+
+**What I need to resume takes**: the rec-profile Chrome up, launched
+`--lang=ar` for the ar retakes (then `--lang=id`). Account writes those
+sessions will make, pre-declared: ChatGPT custom instructions and Claude
+personal-preferences overwritten with the ar prompt (1160), Gemini
+saved-info written in two parts and cleared after; same for id (1499).
+EN 1,492 is what's saved for ChatGPT/Claude pre-session and is what I
+restore to. Gemini saved-info is EMPTY and verified as of now.
