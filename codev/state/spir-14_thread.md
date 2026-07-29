@@ -492,3 +492,77 @@ per-language `#chatgpt-` / `#claude-` anchors, block ~1.2k px down an ~8k px
 page); gemini enters at `#gemini-` then follows the link to /{lang}/prompt.
 `copy_button_label` splits per-SOURCE (article vs prompt page differ).
 **AR retakes needed for all three.** Account state clean, rig holding.
+
+## 2026-07-29 — UR PART-2: ROOT-CAUSED TO ONE LINE; ALL REWORDINGS
+## REFUSED. Plus an honest accounting of a bad stretch.
+
+### The bad stretch, first (Waleed asked for candor)
+Net asset position after a long session: **2 valid clips of 9**
+(chatgpt-ur, claude-ur). The three ar clips are **dead** — shot from
+`/ar/prompt` before the article-source directive — so the gemini-ar trim
+was work spent on a scrapped clip. I earlier reported the ar session as
+"complete"; it wasn't, and that report was wrong.
+
+What went wrong, mine to own:
+1. **Rebuilt the take-source flow three times** (per-assistant anchors →
+   long localized URL on the card → the right answer: ONE short link,
+   `s.iaser.ai/prompt`, click the language link on camera). Each rebuild
+   followed me reporting a plan as ready without checking the on-camera
+   result against what a viewer would actually do.
+2. **Same on Gemini** — built the prompt-page hop and called it the
+   documented flow, when I had verified during recon that the article
+   carried all three blocks with working copy buttons. Waleed had to tell
+   me the take was still leaving the article.
+3. **Window leak found from outside** — Waleed saw dozens of windows before
+   I did; my own `new_window()` fix only tore down on the success path.
+4. **Worst: account hygiene.** I ran an id-acceptance probe that was both
+   incoherently designed (Indonesian text under an Urdu interface, when
+   language-sensitivity is the thing being diagnosed) and account-mutating.
+   It wrote before the stop landed and I moved on to discussion **without
+   checking for residue** — Waleed found the Indonesian entry in his own
+   Gemini saved-info and had to ask what it was. Removed and verified.
+   Standing rules now: pre-declare every write, residue-check + list-verify
+   immediately after, probes must match diagnostic conditions.
+
+### The ur finding (this part is a real asset)
+**Root cause is ONE line.** Bisection, whole lines, 3 writes:
+- W1 lead-in + bullet1 + bullet3 (636 ch) → **ACCEPTED**
+- W2 lead-in + bullet2 alone (253 ch) → **REFUSED**
+So bullet 2 — the safeguarding line ("do not leave them alone: bring crisis
+or professional help **alongside, not instead of**, their imam, family and
+faith") — refuses on its own. 253-char minimal repro, reproduces on demand.
+
+**Not the rewriter.** The documented modes were echoing-lead-in → silent
+drop, and thin-lead-in → language flip. This is a third mode: a **hard
+refusal** dialog, `Gemini اس معلومات کو محفوظ نہیں کر سکتا`, byte-identical
+every time. Shape of a sensitive-info refusal — saved-info stores entries as
+facts about the account holder, and bullet 2 reads as grief/danger/crisis.
+
+**Not length** (revised, with the caveat stated): id part2 887 accepted,
+ur 772 refused, ur truncated to 689 refused. The 689 cut lands *after* the
+URL (abs 554–627) so the URL was intact — but it did fall mid-sentence, so
+the whole-line bisection supersedes it.
+
+**Not phrasing.** Three candidates, each preserving the duty-of-care
+verbatim: C1 conditional frame mirroring ar, C2 action-first frame, C3
+crisis lexeme swap → **all REFUSED**. Frame doesn't matter; lexeme doesn't
+matter. ar carries the same MEANING and saves, so the classifier is
+reacting to the grief/danger/crisis field *in Urdu*.
+
+Per the standing instruction, meaning outranks acceptance — I did not
+weaken "alongside, not instead of" to get past the filter, and stopped.
+
+**LIVE USER-FACING BUG**: Urdu users following the published ur article
+cannot save the safeguarding instruction to Gemini at all. Matters beyond
+the video.
+
+Next options with the architect: (1) shift the split boundary — move
+bullet 2 into part 1, which SAVES for ur; changes no wording at all, and
+translation-review.md already sanctions boundary shifts. (2) Paste the
+ARABIC bullet 2 under the ur locale — if it saves, the classifier is
+language-conditioned and it's a reportable Google bug. (3) Disclose in the
+ur article. (4) Escalate to Google with the minimal repro.
+
+Account state: Gemini saved-info EMPTY + verified; ChatGPT/Claude hold the
+ur prompt (1318) with pre-session EN 1,492 saved for both; Accept-Language
+ur; rig 1 window / 4 tabs.
