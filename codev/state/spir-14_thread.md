@@ -443,3 +443,52 @@ the truth that time).
 
 Rig left up (PID 44776, ar locale). Next: ur session, then id — re-check
 Claude's language list each time (still no ar/ur/id: re-verified today).
+
+## 2026-07-29 — UR SESSION HELD mid-flight; article-source directive;
+## window leak fixed
+
+**Gemini-ar trim landed first** (Waleed: fix-in-edit, no retake). Rebuilt
+from the take's OWN frames — frames 0..518 (t≤43.167s) + 1.6s clone-hold —
+so ONE encode, not a second generation over the mp4 (PSNR 48.6dB vs raw).
+Clip now ends on Gemini's `تم حفظ التعليمات` toast, matching the chatgpt /
+claude confirmation beat. Command + rationale in the README take log.
+**Superseded in part**: the new article-source directive means gemini-ar
+needs a retake anyway (its opening changes), but the trim technique and the
+"keep frames-dirs until a take is accepted" rule stand.
+
+**UR session**: relaunched --lang=ur (PID 63793, Accept-Language ar→ur).
+Pre-flight caught that `ur/config.toml` had **no chatgpt_ui/gemini_ui
+sections at all** — silently falling back to EN, so the take died hunting
+for "Personalization". Discovered live and added: شخصی بناوٹ / اضافی رویّہ /
+محفوظ کریں / حسب ضرورت ہدایات اپ ڈیٹ کی گئیں, gemini شامل کریں + جمع کرائیں.
+Two gotchas: `save` renders only when the field is DIRTY, and Cancel
+(منسوخ کریں) comes FIRST in DOM order — grabbing the first new button clicks
+Cancel. `delete_all` only renders with a non-empty list, so config.py now
+MERGES ui sections over the EN defaults instead of replacing them (a partial
+section used to KeyError at use).
+
+**WINDOW LEAK (Waleed saw dozens on his desktop)**: `new_window()` opened a
+window per half but only the SUCCESS path closed them — every abort stranded
+two. Session now tracks its own windows and closes them in `close()`, which
+runs on success AND abort. Swept back to 1 window / 4 base tabs.
+
+**NEW DIRECTIVE — takes must open on the OFFICIAL ARTICLE pages**, not the
+bare /{lang}/prompt pages. Recon done:
+- Articles DO have copy affordances: 3 'Copy prompt' buttons each, payloads
+  byte-verified (full 1160/1318/1499, part1 563/663/747, part2 689/772/887).
+  No selection-drag needed.
+- Articles link to /{lang}/prompt, so the Gemini hop works.
+- **Correction**: I first measured part1/part2 returning identical payloads
+  and suspected a published-article bug. A sentinel re-test showed both
+  CORRECT (563 / 689) — the first pass read a stale clipboard. No article
+  bug; nothing escalated.
+- **TWO REAL BLOCKERS for iaser.ai**: the copy buttons read "Copy prompt"
+  **in English** on all three localized articles, and `html lang="en"` on
+  all three. Same class as the old staging banner — English chrome on camera,
+  on the very button that IS the honesty beat.
+
+Plan once fixed: chatgpt/claude enter at the article (deep-link to the
+per-language `#chatgpt-` / `#claude-` anchors, block ~1.2k px down an ~8k px
+page); gemini enters at `#gemini-` then follows the link to /{lang}/prompt.
+`copy_button_label` splits per-SOURCE (article vs prompt page differ).
+**AR retakes needed for all three.** Account state clean, rig holding.
