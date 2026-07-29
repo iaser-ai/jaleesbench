@@ -128,6 +128,27 @@ def _need(table: dict, key: str, ctx: str):
     return table[key]
 
 
+def _ui_section(rec: dict, key: str, lang: str, ctx: str,
+                en_defaults: dict[str, str]) -> dict[str, str]:
+    """Merge a language's assistant-UI labels over the EN defaults.
+
+    A *partial* section is fine and merges. A section that is absent
+    entirely, on a non-EN language, is refused: it means nobody has recced
+    that assistant's UI in this language yet, and the silent EN fallback
+    sends the driver hunting for "Personalization" under a localized
+    interface — the exact way the first Urdu take died.
+    """
+    if lang != "en" and key not in rec:
+        raise ConfigError(
+            f"[{ctx}.recording] missing [{ctx}.recording.{key}] — the "
+            f"assistant's UI labels for {lang!r} have not been observed "
+            f"yet. Falling back to the EN labels would make the driver "
+            f"hunt for English strings in a {lang} interface. Open the "
+            f"assistant under the {lang} locale, read the labels live, and "
+            f"add them (see README 'Adding a language').")
+    return {**en_defaults, **rec.get(key, {})}
+
+
 def _read(path: Path, ctx: str) -> str:
     if not path.exists():
         raise ConfigError(f"[{ctx}] missing required file: {path}")
@@ -285,15 +306,17 @@ def load_language(lang: str, *,
         # MERGE over the EN defaults, don't replace them: a language that
         # localizes some keys and not others (labels are discovered live,
         # a few at a time) would otherwise KeyError at use instead of
-        # falling back.
-        gemini_ui={"add": "Add", "submit": "Submit",
-                   "delete_all": "Delete all",
-                   **rec.get("gemini_ui", {})},
-        chatgpt_ui={"personalization": "Personalization",
-                    "ci_placeholder_substr": "Additional behavior",
-                    "save": "Save",
-                    "toast_substr": "Custom instructions updated",
-                    **rec.get("chatgpt_ui", {})},
+        # falling back. _ui_section refuses the *wholly absent* case, which
+        # is not partial localization but a language nobody has recced yet.
+        gemini_ui=_ui_section(
+            rec, "gemini_ui", lang, ctx,
+            {"add": "Add", "submit": "Submit", "delete_all": "Delete all"}),
+        chatgpt_ui=_ui_section(
+            rec, "chatgpt_ui", lang, ctx,
+            {"personalization": "Personalization",
+             "ci_placeholder_substr": "Additional behavior",
+             "save": "Save",
+             "toast_substr": "Custom instructions updated"}),
         card_goto_line=_need(rec, "card_goto_line", f"{ctx}.recording"),
         card_open_line=_need(rec, "card_open_line", f"{ctx}.recording"),
         account_label=_need(rec, "account_label", f"{ctx}.recording"),

@@ -13,10 +13,22 @@ from companion_pipeline.config import (
 @pytest.fixture
 def broken_lang(tmp_path, monkeypatch):
     """Clone the EN config as language 'xy' under a temp languages dir;
-    the test then breaks one piece and asserts fail-fast behavior."""
+    the test then breaks one piece and asserts fail-fast behavior.
+
+    The clone gets assistant-UI label sections EN itself doesn't carry (EN's
+    labels are the built-in defaults). Without them 'xy' would be a non-EN
+    language with no recced UI at all, which load_language refuses outright
+    — every test here would fail on that instead of on the thing it breaks.
+    The sections are deliberately PARTIAL: that is the legal shape, and it
+    is what test_ui_labels_merge_over_defaults asserts.
+    """
     langs = tmp_path / "languages"
     langs.mkdir()
     shutil.copytree(LANGUAGES_DIR / "en", langs / "xy")
+    cfg = langs / "xy" / "config.toml"
+    cfg.write_text(cfg.read_text()
+                   + '\n[recording.chatgpt_ui]\nsave = "Simpan"\n'
+                   + '\n[recording.gemini_ui]\nsubmit = "Kirim"\n')
     monkeypatch.setattr(config, "LANGUAGES_DIR", langs)
     return langs / "xy"
 
@@ -129,12 +141,28 @@ def test_missing_article_key_fails_fast(broken_lang):
 def test_ui_labels_merge_over_defaults(broken_lang):
     """A partially-localized ui section must fall back, not KeyError:
     labels are discovered live a few at a time."""
-    cfg = broken_lang / "config.toml"
-    cfg.write_text(cfg.read_text()
-                   + '\n[recording.gemini_ui]\nsubmit = "Kirim"\n')
     c = load_language("xy")
-    assert c.gemini_ui["submit"] == "Kirim"
-    assert c.gemini_ui["delete_all"] == "Delete all"   # default survives
+    assert c.gemini_ui["submit"] == "Kirim"           # localized wins
+    assert c.gemini_ui["delete_all"] == "Delete all"  # default survives
+
+
+@pytest.mark.parametrize("section", ["chatgpt_ui", "gemini_ui"])
+def test_absent_ui_section_fails_fast(broken_lang, section):
+    """Absent entirely is NOT partial localization — it means nobody has
+    recced that assistant in this language. Silently handing the driver EN
+    labels is how the first Urdu take died, hunting for 'Personalization'
+    in an Urdu interface."""
+    cfg = broken_lang / "config.toml"
+    cfg.write_text(cfg.read_text().replace(f"[recording.{section}]",
+                                           "[recording.unused]"))
+    with pytest.raises(ConfigError, match=section):
+        load_language("xy")
+
+
+def test_en_needs_no_ui_sections():
+    """EN is the reference: its labels ARE the built-in defaults, so the
+    absent-section rule must not fire on it."""
+    assert load_language("en").chatgpt_ui["save"] == "Save"
 
 
 def test_recording_load_skips_later_phase_assets(broken_lang):

@@ -246,10 +246,35 @@ Accepted clips live in `inputs/clips/<lang>/`. Anything done to a clip
 after capture is recorded here — a clip that is not a straight `companion
 record` output must say so.
 
-**ar (2026-07-29)** — `copypaste-chatgpt.mp4` 33.7s and
-`copypaste-claude.mp4` 34.0s are unedited captures.
-`copypaste-gemini.mp4` is **trimmed**: the raw 46.3s take picked up a
-Gemini-side `تعذّر عرض المحادثات الأخيرة` ("couldn't load recent
+### Status: 2 of 9 clips accepted
+
+| lang | chatgpt | claude | gemini |
+|---|---|---|---|
+| ar | SUPERSEDED — retake | SUPERSEDED — retake | SUPERSEDED — retake |
+| ur | **accepted** | **accepted** | BLOCKED (see below) |
+| id | not shot | not shot | not shot |
+
+**ur (2026-07-29)** — `copypaste-chatgpt.mp4` and `copypaste-claude.mp4`
+are unedited captures on the article-source flow. `gemini` is **blocked**,
+not merely unshot: the ur part-2 paste triggers a hard Gemini saved-info
+refusal (`Gemini اس معلومات کو محفوظ نہیں کر سکتا`), root-caused to
+bullet 2 — the safeguarding line — refusing on its own in a 253-char
+minimal repro. Three rewordings that preserve the duty-of-care verbatim
+were all refused, so the fix is not a wording change; it is with the
+architect. This is also a live user-facing bug: ur readers following the
+published article cannot save that instruction to Gemini at all.
+
+**ar (2026-07-29) — SUPERSEDED, all three need retakes.** The clips still
+in `inputs/clips/ar/` were shot entering at `/ar/prompt`, before the
+directive that takes must enter on the **official article page** (one URL
+on camera, `s.iaser.ai/prompt`, then the language link clicked on camera).
+They are kept only as reference until the retakes land. What follows
+documents the trim technique on the old gemini clip — the technique and
+the "keep frames-dirs until a take is accepted" rule stand, the clip does
+not.
+
+The raw 46.3s ar gemini take picked up a Gemini-side
+`تعذّر عرض المحادثات الأخيرة` ("couldn't load recent
 conversations") error toast at t≈43.3s, which sat through the whole closing
 hold. Waleed's call was fix-in-edit, not retake. Rebuilt from the take's
 own frames at `frames-copypaste-gemini-ar-{0,1}` — frames 0..518
@@ -275,5 +300,21 @@ on, so the edit improves the ending rather than merely salvaging it.
    `spellouts.toml`.
 2. RTL languages: set `dir = "rtl"` and add font/line-height overrides in
    `[cards] css` (Nastaliq needs taller line metrics than Naskh).
-3. Record clips (`companion record`), then build, captions, listen-check,
+3. **Rec the assistant UIs before the first take.** Open ChatGPT and Gemini
+   under the target locale off-camera and read the labels live into
+   `[recording.chatgpt_ui]` / `[recording.gemini_ui]`. `load_language`
+   refuses a non-EN language that has neither section — the EN fallback
+   would send the driver hunting for "Personalization" in a localized
+   interface, which is how the first Urdu take died. Partial sections are
+   legal and merge over the EN defaults. Two labels don't render in a
+   clean state: ChatGPT's `save` only appears once the field is **dirty**
+   (and Cancel precedes it in DOM order — don't grab the first new
+   button), and Gemini's `delete_all` only appears with a **non-empty**
+   list. Watch for one string serving two roles: `personalization` is the
+   ACCOUNT-MENU item, which in ur differs from the settings dialog's own
+   tab label, while ar uses one string for both.
+4. Record clips (`companion record`), then build, captions, listen-check,
    watch-through, upload.
+
+**Outstanding**: `id` has neither UI section yet — its recon is the first
+step of the id recording session.
