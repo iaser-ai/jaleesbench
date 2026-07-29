@@ -188,6 +188,14 @@ Verified 2026-07-28 (read-only probes against the live products):
 | ChatGPT | ignores `?hl`; use Settings → Language (account setting — temporary write, restore after) or leave on Auto-detect and relaunch the recording Chrome with `--lang=<code>` | route identified; verify at recording time |
 | Claude | ignores `?hl`; follows browser language — relaunch the recording Chrome with `--lang=<code>` | route identified; verify at recording time |
 
+**Session-start check (standing, per Waleed)**: Claude ships no ar/ur/id
+interface language today (21-language list verified 2026-07-28), so
+Claude cells record with the EN UI + translated prompt + target-language
+narration bridging — Waleed's explicit fallback. His standing preference
+is native target-language UI wherever it exists: **re-check Claude's
+Settings → Language list at the start of every recording session**; if
+the target language has shipped, record Claude natively instead.
+
 Per-language recording sessions therefore launch Chrome as:
 
 ```bash
