@@ -114,6 +114,11 @@ segments, big start shifts) are regressions.
   CDP `Target.createTarget` also opens a window, but an **already-connected
   Playwright session never attaches to it**, so the page is invisible to
   the driver — use the popup route.
+- **Keep `out/recordings/frames-<name>-{0,1}/`** until a take is accepted.
+  They are the take's negatives: any tail fix (a stray toast in the closing
+  hold, a bad final frame) rebuilds from them in ONE encode instead of
+  re-encoding the mp4 a second time. `stop_dual` purges them per take name,
+  so they survive only until that clip is re-recorded.
 - Set **viewport BEFORE goto** — Gemini decides element visibility at load
   and never re-evaluates on resize.
 - Gemini requires **trusted locator clicks and a visible window**;
@@ -234,6 +239,33 @@ Each copy button flashes the copied char count on click —
 **capture that flash in takes as the on-camera honesty check**; the
 driver-level clipboard assert stays. Translation revisions route through
 the architect for iaser.ai re-vendor + re-verify.
+
+## Take log (accepted clips and any edits)
+
+Accepted clips live in `inputs/clips/<lang>/`. Anything done to a clip
+after capture is recorded here — a clip that is not a straight `companion
+record` output must say so.
+
+**ar (2026-07-29)** — `copypaste-chatgpt.mp4` 33.7s and
+`copypaste-claude.mp4` 34.0s are unedited captures.
+`copypaste-gemini.mp4` is **trimmed**: the raw 46.3s take picked up a
+Gemini-side `تعذّر عرض المحادثات الأخيرة` ("couldn't load recent
+conversations") error toast at t≈43.3s, which sat through the whole closing
+hold. Waleed's call was fix-in-edit, not retake. Rebuilt from the take's
+own frames at `frames-copypaste-gemini-ar-{0,1}` — frames 0..518
+(t≤43.167s) plus a 1.6s clone-hold on the last clean frame, one encode, no
+second generation (PSNR 48.6dB vs the raw take over the shared range):
+
+```bash
+ffmpeg -framerate 12 -i out/recordings/frames-copypaste-gemini-ar-0/f%05d.png \
+       -framerate 12 -i out/recordings/frames-copypaste-gemini-ar-1/f%05d.png \
+  -filter_complex "[0:v]trim=end_frame=519,setpts=PTS-STARTPTS,scale=720:550:force_original_aspect_ratio=decrease,pad=720:550:(ow-iw)/2:(oh-ih)/2:color=#0d0d0d[l];[1:v]trim=end_frame=519,setpts=PTS-STARTPTS,scale=720:550:force_original_aspect_ratio=decrease,pad=720:550:(ow-iw)/2:(oh-ih)/2:color=#0d0d0d[r];[l][r]hstack=inputs=2,tpad=stop_mode=clone:stop_duration=1.6[v]" \
+  -map "[v]" -c:v libx264 -pix_fmt yuv420p -crf 21 out.mp4
+```
+
+The trim lands the clip on Gemini's own `تم حفظ التعليمات` ("instructions
+saved") toast — the same confirmation beat the ChatGPT and Claude clips end
+on, so the edit improves the ending rather than merely salvaging it.
 
 ## Adding a language
 
