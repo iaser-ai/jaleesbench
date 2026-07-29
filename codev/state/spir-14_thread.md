@@ -356,3 +356,39 @@ Account state: only the profile Accept-Language changed (backed up);
 no assistant settings written; Claude language dropdown opened
 read-only. ChatGPT+Gemini ar takes GO the moment the page chrome
 clears.
+
+## 2026-07-28 — PAGE-CHROME BLOCKER CLEARED (self-discovered); two
+## take-blocking defects found and fixed
+
+Resumed after /clear. Checked the blocker directly rather than waiting on
+the relay: **iaser.ai's public localized pages are live** —
+`iaser.ai/{ar,ur,id}/prompt` now serve `html lang={ar,ur,id}`, localized
+titles, and NO staging banner (verified both over HTTP and in the rendered
+DOM via the rec Chrome, since a JS-injected banner would not show in curl).
+Re-verified **9/9 blocks byte-exact** against `handoff/prompt-page/*`
+(extractor must unwrap `<pre><code>`; a uniform +13 char delta across all
+nine blocks was the `<code></code>` tags, not content).
+
+The rollout also broke two things that would have failed every take:
+
+1. **Copy buttons are now localized** — ar `نسخ`, ur `نقل کریں`, id
+   `Salin`; all three configs still declared `"Copy"` from the staging
+   pages. Retargeted and confirmed the drivers' own selector
+   (`button:has-text(...)`) resolves 3/3 on each live page.
+2. **`companion record` died before opening the browser**:
+   `load_language` demands `vo/*.toml` + `cards/*`, which the NEXT phase
+   (`localized_content`) authors. Added `require_later_assets=False` for
+   the record path only — drivers touch nothing but `[recording]` (verified
+   by grepping every `cfg.` access). `clip_path` now explains the cause
+   instead of raising KeyError. All other callers keep the fail-fast
+   default. 61 tests green (59 + 2 new).
+
+Rig still up (PID 44776, ar locale, CDP 9222); ar prompt tab hard-refreshed
+and clean. Scratch tab used for ur/id inspection was closed. **Account
+state unchanged this session** — no assistant settings touched; profile
+Accept-Language still `ar,en-US,en` (backup in profile, restore at ar
+session end).
+
+**Takes are now unblocked.** Next: ChatGPT ar → review → Gemini ar →
+review → Claude ar (EN UI per Q3 amendment; re-check its language list
+first). Awaiting Waleed's go for the live session.
