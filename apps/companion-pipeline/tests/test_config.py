@@ -119,6 +119,23 @@ def test_missing_card_template_fails_fast(broken_lang):
         load_language("xy")
 
 
+def test_recording_load_skips_later_phase_assets(broken_lang):
+    """Clips are recorded a phase before VO and cards exist."""
+    (broken_lang / "vo" / "claude.toml").unlink()
+    (broken_lang / "cards" / "intro.html").unlink()
+    cfg = load_language("xy", require_later_assets=False)
+    assert cfg.videos == {}
+    assert cfg.intro_card_html == ""
+    # the core the drivers actually read still loads and still fails fast
+    assert cfg.copy_button_label and cfg.prompt_url
+
+
+def test_clip_path_explains_a_recording_only_config(broken_lang):
+    cfg = load_language("xy", require_later_assets=False)
+    with pytest.raises(ConfigError, match="require_later_assets=False"):
+        cfg.clip_path("chatgpt")
+
+
 def test_missing_spellouts_file_fails_fast(broken_lang):
     (broken_lang / "spellouts.toml").unlink()
     with pytest.raises(ConfigError, match="xy/spellouts"):

@@ -94,6 +94,11 @@ class LanguageConfig:
         return INPUTS_DIR / "clips" / self.lang
 
     def clip_path(self, video: str) -> Path:
+        if video not in self.videos:
+            raise ConfigError(
+                f"[{self.lang}/{video}] no VO config — this LanguageConfig "
+                f"was loaded with require_later_assets=False (the recording "
+                f"path). Reload with load_language({self.lang!r}) to build.")
         p = self.clips_dir / self.videos[video].clip
         if not p.exists():
             raise ConfigError(
@@ -190,7 +195,17 @@ def validate_skeleton(lang: str) -> list[str]:
     return [str(p.relative_to(base)) for p in later_phase if not p.exists()]
 
 
-def load_language(lang: str) -> LanguageConfig:
+def load_language(lang: str, *,
+                  require_later_assets: bool = True) -> LanguageConfig:
+    """Load a language config.
+
+    `require_later_assets=False` skips the later-phase assets named by
+    `validate_skeleton` — the `vo/*.toml` scripts and the cards — leaving
+    `videos` empty and the card HTML blank. The recording drivers read only
+    the core `[recording]` block, and clips are captured a phase before VO
+    and cards are authored, so a take must not be blocked on assets that do
+    not exist yet. Every other caller keeps the fail-fast default.
+    """
     base = _lang_base(lang)
     ctx = lang
     core = _parse_core(base, ctx)
@@ -206,7 +221,7 @@ def load_language(lang: str) -> LanguageConfig:
             f"these must match exactly (watch for trailing newlines)")
 
     videos: dict[str, VideoConfig] = {}
-    for name in VIDEOS:
+    for name in VIDEOS if require_later_assets else ():
         vctx = f"{ctx}/vo/{name}"
         v = _load_toml(base / "vo" / f"{name}.toml", vctx)
         raw_segs = _need(v, "segments", vctx)
@@ -259,8 +274,10 @@ def load_language(lang: str) -> LanguageConfig:
         youtube_language=_need(yt, "video_language", f"{ctx}.youtube"),
         videos=videos,
         spellouts=core["spellouts"],
-        intro_card_html=_read(base / "cards" / "intro.html", ctx),
-        outro_card_html=_read(base / "cards" / "outro.html", ctx),
+        intro_card_html=(_read(base / "cards" / "intro.html", ctx)
+                         if require_later_assets else ""),
+        outro_card_html=(_read(base / "cards" / "outro.html", ctx)
+                         if require_later_assets else ""),
     )
 
 

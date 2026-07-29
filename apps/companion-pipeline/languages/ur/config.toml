@@ -31,7 +31,7 @@ css = """
 [recording]
 prompt_url = "https://iaser.ai/ur/prompt"
 prompt_url_display = "iaser.ai/ur/prompt"
-copy_button_label = "Copy"  # staged pages use plain "Copy" x3 (full, part1, part2)
+copy_button_label = "نقل کریں"  # public pages localize the button x3 (full, part1, part2)
 prompt_chars = 1318
 gemini_part_min = 603
 gemini_part2_leadin = "یہ باقی ہدایات ہیں؛ ان پر پچھلی ہدایات کے ساتھ عمل کریں۔ ان سب کا مقصد ایک ہی ہے: ایسی سچی مدد جو اچھا اثر چھوڑ جائے:"

@@ -51,7 +51,8 @@ def record(lang: str = typer.Option(...),
            video: str = typer.Option(..., help="chatgpt|claude|gemini — "
                                      "one take at a time")):
     """Record a walkthrough clip via the CDP Chrome (see README setup)."""
-    cfg = load_language(lang)
+    # Recording precedes VO authoring; drivers read only [recording].
+    cfg = load_language(lang, require_later_assets=False)
     if video not in VIDEOS:
         raise typer.BadParameter(f"video must be one of {', '.join(VIDEOS)}")
     driver = importlib.import_module(f".drivers.{video}",

@@ -27,7 +27,7 @@ css = """
 [recording]
 prompt_url = "https://iaser.ai/ar/prompt"
 prompt_url_display = "iaser.ai/ar/prompt"
-copy_button_label = "Copy"  # staged pages use plain "Copy" x3 (full, part1, part2)
+copy_button_label = "نسخ"  # public pages localize the button x3 (full, part1, part2)
 prompt_chars = 1160
 gemini_part_min = 503
 gemini_part2_leadin = "وهذه بقية التوجيهات، فاعمل بها مع ما سبق. وكلها تخدم غاية واحدة: عونٌ صادق يترك أثرًا طيبًا:"

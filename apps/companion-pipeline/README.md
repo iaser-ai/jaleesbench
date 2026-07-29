@@ -207,11 +207,14 @@ must keep using role/label-based locators, never coordinates.
 
 ## Localized prompt pages (recording sources)
 
-Live (unlisted) per-language pages, staged and byte-verified by iaser.ai
-against `handoff/prompt-page/`: `iaser.ai/{ar,ur,id}/prompt`. Structure:
-3 `<pre>` blocks (full prompt, Gemini part 1, part 2) with plain
-**"Copy"** buttons (config `copy_button_label`; the EN page uses "Copy
-prompt"). Each copy button flashes the copied char count on click —
+Live **public** per-language pages, byte-verified by iaser.ai against
+`handoff/prompt-page/`: `iaser.ai/{ar,ur,id}/prompt`. Structure:
+3 `<pre><code>` blocks (full prompt, Gemini part 1, part 2) with
+**target-language** copy buttons — config `copy_button_label`: ar `نسخ`,
+ur `نقل کریں`, id `Salin`; the EN page uses "Copy prompt". Re-check these
+labels after any iaser.ai page revision: the earlier staging pages used a
+plain English "Copy", and the public rollout localized it.
+Each copy button flashes the copied char count on click —
 **capture that flash in takes as the on-camera honesty check**; the
 driver-level clipboard assert stays. Translation revisions route through
 the architect for iaser.ai re-vendor + re-verify.
