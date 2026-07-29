@@ -64,11 +64,11 @@ save = "محفوظ کریں"
 toast_substr = "حسب ضرورت ہدایات اپ ڈیٹ کی گئیں"
 
 [recording.gemini_ui]
-# add/submit observed live 2026-07-29. delete_all only renders when the
-# list is non-empty, so it is filled in after the first ur take; until
-# then it falls back to the EN default (keys merge over defaults).
+# All observed live 2026-07-29 (delete_all only renders when the list
+# is non-empty, so it was read during a cleanup).
 add = "شامل کریں"
 submit = "جمع کرائیں"
+delete_all = "سبھی حذف کریں"
 
 [youtube]
 video_language = "Urdu"

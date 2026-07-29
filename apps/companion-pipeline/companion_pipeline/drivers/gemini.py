@@ -63,6 +63,17 @@ def ensure_visible(s, right, cfg):
     foregrounded reload. Locale-robust: the Add button is found by its
     stable class, not its (localized) label."""
     for attempt in range(3):
+        # A dialog left open by the PREVIOUS entry keeps its backdrop over
+        # the page, and every later click lands on the backdrop instead of
+        # the button — which surfaces as an opaque click-timeout rather
+        # than the take-abort. Clear it before looking for the Add button.
+        if right.locator(".cdk-overlay-backdrop").count():
+            print("  stale dialog backdrop — dismissing")
+            right.keyboard.press("Escape")
+            right.wait_for_timeout(800)
+            if right.locator(".cdk-overlay-backdrop").count():
+                right.reload()
+                right.wait_for_timeout(3500)
         ok = right.evaluate("""() => {
           const b = document.querySelector('button.create-memory-button');
           return !!(b && getComputedStyle(b).visibility === 'visible');
@@ -183,34 +194,22 @@ def record(cfg: LanguageConfig) -> None:
         t0 = time.time()
         left.bring_to_front()
 
-        # Short link -> EN article -> language link, then take the
-        # article's own link across to the prompt page. That hop is the
-        # documented user flow for Gemini (the two-part paste lives on the
-        # prompt page), so it belongs ON camera rather than being skipped.
+        # Short link -> EN article -> language link. Both Gemini parts are
+        # copied FROM THE ARTICLE ITSELF (it carries all three blocks:
+        # full prompt, part 1, part 2) — the take never leaves the article
+        # for the bare prompt page.
         open_article(s, left, cfg, width=1000)
 
-        link_sel = f"a[href='/{cfg.lang}/prompt']"
-        left.locator(link_sel).first.scroll_into_view_if_needed()
-        left.wait_for_timeout(900)
-        assert left.locator(link_sel).count(), \
-            f"article has no link to /{cfg.lang}/prompt to follow on camera"
-        s.move_click(left, link_sel, after_ms=1200)
-        left.wait_for_url(f"**/{cfg.lang}/prompt", timeout=20000)
-        left.set_viewport_size({"width": 1000, "height": 765})
-        left.wait_for_timeout(2400)
-        s.ensure_cursor(left)
-
-        # scroll to the Gemini section's Part 1 block (block #2 on page)
         blocks = left.locator("pre")
         n_blocks = blocks.count()
-        print("code blocks on page:", n_blocks)
-        assert n_blocks >= 3, "part blocks not on the deployed page yet"
+        print("code blocks in article:", n_blocks)
+        assert n_blocks >= 3, "part blocks not on the deployed article yet"
         blocks.nth(1).scroll_into_view_if_needed()
         left.evaluate("window.scrollBy(0,-160)")
         left.wait_for_timeout(900)
 
         copy_btns = left.locator(
-            f"pre button, button:has-text('{cfg.copy_button_label}')")
+            f"button:has-text('{cfg.article_copy_button_label}')")
         print("copy buttons:", copy_btns.count())
 
         # LEFT: copy Part 1

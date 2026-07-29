@@ -108,7 +108,37 @@ class Session:
 
     # -- lifecycle ---------------------------------------------------------
     def __enter__(self):
+        self.sweep_strays()
         return self
+
+    def sweep_strays(self):
+        """Close any window that is not the rig's base window.
+
+        Belt and braces for the operator's desktop: a take that dies hard
+        enough to skip close() (or a crashed run from an earlier session)
+        must not leave windows behind for the next take to inherit. The
+        rig's base window is the one holding the most tabs.
+        """
+        wins: dict[object, list] = {}
+        for page in list(self.ctx.pages):
+            try:
+                wid = self.ctx.new_cdp_session(page).send(
+                    "Browser.getWindowForTarget")["windowId"]
+            except Exception:
+                continue
+            wins.setdefault(wid, []).append(page)
+        if len(wins) < 2:
+            return
+        base = max(wins, key=lambda w: len(wins[w]))
+        for wid, pages in wins.items():
+            if wid == base:
+                continue
+            for page in pages:
+                try:
+                    page.close()
+                except Exception:
+                    pass
+        print(f"swept {len(wins) - 1} stray window(s) before rolling")
 
     def __exit__(self, *exc):
         self.close()
