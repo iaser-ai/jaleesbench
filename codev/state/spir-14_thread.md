@@ -1,5 +1,36 @@
 # spir-14 thread — Multilingual companion-prompt assets (AR / UR / ID)
 
+> **Resuming after a context clear?** A fuller operational handoff sits
+> beside this file at `codev/state/spir-14_resume.md` (uncommitted — the
+> repo ignores non-thread state files — so it exists only in this
+> worktree). The essentials are duplicated in **CURRENT STATE** below so
+> the committed record stands alone.
+
+## CURRENT STATE (2026-07-29, keep updated)
+
+- **Porch**: `implement` → plan phase **`recordings`** (4/8). Phases 1–3
+  approved. Strict mode: porch owns transitions; never edit status.yaml,
+  never `porch approve`.
+- **BLOCKED ON**: iaser.ai serving clean public target-language chrome for
+  `iaser.ai/{ar,ur,id}/prompt` (today an EN "Unlisted staging page" banner
+  would be on camera). Architect relays when live. Nothing else gates the
+  ChatGPT + Gemini Arabic takes.
+- **Rig hot**: rec Chrome `--lang=ar`, CDP 9222, tabs on the ar prompt
+  page + the three assistants. ChatGPT UI Arabic ✓, Gemini ar RTL via
+  `?hl=ar` ✓, Claude EN-only (Q3 amendment).
+- **ACCOUNT STATE — outstanding restore**: profile
+  `intl.accept_languages` was `(unset)`, now `ar,en-US,en` (backup at
+  `<rec-profile>/accept_languages.backup.txt`) — **restore at session
+  end**. No assistant settings touched this session. Gemini saved-info is
+  EMPTY (Waleed's baseline — do not reinstall the EN entries).
+- **Next actions**: verify page chrome → record ChatGPT ar → Gemini ar →
+  Claude ar (EN UI) → review each take → commit accepted clips to
+  `inputs/clips/ar/` → report clips + account state → restore
+  Accept-Language → repeat for ur, id (re-check Claude's language list
+  each session) → `porch done 14`.
+- **Verify anything before trusting it**: `uv run --directory
+  apps/companion-pipeline pytest -q` (59 green at handoff).
+
 ## 2026-07-28 — Session start, Specify phase
 
 Spawned in strict mode for issue #14. Porch says phase = specify; spec file
