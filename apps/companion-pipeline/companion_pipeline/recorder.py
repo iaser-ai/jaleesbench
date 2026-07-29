@@ -104,6 +104,7 @@ class Session:
         self._frames = []
         self._rec_name = None
         self._cdp = None
+        self._own_pages = []   # windows this Session opened; closed on exit
 
     # -- lifecycle ---------------------------------------------------------
     def __enter__(self):
@@ -113,10 +114,25 @@ class Session:
         self.close()
 
     def close(self):
+        # Take windows MUST be torn down on abort as well as success —
+        # every failed take used to strand two visible windows on the
+        # operator's desktop, and they accumulated across a session.
         try:
-            self.browser.close()
+            self.close_take_windows()
         finally:
-            self._pw.stop()
+            try:
+                self.browser.close()
+            finally:
+                self._pw.stop()
+
+    def close_take_windows(self):
+        """Close every window this Session opened, ignoring the rig's."""
+        while self._own_pages:
+            page = self._own_pages.pop()
+            try:
+                page.close()
+            except Exception:
+                pass
 
     # -- pages -------------------------------------------------------------
     def new_page(self, url: str):
@@ -151,6 +167,7 @@ class Session:
                      `width=${w},height=${h},left=${l},top=0`)""",
                 [width, height, left])
         page = info.value
+        self._own_pages.append(page)
 
         # viewport BEFORE goto — some apps fix element visibility at load
         page.set_viewport_size({"width": width, "height": height})

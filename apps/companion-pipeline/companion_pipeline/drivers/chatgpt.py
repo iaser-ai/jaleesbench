@@ -167,11 +167,4 @@ def record(cfg: LanguageConfig) -> None:
             right.wait_for_timeout(700)
         n = len(v.first.input_value() or "") if v.count() else -1
         print("persisted custom-instruction chars:", n)
-        # close the take's windows before asserting, so a failed take still
-        # leaves the rig as it found it
-        for p in (left, right):
-            try:
-                p.close()
-            except Exception:
-                pass
         assert n == cfg.prompt_chars, "prompt did not persist"

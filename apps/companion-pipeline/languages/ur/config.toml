@@ -41,5 +41,22 @@ card_goto_line = "اپنے براؤزر میں جائیں"
 card_open_line = "اب کھولیں"
 account_label = "waleedkadous"
 
+[recording.chatgpt_ui]
+# Discovered live under the ur Accept-Language session (2026-07-29).
+# `save` only renders once the field is DIRTY (it appears next to
+# منسوخ کریں = Cancel, and Cancel comes FIRST in DOM order — don't grab
+# the first new button). toast_substr is the full phrase on purpose.
+personalization = "شخصی بناوٹ"
+ci_placeholder_substr = "اضافی رویّہ"
+save = "محفوظ کریں"
+toast_substr = "حسب ضرورت ہدایات اپ ڈیٹ کی گئیں"
+
+[recording.gemini_ui]
+# add/submit observed live 2026-07-29. delete_all only renders when the
+# list is non-empty, so it is filled in after the first ur take; until
+# then it falls back to the EN default (keys merge over defaults).
+add = "شامل کریں"
+submit = "جمع کرائیں"
+
 [youtube]
 video_language = "Urdu"

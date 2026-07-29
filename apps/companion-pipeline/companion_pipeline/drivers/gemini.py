@@ -244,8 +244,3 @@ def record(cfg: LanguageConfig) -> None:
         right.wait_for_timeout(3500)
         body = right.evaluate("document.body.innerText")
         print("entries mention companion:", "companion" in body)
-        for p in (left, right):
-            try:
-                p.close()
-            except Exception:
-                pass
