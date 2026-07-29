@@ -19,7 +19,8 @@ import time
 
 from ..config import LanguageConfig
 from ..recorder import Session
-from .common import CARD_JS, OVERLAY_JS, OVERLAY_OFF_JS, clipboard
+from .common import (OVERLAY_JS, OVERLAY_OFF_JS, clipboard,
+                     open_article)
 
 # hide the location rows of the settings menu the moment they mount
 REDACT_JS = """() => {
@@ -182,18 +183,15 @@ def record(cfg: LanguageConfig) -> None:
         t0 = time.time()
         left.bring_to_front()
 
-        # Enter on the ARTICLE at the Gemini section, then take the
+        # Short link -> EN article -> language link, then take the
         # article's own link across to the prompt page. That hop is the
         # documented user flow for Gemini (the two-part paste lives on the
         # prompt page), so it belongs ON camera rather than being skipped.
-        left.evaluate(CARD_JS, [cfg.card_goto_line, cfg.article_url_display])
-        left.wait_for_timeout(3200)
-        left.goto(f"{cfg.article_url}#gemini-")
-        left.set_viewport_size({"width": 1000, "height": 765})
-        left.wait_for_timeout(2600)
-        s.ensure_cursor(left)
+        open_article(s, left, cfg, width=1000)
 
         link_sel = f"a[href='/{cfg.lang}/prompt']"
+        left.locator(link_sel).first.scroll_into_view_if_needed()
+        left.wait_for_timeout(900)
         assert left.locator(link_sel).count(), \
             f"article has no link to /{cfg.lang}/prompt to follow on camera"
         s.move_click(left, link_sel, after_ms=1200)

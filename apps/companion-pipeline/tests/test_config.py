@@ -121,8 +121,8 @@ def test_missing_card_template_fails_fast(broken_lang):
 
 def test_missing_article_key_fails_fast(broken_lang):
     cfg = broken_lang / "config.toml"
-    cfg.write_text(cfg.read_text().replace("article_url =", "unused ="))
-    with pytest.raises(ConfigError, match="article_url"):
+    cfg.write_text(cfg.read_text().replace("article_entry_url =", "unused ="))
+    with pytest.raises(ConfigError, match="article_entry_url"):
         load_language("xy")
 
 

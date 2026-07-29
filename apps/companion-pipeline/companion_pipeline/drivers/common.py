@@ -73,6 +73,36 @@ def stable_value(page, loc, rounds: int = 4):
     return last
 
 
+def open_article(s, left, cfg, width: int = 657, height: int = 765):
+    """Card -> short link -> (on camera) the page's own language link.
+
+    Every language enters on the SAME short link, because that is the only
+    address a viewer could realistically retype; it lands on the EN
+    article and the take clicks through to the localized one on camera.
+    The localized URL is never navigated to directly.
+    """
+    left.evaluate(CARD_JS, [cfg.card_goto_line, cfg.article_url_display])
+    left.wait_for_timeout(3200)
+    left.goto(cfg.article_entry_url)
+    left.set_viewport_size({"width": width, "height": height})
+    left.wait_for_timeout(2600)
+    s.ensure_cursor(left)
+
+    if cfg.article_lang_link:
+        sel = f"a:has-text('{cfg.article_lang_link}')"
+        assert left.locator(sel).count(), (
+            f"no {cfg.article_lang_link!r} language link on "
+            f"{cfg.article_entry_url}")
+        s.move_click(left, sel, after_ms=1400)
+        left.wait_for_function(
+            "lang => location.pathname.includes('/' + lang + '/')",
+            arg=cfg.lang, timeout=20000)
+        left.set_viewport_size({"width": width, "height": height})
+        left.wait_for_timeout(2200)
+        s.ensure_cursor(left)
+    print("article:", left.url)
+
+
 def copy_block(s, left, button_sel: str, expected_chars: int,
                label: str) -> str:
     """Highlight + click a copy button (article OR prompt page) and verify
