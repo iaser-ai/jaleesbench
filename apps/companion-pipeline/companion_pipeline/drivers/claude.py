@@ -19,10 +19,10 @@ from .common import (CARD_JS, OVERLAY_JS, OVERLAY_OFF_JS,
 def record(cfg: LanguageConfig) -> None:
     name = f"copypaste-claude-{cfg.lang}"
     with Session() as s:
-        left = next(p for p in s.ctx.pages if "iaser.ai" in p.url)
-        right = next(p for p in s.ctx.pages if "claude.ai" in p.url)
-        left.set_viewport_size({"width": 657, "height": 765})
-        right.set_viewport_size({"width": 657, "height": 765})
+        # Own window per half — both are screencast at once, and a
+        # background tab renders at its window's size, not its viewport.
+        left = s.new_window("about:blank", left=0)
+        right = s.new_window("https://claude.ai/new", left=680)
 
         # ---- off-camera reset: Instructions field must be empty ----------
         right.goto("https://claude.ai/new#settings/general")
@@ -56,9 +56,13 @@ def record(cfg: LanguageConfig) -> None:
                     break
                 right.wait_for_timeout(500)
             assert gone_r, "reset save did not register"
-            # reads can lag saves by many seconds — retry the reload check
+            # Claude's read-after-write lag is MINUTES, not seconds: after a
+            # save, reloads keep serving the OLD value for a long time. This
+            # loop must outlast that or it reports a false "did not persist"
+            # on a save that actually landed (it has done so twice; a ~45s
+            # budget aborted a take whose reset had in fact succeeded).
             ok = False
-            for _ in range(8):
+            for _ in range(30):  # ~4 min
                 right.reload()
                 right.wait_for_timeout(3500)
                 chk = right.locator("textarea").first
@@ -66,7 +70,8 @@ def record(cfg: LanguageConfig) -> None:
                 if (stable_value(right, chk) or "").strip() in ("", "."):
                     ok = True
                     break
-            assert ok, "field not effectively empty after reset"
+                right.wait_for_timeout(4000)
+            assert ok, "field not effectively empty after reset (waited ~4min)"
 
         # dismiss any promo tooltip, park on clean home under the dark cover
         right.goto("https://claude.ai/new")

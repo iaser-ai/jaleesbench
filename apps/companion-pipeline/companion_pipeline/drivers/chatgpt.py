@@ -38,12 +38,12 @@ def record(cfg: LanguageConfig) -> None:
     name = f"copypaste-chatgpt-{cfg.lang}"
     CI_FIELD = ci_field(cfg)
     with Session() as s:
-        left = next(p for p in s.ctx.pages if "iaser.ai" in p.url)
-        right = next(p for p in s.ctx.pages if "chatgpt.com" in p.url)
-        # pin BOTH halves to identical viewports — the composite depends on
-        # every captured frame having the same geometry
-        left.set_viewport_size({"width": 657, "height": 765})
-        right.set_viewport_size({"width": 657, "height": 765})
+        # Each half needs its OWN window: both are screencast at once, and a
+        # background tab renders at its window's size, not its viewport.
+        # Identical viewports — the composite depends on every captured
+        # frame having the same geometry.
+        left = s.new_window("about:blank", left=0)
+        right = s.new_window("https://chatgpt.com/", left=680)
 
         # ---- off-camera reset: custom-instructions field must be empty ---
         right.goto("https://chatgpt.com/#settings/Personalization")
@@ -167,4 +167,11 @@ def record(cfg: LanguageConfig) -> None:
             right.wait_for_timeout(700)
         n = len(v.first.input_value() or "") if v.count() else -1
         print("persisted custom-instruction chars:", n)
+        # close the take's windows before asserting, so a failed take still
+        # leaves the rig as it found it
+        for p in (left, right):
+            try:
+                p.close()
+            except Exception:
+                pass
         assert n == cfg.prompt_chars, "prompt did not persist"

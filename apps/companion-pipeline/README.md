@@ -106,7 +106,14 @@ segments, big start shifts) are regressions.
 ## Recording rules (each learned the hard way)
 
 - Each recorded page needs its **own window** — background tabs render at
-  the window's size, not their viewport.
+  the window's size, not their viewport. The split-screen drivers no
+  longer reuse the rig's tabs (all of which share one window, so only one
+  half could ever be foreground — that shipped a visibly shrunken,
+  letterboxed right half). They call `Session.new_window()`, which opens a
+  real separate window via `window.open` with explicit geometry. Note raw
+  CDP `Target.createTarget` also opens a window, but an **already-connected
+  Playwright session never attaches to it**, so the page is invisible to
+  the driver — use the popup route.
 - Set **viewport BEFORE goto** — Gemini decides element visibility at load
   and never re-evaluates on resize.
 - Gemini requires **trusted locator clicks and a visible window**;
@@ -124,8 +131,17 @@ segments, big start shifts) are regressions.
   the full prompt (error 13). Re-verify per language.
 - **Claude read-after-write lag is minutes**: after Save, reloads keep
   showing the OLD field value for a long time before flipping. Poll
-  patiently (~3–4 min) before concluding a save failed — two false
-  "did not persist" readings came from exactly this.
+  patiently (~3–4 min) before concluding a save failed — three false
+  "did not persist" readings came from exactly this. The driver's reset
+  verify loop is budgeted ~4 min for this reason; an earlier ~45s budget
+  aborted an ar take whose reset had in fact succeeded (the field flipped
+  to the saved value minutes later).
+- **Per-language ChatGPT UI labels**: validate them off camera before the
+  first take of a language. `save` only renders once the field is DIRTY
+  (a clean-state probe won't find it), and `toast_substr` must be the FULL
+  confirmation phrase — the short form also matches the always-visible
+  "Custom instructions" section button, so the driver's toast wait can
+  resolve against the heading and miss the actual toast beat.
 - **Gemini saved-info automation specifics**: confirm buttons in its
   dialogs are `mat-tonal-button` (NOT `mat-primary`) — include it in
   selectors or clicks silently miss; entry rows expose kebab menus

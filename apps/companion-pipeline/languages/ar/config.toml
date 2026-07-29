@@ -42,13 +42,15 @@ account_label = "waleedkadous"
 # recording-session start (drivers fall back to locale-independent
 # selectors where possible).
 [recording.chatgpt_ui]
-# Observed live under the ar Accept-Language session (2026-07-28).
-# save/toast are best-guess until the first off-camera reset validates
-# them (that happens before any camera rolls).
+# All four VALIDATED live off-camera 2026-07-29 before the ar takes.
+# `save` only renders once the field is dirty (with إلغاء) — a clean-state
+# probe won't find it. toast_substr must stay the FULL phrase: the bare
+# "التعليمات المخصصة" also matches the always-visible section button, so a
+# shorter substring resolves against the heading instead of the toast.
 personalization = "التخصيص"
 ci_placeholder_substr = "تفضيلات إضافية"
 save = "حفظ"
-toast_substr = "التعليمات المخصصة"
+toast_substr = "تم تحديث التعليمات المخصصة"
 
 [recording.gemini_ui]
 add = "إضافة"

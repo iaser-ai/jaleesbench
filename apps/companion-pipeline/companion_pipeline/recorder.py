@@ -128,6 +128,37 @@ class Session:
         hide_chrome()
         return page
 
+    def new_window(self, url: str, width: int = 657, height: int = 765,
+                   left: int = 0):
+        """Open `url` in its OWN top-level window and return the Page.
+
+        Split-screen takes screencast both halves at once, so neither half
+        may be a background tab: a backgrounded tab renders at its window's
+        size rather than its viewport, and the composite letterboxes it
+        (this shipped a visibly shrunken right half once). Reusing the
+        rig's existing tabs puts both halves in one window, which cannot
+        satisfy that — so each half gets a window here.
+        """
+        # window.open with explicit geometry — Chrome makes that a real
+        # separate window, and Playwright tracks it as a popup. (Raw
+        # Target.createTarget also opens a window, but an already-connected
+        # Playwright session never attaches to it, so the page is invisible
+        # to the driver.)
+        opener = self.ctx.pages[0]
+        with self.ctx.expect_page(timeout=20000) as info:
+            opener.evaluate(
+                """([w, h, l]) => window.open('about:blank', '_blank',
+                     `width=${w},height=${h},left=${l},top=0`)""",
+                [width, height, left])
+        page = info.value
+
+        # viewport BEFORE goto — some apps fix element visibility at load
+        page.set_viewport_size({"width": width, "height": height})
+        page.goto(url, wait_until="domcontentloaded")
+        page.wait_for_timeout(1500)
+        self.ensure_cursor(page)
+        return page
+
     def ensure_cursor(self, page):
         page.evaluate(CURSOR_JS)
 

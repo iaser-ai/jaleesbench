@@ -105,10 +105,21 @@ def paste_entry(s, right, cfg, text, label):
             "() => !document.querySelector('.cdk-overlay-backdrop')",
             timeout=25000)
     except Exception:
+        # capture what the dialog actually said — the abort is otherwise
+        # blind, and the same guard fires for genuine and false errors
+        try:
+            dlg = right.evaluate(
+                """() => [...document.querySelectorAll(
+                     '.cdk-overlay-container mat-dialog-container, '
+                     + '.cdk-overlay-container [role=dialog]')]
+                     .map(n => (n.innerText||'').trim()).join(' | ')""")
+        except Exception:
+            dlg = "<could not read dialog>"
         raise RuntimeError(
             f"TAKE ABORT ({label}): submit dialog did not close on camera "
             "(likely the false-error dialog). Stop recording, verify the "
-            "entry list (the entry may HAVE saved), clean up, retake.")
+            "entry list (the entry may HAVE saved), clean up, retake.\n"
+            f"DIALOG TEXT: {dlg[:600]}")
     right.wait_for_timeout(1500)
     print(f"{label} submitted, dialog closed")
 
@@ -140,11 +151,13 @@ def _copy_part(s, left, copy_btns, idx: int, cfg: LanguageConfig,
 def record(cfg: LanguageConfig) -> None:
     name = f"copypaste-gemini-{cfg.lang}"
     with Session() as s:
-        left = next(p for p in s.ctx.pages
-                    if "gemini.google.com" not in p.url)
-        right = next(p for p in s.ctx.pages if "gemini.google.com" in p.url)
-        left.set_viewport_size({"width": 1000, "height": 765})
-        right.set_viewport_size({"width": 1000, "height": 765})
+        # Own window per half — both are screencast at once, and a
+        # background tab renders at its window's size, not its viewport.
+        # Gemini additionally needs a genuinely visible window, so the two
+        # are placed side by side rather than stacked.
+        left = s.new_window("about:blank", width=1000, left=0)
+        right = s.new_window(f"https://gemini.google.com/app?hl={cfg.lang}",
+                             width=1000, left=1010)
 
         # ---- off-camera prep: park directly on the instructions page -----
         # (viewport BEFORE navigation: the page decides visible-vs-hidden
@@ -231,3 +244,8 @@ def record(cfg: LanguageConfig) -> None:
         right.wait_for_timeout(3500)
         body = right.evaluate("document.body.innerText")
         print("entries mention companion:", "companion" in body)
+        for p in (left, right):
+            try:
+                p.close()
+            except Exception:
+                pass
