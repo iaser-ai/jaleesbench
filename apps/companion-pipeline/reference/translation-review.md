@@ -264,3 +264,65 @@ the package location and integration notes. Acknowledgement pending.
 - Gemini saved-info: state NOT programmatically verified — needs manual
   eyes (expected: the two EN entries; possibly stray test entries from
   the two attempts, which submits may or may not have created).
+
+### ur split moved 3 → 5 — boundary, not wording (2026-07-29, Waleed's call)
+
+**The refusal.** ur bullet 5 — the safeguarding line — is refused by
+Gemini as a saved-info entry whenever it arrives in part 2:
+
+> غم، خطرے یا بڑھتے شک میں اسے تنہا نہ چھوڑیں: امام، خاندان اور دین کے ساتھ ساتھ — ان کی جگہ نہیں — بحرانی یا پیشہ ورانہ مدد بھی لائیں۔
+
+Bisection on whole lines, 3 writes: lead-in + bullets 4 and 6 (636 ch)
+**ACCEPTED**; lead-in + bullet 5 alone (253 ch) **REFUSED**. The dialog
+(`Gemini اس معلومات کو محفوظ نہیں کر سکتا`) is byte-identical every run.
+This is a **third failure mode**, distinct from the two already recorded
+here: not the rewriter's silent drop (echoing lead-in) and not the
+language flip (thin lead-in), but a hard refusal — the shape of a
+sensitive-information classifier, saved-info being a store of facts about
+the account holder and this line reading as grief / danger / crisis.
+
+**Ruled out.** *Length*: id part 2 at 887 is accepted while ur at 772 is
+refused. *Phrasing*: three candidates, each preserving "alongside, not
+instead of" verbatim — a conditional frame mirroring ar, an action-first
+frame, and a crisis-lexeme swap — were **all refused**. Frame doesn't
+matter and lexeme doesn't matter. ar carries the same meaning and saves.
+Per the standing instruction that meaning outranks acceptance, the line
+was not weakened to get past the filter.
+
+**The fix is structural.** ar's bullet 5 saves; ur's refuses; the words
+stay. Moving the boundary from after bullet 3 to after bullet 5 puts the
+line in part 1, where it is accepted. Nothing is translated, reordered,
+or rewritten — only where the cut falls. This is the boundary latitude
+already sanctioned above.
+
+| | old (3/3) | new (5/1) |
+|---|---|---|
+| part 1 | header + bullets 1-3 = **663** | header + bullets 1-5 = **955** |
+| part 2 | lead-in + bullets 4-6 = **772** | lead-in + bullet 6 = **480** |
+| canonical | 1318 | 1318 (unchanged, byte-identical) |
+
+Byte accounting. The lead-in (117) exists only in the parts rendering,
+never in the canonical prompt, so part 2 carries 480 − 117 − 1 = 362 chars
+of actual bullet. Reassembly: 955 + 1 (the newline) + 362 = **1318** ✓,
+the canonical length exactly. That identity —
+`p1 + "\n" + p2.removeprefix(leadin + "\n") == canonical` — is asserted in
+the tests, as is every bullet landing in exactly one part. Part 1 grows to
+955, still well under the full 1318 the entry rewriter rejects, which is
+what makes the move viable at all.
+
+**NOT YET CONFIRMED LIVE.** Two ledgered confirmation runs (the ar
+≥2-confirmation precedent) are owed and have not been run — the recording
+rig has been down. Until they pass, the new split is a well-founded
+prediction, not a verified result. The confirmation is also
+text-dependent: it tests whether *this* wording of bullet 5 saves inside
+part 1, so if the ur reviewer revises the text, it re-runs against the
+revision.
+
+**Detection gap found while landing this.** The clipboard char band
+cannot police this transition: the superseded sizes (663/772) fall
+*between* the new ones (480/955), so no band that accepts the new parts
+rejects a stale-cached page serving the old ones. The recording driver
+now asserts the copied block byte-for-byte against the derived part. The
+handoff-package test had the same shape of hole — reassembly-to-canonical
+is boundary-agnostic and passed the stale 3/3 package — and is now pinned
+to the configured boundary.
