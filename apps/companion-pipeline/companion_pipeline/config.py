@@ -60,6 +60,10 @@ class LanguageConfig:
     direction: str       # "ltr" | "rtl"
     tts: TtsConfig
     card_css: str        # per-language CSS override block (may be empty)
+    # Font family that MUST actually resolve when cards render. Empty
+    # = unguarded. Chrome falls back silently, so a missing face shows
+    # up only as wrong-looking cards on camera.
+    card_require_font: str
     prompt: str
     prompt_url: str
     prompt_url_display: str   # short form shown on recorded cards
@@ -209,6 +213,8 @@ def _parse_core(base: Path, ctx: str) -> dict:
         "direction": direction,
         "tts": tts,
         "card_css": cfg.get("cards", {}).get("css", ""),
+        "card_require_font": cfg.get("cards", {}).get(
+            "require_font", ""),
         "rec": rec,
         "yt": yt,
         "spellouts": spellouts,
@@ -290,6 +296,7 @@ def load_language(lang: str, *,
         direction=core["direction"],
         tts=core["tts"],
         card_css=core["card_css"],
+        card_require_font=core["card_require_font"],
         prompt=prompt,
         prompt_url=_need(rec, "prompt_url", f"{ctx}.recording"),
         prompt_url_display=_need(rec, "prompt_url_display",

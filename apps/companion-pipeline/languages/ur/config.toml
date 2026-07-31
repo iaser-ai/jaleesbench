@@ -22,6 +22,14 @@ cache_prefix = "ur-puck1"
 # Urdu readers expect Nastaliq, not Naskh. Nastaliq's vertical metrics are
 # much taller than Latin/Naskh — the generous line-height prevents the
 # clipping called out in the spec's RTL requirements.
+#
+# Guarded, because the line-height below is tuned FOR Nastaliq: if the face
+# silently falls back to a Naskh-shaped serif, the cards get Nastaliq
+# spacing on the wrong typeface and nothing errors. Present here only
+# because macOS ships NotoNastaliq.ttc — the repo vendors no fonts, so
+# card rendering is machine-DEPENDENT today. iaser.ai solved the same
+# problem for the web surfaces by self-hosting a woff2 subset.
+require_font = "Noto Nastaliq Urdu"
 css = """
   .wrap { font-family:'Noto Nastaliq Urdu',serif; }
   h1 { line-height:2.0; font-size:46px; }

@@ -43,6 +43,51 @@ def card_html(cfg: LanguageConfig, video: VideoConfig, kind: str) -> str:
                      .replace("__BODY__", body))
 
 
+# Does a named family actually RESOLVE, or is the browser quietly falling
+# back? `document.fonts.check()` cannot answer this — it returns true for
+# families that do not exist (verified: a nonsense name checks true). The
+# reliable test is metric comparison: render the same text under the target
+# family and under a family that cannot exist, both backed by the same
+# generic. Identical widths mean the target never resolved.
+_FONT_PROBE_JS = """
+(fam) => {
+  const probe = (stack) => {
+    const s = document.createElement('span');
+    s.textContent = 'اردو عربی نستعلیق ابجد هوز';
+    s.style.cssText = 'position:absolute;visibility:hidden;'
+                    + 'font-size:72px;white-space:nowrap;font-family:' + stack;
+    document.body.appendChild(s);
+    const w = s.getBoundingClientRect().width;
+    s.remove();
+    return w;
+  };
+  return Math.abs(probe("'__no_such_family__', serif")
+                  - probe("'" + fam + "', serif")) > 0.5;
+}"""
+
+
+def assert_font_available(pg, cfg: LanguageConfig) -> None:
+    """Fail before a card is screenshotted in the wrong typeface.
+
+    Chrome substitutes a missing family silently, so an absent face never
+    announces itself — it just ships wrong-looking cards. That is sharpest
+    for Urdu: the config raises line-height to 2.0 for Nastaliq's tall
+    metrics, so falling back to a Naskh-shaped serif applies Nastaliq
+    spacing to the wrong face. Empty require_font means the language has
+    not committed to a face and is deliberately unguarded.
+    """
+    if not cfg.card_require_font:
+        return
+    if not pg.evaluate(_FONT_PROBE_JS, cfg.card_require_font):
+        raise RuntimeError(
+            f"[{cfg.lang}] card font {cfg.card_require_font!r} is not "
+            f"available to Chrome on this machine — cards would render in "
+            f"a substituted face with {cfg.lang}-tuned line metrics. "
+            f"Install the font or vendor it into the card CSS as a "
+            f"self-hosted @font-face, the way iaser.ai serves the web "
+            f"surfaces.")
+
+
 def render_card(cfg: LanguageConfig, video: VideoConfig, kind: str) -> Path:
     from playwright.sync_api import sync_playwright
 
@@ -56,6 +101,7 @@ def render_card(cfg: LanguageConfig, video: VideoConfig, kind: str) -> Path:
         pg = b.new_page(viewport={"width": 1376, "height": 800})
         pg.goto(f"file://{html_path}")
         pg.wait_for_timeout(400)
+        assert_font_available(pg, cfg)
         pg.screenshot(path=str(png))
         b.close()
     return png

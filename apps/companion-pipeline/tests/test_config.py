@@ -211,3 +211,27 @@ def test_card_html_rejects_bad_kind():
     cfg = load_language("en")
     with pytest.raises(ValueError):
         cards.card_html(cfg, cfg.videos["chatgpt"], "middle")
+
+
+def test_card_font_guard_detects_a_missing_face(tmp_path):
+    """The guard must distinguish a real face from an absent one. It exists
+    because document.fonts.check() cannot: that API returns true for
+    families that do not exist, so it would have passed everything."""
+    from playwright.sync_api import sync_playwright
+    from companion_pipeline.cards import _FONT_PROBE_JS
+    with sync_playwright() as pw:
+        b = pw.chromium.launch(channel="chrome", headless=True)
+        pg = b.new_page()
+        pg.set_content("<!doctype html><meta charset=utf-8><body></body>")
+        # A face macOS ships, versus one that cannot exist anywhere.
+        assert pg.evaluate(_FONT_PROBE_JS, "Noto Nastaliq Urdu")
+        assert not pg.evaluate(_FONT_PROBE_JS, "No Such Family 91731")
+        b.close()
+
+
+def test_ur_requires_nastaliq_and_ar_is_knowingly_unguarded():
+    ur = load_language("ur", require_later_assets=False)
+    assert ur.card_require_font == "Noto Nastaliq Urdu"
+    # ar stays unguarded on purpose: its first-choice face doesn't resolve
+    # here, so requiring anything would pin an unmade typography decision.
+    assert load_language("ar", require_later_assets=False).card_require_font == ""
