@@ -117,6 +117,30 @@ therefore clamped starts — move by fractions of a second). Byte-identity
 is NOT expected; structurally different timelines (missing cues, reordered
 segments, big start shifts) are regressions.
 
+## Card fonts (vendored, and why)
+
+Card faces are **checked into `assets/fonts/`** and embedded as data-URI
+`@font-face` rules, not named-and-hoped-for. Chrome substitutes a missing
+family **silently**, so naming one bought nothing: `ur` rendered correctly
+only because macOS ships `NotoNastaliq.ttc`, and `ar` had been rendering
+in a Geeza Pro fallback the whole time — nobody had ever seen an `ar` card
+in the face its config named. A language's `[cards] require_font` must
+name a family present in `cards.VENDORED_FONTS`, and `render_card` fails
+before screenshotting if it doesn't resolve. Adding a language means
+adding its woff2 + OFL text; see `assets/fonts/README.md`.
+
+**`document.fonts.check()` cannot detect a missing font — it returns
+`true` for families that do not exist.** Verified directly: a nonsense
+name checks `true`. Anything relying on it to confirm a face loaded is
+reading a constant. The working test is metric comparison — render the
+same text under the target family and under a family that cannot exist,
+both backed by the same generic, and compare widths; identical means the
+target never resolved (`cards._FONT_PROBE_JS`). `document.fonts.load()` +
+`document.fonts.ready` are still needed first, to await decoding — they
+just can't tell you *what* you got. Belt-and-braces verification
+(computed styles, plus self-hosting the file so there is nothing to miss)
+is sound; `document.fonts.check()` alone is not.
+
 ## Recording rules (each learned the hard way)
 
 - Each recorded page needs its **own window** — background tabs render at

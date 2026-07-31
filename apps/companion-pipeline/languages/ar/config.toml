@@ -18,14 +18,16 @@ cache_prefix = "ar-puck1"
 
 [cards]
 # Naskh for Arabic; slightly taller line box than the EN default.
-# NO require_font — deliberately unguarded, pending a decision.
-# 'Noto Naskh Arabic' does NOT resolve on this machine (metric-probed), so
-# ar cards have been rendering in the Geeza Pro fallback all along, not the
-# first-choice face the stack implies. That is a typography call for
-# Waleed: vendor Noto Naskh Arabic and require it, or bless Geeza Pro and
-# require that. Guarding it now would just pin whichever answer I guessed.
+# Waleed's call (2026-07-31): vendor Noto and require it. The face comes
+# from assets/fonts/ as an embedded @font-face now, not from whatever the
+# host happens to have — metric-probing had shown 'Noto Naskh Arabic' does
+# NOT resolve on this machine, so ar cards had been rendering in the Geeza
+# Pro fallback all along, never the face this stack named. Geeza Pro is
+# dropped from the stack deliberately: a fallback here would re-open the
+# silent-substitution hole the guard exists to close.
+require_font = "Noto Naskh Arabic"
 css = """
-  .wrap { font-family:'Noto Naskh Arabic','Geeza Pro',serif; }
+  .wrap { font-family:'Noto Naskh Arabic',serif; }
   h1 { line-height:1.5; font-size:52px; }
   .kicker, .sub { line-height:1.6; }
 """

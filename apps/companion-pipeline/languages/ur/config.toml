@@ -24,11 +24,11 @@ cache_prefix = "ur-puck1"
 # clipping called out in the spec's RTL requirements.
 #
 # Guarded, because the line-height below is tuned FOR Nastaliq: if the face
-# silently falls back to a Naskh-shaped serif, the cards get Nastaliq
-# spacing on the wrong typeface and nothing errors. Present here only
-# because macOS ships NotoNastaliq.ttc — the repo vendors no fonts, so
-# card rendering is machine-DEPENDENT today. iaser.ai solved the same
-# problem for the web surfaces by self-hosting a woff2 subset.
+# silently fell back to a Naskh-shaped serif, the cards would get Nastaliq
+# spacing on the wrong typeface and nothing would error. Vendored at
+# assets/fonts/ per Waleed's call (2026-07-31) and embedded as an
+# @font-face, so this no longer depends on macOS happening to ship
+# NotoNastaliq.ttc — same approach iaser.ai took for the web surfaces.
 require_font = "Noto Nastaliq Urdu"
 css = """
   .wrap { font-family:'Noto Nastaliq Urdu',serif; }
