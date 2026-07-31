@@ -744,3 +744,41 @@ a fallback that keeps things *working* while making them *wrong*, with
 no error anywhere. Worth watching for more of them.
 
 Tests 68/68. No accounts touched, no takes shot. Everything still held.
+
+## 2026-07-31 — FONTS VENDORED AND REQUIRED (c422308)
+
+Waleed's call executed: both Noto faces checked in and required, so card
+rendering is machine-independent and matches iaser.ai's web faces.
+
+`assets/fonts/` — 4 woff2 (~370KB): arabic + latin subset per family.
+Two subsets because cards mix scripts (product names and
+`s.iaser.ai/prompt` are Latin inside RTL text); one file covers weights
+400 and 700 because these are variable fonts. Each family ships its OFL
+text per license terms, plus a README with provenance (Google Fonts,
+Naskh v44 / Nastaliq v23, `wOF2` magic verified on all four) and refresh
+instructions — the CSS2 API's UA sniffing decides whether you get woff2,
+so that's written down.
+
+Cards embed them as **data-URI @font-face** rules: the HTML is
+self-contained, renders the same from any cwd, and a moved/deleted file
+fails at read time instead of degrading silently at screenshot time.
+ar → Noto Naskh Arabic, ur → Noto Nastaliq Urdu. **Dropped Geeza Pro from
+ar's stack deliberately** — leaving a fallback there would re-open the
+exact silent-substitution hole the guard exists to close.
+
+**Verified by looking, not just by the guard passing.** Rendered a card in
+each face and read the PNGs: genuine Naskh, genuine Nastaliq. Worth doing
+— on this machine the positive guard check would have passed even with no
+vendored file at all, because macOS supplies Nastaliq. So one test
+registers the vendored BYTES under a family name no system font can
+supply; if that resolves, the data: URI is doing the work. That's the test
+that actually proves vendoring.
+
+**`document.fonts.check()` returns TRUE for fonts that do not exist.**
+Now in the README as a runbook note. Anything using it to confirm a face
+loaded is reading a constant. Metric comparison is the working test;
+`fonts.load()` + `fonts.ready` are still needed first to await decoding,
+they just can't tell you *what* you got. (iaser.ai's own verification is
+fine — they also checked computed styles and self-hosted the file.)
+
+Tests 71/71. Rendering-side only; no accounts touched, no takes shot.
