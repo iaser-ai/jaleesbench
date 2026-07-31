@@ -607,3 +607,55 @@ personal-preferences overwritten with the ar prompt (1160), Gemini
 saved-info written in two parts and cleared after; same for id (1499).
 EN 1,492 is what's saved for ChatGPT/Claude pre-session and is what I
 restore to. Gemini saved-info is EMPTY and verified as of now.
+
+## 2026-07-31 — SPLIT-SHIFT BUILT AND REVIEWED; T1 CONFIRMATIONS AT ZERO
+
+Waleed's call landed: split-shift + re-vendor only, no Google report, no
+article disclosure. Built the whole text-independent half. Did NOT run
+the confirmation runs, because the rig is still down (re-probed CDP 9222,
+nothing) — so **T1 stands at zero of two, not one of two.**
+
+**Two things I pushed back on rather than absorbed:**
+
+1. **The architect credited me with a T2 result I do not have.** "T1"/"T2"
+   appear nowhere in this thread, translation-review.md, or any project
+   file, and my thread lists the Arabic-bullet-under-ur-locale probe as an
+   unexecuted OPTION. I was asked to write "the language-conditioned
+   theory being DEAD" and a "proportion finding" into translation-review.md.
+   I declined and asked for the numbers instead. If someone ran those
+   out-of-band the record should say so and say who — but I'm not writing
+   up a finding I didn't produce and can't verify.
+
+2. **The hold rationale applies to T1 itself.** Takes are held because
+   shooting against text that's about to change is how the first ar set
+   died — and the ur reviewer may revise the ur text. T1 is not purely
+   structural: it tests whether *this wording* of bullet 5 saves in part 1.
+   Revised wording ⇒ re-run. The split MECHANISM transfers to any text
+   (that part is built); the confirmation runs are the text-dependent
+   piece. Recommended firing T1 after the ur text settles, once.
+
+**Built (5a2acef, a39af9c):**
+- `gemini_split_after` makes the boundary per-language; ur = 5. Parts
+  663/772 → 955/480. Bullet 5 verified into part 1; every bullet in
+  exactly one part; reassembly 955 + 1 + 362 = 1318 = canonical, asserted.
+- `split_prompt()` is now the single implementation. `test_spike` had
+  restated the 3/3 split inline — it would have gone on asserting the old
+  boundary forever while looking green.
+- ur re-vendor package regenerated (`handoff/prompt-page/ur/`,
+  955 + 480, canonical prompt.txt untouched). Holding it until the text
+  decision so iaser.ai re-vendors once, not twice.
+- translation-review.md carries the boundary review: third failure mode,
+  what was ruled out, byte accounting, and an explicit NOT-YET-CONFIRMED.
+
+**Real gap found while landing it.** The clipboard char band *cannot*
+police this transition — the superseded sizes (663/772) fall BETWEEN the
+new ones (480/955), so no band accepting the new parts rejects a
+stale-cached page serving the old ones. I'd written a config comment
+claiming the band did catch it; that was wrong and I corrected it rather
+than leaving a comforting comment in place. Driver now asserts the copied
+block byte-for-byte against the derived part. The handoff test had the
+same shape of hole — reassembly-to-canonical is boundary-agnostic and
+passed the stale 3/3 package happily — now pinned to the boundary.
+
+Tests 66/66. Nastaliq noted: gemini-ur shoots on the new font regardless;
+chatgpt-ur/claude-ur typography re-shoot is Waleed's call. ALL takes held.
