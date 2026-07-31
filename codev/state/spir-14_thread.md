@@ -706,3 +706,41 @@ deliberately did not open settings during a no-writes check.
 
 All takes still held pending ar/ur text decisions. ur vendor package held
 for one re-vendor.
+
+## 2026-07-31 — NASTALIQ FYI TURNED UP A REAL DEFECT ON OUR SIDE
+
+iaser.ai self-hosting a woff2 subset makes the WEB surfaces
+machine-independent. It made me check the pipeline's own card rendering,
+which is **not**. The repo vendors no fonts; Chrome substitutes a missing
+family SILENTLY. Both findings metric-probed, not assumed:
+
+1. **ur** declares `Noto Nastaliq Urdu` with line-height 2.0 tuned for
+   Nastaliq's tall metrics. It resolves here ONLY because macOS ships
+   `NotoNastaliq.ttc`. On a Linux CI box or another laptop the cards get
+   Nastaliq spacing on a Naskh-shaped serif — on camera, no error.
+   Now guarded: `render_card` fails fast naming the font.
+2. **ar's first-choice face `Noto Naskh Arabic` does NOT resolve here.**
+   ar cards have been rendering in the Geeza Pro fallback the whole time.
+   Nobody has ever seen an ar card in the face the config implies.
+
+Left ar deliberately UNGUARDED with the finding recorded in-config —
+vendor Noto Naskh and require it, or bless Geeza Pro and require that, is
+Waleed's typography call. Guarding it would have pinned whichever answer
+I guessed. Recommended to the architect: vendor self-hosted woff2 for
+both, exactly mirroring what iaser.ai did. ur's current guard protects
+against a font that merely happens to ship with macOS — a guard, not a
+guarantee.
+
+**Technique note for whoever hits this next**: `document.fonts.check()`
+CANNOT detect a missing family — it returns **true for fonts that do not
+exist**. I probed it before building on it and a nonsense name checked
+true. The working test renders the same text under the target family and
+under a family that cannot exist, both backed by the same generic;
+identical widths mean the target never resolved. Tested both directions.
+
+This is the second silent-fallback defect this session (the first: absent
+assistant-UI label sections inheriting EN). Both had the same shape —
+a fallback that keeps things *working* while making them *wrong*, with
+no error anywhere. Worth watching for more of them.
+
+Tests 68/68. No accounts touched, no takes shot. Everything still held.
