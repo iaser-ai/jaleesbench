@@ -54,6 +54,20 @@ handoff/                  committed deliverables staging (articles, GIFs)
   google-chrome --user-data-dir=<rec-profile> --remote-debugging-port=9222
   ```
 
+  **The profile lives at `~/jaleesbench-rec/rec-profile`.** It is not
+  reproducible — rebuilding it means re-authenticating four surfaces by
+  hand — so it must stay on a durable path. It spent 07-29 to 07-31
+  inside a dead Claude session's scratchpad under `/private/tmp`, one
+  purge away from gone, which stalled every take for two days. Never
+  point `--user-data-dir` at a scratchpad, a temp dir, or anything inside
+  the repo. macOS launch:
+
+  ```bash
+  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+    --user-data-dir="$HOME/jaleesbench-rec/rec-profile" \
+    --remote-debugging-port=9222 --lang=<code>
+  ```
+
   The macOS re-hide helper finds this Chrome by matching a substring of
   its `--user-data-dir`; the default match is `rec-profile`, so either
   name your profile directory accordingly or set
