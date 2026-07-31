@@ -40,9 +40,26 @@ article_lang_link = "اردو"  # clicked ON CAMERA on the EN article
 # the prompt page are localized independently and diverged once.
 article_copy_button_label = "نقل کریں"
 prompt_chars = 1318
-gemini_part_min = 603
+# SPLIT MOVED 3 -> 5 (2026-07-29, Waleed's call). Gemini hard-REFUSES
+# bullet 5 — the safeguarding line — as a saved-info entry when it arrives
+# in part 2: 253-char minimal repro, byte-identical refusal dialog, and
+# three rewordings that preserved the duty of care verbatim were all
+# refused. Riding in part 1 it saves. The boundary moves; not one word of
+# the translation does. Parts become p1=955 (bullets 1-5), p2=480
+# (bullet 6). Bounds re-bracket those two and still exclude both the full
+# prompt (1318) and the OLD part sizes (663/772) — so a stale-cached
+# prompt page after the re-vendor aborts the take instead of filming the
+# superseded split.
+#
+# NOTE the band alone canNOT catch a stale page here: the old sizes
+# (663/772) sit between the new ones (480/955), so any band holding both
+# new parts holds both old ones. That is why the driver now asserts the
+# clipboard byte-for-byte against gemini_parts(); the band survives only
+# as a cheap first look with a readable message.
+gemini_split_after = 5
+gemini_part_min = 440
 gemini_part2_leadin = "یہ باقی ہدایات ہیں؛ ان پر پچھلی ہدایات کے ساتھ عمل کریں۔ ان سب کا مقصد ایک ہی ہے: ایسی سچی مدد جو اچھا اثر چھوڑ جائے:"
-gemini_part_max = 832
+gemini_part_max = 1000
 # PENDING: localized card strings (localized_content phase).
 card_goto_line = "اپنے براؤزر میں جائیں"
 card_open_line = "اب کھولیں"

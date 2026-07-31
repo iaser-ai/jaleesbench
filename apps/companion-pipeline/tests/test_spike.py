@@ -3,7 +3,8 @@
 import pytest
 
 from companion_pipeline.config import (
-    ConfigError, available_languages, load_language, validate_skeleton)
+    ConfigError, available_languages, load_language, split_prompt,
+    validate_skeleton)
 from companion_pipeline.spike import CANDIDATE_VOICES, SAMPLE_TEXTS, run_spike
 
 
@@ -77,12 +78,19 @@ def test_translated_prompt_fits_entry_limits(code):
     assert leadin, ("ar/ur/id part 2 must carry a prose lead-in — "
                     "Gemini's rewriter language-switches bare-bullet "
                     "openings (observed for Arabic)")
-    p1 = bullets[0] + "\n- " + "\n- ".join(bullets[1:4])
-    p2 = leadin + "\n" + "- " + "\n- ".join(bullets[4:])
+    # Derive the parts from gemini_parts(), never by re-implementing the
+    # split here: this test used to hardcode 3/3 and would have gone on
+    # asserting the old boundary after ur moved to 5.
+    p1, p2 = split_prompt(text, leadin,
+                          raw["recording"].get("gemini_split_after", 3), code)
     lo = raw["recording"]["gemini_part_min"]
     hi = raw["recording"]["gemini_part_max"]
     assert lo < len(p1) < hi
     assert lo < len(p2) < hi
+    # Every bullet survives the split exactly once, wherever the boundary
+    # falls — a boundary move must never drop or duplicate a line.
+    for b in bullets[1:]:
+        assert (b in p1) != (b in p2), f"[{code}] bullet not in exactly one part"
 
 
 def test_complete_language_has_nothing_missing():
@@ -121,6 +129,14 @@ def test_handoff_prompt_package_integrity(code):
     assert p2.startswith(leadin + "\n")
     assert leadin not in canonical
     assert p1 + "\n" + p2.removeprefix(leadin + "\n") == canonical
+    # Reassembling to the canonical prompt is boundary-AGNOSTIC — it holds
+    # for any split, so on its own it would have let ur's package keep
+    # shipping the superseded 3/3 files. Pin the parts to the configured
+    # boundary as well; this is what the re-vendor package is checked on.
+    with open(LANGUAGES_DIR / code / "config.toml", "rb") as f:
+        split_after = tomllib.load(f)["recording"].get(
+            "gemini_split_after", 3)
+    assert (p1, p2) == split_prompt(canonical, leadin, split_after, code)
 
 
 def test_rtl_skeletons_declare_direction_and_fonts():

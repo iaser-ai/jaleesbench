@@ -17,7 +17,7 @@ window must be visible (not hidden) or events silently fail.
 
 import time
 
-from ..config import LanguageConfig
+from ..config import LanguageConfig, gemini_parts
 from ..recorder import Session
 from .common import (OVERLAY_JS, OVERLAY_OFF_JS, clipboard,
                      open_article)
@@ -159,6 +159,20 @@ def _copy_part(s, left, copy_btns, idx: int, cfg: LanguageConfig,
         raise RuntimeError(
             f"{label}: clipboard holds {len(part)} chars, expected "
             f"{cfg.gemini_part_min}-{cfg.gemini_part_max}")
+    # The band is only a first look. What actually has to hold is that the
+    # published page serves the SAME bytes this repo derives — otherwise a
+    # take films a page that has drifted from the source of truth. A band
+    # can't see that: when ur's split moved 3->5 the superseded part sizes
+    # (663/772) landed BETWEEN the new ones (480/955), so no band covering
+    # the new parts can exclude a stale-cached page serving the old ones.
+    expected = gemini_parts(cfg)[idx - 1]
+    if part != expected:
+        raise RuntimeError(
+            f"TAKE ABORT ({label}): the page's block does not match this "
+            f"repo's prompt. Copied {len(part)} chars, expected "
+            f"{len(expected)}. Usually a stale-cached page after a "
+            f"re-vendor — hard-refresh and re-check — or the page and "
+            f"languages/{cfg.lang}/prompt.txt have genuinely diverged.")
     return part
 
 

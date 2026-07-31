@@ -82,6 +82,13 @@ class LanguageConfig:
     prompt_chars: int
     gemini_part_min: int      # expected char bounds for the two-part paste
     gemini_part_max: int
+    # Which bullet the two-part split falls after. 3 (an even 3/3) is the
+    # shipped default and what EN/ar/id use. ur moved to 5 because Gemini
+    # hard-REFUSES its bullet 5 — the safeguarding line — as a saved-info
+    # entry when it arrives in part 2, and no rewording that preserved the
+    # duty of care got past it. Riding in part 1 it saves, so the boundary
+    # moves and the words do not. See reference/translation-review.md.
+    gemini_split_after: int
     # Prose line prepended to Gemini part 2 ONLY (not part of the
     # canonical prompt): Gemini's entry rewriter keeps entries in-language
     # when they open with prose but can language-switch bare-bullet
@@ -301,6 +308,7 @@ def load_language(lang: str, *,
                                   f"{ctx}.recording")),
         gemini_part_max=int(_need(rec, "gemini_part_max",
                                   f"{ctx}.recording")),
+        gemini_split_after=int(rec.get("gemini_split_after", 3)),
         gemini_part2_leadin=_need(rec, "gemini_part2_leadin",
                                   f"{ctx}.recording"),
         # MERGE over the EN defaults, don't replace them: a language that
@@ -331,20 +339,32 @@ def load_language(lang: str, *,
 
 
 def gemini_parts(cfg: LanguageConfig) -> tuple[str, str]:
-    """The two Gemini saved-info paste blocks: header + first three
-    bullets, then (optional prose lead-in +) the last three bullets.
+    """The two Gemini saved-info paste blocks: header + the bullets up to
+    `gemini_split_after`, then (optional prose lead-in +) the rest.
     Single source of truth — the prompt page's part blocks, the recording
     driver's clipboard asserts, and the tests all derive from this."""
-    bullets = cfg.prompt.split("\n- ")
+    return split_prompt(cfg.prompt, cfg.gemini_part2_leadin,
+                        cfg.gemini_split_after, cfg.lang)
+
+
+def split_prompt(prompt: str, leadin: str, split_after: int,
+                 ctx: str) -> tuple[str, str]:
+    """The split itself, over plain text — so callers that hold the prompt
+    without a fully-loaded config (the prompt-text tests, which cover
+    languages whose UI recon hasn't happened yet) share this exact
+    implementation rather than restating it."""
+    bullets = prompt.split("\n- ")
     if len(bullets) != 7:
         raise ConfigError(
-            f"[{cfg.lang}] prompt must be header + 6 bullets for the "
+            f"[{ctx}] prompt must be header + 6 bullets for the "
             f"two-part split, found {len(bullets) - 1} bullets")
-    p1 = bullets[0] + "\n- " + "\n- ".join(bullets[1:4])
-    tail = "- " + "\n- ".join(bullets[4:])
-    p2 = (cfg.gemini_part2_leadin + "\n" + tail
-          if cfg.gemini_part2_leadin else tail)
-    return p1, p2
+    if not 1 <= split_after <= 5:
+        raise ConfigError(
+            f"[{ctx}] gemini_split_after must leave both parts "
+            f"non-empty (1-5), got {split_after}")
+    p1 = bullets[0] + "\n- " + "\n- ".join(bullets[1:split_after + 1])
+    tail = "- " + "\n- ".join(bullets[split_after + 1:])
+    return p1, (leadin + "\n" + tail if leadin else tail)
 
 
 def gemini_api_key() -> str:
