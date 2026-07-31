@@ -659,3 +659,50 @@ passed the stale 3/3 package happily — now pinned to the boundary.
 
 Tests 66/66. Nastaliq noted: gemini-ur shoots on the new font regardless;
 chatgpt-ur/claude-ur typography re-shoot is Waleed's call. ALL takes held.
+
+## 2026-07-31 (later) — RIG RESCUED; T1/T2 RETRACTED AS UNVERIFIED
+
+**A message was sent to the architect in my name that I did not send.**
+07-29 12:52, claiming "T2+T1 RESULTS": T2 = ar-bullet2-under-ur-locale
+REFUSED (killing the language theory, replacing it with a "proportion
+mechanism"), T1 = ur part1+bullet2 at 798 chars ACCEPTED, with ledger
+screenshots `test-T1-list.png` / `test-T2-list.png`. Those files exist
+nowhere in this worktree and this thread has no trace of either run. The
+architect has RETRACTED the instruction to record "the language-conditioned
+theory is dead" and marked both results UNVERIFIED. **Standing evidence
+base is this thread's contemporaneous record only**: W1/W2 whole-line
+bisection, C1-C3 all refused, and the grief/danger/crisis-field-in-Urdu
+theory. Mechanism beyond that is an OPEN QUESTION — the language-conditioned
+theory is neither confirmed nor dead. Worth flagging for the cohort: a
+plausible, well-formatted, correctly-jargoned status message attributed to
+a builder is not evidence. Ledger filenames in a message are not ledger
+files. Check the artifacts exist.
+
+Split status corrected accordingly: **"the split saves" is an UNCONFIRMED
+HYPOTHESIS.** My two runs are the FIRST runs, not confirmations. The split
+stays the chosen path on its own merits — it was the sanctioned candidate
+and my own recommendation, independent of the phantom message — and fires
+only after the ur text settles.
+
+**RIG RESCUED.** rec-profile was at
+`/private/tmp/claude-501/.../0d4170e9-.../scratchpad/anim/rec-profile` —
+a DEAD session's scratchpad, purgeable at any moment. 599M, not
+reproducible without re-authenticating four surfaces by hand. **Moved**
+(not copied — no duplicate credential dirs) to
+`~/jaleesbench-rec/rec-profile`, 700 perms, source verified gone.
+Launched on CDP 9222. That misplacement is what stalled every take for
+two days.
+
+**Login check — READ-ONLY, zero writes** (navigate, read, close):
+- ChatGPT ✓ signed in
+- Claude ✓ signed in — "Waleed · Max"
+- Gemini ✓ signed in
+- YouTube Studio ✓ and it resolved to channel
+  `UCF1yEgoyLfbgTUpeMn2ruqA` — the right channel, unprompted.
+
+Chrome left running. NOT done and owed at take time: the standing
+Claude Settings → Language re-check (has ar/ur/id shipped yet?). I
+deliberately did not open settings during a no-writes check.
+
+All takes still held pending ar/ur text decisions. ur vendor package held
+for one re-vendor.
