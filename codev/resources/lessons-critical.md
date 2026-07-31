@@ -10,6 +10,8 @@ STARTER: a few universal lessons are seeded; add your project's as you learn the
 - Check for existing work (PRs, git history) before building from scratch.
 - "It compiled" / "tests pass" is not "it works" — verify the real user path before calling it done.
 - When stuck (2 failed hypotheses or ~30 min), get an outside perspective instead of guessing.
+- A result exists when its artifact is on disk in the worktree — filenames in a message are not files. Verify artifacts before relaying a result or deciding on it.
+- Don't write up a finding you didn't produce, however plausible the source or confident the ask; say you don't have it and request the numbers.
 - <Add your project's hard-won, cross-cutting lessons; keep <=10, one line each.>
 
 ## Map of lessons-learned.md (consult when…)
