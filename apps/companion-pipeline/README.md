@@ -384,3 +384,39 @@ on, so the edit improves the ending rather than merely salvaging it.
 
 **Outstanding**: `id` has neither UI section yet — its recon is the first
 step of the id recording session.
+
+## Privacy sweep before committing a clip or uploading a video (STANDING RULE)
+
+**Every clip gets a sidebar/recents pass before it is committed or
+uploaded.** This is not optional and it is not a spot check.
+
+It exists because it already failed: `inputs/clips/{ar,ur}/copypaste-chatgpt.mp4`
+open the ChatGPT sidebar as an on-camera beat, and by the time those takes
+were shot the Recents list was populated — seven real conversation titles,
+legible, committed to a **public** repo. The EN clip was clean only by
+luck of timing: it was recorded while that list happened to be empty.
+
+Two things that did NOT work, so don't repeat them:
+
+- **Sampling.** A 1-in-5-frames pass over the same clips found nothing.
+  `companion_pipeline.privacy.distinct_frames()` reads every frame.
+- **A whole-frame hash.** A 16×16 average hash cannot see a 250px sidebar
+  appear in a 1376px frame. Change detection is per-block on a 160×120
+  grid, which is what makes a panel or dropdown opening visible.
+
+```python
+from companion_pipeline.privacy import distinct_frames, contact_sheet
+kept = distinct_frames(Path("inputs/clips/xx/copypaste-chatgpt.mp4"))
+contact_sheet(kept, Path("out/privacy/xx-chatgpt.png"))   # then LOOK at it
+```
+
+The tool flags candidate frames; a human reads them against
+`privacy.CHECKLIST`. It deliberately does not classify — the failure mode
+was never detection, it was that nobody looked. `IDENTITY_CHECKLIST` is
+tracked separately: the author's own name and handle are usually intended,
+but they get inventoried rather than assumed.
+
+**Upstream fix, better than any check**: the recording drivers should
+clear or collapse Recents during their off-camera reset, the same way the
+ChatGPT driver already empties the custom-instructions field. A guard that
+depends on someone remembering to look is the weaker half of this.
