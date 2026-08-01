@@ -43,10 +43,16 @@ article_lang_link = "العربية"  # clicked ON CAMERA on the EN article
 # iaser.ai 2026-07-29; kept as its own key because the article and
 # the prompt page are localized independently and diverged once.
 article_copy_button_label = "نسخ"
-prompt_chars = 1160
-gemini_part_min = 503
+# v2 canonical (2026-08-01): erudite reviewer rewrite + 3 architect
+# drift-fixes Waleed approved. Bullet 5 stays EXACTLY as the reviewer
+# wrote it — the 4th proposed fix was deliberately NOT taken. 1160 -> 1231.
+# Split stays at the 3/3 default: bullet 5's Arabic saved before and the
+# text is a rewrite, not a restructure — but that is a PREDICTION until
+# the ledgered saved-info re-validation runs under the ar locale.
+prompt_chars = 1231
+gemini_part_min = 550
 gemini_part2_leadin = "وهذه بقية التوجيهات، فاعمل بها مع ما سبق. وكلها تخدم غاية واحدة: عونٌ صادق يترك أثرًا طيبًا:"
-gemini_part_max = 749
+gemini_part_max = 780
 # PENDING: localized card strings (localized_content phase).
 card_goto_line = "في متصفحك، اذهب إلى"
 card_open_line = "الآن افتح"
