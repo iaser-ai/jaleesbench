@@ -531,3 +531,43 @@ already shipped. It outranks every remaining localization task.
 **Note on run 5**: the retryable "something went wrong" dialog appeared
 AND the entry stored anyway — the documented false-error. A user who
 follows that dialog's own advice and clicks Send again gets a duplicate.
+
+### 3-ENTRY SPLIT — DOES NOT WORK (2026-08-01, 35 writes)
+
+The hypothesis was that smaller entries dodge the rewriter. Tested at the
+pre-registered bar: an entry counts as improved at **≥7/10 verbatim**.
+
+| entry | chars | verbatim | outcomes |
+|---|---|---|---|
+| E1 | 483 | **2/10** | 2 verbatim, 6 mutated, 1 retryable-but-stored, 1 retryable |
+| E2 | 422 | **0/10** | 8 retryable, 2 mutated |
+| E3 | 585 | **0/10** | 9 mutated, 1 retryable |
+| two-part part 2 (baseline) | 748 | **1/10** | 1 verbatim, 8 mutated, 1 hard-refusal |
+
+**2 of 30 across the three entries. Not one entry clears the bar; none
+comes close.** Against a 1/10 baseline this is not an improvement — E2 and
+E3 never stored verbatim at all, and E2 spent 8 of 10 runs in the
+retryable-error path.
+
+**Size is not the variable.** E2 is the smallest block tested anywhere in
+this investigation (422) and it is the *worst* performer. The 585-char E3
+and the 748-char baseline behave alike. Whatever the rewriter is doing, it
+does not scale down with entry length, so there is no shorter block to
+retreat to.
+
+**Do not re-teach the articles around a 3-entry flow.** It would cost four
+article rewrites, four prompt pages, config, captions, and every Gemini
+video including the published EN one — to move verbatim odds from roughly
+1-in-10 to roughly 1-in-15. `handoff/article/gemini-3entry-reteach.md`
+stays contingent and is now contingent on a hypothesis that failed; it
+should be treated as dead unless something else revives it.
+
+Account hygiene: **every one of the 35 writes ended Delete-All + verified
+empty**, no exceptions, ledger in `out/gemini-cells/`.
+
+**What this leaves.** The verify-step warning already shipped is not a
+stopgap ahead of a better mechanism — on this evidence it *is* the
+mitigation. No arrangement of the existing text stores reliably, so the
+honest options are the ones that do not depend on Gemini storing it
+faithfully: drop the Gemini saved-info route from the guidance, or keep it
+with the check and be plain that a rewrite is likely.
