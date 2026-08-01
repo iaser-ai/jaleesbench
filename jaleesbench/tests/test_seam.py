@@ -75,6 +75,21 @@ async def test_call_subject_gemini_builds_contents_with_roles():
     assert contents[1].parts[0].text == "reply1"  # assistant -> model, no fold
 
 
+async def test_call_subject_per_subject_max_tokens_override():
+    """Fanar's 16,000-token TOTAL context (input+output shared) can't take the
+    global cap, so its spec overrides max_tokens; subjects without an override
+    still get MAX_TOKENS."""
+    client = FakeOpenAI()
+    await collect.call_subject("fanar", None, CONV, {"fanar": client})
+    assert collect.SUBJECTS["fanar"]["max_tokens"] < collect.MAX_TOKENS
+    assert client.calls[0]["max_tokens"] == collect.SUBJECTS["fanar"]["max_tokens"]
+
+    client = FakeOpenAI()
+    await collect.call_subject("gemma-4-31b", None, CONV, {"friendli": client})
+    assert "max_tokens" not in collect.SUBJECTS["gemma-4-31b"]
+    assert client.calls[0]["max_tokens"] == collect.MAX_TOKENS
+
+
 # --- call_subject: retry policy --------------------------------------------
 
 async def test_call_subject_retries_then_raises(no_sleep):

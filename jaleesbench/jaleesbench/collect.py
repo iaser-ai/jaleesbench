@@ -74,6 +74,14 @@ SUBJECTS = {
     # completion tokens; final answer lands in message.content.
     "inkling": {"provider": "tinker", "model": "thinkingmachines/Inkling",
                 "framings": ["unstated", "stated", "guided"]},
+    # Fanar (QCRI/HBKU) via its OpenAI-compatible endpoint (FANAR_API_KEY in
+    # repo .env; same key as the ansari-multisage BATIK run). "Fanar" is the
+    # routed flagship users get; Sadiq/C-2-27B variants exist but aren't run.
+    # Rate-limit-strict API: patient retries like ansari/tinker. 16,000-token
+    # TOTAL context (input+output share it) — max_tokens must leave input room,
+    # so this subject overrides the global cap.
+    "fanar": {"provider": "fanar", "model": "Fanar", "max_tokens": 8192,
+              "framings": ["unstated", "stated", "guided"]},
     # Ansari via its OpenAI-compatible route (ansari-multisage spec 19):
     # drives the real facilitator pipeline, accepts the system role, reports
     # usage, no marketing footer, and the leaderboard bearer bypasses the
@@ -149,7 +157,8 @@ async def call_subject(subject: str, ctx: str | None, messages: list[dict],
     spec = SUBJECTS[subject]
     # Ansari (free community endpoint) and Tinker (in-flight request cap that
     # 429s under launch load): be patient with rate limits.
-    retries = 5 if spec["provider"] in ("ansari", "tinker") else RETRIES
+    retries = 5 if spec["provider"] in ("ansari", "tinker", "fanar") else RETRIES
+    max_tokens = spec.get("max_tokens", MAX_TOKENS)
 
     def folded(m: dict) -> dict:
         if m["role"] != "user" or not ctx:
@@ -161,14 +170,15 @@ async def call_subject(subject: str, ctx: str | None, messages: list[dict],
         try:
             provider = spec["provider"]
             model = spec.get("model", subject)
-            if provider in ("openai", "friendli", "blackbox", "ansari", "tinker"):
+            if provider in ("openai", "friendli", "blackbox", "ansari", "tinker",
+                            "fanar"):
                 msgs = [folded(m) for m in messages]
                 # Friendli thinking arms turn on the gemma4/GLM reasoning pass;
                 # the final answer still arrives in message.content.
                 extra = ({"chat_template_kwargs": {"enable_thinking": True}}
                          if spec.get("thinking") and provider == "friendli" else None)
                 content, usage = await openai_complete(
-                    clients[provider], model, msgs, MAX_TOKENS,
+                    clients[provider], model, msgs, max_tokens,
                     completion_param=(provider == "openai"), extra_body=extra)
             elif provider == "anthropic":
                 # Prompt caching: the framing block (shared by every sitting of
@@ -194,7 +204,7 @@ async def call_subject(subject: str, ctx: str | None, messages: list[dict],
                     amsgs.append({"role": "user", "content": blocks})
                     first_user = False
                 content, usage = await anthropic_complete(
-                    clients["anthropic"], model, amsgs, MAX_TOKENS,
+                    clients["anthropic"], model, amsgs, max_tokens,
                     thinking=bool(spec.get("thinking")))
             elif spec["provider"] == "gemini":
                 from google.genai import types
@@ -203,7 +213,7 @@ async def call_subject(subject: str, ctx: str | None, messages: list[dict],
                                   parts=[types.Part(text=folded(m)["content"])])
                     for m in messages]
                 content, usage = await gemini_complete(
-                    clients["gemini"], model, contents, max_tokens=MAX_TOKENS)
+                    clients["gemini"], model, contents, max_tokens=max_tokens)
             else:
                 raise RuntimeError(f"unknown provider: {provider}")
             if not content or not content.strip():
@@ -212,7 +222,7 @@ async def call_subject(subject: str, ctx: str | None, messages: list[dict],
         except Exception as e:  # noqa: BLE001 — retry transient, then fail loudly
             last_err = e
             if attempt < retries:
-                backoff = 30 * (attempt + 1) if spec["provider"] in ("ansari", "tinker") \
+                backoff = 30 * (attempt + 1) if spec["provider"] in ("ansari", "tinker", "fanar") \
                     else 2 * (attempt + 1)
                 await asyncio.sleep(backoff)
     raise RuntimeError(f"subject {subject} failed after {retries + 1} attempts: {last_err}")
