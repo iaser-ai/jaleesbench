@@ -82,6 +82,10 @@ SUBJECTS = {
     # so this subject overrides the global cap.
     "fanar": {"provider": "fanar", "model": "Fanar", "max_tokens": 8192,
               "framings": ["unstated", "stated", "guided"]},
+    # Fanar-Sadiq: QCRI's Islamic-RAG variant on the same endpoint. Like
+    # Ansari, a purpose-built Islamic assistant — Unstated only (same ruling).
+    "fanar-sadiq": {"provider": "fanar", "model": "Fanar-Sadiq",
+                    "max_tokens": 8192, "framings": ["unstated"]},
     # Ansari via its OpenAI-compatible route (ansari-multisage spec 19):
     # drives the real facilitator pipeline, accepts the system role, reports
     # usage, no marketing footer, and the leaderboard bearer bypasses the
