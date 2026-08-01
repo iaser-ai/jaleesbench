@@ -889,3 +889,57 @@ writes found no safe wording; more wording attempts is the wrong spend.
   screenshots instead of re-spending approved writes. **Ledger
   screenshots aren't decoration; they were the only surviving record.**
 - Long rig scripts need an explicit long timeout or background execution.
+
+## 2026-08-01 — EN PROBE: THE FLOW IS BROKEN IN ENGLISH, AND IT IS LIVE
+
+5 writes, EN locale, EN part2 (748), the flow exactly as the published EN
+article instructs it (EN ships no lead-in). Each from verified-empty,
+each cleaned.
+
+| run | verdict |
+|---|---|
+| 1 | MUTATED-SAVE — first-person flip |
+| 2 | VERBATIM-SAVE |
+| 3 | HARD REFUSAL (`Gemini can't save this info`) |
+| 4 | HARD REFUSAL |
+| 5 | RETRYABLE dialog **but stored anyway**, mutated |
+
+**1/5 verbatim · 2/5 refused · 2/5 silently mutated.**
+
+**The mutation is the SAME first-person flip as Arabic** → not a
+translation artifact, not language-conditioned. It's what the rewriter
+does. `Soften your manner, never the truth` → `**I should** soften my
+manner, never the truth`. `Never invent or misattribute a Qur'anic verse`
+→ `**I should** never invent or misattribute a Qur'anic verse`.
+
+**Why it's not cosmetic**: saved-info stores facts about the ACCOUNT
+HOLDER. So the flip inverts who each clause binds — instructions governing
+Gemini become the user describing themselves. Safeguarding,
+anti-fabrication, soften-the-manner-never-the-truth: all of it. The entry
+looks right, reads plausibly, and does not do the job.
+
+**Live today**: the EN article + three published videos walk the largest
+audience through this. ~1-in-5 odds of storing what the article claims.
+Product problem, already shipped, outranks all remaining localization.
+
+Gemini takes stay frozen — now for a stronger reason than "we don't
+understand it": we DO, and filming it would be filming a broken
+instruction.
+
+Options put to the architect for Waleed (not my call): (a) drop the Gemini
+two-part flow from article + videos; (b) keep it with an explicit
+"check what actually got saved" step — honest, ugly on camera; (c) pursue
+a Gemini-side fix/report, which helps nobody reading the article this week.
+
+**Holding the id non-Gemini half too.** chatgpt-id/claude-id are
+technically unaffected, but if the product shape changes they may change
+with it, and shooting into a pending decision is how the first ar set
+died. Waiting for the react.
+
+Retrospective on the whole ur/ar saga: the "ur bullet 5 is refused because
+Urdu grief/danger/crisis" theory consumed a lot of session time and was
+almost certainly always this — a nondeterministic rewriter, sampled once
+per condition. Every "root cause" that rested on a single observation
+(bullet-2 bisection, the language theory, my own v1 control) was a sample,
+not a mechanism. On a nondeterministic surface, n=1 is not evidence and
+bisection is not root-causing.
