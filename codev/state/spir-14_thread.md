@@ -943,3 +943,66 @@ per condition. Every "root cause" that rested on a single observation
 (bullet-2 bisection, the language theory, my own v1 control) was a sample,
 not a mechanism. On a nondeterministic surface, n=1 is not evidence and
 bisection is not root-causing.
+
+## 2026-08-01 (cont) — WINDOW CHURN CALLED OUT; 3-WAY SPLIT DESIGNED
+
+**Waleed saw window churn and it bothered him.** Fair: I relaunched Chrome
+four or five times in a row chasing the Accept-Language problem instead of
+batching. Rig killed, process-verified down. **New discipline: window work
+in consolidated bursts, announce before starting, fully idle between — no
+background page-poking.**
+
+**Three findings from that stretch, all read-only, no writes:**
+1. **ACCOUNT RESIDUE, ~3 days old**: ChatGPT custom instructions AND
+   Claude Instructions BOTH still hold the **Urdu** prompt (1318). Never
+   restored to EN 1,492 after the 07-29 session. My miss, from the session
+   that ended mid-flight. Restore is step 2 of the next burst.
+2. **`--lang=<code>` does NOT set Accept-Language.** `navigator.languages`
+   read `en-US,en` under `--lang=id`. The profile pins
+   `intl.accept_languages`; the ar/ur takes got their locale from a
+   Preferences edit (hence `accept_languages.backup.txt`). Set properly →
+   **ChatGPT DOES localize to Indonesian** (`html lang=id-ID`; Riwayat,
+   Obrolan baru, Pustaka, Proyek). chatgpt-id records native.
+   *Does not affect the ar/EN Gemini probes* — those drove locale via
+   `?hl=` and I verified the Arabic UI on screen.
+3. **Claude still ships no Indonesian** → claude-id uses the documented
+   EN-UI fallback; the conditional language write is cancelled.
+
+**Gem spike cancelled by Waleed before it began. No test Gem was ever
+created — nothing to delete.** Replaced by the 3-sub-prompt exploration.
+
+**3-WAY SPLIT — designed and APPROVED.** Seam after bullets 2 and 4,
+order preserved. All five order-preserving seam pairs evaluated; this one
+minimises the largest entry, which IS the hypothesis:
+
+| seam | sizes | max |
+|---|---|---|
+| b1,b3 | 301 / 441 / 748 | 748 — E3 is just today's part2, no gain |
+| **b2,b4** | **483 / 422 / 585** | **585 ← chosen** |
+| b2,b5 | 483 / 599 / 408 | 599 |
+| b3,b5 | 743 / 339 / 408 | 743 |
+| b1,b4 | 301 / 604 / 585 | 604 |
+
+Reassembly verified exact: 483+1+422+1+585 = 1492. Entries cohere as
+standalone facts: E1 identity + practical help + direction; E2 how to
+counsel and hold under pressure; E3 duty of care + honesty about sources.
+
+**Deliberate call: NO lead-ins in arm 1.** The hypothesis is that smaller
+entries survive better; adding lead-ins at the same time confounds size
+with lead-in presence and makes any gain unattributable. EN also ships no
+lead-in, so this is the honest like-for-like against the 1/5 baseline.
+Lead-ins are arm 2 only if arm 1 disappoints. One variable at a time — a
+lesson this project has now paid for twice.
+
+**N = 10 per entry, rule ≥7/10 verbatim.** P(≥7/10) = 0.0009 at a true
+20% (today's baseline), 0.879 at a true 80% → ~0.1% false-positive risk,
+~88% power. Decision-grade for "re-teach the articles around this?", which
+is the actual question; a precise rate would need ~40 runs/entry. 35
+writes total (30 + 5 to bring the two-part baseline to n=10).
+
+**Verify-step translations**: blocked, correctly — waiting on iaser.ai's
+literal published EN string. Translating a paraphrase would ship three
+localized passages that don't match the EN, failing the fidelity bar at
+step one.
+
+**Window stretch is approved but NOT started — timing is Waleed's.**
