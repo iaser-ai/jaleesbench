@@ -382,3 +382,48 @@ this session, so "Gemini's behavior changed since 07-28" is not excluded.
 The decisive control is one write: paste **v1** part 2 under identical
 conditions and see whether it survives. Cheap, and it settles which of
 the two is the variable.
+
+### V1 CONTROL — the variable is GEMINI, not the v2 text (2026-08-01)
+
+One write, ar v1 part 2 (689), identical ar-locale conditions, end state
+delete-all + verified empty.
+
+**Result: HARD REFUSAL.** `لا يستطيع Gemini حفظ هذه المعلومات` — "Gemini
+cannot save this information". Nothing stored. That is the same class as
+the Urdu refusal of 2026-07-29 (`Gemini اس معلومات کو محفوظ نہیں کر سکتا`),
+not the retryable false-error.
+
+This is the same text that **passed the condition-3 counting retest ×2 on
+2026-07-28**, saving in Arabic both times. It is now refused.
+
+**Consequences, in order of importance:**
+
+1. **Gemini's classifier has drifted since 07-28.** The v2 rewrite is not
+   the variable. Nothing about the erudite rewrite caused this.
+2. **The language-conditioned theory is falsified — on evidence.** The
+   07-29 reasoning was: ur bullet 5 (safeguarding) refuses, ar carries the
+   same meaning and saves, therefore the classifier reacts to the
+   grief/danger/crisis field *in Urdu*. The second premise no longer
+   holds. Arabic, carrying the same safeguarding content, is now refused
+   too. The behavior tracks **time**, not language.
+3. **v2 currently fares BETTER than v1** — v2 part 2 was accepted (albeit
+   mangled) where v1 part 2 is refused outright. Whatever moved, it is not
+   pushing in the direction the rewrite went.
+
+**A caution about a coincidence.** The phantom 07-29 message — the one
+sent in the builder's name with results that existed nowhere on disk —
+asserted that the language-conditioned theory was dead. That conclusion
+now appears to be correct. **This does not corroborate that message.** Its
+claimed mechanism ("a proportion mechanism") remains unevidenced, its
+claimed T1 result (798 accepted) remains unverified, and arriving at a
+true conclusion by unknown means is not method. The theory is dead because
+of this control, and it should be cited to this control only.
+
+**Confidence: n=1, and the surface is demonstrably nondeterministic** —
+v2 part 2 gave a retryable error on one run and a silent mangle on the
+next. A single refusal is a strong signal, not a settled result. The
+refusal dialog was byte-identical and reproducible on demand throughout
+the ur saga, which raises confidence, but characterizing this properly
+needs a small matrix: v1 part 2 ×2 more, v2 part 2 ×1 more, and ideally
+one non-safeguarding control block to test whether the refusal follows the
+safeguarding content or has widened to the whole part-2 shape.

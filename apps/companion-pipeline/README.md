@@ -141,6 +141,34 @@ just can't tell you *what* you got. Belt-and-braces verification
 (computed styles, plus self-hosting the file so there is nothing to miss)
 is sound; `document.fonts.check()` alone is not.
 
+## Gemini saved-info: read back every write (STANDING RULE)
+
+**Every entry write, every language, gets a read-back verification.** The
+submit dialog is not evidence. Three distinct failure modes have been
+observed, and only one of them announces itself:
+
+| Mode | Dialog | Actually stored |
+|---|---|---|
+| Hard refusal | `لا يستطيع Gemini حفظ هذه المعلومات` ("cannot save") | nothing |
+| Retryable false-error | `حدث خطأ … يُرجى النقر على "إرسال"` | sometimes nothing, sometimes the entry |
+| **Silent mangle** | **closes normally — reports success** | **a rewritten entry** |
+
+The third is the dangerous one. On 2026-08-01 an Arabic part 2 closed the
+dialog cleanly and stored a version with the prose lead-in stripped and
+six second-person imperatives flipped to first person — turning
+instructions *to* Gemini into claims *about the account holder*,
+including the safeguarding and anti-fabrication clauses. Nothing errored.
+
+**Read back the WHOLE list and compare, normalized for whitespace.** Do
+NOT probe by searching for strings you sent: a rewriter that edits them
+makes that search return nothing, which reads as "silently dropped" when
+the truth is "silently rewritten". That exact mistake nearly entered the
+record. `innerText` also collapses blank lines, so compare on
+`re.sub(r"\s+", " ", …)` rather than raw length — a 1-char delta is
+usually your reader, not the rewriter.
+
+Truth is the list, never the dialog.
+
 ## Recording rules (each learned the hard way)
 
 - Each recorded page needs its **own window** — background tabs render at
