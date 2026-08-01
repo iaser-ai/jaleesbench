@@ -50,6 +50,10 @@ def make_clients(which: set[str] | None = None) -> dict:
         clients["tinker"] = AsyncOpenAI(
             base_url="https://tinker.thinkingmachines.dev/services/tinker-prod/oai/api/v1",
             api_key=os.environ["TINKER_API_KEY"], timeout=600)
+    if want("fanar"):
+        clients["fanar"] = AsyncOpenAI(
+            base_url="https://api.fanar.qa/v1",
+            api_key=os.environ["FANAR_API_KEY"], timeout=300)
     if want("ansari"):
         clients["ansari"] = AsyncOpenAI(
             base_url="https://api-35.ansari.chat/api/v1",
