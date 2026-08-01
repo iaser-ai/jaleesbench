@@ -782,3 +782,59 @@ they just can't tell you *what* you got. (iaser.ai's own verification is
 fine — they also checked computed styles and self-hosted the file.)
 
 Tests 71/71. Rendering-side only; no accounts touched, no takes shot.
+
+## 2026-08-01 — AR V2 PART2 PARAPHRASED (escalated); SLATE CUT TO 4 TAKES
+
+**ar v2 text landed** (001693b). Taken byte-for-byte from
+`tmp/ar-prompt-v2-canonical.txt` on main and verified identical to the
+instruction text rather than retyped — no transcription risk. 1160 → 1231.
+All four approved decisions assert present, both superseded wordings
+absent. Split stays 3/3: p1 602, p2 721, reassembly exact.
+
+**Step-2 validation, ar locale, ledgered, ends verified-empty (c68cf02):**
+- **part1 (602) stores VERBATIM.** I first reported a 602→601 drift —
+  that was `innerText` collapsing a blank line, NOT the rewriter. Caught
+  it by normalizing before concluding. Not a finding; corrected in the
+  record so it can't propagate.
+- **part2 (721) is the problem, and it's nondeterministic.** Run 1: the
+  retryable false-error, nothing saved. Run 2: dialog CLOSED, reported
+  success, silently stored **622 chars rewritten** — prose lead-in
+  stripped, and six 2nd-person imperatives flipped to 1st person
+  ("don't leave him alone" → "**I** don't leave him alone"; "don't
+  fabricate a verse" → "**I** don't fabricate a verse"). Incoherent too:
+  `ودُلَّه` and `فقل إنك…` survive as 2nd person.
+
+**Worse than a refusal** — a refusal is loud and stops the take; this
+reports success and stores a safeguarding clause rewritten into a claim
+about Waleed. It would have shipped. Escalated, text untouched.
+
+**A near-miss worth recording**: my read-back selector searched for
+`ولا تختلق` and the lead-in — the exact strings the rewriter had changed
+— so it returned "0 entries" and I nearly logged a silent drop. Dumping
+the actual page is what found the paraphrase. **When you search for text
+you sent, a rewriter that edits it makes your probe blind.** Read the
+whole list, not a needle.
+
+**Decisive control proposed** (approval requested, outside my declared
+payload): paste ar **v1** part2 under identical conditions. Separates
+"the v2 text triggers this" from "the rewriter changed since 07-28".
+
+**SLATE CUT — Waleed: no reshoots, ar OR ur.** ar ×3 final (v1 text, old
+/ar/prompt flow, gemini-ar = the 9432dee trim). chatgpt-ur + claude-ur
+final on the old font. **5 of 9 final; 4 to shoot, all FIRST takes:**
+gemini-ur + id ×3.
+
+**Verified consequence I flagged rather than assumed**: pulled frames
+from `copypaste-chatgpt-ar` — at t≈11s the clip shows the copy flash
+`تم النسخ ✓ (1160)`, the v1 count, on camera. Post-re-vendor the page
+serves 1231. That flash is the runbook's on-camera honesty check, so the
+mismatch is a visible NUMBER in frame, not invisible text drift. Waleed's
+call stands; he should just make it knowing that.
+
+**New critical path**: (1) ur text verdict → T1 ×2 → re-vendor →
+gemini-ur is the longest pole, external deps pace it. (2) **id ×3 is
+fully unblocked and in my control** — id text was never under revision,
+article live and byte-verified, only gap is the id UI recon at session
+start. Recommended starting it now instead of idling. (3) ar re-vendor is
+now OFF the clip path — pages only. (4) localized_content can start
+against clips in hand.
