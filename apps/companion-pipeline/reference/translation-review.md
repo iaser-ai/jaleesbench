@@ -481,3 +481,53 @@ nothing on this surface.
 this properly means repetition — on the order of 5+ runs per condition —
 or accepting that the flow is unreliable and designing around that rather
 than trying to find the safe wording.
+
+### EN PROBE — the flow is broken in ENGLISH too (2026-08-01)
+
+Five writes, EN locale, EN part 2 (748), each from a verified-empty list,
+each cleaned. **EN carries no lead-in** — it shipped without one — so this
+is the flow exactly as the published EN article instructs it.
+
+| run | verdict | stored |
+|---|---|---|
+| 1 | **MUTATED-SAVE** | first-person flip |
+| 2 | VERBATIM-SAVE | clean |
+| 3 | **HARD REFUSAL** (`Gemini can't save this info`) | nothing |
+| 4 | **HARD REFUSAL** | nothing |
+| 5 | RETRYABLE dialog — **but the entry stored anyway**, mutated | first-person flip |
+
+**1 of 5 verbatim. 2 of 5 refused outright. 2 of 5 silently mutated.**
+
+**The mutation is the same first-person flip seen in Arabic**, so it is
+not a translation artifact and not language-conditioned — it is what the
+rewriter does:
+
+| sent | stored |
+|---|---|
+| `stay warm and stay put` | `**I should** stay warm and stay put` |
+| `Soften your manner, never the truth` | `**I should** soften my manner, never the truth` |
+| `keep them accompanied: bring in crisis or professional help` | `**I should** keep them accompanied: bringing in crisis or professional help` |
+| `Never invent or misattribute a Qur'anic verse or hadith` | `**I should** never invent or misattribute a Qur'anic verse or hadith` |
+
+**Why the flip is not cosmetic.** Saved-info stores *facts about the
+account holder*. An entry reading "I should never invent or misattribute a
+Qur'anic verse" is a statement about the **user**, not an instruction
+governing **Gemini**. The rewrite inverts who each clause binds. Every
+behavioral guarantee the prompt exists to create — the safeguarding
+clause, the anti-fabrication clause, soften-the-manner-never-the-truth —
+is converted into the user describing themselves.
+
+**Live impact, today.** The EN article at
+`iaser.ai/articles/jaleesbench-companion-prompt` and the three published
+videos instruct readers through exactly this flow. On these numbers a
+reader following it has roughly a 1-in-5 chance of storing what the
+article says they are storing. Two in five get nothing (at least that
+fails loudly). Two in five get a version whose clauses have been turned
+into claims about themselves — silently.
+
+This is a **product problem, not a translation problem**, and it is
+already shipped. It outranks every remaining localization task.
+
+**Note on run 5**: the retryable "something went wrong" dialog appeared
+AND the entry stored anyway — the documented false-error. A user who
+follows that dialog's own advice and clicks Send again gets a duplicate.
