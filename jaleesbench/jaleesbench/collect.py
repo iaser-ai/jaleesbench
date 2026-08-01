@@ -76,7 +76,8 @@ SUBJECTS = {
                 "framings": ["unstated", "stated", "guided"]},
     # Fanar (QCRI/HBKU) via its OpenAI-compatible endpoint (FANAR_API_KEY in
     # repo .env; same key as the ansari-multisage BATIK run). "Fanar" is the
-    # routed flagship users get; Sadiq/C-2-27B variants exist but aren't run.
+    # routed flagship users get; the C-2-27B variant exists but isn't run, and
+    # Sadiq runs as its own subject below.
     # Rate-limit-strict API: patient retries like ansari/tinker. 16,000-token
     # TOTAL context (input+output share it) — max_tokens must leave input room,
     # so this subject overrides the global cap.

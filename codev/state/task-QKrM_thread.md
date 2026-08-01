@@ -24,11 +24,15 @@ SUBJECTS size. Checked: nothing asserts `len(collect.SUBJECTS)`.
 the *paper* subject list in `paper_stats.py` — untouched by this change. No
 test edits needed. Full suite: 74 passed.
 
-## Noted, not changed
-The pre-existing `fanar` comment says "Sadiq/C-2-27B variants exist but aren't
-run" — now stale for Sadiq. Left alone: the instruction was to apply the diff
-verbatim, and the diff does not touch that line. Flagged to the architect
-rather than silently fixed.
+## Stale comment — flagged, then fixed on architect instruction
+The pre-existing `fanar` comment said "Sadiq/C-2-27B variants exist but aren't
+run" — made false by this very PR. Initially left alone (the instruction was to
+apply the diff verbatim) and flagged to the architect instead.
+
+Architect ruling (2026-08-01): verbatim-diff discipline is the right default,
+but **a comment made false BY this PR belongs to this PR**. Reworded to "the
+C-2-27B variant exists but isn't run, and Sadiq runs as its own subject below."
+Suite still 74 passed.
 
 ## Constraints honored
 Did not run collection. Did not touch `results/`.
