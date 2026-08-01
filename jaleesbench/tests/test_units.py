@@ -38,10 +38,15 @@ def test_load_env_reads_env_file_but_environment_wins(tmp_path, monkeypatch):
     monkeypatch.setattr(collect, "VERTEX_SA", tmp_path / "sa.json")
     for k in collect.REQUIRED_KEYS:
         monkeypatch.delenv(k, raising=False)
-    for k in ["ANTHROPIC_API_KEY", "FRIENDLI_API_KEY", "BLACKBOX_API_KEY",
-              "LEADERBOARD_API_KEY", "FANAR_API_KEY", "GEMINI_API_KEY"]:
-        monkeypatch.setenv(k, "preset")
-    monkeypatch.setenv("TINKER_API_KEY", "preset")
+    # This test is about file-vs-environment precedence, not the key list, so
+    # preset every required key EXCEPT OPENAI_API_KEY (left unset so it must
+    # come from the .env file). TINKER_API_KEY is in the file too, so its
+    # preset value is what "already-set wins" is asserted on below. Deriving
+    # from REQUIRED_KEYS keeps new provider keys from touching this test.
+    for k in collect.REQUIRED_KEYS:
+        if k != "OPENAI_API_KEY":
+            monkeypatch.setenv(k, "preset")
+    monkeypatch.setenv("GEMINI_API_KEY", "preset")  # satisfies the Gemini check
     collect.load_env()
     import os
     assert os.environ["OPENAI_API_KEY"] == "fromfile"   # loaded from .env
