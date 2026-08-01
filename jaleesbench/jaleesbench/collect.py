@@ -116,7 +116,7 @@ RETRIES = 2
 ENV_PATH = ROOT.parent.parent / ".env"  # repo-root .env
 REQUIRED_KEYS = ["ANTHROPIC_API_KEY", "OPENAI_API_KEY",
                  "FRIENDLI_API_KEY", "BLACKBOX_API_KEY", "LEADERBOARD_API_KEY",
-                 "TINKER_API_KEY"]
+                 "TINKER_API_KEY", "FANAR_API_KEY"]
 
 
 def load_env() -> None:
