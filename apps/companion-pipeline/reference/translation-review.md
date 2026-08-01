@@ -427,3 +427,57 @@ the ur saga, which raises confidence, but characterizing this properly
 needs a small matrix: v1 part 2 ×2 more, v2 part 2 ×1 more, and ideally
 one non-safeguarding control block to test whether the refusal follows the
 safeguarding content or has widened to the whole part-2 shape.
+
+### CORRECTION + full matrix — the surface is nondeterministic (2026-08-01)
+
+**The section above overstated its case and is corrected here.** It
+concluded, from a single write, that ar v1 part 2 "is now hard-refused"
+and that the language-conditioned theory was therefore falsified. The
+matrix shows ar v1 part 2 is **not** deterministically refused — it
+refuses on some runs and saves on others. That premise does not hold, so
+**the language-conditioned theory is NOT established as falsified.** It
+returns to untested, exactly where the retraction of the phantom message
+left it. Flagged at the time as n=1 on a nondeterministic surface; that
+caution was warranted and the conclusion should not have been stated as
+firmly as it was.
+
+Seven writes, ar locale, each from a verified-empty list, each cleaned:
+
+| # | payload | outcome |
+|---|---|---|
+| 1 | v2 part 2 (721) | retryable error — nothing stored |
+| 2 | v2 part 2 (721) | saved; lead-in stripped; **1st-person flip** |
+| 3 | v1 part 2 (689) | **hard refusal** — nothing stored |
+| 4 | v1 part 2 (689) | saved; lead-in stripped; Arabic; imperatives intact |
+| 5 | v1 part 2 (689) | saved; lead-in stripped; **flipped to English** |
+| 6 | v2 part 2 (721) | nothing stored |
+| 7 | part 2 minus the safeguarding bullet (560) | saved; lead-in **kept**, prefixed `تذكر أن:`; Arabic |
+
+**Nothing here is deterministic.** Identical payloads produce refusal,
+retryable error, silent drop, faithful-ish save, English flip, and
+first-person flip. The lead-in is stripped on three saves and survives on
+a fourth. No rule separates the outcomes.
+
+**What IS robust — and it is the finding that matters:**
+
+> **0 of 7 writes stored the text verbatim.** Every one of the four that
+> stored anything stored a mutated version. The clean, in-Arabic,
+> lead-in-intact save that was verified twice on 2026-07-28 did not
+> reproduce once.
+
+So the honest statement is not "v1 is refused" or "v2 broke it" — it is
+that **the two-part saved-info flow no longer reliably preserves the
+prompt, in any version.** That is a spec-level problem, not a translation
+one: it touches gemini-ur, gemini-id, the published per-language pages,
+and the EN two-part flow that serves the largest audience and is already
+on three published videos.
+
+**The safeguarding bullet is not clearly the trigger.** Run 7 (without it)
+saved — but runs 4 and 5 (with it) also saved. A single clean run proves
+nothing on this surface.
+
+**Sample sizes are too small for rates.** With six outcome classes and
+1–3 runs per condition, no proportion here is meaningful. Characterizing
+this properly means repetition — on the order of 5+ runs per condition —
+or accepting that the flow is unreliable and designing around that rather
+than trying to find the safe wording.
