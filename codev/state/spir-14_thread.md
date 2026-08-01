@@ -1059,3 +1059,49 @@ to reveal the Save button was discarded by reload and never saved.
 indistinguishable from the ~2/10 two-part baseline. E2 is 0/5 so far,
 mostly RETRYABLE. The smaller-entries hypothesis is not being borne out;
 final numbers to follow.
+
+## 2026-08-01 — HISTORY PURGE DONE + AN EXPOSURE CORRECTION
+
+**Purged, on Waleed's explicit go**: `inputs/clips/{ar,ur}/copypaste-chatgpt.mp4`
+removed from the working tree and from every reachable commit, and the
+leaked titles redacted out of the thread log across all of history.
+
+**MY EARLIER EXPOSURE CLAIM WAS WRONG, and the correction is the good
+news.** I reported the titles were public — "the exposure I can prove is
+the PUBLIC REPO: two committed mp4s… the titles are public and in git
+history". I inferred *committed* meant *published*. It did not. The remote
+branch sat at `b82a98c` (2026-07-28), predating both clip commits, so
+**neither clip nor any title was ever pushed to GitHub.** Verified against
+the remote ref before pushing: 0 commits for both paths, 0 commits
+containing the titles. The exposure was local-only, the whole time.
+
+The purge was still right — it stops the material reaching the remote on
+the next push, which is exactly what happened minutes later — but the
+severity I reported was overstated. Waleed made a call under a worse
+picture than the real one.
+
+**Method, deliberately conservative.** This worktree shares an object
+store with the main checkout, so a whole-repo tool (filter-repo) would
+have rewritten `main` locally too. Scoped instead to `main..HEAD` with a
+`filter-branch --index-filter`: mp4 paths dropped from the index, thread
+blob passed through a redactor. No checkouts, main never in scope.
+
+**Verification:**
+- both clip paths: 0 commits, locally and on the remote
+- titles: 0 reachable commits, locally and on the remote
+- blobs `e356233e…` / `814f15eb…`: **gone from the object store** after
+  dropping `refs/original`, deleting the backup ref, expiring reflogs and
+  `gc --prune=now`
+- `main` = `origin/main` = `6b130dd`, before and after — untouched
+- surviving clips intact: ar claude+gemini, ur claude, en ×3
+- 101 commits preserved (the working-tree redaction commit pruned itself
+  as empty once history carried the redaction — expected)
+- force-push used `--force-with-lease` pinned to the old remote SHA, so a
+  concurrent push would have aborted it rather than being clobbered
+
+Remote now `e90e023`, clean. **Titles are not written down anywhere from
+here on** — not in this log, not in commit messages, not in the ledger.
+
+ar-chatgpt and ur-chatgpt are gone and count as unshot: **3 of 9 clips**
+(ar claude+gemini, ur claude... and en is reference, not deliverable).
+Retakes wait for the driver fix and are post-decision-cycle per Waleed.
