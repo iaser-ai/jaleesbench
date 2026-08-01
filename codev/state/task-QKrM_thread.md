@@ -36,3 +36,33 @@ Suite still 74 passed.
 
 ## Constraints honored
 Did not run collection. Did not touch `results/`.
+
+## Follow-up PR #17 — require FANAR_API_KEY in load_env (merged 8427a20)
+
+Architect spotted a gap left by PR #15: `collect.run()` calls `make_clients()`
+unfiltered, so `providers.py:56` reads `os.environ["FANAR_API_KEY"]`
+unconditionally. Without the key in `REQUIRED_KEYS`, a contributor missing it
+got a raw `KeyError` instead of `load_env`'s clean missing-keys message. Fanar
+was the only `make_clients` env-key provider absent from the list. Confirmed in
+the code before changing anything; verified the fix in a REPL.
+
+**Test fragility found along the way.** The one-line fix broke
+`test_load_env_reads_env_file_but_environment_wins`: it cleared every
+`REQUIRED_KEYS` entry, then re-set a *hardcoded* list — so every new provider
+key broke it. Architect ruling: derive the preset set from `REQUIRED_KEYS`,
+since the test's subject is env-file-vs-environment precedence, not key-list
+completeness.
+
+**Mutation-checked the loosened test** rather than trusting a green run:
+- `setdefault` → unconditional assignment (breaks precedence): test FAILS ✓
+  (so it isn't vacuous — still tests its actual subject)
+- drop `FANAR_API_KEY` from `REQUIRED_KEYS`: test PASSES ✓
+  (so it's genuinely key-list-agnostic now)
+
+Worth carrying forward: loosening a test to stop it breaking on unrelated
+changes should come with proof it still fails for the right reason. A green
+suite after a loosening proves nothing on its own.
+
+## Status
+Both PRs merged. Subject 12 live; `FANAR_API_KEY` now fails fast with a clean
+message. Worktree left intact for architect-driven cleanup.
