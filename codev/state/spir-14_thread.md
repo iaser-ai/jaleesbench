@@ -1006,3 +1006,56 @@ localized passages that don't match the EN, failing the fidelity bar at
 step one.
 
 **Window stretch is approved but NOT started — timing is Waleed's.**
+
+## 2026-08-01 — WINDOW STRETCH: A LEAK, A BROKEN DRIVER, AND THE PROBE
+
+### PRIVACY LEAK — CONFIRMED, and it is Waleed's "SCT" memory
+`inputs/clips/ar/copypaste-chatgpt.mp4` and `.../ur/copypaste-chatgpt.mp4`
+open the ChatGPT sidebar on camera with **Recents populated and legible**:
+[seven private conversation titles — REDACTED from history 2026-08-01 per Waleed] ar ≈17.0–21.5s, ur from
+≈22.0s. Both are committed to a **PUBLIC repo**.
+
+His recollection was right, and it was NOT an early take — it is two of
+the five clips he just declared final.
+
+`en/copypaste-chatgpt.mp4` is **clean** — Recents collapsed and empty
+throughout. That is luck of timing, not design: EN was shot before the
+account accumulated chats. It is also why the architect's sampled pass and
+the published EN assets came back clean.
+
+**Exposure, bounded honestly**: everything published to YouTube/iaser.ai is
+EN, and EN is clean — no evidence of a leak in any published asset. What I
+can prove is the public repo, including git history.
+
+**Why the earlier pass missed it**, both worth keeping:
+- **Sampling misses transients** — 1-in-5 frames found nothing.
+- **A whole-frame hash misses regions** — my own first attempt used a
+  16×16 average hash and reduced 434 frames to 8 "distinct", which would
+  have missed it too. A 250px sidebar in a 1376px frame does not move a
+  16×16 downsample. Fixed by per-block change detection on a 160×120 grid
+  → 40 distinct frames, and the sidebar was immediately visible.
+I nearly shipped the same false negative with a better-sounding method.
+
+Landed `companion_pipeline/privacy.py` + a standing README rule (3dc6f18)
+so the rule is real rather than aspirational. Noted there that the better
+fix is upstream: drivers should clear/collapse Recents in their off-camera
+reset, as the ChatGPT driver already does for the CI field.
+
+### CHATGPT DRIVER IS BROKEN — blocks chatgpt-id and any chatgpt re-shoot
+`[data-testid='open-sidebar-button']` **no longer exists**; today's UI has
+`close-sidebar-button` and `accounts-profile-button`, and a
+`stage-slideover-sidebar` overlay intercepts clicks at the take viewport.
+Four recon attempts failed on it. Per the standing rule and with Waleed
+asleep, I STOPPED rather than re-derive the on-camera choreography
+unreviewed. **chatgpt-id not shot.** This blocks the re-shoots the leak
+needs, so both want fixing in one pass.
+
+Account state verified clean after recon: ChatGPT and Claude both still
+hold exactly the 1318-char ur residue, unchanged — the character I typed
+to reveal the Save button was discarded by reload and never saved.
+
+### 3-WAY PROBE — early result is negative
+**E1 complete: 2/10 verbatim.** The bar was ≥7/10. That is
+indistinguishable from the ~2/10 two-part baseline. E2 is 0/5 so far,
+mostly RETRYABLE. The smaller-entries hypothesis is not being borne out;
+final numbers to follow.
