@@ -100,6 +100,14 @@ paraphrase it. Substance:
   already-published EN Gemini video teaches a flow we would be retiring.
 - **Captions and VO** — Gemini scripts re-timed for three cycles.
 
+## Interim policy while this is contingent (2026-08-01)
+
+Until the probe result lands, Waleed's standing call is: **videos
+unchanged, article gets the verify step only.** Nothing in this document
+is in effect. The questions below travel to him as a single decision
+package *with the numbers* — they all condition on the result, so asking
+them separately would only invite answers that the data then invalidates.
+
 ## Open questions for Waleed, not decided here
 
 1. **Does the EN Gemini video get re-shot, or pulled?** It is published
