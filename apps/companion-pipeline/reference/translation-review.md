@@ -326,3 +326,59 @@ now asserts the copied block byte-for-byte against the derived part. The
 handoff-package test had the same shape of hole — reassembly-to-canonical
 is boundary-agnostic and passed the stale 3/3 package — and is now pinned
 to the configured boundary.
+
+### ar v2 part 2 — ACCEPTED BUT PARAPHRASED (2026-08-01) — ESCALATION
+
+Step-2 re-validation of the v2 canonical under the ar locale, saved-info,
+ledgered, end state verified empty.
+
+**part 1 (602) is clean.** Stored **verbatim** — byte-identical after
+whitespace normalization, no dedupe, no paraphrase. (An earlier read-back
+reported a 602→601 mismatch; that was `innerText` collapsing the blank
+line, not the rewriter. Corrected here so the record isn't wrong.)
+
+**part 2 (721) is not.** Two runs, two different outcomes:
+
+- Run 1 — the retryable error dialog (`حدث خطأ ولم يتم حفظ المعلومات`,
+  "an error occurred, click Send to try again"). Nothing saved. This is
+  the documented false-error class, **not** the ur hard-refusal class
+  (`لا يمكن`/"cannot save").
+- Run 2 — dialog closed, apparently accepted. What actually persisted was
+  **622 chars, rewritten**.
+
+Two mutations, both meaning-bearing:
+
+1. **The prose lead-in was stripped entirely** — the very device adopted
+   on 2026-07-28 to stop the rewriter language-flipping bare-bullet
+   openings.
+2. **Second-person imperatives flipped to first person**, turning
+   instructions *to* Gemini into claims *about the user*:
+
+| sent | stored |
+|---|---|
+| `فإن دفعك بإلحاح` (if he presses *you*) | `إن دفعني بإلحاح` (if he presses *me*) |
+| `وليّن أسلوبك ولا تليّن الحقّ` (soften *your* manner, don't soften the truth) | `وليّن أسلوبي ولا أليّن الحقّ` (soften *my* manner, *I* don't soften the truth) |
+| `فلا تدعه وحده` (don't leave him alone) | `فلا أدعه وحده` (*I* don't leave him alone) |
+| `ولا تختلق آيةً` (don't fabricate a verse) | `ولا أختلق آيةً` (*I* don't fabricate a verse) |
+| `ولا تنسب نصًّا` | `ولا أنسب نصًّا` |
+| `فلا تقطع فيه بقول` | `فلا أقطع فيه بقول` |
+
+The rewrite is also **incoherent**: `ودُلَّه` and `فقل إنك لا تستطيع
+التحقق` survive as second-person, so the stored entry mixes first-person
+self-description with second-person commands to the reader.
+
+**Why this is worse than a refusal.** A refusal is loud and stops the
+take. This closes the dialog, reports success, and silently stores an
+entry whose safeguarding and anti-fabrication clauses have been converted
+into assertions about the account holder. It would have shipped.
+
+**Escalated, not reworded.** The instruction is explicit that this exact
+text is not mine to touch, so no rewording was attempted.
+
+**Open question — is this v2 or is it Gemini?** ar v1 part 2 passed a
+counting retest ×2 on 2026-07-28 with the lead-in intact, which points at
+the v2 text. But the rewriter is a moving target and was not re-tested in
+this session, so "Gemini's behavior changed since 07-28" is not excluded.
+The decisive control is one write: paste **v1** part 2 under identical
+conditions and see whether it survives. Cheap, and it settles which of
+the two is the variable.
