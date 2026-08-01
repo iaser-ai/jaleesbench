@@ -39,7 +39,7 @@ def test_load_env_reads_env_file_but_environment_wins(tmp_path, monkeypatch):
     for k in collect.REQUIRED_KEYS:
         monkeypatch.delenv(k, raising=False)
     for k in ["ANTHROPIC_API_KEY", "FRIENDLI_API_KEY", "BLACKBOX_API_KEY",
-              "LEADERBOARD_API_KEY", "GEMINI_API_KEY"]:
+              "LEADERBOARD_API_KEY", "FANAR_API_KEY", "GEMINI_API_KEY"]:
         monkeypatch.setenv(k, "preset")
     monkeypatch.setenv("TINKER_API_KEY", "preset")
     collect.load_env()
