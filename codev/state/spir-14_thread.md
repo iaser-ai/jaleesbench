@@ -838,3 +838,54 @@ article live and byte-verified, only gap is the id UI recon at session
 start. Recommended starting it now instead of idling. (3) ar re-vendor is
 now OFF the clip path — pages only. (4) localized_content can start
 against clips in hand.
+
+## 2026-08-01 — I OVERSTATED THE V1 CONTROL. CORRECTED. THE REAL FINDING
+## IS BIGGER.
+
+**The mistake, mine:** off ONE write I reported "ar v1 part2 is now
+hard-refused → the language-conditioned theory is falsified". The 4-write
+matrix shows v1 part2 is **not deterministically refused** — it refuses on
+some runs, saves on others. Premise gone, so the language theory is **not
+falsified**; back to UNTESTED. I flagged n=1 at the time and then led with
+the inversion anyway. Flagging a caveat isn't the same as letting it
+govern the conclusion.
+
+**Seven writes, ar locale, each from verified-empty, each cleaned:**
+
+| # | payload | outcome |
+|---|---|---|
+| 1 | v2 p2 (721) | retryable error — nothing stored |
+| 2 | v2 p2 (721) | saved; lead-in stripped; 1st-person flip |
+| 3 | v1 p2 (689) | HARD REFUSAL — nothing stored |
+| 4 | v1 p2 (689) | saved; lead-in stripped; Arabic; imperatives intact |
+| 5 | v1 p2 (689) | saved; lead-in stripped; **flipped to English** |
+| 6 | v2 p2 (721) | nothing stored |
+| 7 | p2 minus safeguarding bullet (560) | saved; lead-in KEPT (+`تذكر أن:`) |
+
+Nothing deterministic. Same payload → six different outcome classes. The
+lead-in strips on three saves and survives on a fourth. The safeguarding
+bullet is NOT clearly the trigger (7 without it saved; 4 and 5 with it
+also saved).
+
+**THE ROBUST FINDING — 0 of 7 stored VERBATIM.** Every write that stored
+anything stored a mutation. The clean in-Arabic lead-in-intact save
+verified TWICE on 07-28 never reproduced. So it isn't "v1 refuses" or "v2
+broke it": **the two-part saved-info flow no longer reliably preserves the
+prompt in any version.** Spec-level, not translation-level — it touches
+gemini-ur, gemini-id, the published pages, and the EN flow already baked
+into three published videos.
+
+Recommended to the architect, priority order: (1) EN part2 probe ×5 —
+decides whether this is a LIVE published-content problem for the largest
+audience; (2) do NOT shoot gemini-id or gemini-ur until the flow is
+understood — a take that films a mangled save is worse than no take;
+(3) design around unreliability instead of hunting a safe wording. Seven
+writes found no safe wording; more wording attempts is the wrong spend.
+
+**Process notes for the cohort:**
+- The 2-minute Bash timeout SIGTERMed the matrix mid-run. Account was
+  clean (checked immediately — first thing, before diagnosis), but three
+  runs' stdout was lost. Recovered the verdicts from the full-page
+  screenshots instead of re-spending approved writes. **Ledger
+  screenshots aren't decoration; they were the only surviving record.**
+- Long rig scripts need an explicit long timeout or background execution.
