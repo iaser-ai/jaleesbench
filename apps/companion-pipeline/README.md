@@ -169,6 +169,34 @@ usually your reader, not the rewriter.
 
 Truth is the list, never the dialog.
 
+## Purging something from a builder branch (shared object store!)
+
+**Do not reach for `git filter-repo` in a builder worktree.** Worktrees
+share an object store with the main checkout, and filter-repo rewrites
+*all* refs — it would rewrite `main` locally too and leave a real mess to
+untangle. Scope the rewrite to your branch instead:
+
+```bash
+git branch backup/pre-purge HEAD                      # safety net, deleted after
+FILTER_BRANCH_SQUELCH_WARNING=1 git filter-branch --force \
+  --index-filter 'sh /tmp/purge/idx.sh' --prune-empty -- main..HEAD
+```
+
+`--index-filter` needs no checkout, which matters when the tree carries
+hundreds of MB of clips. Afterwards: delete `refs/original/*`, delete the
+backup ref, `git reflog expire --expire=now --all`, `git gc --prune=now`,
+then confirm the blob SHAs are gone with `git cat-file -e`. Push with
+`--force-with-lease` pinned to the old remote SHA so a concurrent push
+aborts instead of being clobbered. Verify `main == origin/main` before and
+after.
+
+**`committed` is not `published` — check the remote ref before stating
+exposure.** On 2026-08-01 two clips leaked private data and were reported
+as public; the branch had not been pushed since before those commits
+existed, so nothing had ever reached the host. `git log <remote-ref> --
+<path>` answers this in one command, and the answer changes both the
+severity and who needs to be told.
+
 ## Recording rules (each learned the hard way)
 
 - Each recorded page needs its **own window** — background tabs render at

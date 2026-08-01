@@ -17,6 +17,61 @@ from ..recorder import Session
 from .common import (OVERLAY_JS, OVERLAY_OFF_JS, copy_block,
                      open_article)
 
+# Hide the conversation history before a single frame can show it.
+#
+# This is not belt-and-braces: the ar and ur takes DID film it. The sidebar
+# opens as an on-camera beat, and by the time those takes were shot the
+# Recents list was populated — real conversation titles, legible, for
+# several seconds. The clips had to be destroyed and purged from history.
+# The EN clip escaped only because it was recorded while that list happened
+# to be empty, which is luck, not a control.
+#
+# Same shape as the Gemini driver's REDACT_JS: a MutationObserver, because
+# the list mounts asynchronously and re-mounts on navigation, so a one-shot
+# hide loses the race. `visibility:hidden` rather than removal — the layout
+# must not shift on camera.
+SIDEBAR_REDACT_JS = """() => {
+  if (window.__jbHistRedact) return;
+  const hide = () => {
+    for (const el of document.querySelectorAll('a[href^="/c/"]')) {
+      el.style.visibility = 'hidden';          // each conversation link
+    }
+    for (const el of document.querySelectorAll('h2,div,span')) {
+      const t = (el.textContent || '').trim();
+      // the section heading itself, matched loosely so it survives
+      // localization; guarded by length so it can't match a whole pane
+      if (t.length < 24 && /^(Recents|Recent)\\b/i.test(t)) {
+        let n = el;
+        for (let i = 0; i < 2 && n.parentElement; i++) n = n.parentElement;
+        n.style.visibility = 'hidden';
+      }
+    }
+  };
+  window.__jbHistRedact = new MutationObserver(hide);
+  window.__jbHistRedact.observe(document.body, {childList: true, subtree: true});
+  hide();
+}"""
+
+
+def open_account_menu(s, page):
+    """Open the account menu, tolerating both sidebar states.
+
+    `open-sidebar-button` no longer exists — today's UI ships
+    `close-sidebar-button` when the rail is open, and a
+    `stage-slideover-sidebar` overlay that intercepts clicks aimed at
+    elements beneath it. The account chip is reachable directly via
+    `accounts-profile-button` in either state, so go straight there rather
+    than choreographing the sidebar open first.
+    """
+    chip = "[data-testid='accounts-profile-button']"
+    if not page.locator(chip).count():
+        raise RuntimeError(
+            "TAKE ABORT: no accounts-profile-button on the ChatGPT page. "
+            "The account-menu route has moved again — re-rec the selectors "
+            "before shooting, don't improvise mid-take.")
+    s.move_click(page, chip, after_ms=1400)
+
+
 def ci_field(cfg):
     """Custom-instructions textarea, by localized placeholder substring."""
     return ("textarea[placeholder*="
@@ -81,6 +136,14 @@ def record(cfg: LanguageConfig) -> None:
         right.goto("https://chatgpt.com/")
         right.set_viewport_size({"width": 657, "height": 765})
         right.wait_for_timeout(2500)
+        # Arm the history redaction BEFORE the first frame is captured, and
+        # assert it took — a privacy control that fails open is not a
+        # control. This is the reset step, off camera, so aborting here
+        # costs nothing; discovering it in the footage costs the take.
+        right.evaluate(SIDEBAR_REDACT_JS)
+        right.wait_for_timeout(600)
+        assert right.evaluate("() => !!window.__jbHistRedact"), \
+            "history redaction did not arm — refusing to roll"
         right.evaluate(OVERLAY_JS, ["", None])  # dark cover from the start
         left.goto("about:blank")
         left.set_viewport_size({"width": 657, "height": 765})
@@ -111,10 +174,10 @@ def record(cfg: LanguageConfig) -> None:
         right.wait_for_timeout(1200)
         s.ensure_cursor(right)
 
-        # RIGHT: sidebar -> account -> Personalization
-        s.move_click(right, "[data-testid='open-sidebar-button']",
-                     after_ms=1100)
-        s.move_click(right, f"text={cfg.account_label}", after_ms=1200)
+        # RIGHT: account menu -> Personalization. Re-arm first: the card
+        # overlay and any navigation since the reset can drop the observer.
+        right.evaluate(SIDEBAR_REDACT_JS)
+        open_account_menu(s, right)
         s.move_click(right, f"text={cfg.chatgpt_ui['personalization']}", after_ms=2200)
 
         # scroll to the Custom instructions field

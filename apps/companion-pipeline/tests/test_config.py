@@ -307,3 +307,24 @@ def test_vendored_bytes_resolve_without_any_system_font():
         pg.evaluate("() => document.fonts.ready")
         assert pg.evaluate(_FONT_PROBE_JS, alias)
         b.close()
+
+
+def test_chatgpt_driver_redacts_history_and_has_no_stale_selector():
+    """The ar/ur chatgpt clips filmed the conversation list and had to be
+    destroyed. Two things must stay true: the driver arms a history
+    redaction, and it no longer reaches for the selector that broke."""
+    from companion_pipeline.drivers import chatgpt as d
+    src = (LANGUAGES_DIR.parent / "companion_pipeline" / "drivers"
+           / "chatgpt.py").read_text(encoding="utf-8")
+    # the redaction exists, hides conversation links, and is observer-based
+    assert 'a[href^="/c/"]' in d.SIDEBAR_REDACT_JS      # conversation links
+    assert "MutationObserver" in d.SIDEBAR_REDACT_JS     # survives re-mounts
+    assert "visibility" in d.SIDEBAR_REDACT_JS           # no layout shift
+    # it is armed before rolling AND asserted, so it cannot fail open
+    assert "refusing to roll" in src
+    # The selector that no longer exists in ChatGPT's UI must not be USED.
+    # Match the selector form, not the bare name — the name still appears
+    # in prose explaining why it was dropped, and a test that forbids
+    # naming the mistake discourages documenting it.
+    assert "[data-testid='open-sidebar-button']" not in src
+    assert "[data-testid='accounts-profile-button']" in src
