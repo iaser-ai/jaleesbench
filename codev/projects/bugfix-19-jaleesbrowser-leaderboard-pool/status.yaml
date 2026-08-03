@@ -1,7 +1,7 @@
 id: bugfix-19
 title: jaleesbrowser-leaderboard-pool
 protocol: bugfix
-phase: fix
+phase: pr
 plan_phases: []
 current_plan_phase: null
 gates:
@@ -11,4 +11,4 @@ iteration: 1
 build_complete: false
 history: []
 started_at: '2026-08-03T05:19:58.116Z'
-updated_at: '2026-08-03T05:23:12.393Z'
+updated_at: '2026-08-03T05:27:43.153Z'
