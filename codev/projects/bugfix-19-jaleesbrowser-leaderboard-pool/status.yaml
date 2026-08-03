@@ -1,0 +1,17 @@
+id: bugfix-19
+title: jaleesbrowser-leaderboard-pool
+protocol: bugfix
+phase: verified
+plan_phases: []
+current_plan_phase: null
+gates:
+  pr:
+    status: approved
+    requested_at: '2026-08-03T05:32:56.656Z'
+    approved_at: '2026-08-03T05:35:16.767Z'
+iteration: 1
+build_complete: false
+history: []
+started_at: '2026-08-03T05:19:58.116Z'
+updated_at: '2026-08-03T05:35:32.036Z'
+pr_ready_for_human: false
