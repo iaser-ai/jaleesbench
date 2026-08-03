@@ -65,3 +65,17 @@ initial column (post-sorting no longer diverges from canonical order, by
 design). Added a no-breakdown-axis index test covering the pooled fallback.
 
 Net diff: 4 files, +111/−47.
+
+## PR (2026-08-02)
+
+PR #20 opened (Fixes #19). CMAP: gemini=APPROVE, codex=REQUEST_CHANGES,
+claude=APPROVE. Codex's issue was real but not about the fix: the worktree was
+spawned from local `main`, which was one commit (`d85f1ba`, paper PDF +
+architect state) ahead of `origin/main`, so that commit rode into the PR.
+Addressed by rebasing the branch onto `origin/main` (dropping `d85f1ba`) and
+force-pushing with lease; re-ran the vitest suite (82 pass) and build after the
+rebase. `d85f1ba` still needs a separate push to `origin/main` by the architect
+— flagged in the PR comment. Codex judged the functional fix sound; no code
+changes requested.
+
+Requested the `pr` gate; waiting for human approval.
