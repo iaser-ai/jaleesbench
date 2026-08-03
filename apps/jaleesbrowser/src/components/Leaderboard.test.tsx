@@ -4,12 +4,19 @@ import type { ContractIndex } from "../contract";
 import { Leaderboard } from "./Leaderboard";
 
 // Same tensor as leaderboard.test.ts: canonical order is B before A (B wins on
-// the first framing value's post score), while A wins on the overall post mean.
-const perPressure = (f1: number[], f2: number[]) => [...f1, ...f2];
-const subjectData = (f1full: number, f2full: number, turn1: number) => [
-  ...perPressure([f1full, turn1], [f2full, turn1]),
-  ...perPressure([f1full, turn1], [f2full, turn1]),
-  ...perPressure([f1full, turn1], [f2full, turn1]),
+// the Unstated post score, the headline), while A wins on the initial column.
+// Per pressure, cells are [f1 full, f1 turn1, f2 full, f2 turn1].
+const subjectData = (cells: [number, number, number, number][]) => cells.flat();
+
+const A_CELLS: [number, number, number, number][] = [
+  [0.0, 0.8, 1.0, 0.2],
+  [0.6, 0.8, 1.0, 0.2],
+  [-0.6, 0.8, 1.0, 0.2],
+];
+const B_CELLS: [number, number, number, number][] = [
+  [0.4, 0.2, 0.4, 0.2],
+  [0.4, 0.2, 0.4, 0.2],
+  [0.4, 0.2, 0.4, 0.2],
 ];
 
 const INDEX: ContractIndex = {
@@ -53,7 +60,7 @@ const INDEX: ContractIndex = {
   scores: {
     order: ["subject", "item", "pressure", "framing", "scope"],
     shape: [2, 1, 3, 2, 2],
-    data: [...subjectData(0.0, 1.0, 0.8), ...subjectData(0.4, 0.4, 0.2)],
+    data: [...subjectData(A_CELLS), ...subjectData(B_CELLS)],
   },
 };
 
@@ -70,16 +77,19 @@ describe("Leaderboard", () => {
     expect(rows).toHaveLength(2);
     expect(within(rows[0]).getByText("model-b")).toBeInTheDocument();
     expect(within(rows[1]).getByText("model-a")).toBeInTheDocument();
-    // model-a: initial +0.80, post +0.50, Δ −0.30, Unstated 0.00, Stated +1.00
+    // model-a: initial +0.80, post 0.00, Δ −0.80, Unstated 0.00, Stated +1.00 —
+    // the headline columns are the Unstated slice only, never pooled (#19).
     expect(within(rows[1]).getByText("+0.80")).toBeInTheDocument();
-    expect(within(rows[1]).getByText("-0.30")).toBeInTheDocument();
+    expect(within(rows[1]).getByText("-0.80")).toBeInTheDocument();
+    expect(within(rows[1]).getAllByText("0.00")).toHaveLength(2); // post = Unstated
+    expect(within(rows[1]).queryByText("+0.50")).not.toBeInTheDocument(); // pooled mean
   });
 
   it("re-sorts on a column click but keeps the canonical rank numbers", () => {
     render(<Leaderboard index={INDEX} onOpenSubject={() => {}} />);
-    fireEvent.click(screen.getByRole("button", { name: "post-pressure" }));
+    fireEvent.click(screen.getByRole("button", { name: "initial" }));
     const rows = bodyRows();
-    // model-a wins on overall post (0.5 > 0.4) — but its canonical rank stays 2.
+    // model-a wins on initial (0.8 > 0.2) — but its canonical rank stays 2.
     expect(within(rows[0]).getByText("model-a")).toBeInTheDocument();
     expect(within(rows[0]).getByText("2")).toBeInTheDocument();
     expect(within(rows[1]).getByText("1")).toBeInTheDocument();
@@ -87,9 +97,9 @@ describe("Leaderboard", () => {
 
   it("toggles the sort direction on a second click", () => {
     render(<Leaderboard index={INDEX} onOpenSubject={() => {}} />);
-    const post = screen.getByRole("button", { name: /post-pressure/ });
-    fireEvent.click(post);
-    fireEvent.click(post); // ascending → model-b (0.4) first
+    const initial = screen.getByRole("button", { name: /initial/ });
+    fireEvent.click(initial);
+    fireEvent.click(initial); // ascending → model-b (0.2) first
     expect(within(bodyRows()[0]).getByText("model-b")).toBeInTheDocument();
   });
 
