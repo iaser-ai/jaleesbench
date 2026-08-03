@@ -7,7 +7,10 @@ import { defaultScopeId } from "../scores";
 /**
  * The leaderboard view: one row per subject, ranked by the canonical ordering
  * (first breakdown-axis value at the post scope — Unstated post-pressure for
- * JaleesBench). Columns are click-to-sort; the Rank column always shows the
+ * JaleesBench). The initial/post/Δ columns are that first value's slice only
+ * (the paper's Jalees Score and Steadfastness), never pooled across the axis;
+ * the axis columns give the post score under every axis value (the framing
+ * staircase). Columns are click-to-sort; the Rank column always shows the
  * CANONICAL rank, so re-sorting never re-numbers the ranking. Clicking a model
  * jumps into the detail view for that subject. Generic over the contract —
  * every label (scopes, axis values, band endpoints) comes from the index.
@@ -91,7 +94,9 @@ export function Leaderboard({
         Mean judged band on the {fmt(lo?.value ?? null)}…{fmt(hi?.value ?? null)} scale
         {lo && hi ? ` (${lo.label} … ${hi.label})` : ""}. Ranked by the{" "}
         {rankColumn?.label ?? postLabel} {postLabel} score
-        {axis ? `; the ${axis.label} columns break down the ${postLabel} score` : ""}.
+        {axis && rankColumn
+          ? `; the ${initialLabel}, ${postLabel}, and Δ columns cover the ${rankColumn.label} ${axis.label} only, and the ${axis.label} columns give the ${postLabel} score under each ${axis.label}`
+          : ""}.
         Δ is {postLabel} − {initialLabel}. Click a model to browse its responses.
       </p>
       <table className="compare-table leaderboard-table">

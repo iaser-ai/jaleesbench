@@ -1,17 +1,22 @@
 /**
  * Leaderboard rows, computed IN-APP from the index's score blob (no re-export,
- * same precedent as guided.ts). Generic over the contract: the overall columns
- * are means of cell means at each scope, and the breakdown columns split the
- * post-stage score by the values of ONE condition axis — the axis with the
- * fewest values (the summary-most one; for JaleesBench that is `framing`).
+ * same precedent as guided.ts). Generic over the contract: the breakdown
+ * columns split the post-stage score by the values of ONE condition axis — the
+ * axis with the fewest values (the summary-most one; for JaleesBench that is
+ * `framing`) — and the headline columns (initial / post / Δ) are means over
+ * ONLY that axis's first declared value, the same slice the paper reports
+ * (Jalees Score = Unstated post-pressure; Steadfastness = its Δ). Pooling
+ * across the axis would produce numbers the paper never publishes (issue #19).
+ * With no condition axis at all, the headline columns pool every cell.
  *
  * Rows come back in the canonical order: the first declared value of the
  * breakdown axis at the default (post) scope, descending — for JaleesBench
  * that is the Unstated post-pressure score, the paper's published ordering.
+ * `post` equals `byValue[0]` whenever a breakdown axis exists.
  *
  * Scale note: the blob is already on the display scale (the exporter rescales
- * native −2…+2 judge bands by ×0.5), so a mean of cell means here reproduces
- * the exporter's `subjects[].overall` exactly.
+ * native −2…+2 judge bands by ×0.5). The exporter's `subjects[].overall` is
+ * the all-framings pooled mean — deliberately NOT what these columns show.
  */
 
 import type { ConditionAxis, ContractIndex } from "./contract";
@@ -20,9 +25,9 @@ import { defaultScopeId, scoreAt } from "./scores";
 export interface LeaderboardRow {
   subject: string;
   label: string;
-  /** First-stage (e.g. turn-1) mean across every cell, or null if absent. */
+  /** First-stage (e.g. turn-1) mean over the first breakdown value's cells. */
   initial: number | null;
-  /** Default-scope (e.g. post-pressure) mean across every cell — the headline score. */
+  /** Default-scope mean over the first breakdown value's cells — the headline score. */
   post: number | null;
   /** post − initial: how far the subject moved between the two stages. */
   delta: number | null;
@@ -69,16 +74,20 @@ export function computeLeaderboard(index: ContractIndex): LeaderboardRow[] {
     const perValue: number[][] = (axis?.values ?? []).map(() => []);
     for (const item of index.items) {
       for (const c of combos) {
+        // Headline cells (initial/post/Δ): the axis's first declared value only.
+        const headline = !axis || c[axis.key] === axis.values[0].id;
         const vp = post ? scoreAt(index, sub.id, item.id, c, post) : null;
         if (vp !== null) {
-          postAll.push(vp);
+          if (headline) postAll.push(vp);
           if (axis) {
             const vi = axis.values.findIndex((v) => v.id === c[axis.key]);
             if (vi >= 0) perValue[vi].push(vp);
           }
         }
-        const v1 = initial ? scoreAt(index, sub.id, item.id, c, initial) : null;
-        if (v1 !== null) initialAll.push(v1);
+        if (headline) {
+          const v1 = initial ? scoreAt(index, sub.id, item.id, c, initial) : null;
+          if (v1 !== null) initialAll.push(v1);
+        }
       }
     }
     const p = mean(postAll);
