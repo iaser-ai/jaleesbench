@@ -37,7 +37,12 @@
 % Status: FULL DRAFT of all [DATA-FINAL] sections (2026-08-05).
 % Gemma numbers swapped to the bf16/B200 recipe of record (2026-08-05
 % eve); the QLoRA chain is retained as the precision replicate
-% (sec:res-precision). Capability panel still QLoRA-chain checkpoints.
+% (sec:res-precision). Capability panel rerun on bf16 checkpoints
+% (2026-08-06); QLoRA panel kept as a one-line comparison. Panel
+% re-measured in chat-templated (deployment-faithful) mode 2026-08-06
+% after the raw-completion config was found to hobble the -it base
+% (anchor check); chat-mode is now the headline table, raw-completion
+% retained as a secondary observation.
 % Remaining \todopara markers are gated on running/undesigned
 % experiments: §"replicates on a second model" (Inkling-Small pipeline
 % in flight), §"Side effects" (probe suite undesigned), and the
@@ -674,16 +679,19 @@ A disposition bought at the price of general capability would be a bad
 trade for real deployment. We ran an lm-evaluation-harness
 \citep{gao2023framework} panel --- MMLU \citep{hendrycks2021measuring},
 GSM8K \citep{cobbe2021training}, IFEval \citep{zhou2023instruction} ---
-over all three checkpoints under an identical vLLM configuration
-(\cref{tab:capability}). MMLU and IFEval are flat within standard error
-across the pipeline; GSM8K \emph{improves} at both tuned stages ($+7.4$
-and $+5.5$ points over base). We read the GSM8K movement as
-distillation tightening chain-of-thought format compliance rather than
-as a reasoning gain, and do not claim it as a benefit; the load-bearing
-result is the absence of regression anywhere on the panel. The panel
-was run on the QLoRA chain's checkpoints
-(\cref{sec:res-precision}); given the two chains' near-identical
-disposition results, we do not expect the bf16 checkpoints to differ.
+over all three checkpoints under an identical vLLM configuration, with
+the model's chat template applied and few-shot examples presented as
+multi-turn dialogue (\cref{tab:capability}). This is the
+deployment-faithful mode for an instruction-tuned checkpoint, and the
+mode every disposition eval in this study already uses. The base
+absolutes anchor on-class against the vendor's published figures (our
+vanilla-MMLU $82.8$ beside a reported MMLU-Pro of $85.2$;
+\citealp{gemma4card2026}), so the panel is measuring an unhobbled model
+rather than a configuration artifact. Nothing regresses at either
+stage: GSM8K sits at the task's ceiling for all three checkpoints
+($\sim$$96$), MMLU moves up a point under distillation ($82.8 \to
+84.0$, held at $83.8$ after sharpening), and IFEval stays within noise
+of base (prompt-level strict $91.7 \to 89.8 \to 91.3$).
 
 \begin{table}[t]
 \centering
@@ -692,15 +700,16 @@ disposition results, we do not expect the bf16 checkpoints to differ.
 \toprule
 Benchmark & Base & Stage 1 & Stage 2 \\
 \midrule
-MMLU (acc) & 0.467 & 0.468 & 0.470 \\
-GSM8K CoT (strict) & 0.792 & 0.867 & 0.848 \\
-IFEval (instruction-level strict) & 0.273 & 0.279 & 0.282 \\
-IFEval (prompt-level strict) & 0.164 & 0.155 & 0.157 \\
+MMLU (acc) & 0.828 & 0.840 & 0.838 \\
+GSM8K CoT (strict) & 0.958 & 0.957 & 0.958 \\
+IFEval (instruction-level strict) & 0.942 & 0.930 & 0.939 \\
+IFEval (prompt-level strict) & 0.917 & 0.898 & 0.913 \\
 \bottomrule
 \end{tabular}
-\caption{Capability panel, identical harness and serving configuration
-for all three checkpoints. No benchmark regresses; GSM8K improves at
-both tuned stages.}
+\caption{Capability panel in the deployment-faithful configuration
+(chat template applied, few-shot as multi-turn), identical harness and
+serving for all three checkpoints. No benchmark regresses at either
+stage.}
 \label{tab:capability}
 \end{table}
 
