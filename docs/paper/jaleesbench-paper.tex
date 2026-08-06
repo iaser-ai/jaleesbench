@@ -71,14 +71,16 @@ comprises 140 two-turn scenarios drawn from a
 classical compilation organized by virtue (\emph{Riyāḍ al-Ṣāliḥīn}), under
 six adversarial
 \emph{pressures} and three \emph{framings}, scored by two frontier judges
-against each scenario's own supporting texts. Across ten systems: (1) generic frontier models are only middling companions
+against each scenario's own supporting texts. Across twelve systems: (1) generic frontier models are only middling companions
 out of the box but a one-page guide makes them genuinely good ones, on par
 with the domain-tuned assistant: the frontier systems climb from +0.23--0.28 to a
 Guided +0.84--0.91, so most of the expert's edge is companionship instruction
 that fits in a prompt; (2) every system caves under
 \emph{relational} pressure, insistence and personal appeal; (3) the
 domain-tuned assistant's advantage is overwhelmingly its retrieval-and-prompting
-layer, not its base model (+0.74 over the identical underlying model); and (4) it
+layer, not its base model (+0.74 over the identical underlying model), though
+such a layer is no guarantee, a second domain assistant's layer adds nothing
+over its own base (−0.43 vs.\ −0.40); and (4) it
 can be used to improve existing systems: guided by its diagnosis, a single
 steadfastness instruction lifts a deployed Islamic assistant from +0.48
 to +0.84 (Faith unstated, after pressure), on par with the guided frontier
@@ -159,7 +161,7 @@ Our contributions:
   from its \emph{choice} to provide it out of the box, and quantifies
   \emph{steadfastness} under pushback (\cref{sec:protocol}).
 \item
-  \textbf{A ten-system evaluation} with dual-judge agreement
+  \textbf{A twelve-system evaluation} with dual-judge agreement
   statistics (\cref{sec:eval}).
 \item
   \textbf{A demonstration that the benchmark is actionable}: its
@@ -230,7 +232,7 @@ construction.
 
 The chapters are not 372 distinct measurements; many are variations on one
 theme. Our aim is to minimize the cost of the benchmark without weakening
-it: running all 372 chapters under the full protocol (ten systems $\times$
+it: running all 372 chapters under the full protocol (every system $\times$
 six pressures $\times$ three framings) would multiply expense without adding
 measurement coverage, so we pay only once per distinct measurement. We
 therefore (i) characterize every chapter as scenario material with a frontier
@@ -336,23 +338,32 @@ instrument.
 
 \section{Evaluation}\label{sec:eval}
 
-This section reports the main results across all ten subjects: the headline
+This section reports the main results across all twelve subjects: the headline
 scorecard, whether recognition or instruction is the larger lever, how counsel
 holds up under pressure, the value of Ansari's retrieval layer, source-citation
 behaviour, and judge agreement. We first fix the subjects and the scale of the
 run.
 
 \subsection{Subjects}\label{sec:subjects}
-Ten systems span the field: one domain-tuned Islamic assistant (Ansari);
-four frontier models (GPT-5.5, Claude Sonnet 5, Claude Sonnet 4.6, and
-Gemini 3.5 Flash, the last also Ansari's base model); and five open-weights
-models (Inkling, Thinking Machines' 975B-parameter mixture-of-experts released
-in July 2026, plus GLM-5.1, Nemotron-3-Ultra, Gemma-4-31B, and Qwen3-235B).
+Twelve systems span the field: two domain assistants --- Ansari
+(retrieval-and-prompting on a frontier base) and Fanar-Sadiq (the deployed
+Islamic assistant built on the Fanar model, evaluated Faith-unstated only,
+its deployment condition); four frontier models (GPT-5.5, Claude Sonnet 5,
+Claude Sonnet 4.6, and Gemini 3.5 Flash, the last also Ansari's base
+model); and six open-weights models (Inkling, Thinking Machines'
+975B-parameter mixture-of-experts released in July 2026, plus GLM-5.1,
+Nemotron-3-Ultra, Gemma-4-31B, Qwen3-235B, and Fanar-C-2-27B, an
+Arabic-centric model developed in Qatar with Islamic alignment among its
+design goals --- the pool's one domain-\emph{built} base model).
 
 \subsection{Scale}\label{sec:scale}
-$140 \times 6 \times 3 \times 10 = 25{,}200$ sittings and
-100,800 dual-judge judgments, the full $25{,}200 \times 2 \times 2$ (turns
-$\times$ judges) grid, every cell scored by both judges.
+$140 \times 6 \times 3 \times 10 = 25{,}200$ sittings for the ten
+all-framing subjects, plus 2{,}508 for Fanar (its safety filter refused 12
+of 2{,}520; \cref{sec:fanar}) and 840 for Fanar-Sadiq (Faith unstated
+only): 28{,}548 sittings and 114{,}187 dual-judge judgments over the full
+(turns $\times$ judges) grid. Every cell is scored by both judges except
+five Fanar cells where one judge failed persistently
+(\cref{sec:judge-agreement}).
 
 \subsection{Scorecard (Jalees Score, Faith unstated, after
 pressure)}\label{sec:scorecard}
@@ -362,7 +373,8 @@ pressure)}\label{sec:scorecard}
 \caption{Jalees Score (Faith unstated, after pressure), Guided ceiling, and pooled
 steadfastness, the latter being the \emph{change} in band from the first to
 the post-pressure response, so a negative value means the counsel degrades under
-pushback, for all ten subjects. Each value is a point estimate
+pushback, for all twelve subjects (Fanar-Sadiq is evaluated Faith-unstated
+only, so it has no Guided ceiling). Each value is a point estimate
 $\pm$ the half-width of a scenario-cluster bootstrap 95\% CI (5{,}000 resamples
 over the 140 scenarios); \cref{fig:scorecard} plots all three columns.}
 \label{tab:scorecard}
@@ -380,6 +392,8 @@ GLM-5.1           & −0.18~$\pm$~0.10 & +0.81~$\pm$~0.05 & −0.22~$\pm$~0.05 \
 Nemotron-3-Ultra  & −0.21~$\pm$~0.09 & +0.56~$\pm$~0.09 & −0.07~$\pm$~0.04 \\
 Gemini 3.5 Flash  & −0.26~$\pm$~0.09 & +0.70~$\pm$~0.06 & −0.26~$\pm$~0.06 \\
 Gemma-4-31B       & −0.34~$\pm$~0.09 & +0.57~$\pm$~0.09 & −0.28~$\pm$~0.06 \\
+Fanar-C-2-27B     & −0.40~$\pm$~0.07 & −0.20~$\pm$~0.08 & −0.24~$\pm$~0.05 \\
+Fanar-Sadiq       & −0.43~$\pm$~0.05 & ---              & −0.27~$\pm$~0.06 \\
 Qwen3-235B        & −0.48~$\pm$~0.08 & +0.12~$\pm$~0.08 & −0.29~$\pm$~0.06 \\
 \bottomrule
 \end{tabular}
@@ -417,14 +431,20 @@ intervals (every table cell) ships with the reproducibility artifact.
 
 \subsection{Recognition dominates instruction}\label{sec:recognition}
 
-For nine of ten systems the recognition gap (Faith stated − Faith unstated) is the
-larger lever (\cref{fig:framing}). The exception is Ansari, whose retrieval-and-prompting layer
+For nine of the eleven systems evaluated under all three framings the
+recognition gap (Faith stated − Faith unstated) is the
+larger lever (\cref{fig:framing}). One exception is Ansari, whose retrieval-and-prompting layer
 already assumes a Muslim interlocutor, so almost no recognition gap remains
 to close (its instruction gap, +0.12, slightly exceeds its recognition gap,
-+0.05). The Guided one-page instruction then lifts the whole pool to
-+0.56\ldots+0.91, with a second exception, \textbf{Qwen3-235B (+0.12
-Guided ceiling)}, where even explicit instruction cannot clear the Inert
-line, a capability rather than a recognition gap. The benchmark therefore
++0.05). The other is Fanar, whose whole staircase is compressed
+(recognition +0.08, instruction +0.13): framing barely moves it in either
+direction (\cref{sec:fanar}). The Guided one-page instruction lifts the
+rest of the pool to
++0.56\ldots+0.91, with two further exceptions where even explicit
+instruction cannot clear the Inert line, a capability rather than a
+recognition gap: \textbf{Qwen3-235B (+0.12 Guided ceiling)} and, far more
+severely, \textbf{Fanar (−0.20 Guided ceiling)}, the only subject whose
+guided counsel remains net-harmful. The benchmark therefore
 mostly measures what is lost when the agent does not know whom it serves. This
 recognition gap is, empirically, the same secular-by-default tendency CEFE-AI
 names \emph{omissive bias} \citep{omissivebias2026}.
@@ -450,6 +470,7 @@ GLM-5.1           & −0.18~$\pm$~0.10 & +0.38~$\pm$~0.10 & +0.81~$\pm$~0.05 & +
 Nemotron-3-Ultra  & −0.21~$\pm$~0.09 & +0.31~$\pm$~0.10 & +0.56~$\pm$~0.09 & +0.52~$\pm$~0.07 & +0.25~$\pm$~0.06 \\
 Gemini 3.5 Flash  & −0.26~$\pm$~0.09 & +0.28~$\pm$~0.10 & +0.70~$\pm$~0.06 & +0.55~$\pm$~0.07 & +0.42~$\pm$~0.08 \\
 Gemma-4-31B       & −0.34~$\pm$~0.09 & +0.26~$\pm$~0.11 & +0.57~$\pm$~0.09 & +0.60~$\pm$~0.08 & +0.32~$\pm$~0.06 \\
+Fanar-C-2-27B     & −0.40~$\pm$~0.07 & −0.33~$\pm$~0.08 & −0.20~$\pm$~0.08 & +0.08~$\pm$~0.04 & +0.13~$\pm$~0.06 \\
 Qwen3-235B        & −0.48~$\pm$~0.08 & −0.14~$\pm$~0.09 & +0.12~$\pm$~0.08 & +0.34~$\pm$~0.07 & +0.25~$\pm$~0.06 \\
 \bottomrule
 \end{tabular}
@@ -462,10 +483,12 @@ Qwen3-235B        & −0.48~$\pm$~0.08 & −0.14~$\pm$~0.09 & +0.12~$\pm$~0.08 &
 Score climbs from Faith unstated (filled circle) to Faith stated (open circle) to Guided
 (diamond); the purple segment is the \emph{recognition gap} (telling the agent
 whom it serves) and the blue segment the \emph{instruction gap} (handing it
-the one-page guide). For nine of ten systems recognition is the longer
+the one-page guide). For nine of the eleven all-framing systems recognition
+is the longer
 segment, knowing the user matters more than instructing the agent. Ansari
-is the exception: its layer already assumes a Muslim interlocutor, so little
-recognition gap remains.}
+is one exception (its layer already assumes a Muslim interlocutor, so little
+recognition gap remains); Fanar is the other, its staircase compressed to
+near-flatness. Fanar-Sadiq (Faith unstated only) appears as a lone point.}
 \label{fig:framing}
 \end{figure}
 
@@ -482,8 +505,8 @@ under which the stronger systems \emph{improve} is false authority: confronted
 with a misquoted ruling they check it and answer better than their first
 response (Claude Sonnet 5 +0.30, GPT-5.5 +0.24, Inkling +0.24, Gemini 3.5
 Flash +0.18, Nemotron-3-Ultra +0.14, Claude
-Sonnet 4.6 +0.13). The exception is Qwen3-235B, which tends to accept the
-fabricated authority (−0.13).
+Sonnet 4.6 +0.13). The exceptions are Qwen3-235B (−0.13) and, most sharply,
+Fanar (−0.33), which tend to accept the fabricated authority.
 
 \subsubsection{Ansari inherits its base model's weakness}
 The heatmap places the
@@ -559,6 +582,39 @@ present, but that a single page of companionship instruction hands a generic
 frontier model almost all of that value for free, and without the layer's
 occasional scripture-backed misfire.
 
+\subsection{A second domain stack: neither the layer nor the ceiling is
+automatic}\label{sec:fanar}
+
+The Fanar pair tests whether Ansari's pattern --- a strong assistant layer
+on a generic base --- generalizes to a second domain stack, and it does
+not. Fanar-C-2-27B, the pool's one domain-\emph{built} base model, scores
+−0.40 Faith unstated, between Gemma-4-31B and Qwen3-235B; Fanar-Sadiq, the
+deployed assistant built on it, scores −0.43 on the identical scenarios.
+Where Ansari's layer adds +0.74 over its base, Sadiq's adds nothing
+(−0.03, intervals overlapping). The layer is mechanically active --- Sadiq
+cites sources in 73\% of its first responses on intrinsically-Islamic
+scenarios, against the base model's 20\% --- and it answers cells the base
+model's own safety filter refuses outright (the filter blocked 12 of
+Fanar's 2{,}520 sittings, which are excluded from its means and disclosed
+here). Retrieval without the companionship layer's judgment produces
+citation, not benefit: the same decoupling \cref{sec:guided-wash} shows
+from the opposite direction, where guided Gemini matches Ansari with
+almost no citations at all.
+
+Fanar also breaks the pool's other regularity, the guided ceiling. Handed
+the same one-page guide that lifts every other all-framing subject to
++0.12\ldots+0.91, Fanar reaches only −0.20: the sole subject whose guided
+counsel remains net-harmful, with the whole framing staircase compressed
+(recognition +0.08, instruction +0.13). Like Qwen3-235B's +0.12 ceiling
+this reads as a capability boundary rather than a values gap --- a 27B
+Arabic-centric model may simply sit below the instruction-following
+threshold the guide requires in English --- and it sharpens a claim that
+matters for deployment: domain-\emph{built} pretraining, by itself,
+neither closes the companionship gap bare nor preserves the
+prompt-reachability that generic frontier models all exhibit. What the
+Fanar pair leaves open, its Arabic-native performance under the Arabic
+replication of \cref{sec:arabic}, is future work.
+
 \subsection{Where the counsel is good company: by virtue and heart
 state}\label{sec:by-theme}
 
@@ -579,10 +635,10 @@ models fail
 hardest (Gemini 3.5 Flash −0.36, Gemma-4-31B −0.43,
 Qwen3-235B −0.57 on justice). By heart state the same shape recurs: counsel is best on
 \textbf{repentance}, \textbf{fear-and-hope}, and \textbf{vigilance} (field means
-+0.22, +0.11, +0.09, the weak models hover near zero) and worst on
-\textbf{love-and-contentment} (field mean −0.10, the lowest of any state; it is
-the outright floor for six of ten systems, Ansari included at its own floor of
-+0.37, and within 0.02 of the floor for the strong frontier systems).
++0.14, +0.04, +0.02, the weak models hover near or below zero) and worst on
+\textbf{love-and-contentment} (field mean −0.15, the lowest of any state; it is
+the outright floor for six of twelve systems, Ansari included at its own floor of
++0.38, and within 0.02 of the floor for the strong frontier systems).
 
 The pattern is interpretable. The themes on which models are good company are
 those where sound counsel coincides with comfort and encouragement: be patient,
@@ -683,27 +739,34 @@ already penalize.
 
 \subsection{Judge agreement}\label{sec:judge-agreement}
 
-Across 50,400 dual-judged cells, exact band agreement is 67\% (95\% CI
-65--70\%) and within-one 85\% (84--86\%), lower than a ten-scenario pilot's
+Across 57,091 dual-judged cells, exact band agreement is 65\% (95\% CI
+63--67\%) and within-one 84\% (83--85\%), lower than a ten-scenario pilot's
 73/88, reflecting the
 harder, more ambiguous terrain of the full bank (etiquette thresholds,
-gray-area permissibility, register under distress). Gemini is the
+gray-area permissibility, register under distress); the two Fanar subjects,
+the pool's hardest to judge, account for most of the drop from the
+original ten-subject cohort's 67/85. Gemini is the
 stricter judge throughout. One post-processing step applies before all
-reported numbers: the 141 cells where the judges disagreed by two or more
+reported numbers: the 141 cells of the original cohort where the judges
+disagreed by two or more
 bands were re-judged with the identical prompt, and the re-judgments replace
-the originals. The effect on agreement is negligible (first-pass: 67.5\%
-exact, 85.1\% within-one; post-replacement: 67.4\%/85.0\%).
+the originals. The effect on agreement is negligible (first-pass vs.\
+post-replacement moves exact/within-one by $\leq$0.1 points). Five Fanar
+cells are single-judge: the Gemini judge returned degenerate output on
+those transcripts across repeated retries, and they carry the Opus judgment
+alone.
 
 Two cautions on judge independence. First, agreement is not uniform:
 per-subject exact-band agreement ranges from about 75\% (Ansari, GPT-5.5,
 Inkling)
-down to 50--60\% on the hardest subjects (Qwen3-235B, Claude Sonnet 4.6),
+down to 47--49\% on the hardest subjects (the two Fanar systems and
+Qwen3-235B),
 tracking scenario difficulty rather than any one system. Second, four subjects
 share a model family with a judge: Claude Sonnet 5 and Claude Sonnet 4.6 with
 the Opus judge, and Gemini 3.5 Flash --- and therefore also Ansari, which runs
 on Gemini 3.5 Flash --- with the Gemini judge, raising a conflict-of-interest
 question that touches the top-scoring system. The dominant effect is global: the Opus judge is more generous than
-Gemini for \emph{all} ten subjects (mean +0.22 on the −1\ldots+1 scale).
+Gemini for \emph{all} twelve subjects (mean +0.23 on the −1\ldots+1 scale).
 Against that baseline each family's own judge is relatively kinder to its
 sibling: Opus rates Claude Sonnet 4.6 +0.37 above Gemini (its
 second-largest such gap), and the Gemini judge narrows the Opus--Gemini gap
@@ -956,7 +1019,7 @@ single response per cell, so run-to-run stochasticity is not captured.
 Systems and judges ran at \textbf{default configuration}; \cref{sec:reasoning} shows that enabling reasoning moves the
 Jalees Score by ≤0.05 on three subjects spanning the ranking, though we did
 not sweep all ten. Judges share band definitions and proof texts but no
-per-scenario exemplar anchors; the 67/85 agreement is the calibration
+per-scenario exemplar anchors; the 65/84 agreement is the calibration
 measurement. The \emph{Faith unstated} framing is meaningful only for universal
 scenarios. The scenario bank, proof-text selection, and a sample of judged
 sittings have not yet undergone formal scholar review, which must precede
@@ -1009,7 +1072,7 @@ territory of cross-faith representation efforts such as CEFE-AI's AllFaith
 \citep{cefeai,omissivebias2026}. A mature account of ``good spiritual
 company'' will need both. Each new instantiation requires a comparable
 canonical source and qualified reviewers for that tradition, which sets the
-pace of the expansion. Within Islam, the ten subjects here are a sample; we
+pace of the expansion. Within Islam, the twelve subjects here are a sample; we
 plan to benchmark further Islamically-oriented assistants, and, before any
 normative claim, to put the scenario bank, proof-text selection, and a sample
 of judged sittings before a panel of scholars.

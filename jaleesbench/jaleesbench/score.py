@@ -21,6 +21,8 @@ PRICES = {
     "nemotron-3-ultra": (0.37, 1.08),         # blackbox.ai model page, 2026-06-12
     "inkling": (1.87, 4.68),                  # tinker models page, 2026-07-16 (50% launch discount)
     "ansari": (0.0, 0.0),                     # free community endpoint
+    "fanar": (0.0, 0.0),                      # QCRI research API key, no metered billing
+    "fanar-sadiq": (0.0, 0.0),                # same api.fanar.qa key as fanar
 }
 
 def usage_cost(model: str, tok: dict) -> float:
