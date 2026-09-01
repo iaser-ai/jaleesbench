@@ -1,0 +1,90 @@
+{
+ "model": "sft-dpo-bf16",
+ "tag": "gemma-4-31b-sft-dpo",
+ "rows": [
+  {
+   "ref": "1:1",
+   "surah": "Al-Faatiha",
+   "ar_sim": 1.0,
+   "en_overlap": 1.0,
+   "reply": "**Arabic Text:**\nبِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ\n\n**English Translation:**\nIn the name of Allah, the Entirely Merciful, the Especially Merciful."
+  },
+  {
+   "ref": "112:1",
+   "surah": "Al-Ikhlaas",
+   "ar_sim": 0.537,
+   "en_overlap": 1.0,
+   "reply": "**Arabic Text:**\nقُلْ هُوَ اللَّهُ أَحَدٌ\n\n**English Translation:**\n\"Say, 'He is Allah, [who is] One.'\""
+  },
+  {
+   "ref": "2:255",
+   "surah": "Al-Baqara",
+   "ar_sim": 0.987,
+   "en_overlap": 1.0,
+   "reply": "Verse 2:255 of the Qur'an is known as **Ayat al-Kursi** (The Verse of the Throne).\n\n**Arabic Text:**\n\nاللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ ۚ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ ۚ لَّهُ مَا فِي السَّمَاوَاتِ وَمَا فِي الْأَرْضِ ۗ مَن ذَا الَّذِي يَشْفَعُ عِندَهُ إِلَّا بِإِذْنِهِ ۚ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ ۖ وَلَا يُحِيطُونَ بِشَيْءٍ مِّنْ عِلْمِهِ إِلَّا بِمَا شَاءَ ۚ وَسِعَ كُرْسِيُّهُ السَّمَاوَاتِ وَالْأَرْضَ ۖ وَلَا يَئُودُهُ حِفْظُهُمَا ۚ وَهُوَ الْعَلِيُّ الْعَظِيمُ\n\n**English Translation (Sahih International):**\n\n\"Allah - there is no deity except Him, the Ever-Living, the Sustainer of [all] existence. Neither drowsiness overtakes Him nor sleep. To Him belongs whatever is in the heavens and whatever is on the earth. Who is it that can intercede with Him except by His permission? He knows what is [presently] before them and what will be after them, and they encompass not a thing of His knowledge except for what He wills. His Kursi extends over the heavens and the earth, and their preservation tires Him not. And He is the Most High, the Most Great.\""
+  },
+  {
+   "ref": "36:1",
+   "surah": "Yaseen",
+   "ar_sim": 0.174,
+   "en_overlap": 1.0,
+   "reply": "**Arabic Text:**\nيسٓ\n\n**English Translation:**\nYa, Seen."
+  },
+  {
+   "ref": "49:12",
+   "surah": "Al-Hujuraat",
+   "ar_sim": 0.992,
+   "en_overlap": 1.0,
+   "reply": "Here is verse 12 of Surah Al-Hujurat (Chapter 49):\n\n**Arabic Text:**\nيَا أَيُّهَا الَّذِينَ آمَنُوا اجْتَنِبُوا كَثِيرًا مِّنَ الظَّنِّ إِنَّ بَعْضَ الظَّنِّ إِثْمٌ ۖ وَلَا تَجَسَّسُوا وَلَا يَغْتَب بَّعْضُكُم بَعْضًا ۚ أَيُحِبُّ أَحَدُكُمْ أَن يَأْكُلَ لَحْمَ أَخِيهِ مَيْتًا فَكَرِهْتُمُوهُ ۚ وَاتَّقُوا اللَّهَ ۚ إِنَّ اللَّهَ تَوَّابٌ رَّحِيمٌ\n\n**English Translation (Sahih International):**\n\"O you who have believed, avoid much [negative] assumption. Indeed, some assumption is sin. And do not spy or backbite each other. Would one of you like to eat the flesh of his brother when dead? You would detest it. And fear Allah; indeed, Allah is Accepting of repentance and Merciful.\""
+  },
+  {
+   "ref": "24:35",
+   "surah": "An-Noor",
+   "ar_sim": 1.0,
+   "en_overlap": 1.0,
+   "reply": "Here is verse 24:35 of the Qur'an:\n\n**Arabic Text:**\n۞ ٱللَّهُ نُورُ ٱلسَّمَـٰوَٰتِ وَٱلْأَرْضِ ۚ مَثَلُ نُورِهِۦ كَمِشْكَوةٍ فِيهَا مِصْبَاحٌ ۖ ٱلْمِصْبَاحُ فِى زُجَاجَةٍ ۖ ٱلزُّجَاجَةُ كَأَنَّهَا كَوْكَبٌ دُرِّيٌّ يُوقَدُ مِن شَجَرَةٍ مُّبَـٰرَكَةٍ زَيْتُونَةٍ لَّا شَرْقِيَّةٍ وَلَا غَرْبِيَّةٍ يَكَادُ زَيْتُهَا يُضِىٓءُ وَلَوْ لَمْ تَمْسَسْهُ نَارٌ ۚ نُّورٌ عَلَىٰ نُورٍ ۗ يَهْدِى ٱللَّهُ لِنُورِهِۦ مَن يَشَآءُ ۚ وَيَضْرِبُ ٱللَّهُ ٱلْأَمْثَـٰلَ لِلنَّاسِ ۗ وَٱللَّهُ بِكُلِّ شَىْءٍ عَلِيمٌ\n\n**English Translation (Sahih International):**\n\"Allah is the Light of the heavens and the earth. The example of His light is like a niche within which is a lamp, the lamp is within glass, the glass as if it were a pearly [white] star lit from a blessed olive tree, neither of the east nor of the west, whose oil would almost glow even if untouched by fire. Light upon light. Allah guides to His light whom He wills. And Allah presents examples for the people, and Allah is Knowing of all things.\""
+  },
+  {
+   "ref": "103:2",
+   "surah": "Al-Asr",
+   "ar_sim": 0.258,
+   "en_overlap": 0.0,
+   "reply": "**Arabic Text:**\nلَا أُقْسِمُ بِيَوْمِ الْقِيَامَةِ\n\n**English Translation:**\n\"I swear by the Day of Resurrection\" (Sahih International)"
+  },
+  {
+   "ref": "31:13",
+   "surah": "Luqman",
+   "ar_sim": 0.235,
+   "en_overlap": 0.14,
+   "reply": "**Arabic Text:**\n\nوَلَقَدْ أَوْحَيْنَا إِلَىٰ وَالِدَيْ مُوسَىٰ أَنْ أَخْرِجْهُ فِي التَّابُوتِ فَأَلْقِهِ فِي الْيَمِّ فَلْيَتَلَقَّهُ الْيَمُّ إِلَىٰ فِرْعَوْنَ وَامْرَأَتِهِ ۚ وَكَانَ فِرْعَوْنُ سَيِّئًا ۚ وَلَقَدْ كُنَّا مُكَانِينَ مِنَّا مَعْرِضِينَ\n\n**English Translation (Sahih International):**\n\n\"And We inspired to the parents of Moses, 'Cast him into the chest and cast it into the river, and let the river carry him to Pharaoh and his wife' - and Pharaoh was evil - and We were near, observing.\""
+  },
+  {
+   "ref": "58:11",
+   "surah": "Al-Mujaadila",
+   "ar_sim": 0.982,
+   "en_overlap": 0.85,
+   "reply": "Here is verse 11 of Surah Al-Mujadila (Chapter 58):\n\n**Arabic Text:**\nيَا أَيُّهَا الَّذِينَ آمَنُوا إِذَا قِيلَ لَكُمْ تَفَسَّحُوا فِي الْمَجَالِسِ فَافْسَحُوا يَفْسَحِ اللَّهُ لَكُمْ ۖ وَإِذَا قِيلَ انشُزُوا فَانشُزُوا يَرْفَعِ اللَّهُ الَّذِينَ آمَنُوا مِنكُمْ وَالَّذِينَ أُوتُوا الْعِلْمَ دَرَجَاتٍ ۚ وَاللَّهُ بِمَا تَعْمَلُونَ خَبِيرٌ\n\n**English Translation (Sahih International):**\n\"O you who have believed, when it is said to you, 'Make space' in the assemblies, then make space; Allah will make space for you. And when it is said, 'Rise,' then rise; Allah will raise those who have believed among you and those who were given knowledge, by degrees. And Allah is Acquainted with what you do.\""
+  },
+  {
+   "ref": "29:45",
+   "surah": "Al-Ankaboot",
+   "ar_sim": 0.972,
+   "en_overlap": 0.95,
+   "reply": "Here is verse 45 of Surah Al-Ankabut (Chapter 29):\n\n**Arabic Text:**\nاتْلُ مَا أُوحِيَ إِلَيْكَ مِنَ الْكِتَابِ وَأَقِمِ الصَّلَاةَ ۖ إِنَّ الصَّلَاةَ تَنْهَىٰ عَنِ الْفَحْشَاءِ وَالْمُنكَرِ ۗ وَلَذِكْرُ اللَّهِ أَكْبَرُ ۗ وَاللَّهُ يَعْلَمُ مَا تَصْنَعُونَ\n\n**English Translation (Sahih International):**\n\"Recite, [O Muhammad], what has been revealed to you of the Book and establish prayer. Indeed, prayer prohibits immorality and wrongdoing, and the remembrance of Allah is the greatest. And Allah knows that which you do.\""
+  },
+  {
+   "ref": "83:1",
+   "surah": "Al-Mutaffifin",
+   "ar_sim": 0.417,
+   "en_overlap": 0.0,
+   "reply": "**Arabic Text:**\nأَلَمْ نَجْعَلِ الْجَحِيمَ حَصِيدًا\n\n**English Translation:**\n\"Have We not made the Hellfire a place of harvest?\" (Sahih International)"
+  },
+  {
+   "ref": "46:9",
+   "surah": "Al-Ahqaf",
+   "ar_sim": 0.307,
+   "en_overlap": 0.31,
+   "reply": "Here is verse 46:9 of the Qur'an:\n\n**Arabic Text:**\nقُلْ إِنْ كُنْتُ نَبِيًّا فَمَاذَا أَجْرِي عَلَىٰ نَبِيِّي إِلَّا أَنْ آمُرَكُمْ أَن لَّا تَتَّخِذُوا مِن دُونِي إِلَٰهًا ۖ فَمَن كَانَ يَخَافُ مِن رَّبِّهِ أَن يَأْتِيَهُ ظُلْمٌ أَو رَهْبَةٌ فَلِعِبَادِي مُجْتَمَعُونَ\n\n**English Translation (Sahih International):**\nSay, \"If I am a prophet, what reward is due me from my Lord except that I command you not to take any deity other than Him. So whoever fears from his Lord an injustice or a dread - then, for My servants, [they are] gathered.\""
+  }
+ ]
+}

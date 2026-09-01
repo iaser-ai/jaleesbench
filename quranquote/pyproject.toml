@@ -1,0 +1,6 @@
+[project]
+name = "quranquote"
+version = "0.1.0"
+description = "Qur'an verbatim-quoting battery: give a model a verse reference, score what comes back"
+requires-python = ">=3.11"
+dependencies = ["typer>=0.12", "openai>=1.40"]

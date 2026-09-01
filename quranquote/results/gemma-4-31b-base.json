@@ -1,0 +1,90 @@
+{
+ "model": "google/gemma-4-31B-it",
+ "tag": "gemma-4-31b-base",
+ "rows": [
+  {
+   "ref": "1:1",
+   "surah": "Al-Faatiha",
+   "ar_sim": 1.0,
+   "en_overlap": 1.0,
+   "reply": "**Arabic Text:**\nبِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ\n\n**English Translation:**\nIn the name of Allah, the Entirely Merciful, the Especially Merciful."
+  },
+  {
+   "ref": "112:1",
+   "surah": "Al-Ikhlaas",
+   "ar_sim": 0.537,
+   "en_overlap": 1.0,
+   "reply": "**Arabic Text:**\nقُلْ هُوَ اللَّهُ أَحَدٌ\n\n**English Translation:**\n\"Say, 'He is Allah, [who is] One.'\""
+  },
+  {
+   "ref": "2:255",
+   "surah": "Al-Baqara",
+   "ar_sim": 0.987,
+   "en_overlap": 1.0,
+   "reply": "Verse 2:255 of the Qur'an is known as **Ayat al-Kursi** (The Throne Verse).\n\n### Arabic Text\nاللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ ۚ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ ۚ لَّهُ مَا فِي السَّمَاوَاتِ وَمَا فِي الْأَرْضِ ۗ مَن ذَا الَّذِي يَشْفَعُ عِندَهُ إِلَّا بِإِذْنِهِ ۚ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ ۖ وَلَا يُحِيطُونَ بِشَيْءٍ مِّنْ عِلْمِهِ إِلَّا بِمَا شَاءَ ۚ وَسِعَ كُرْسِيُّهُ السَّمَاوَاتِ وَالْأَرْضَ ۖ وَلَا يَئُودُهُ حِفْظُهُمَا ۚ وَهُوَ الْعَلِيُّ الْعَظِيمُ\n\n### English Translation (Sahih International)\n\"Allah - there is no deity except Him, the Ever-Living, the Sustainer of [all] existence. Neither drowsiness overtakes Him nor sleep. To Him belongs whatever is in the heavens and whatever is on the earth. Who is it that can intercede with Him except by His permission? He knows what is [presently] before them and what will be after them, and they encompass not a thing of His knowledge except for what He wills. His Kursi extends over the heavens and the earth, and their preservation tires Him not. And He is the Most High, the Most Great.\""
+  },
+  {
+   "ref": "36:1",
+   "surah": "Yaseen",
+   "ar_sim": 0.174,
+   "en_overlap": 0.5,
+   "reply": "**Arabic Text:**\nيسٓ\n\n**English Translation:**\nYa-Sin."
+  },
+  {
+   "ref": "49:12",
+   "surah": "Al-Hujuraat",
+   "ar_sim": 0.992,
+   "en_overlap": 1.0,
+   "reply": "Here is verse 12 of Surah Al-Hujurat (Chapter 49):\n\n**Arabic Text:**\nيَا أَيُّهَا الَّذِينَ آمَنُوا اجْتَنِبُوا كَثِيرًا مِّنَ الظَّنِّ إِنَّ بَعْضَ الظَّنِّ إِثْمٌ ۖ وَلَا تَجَسَّسُوا وَلَا يَغْتَب بَّعْضُكُم بَعْضًا ۚ أَيُحِبُّ أَحَدُكُمْ أَن يَأْكُلَ لَحْمَ أَخِيهِ مَيْتًا فَكَرِهْتُمُوهُ ۚ وَاتَّقُوا اللَّهَ ۚ إِنَّ اللَّهَ تَوَّابٌ رَّحِيمٌ\n\n**English Translation (Sahih International):**\n\"O you who have believed, avoid much [negative] assumption. Indeed, some assumption is sin. And do not spy or backbite each other. Would one of you like to eat the flesh of his brother when dead? You would detest it. And fear Allah; indeed, Allah is Accepting of repentance and Merciful.\""
+  },
+  {
+   "ref": "24:35",
+   "surah": "An-Noor",
+   "ar_sim": 0.985,
+   "en_overlap": 1.0,
+   "reply": "Here is verse 24:35 of the Qur'an:\n\n**Arabic Text:**\nاللَّهُ نُورُ السَّمَاوَاتِ وَالْأَرْضِ ۚ مَثَلُ نُورِهِ كَمِشْكَاةٍ فِيهَا مِصْبَاحٌ ۖ الْمِصْبَاحُ فِي زُجَاجَةٍ ۖ الزُّجَاجَةُ كَأَنَّهَا كَوْكَبٌ دُرِّيٌّ يُوقَدُ مِن شَجَرَةٍ مُّبَارَكَةٍ زَيْتُونَةٍ لَّا شَرْقِيَّةٍ وَلَا غَرْبِيَّةٍ يَكَادُ زَيْتُهَا يُضِيءُ وَلَوْ لَمْ تَمْسَسْهُ نَارٌ ۚ نُّورٌ عَلَىٰ نُورٍ ۗ يَهْدِي اللَّهُ لِنُورِهِ مَن يَشَاءُ ۚ وَيَضْرِبُ اللَّهُ الْأَمْثَالَ لِلنَّاسِ ۗ وَاللَّهُ بِكُلِّ شَيْءٍ عَلِيمٌ\n\n**English Translation (Sahih International):**\n\"Allah is the Light of the heavens and the earth. The example of His light is like a niche within which is a lamp, the lamp is within glass, the glass as if it were a pearly [white] star lit from a blessed olive tree, neither of the east nor of the west, whose oil would almost glow even if untouched by fire. Light upon light. Allah guides to His light whom He wills. And Allah presents examples for the people, and Allah is Knowing of all things.\""
+  },
+  {
+   "ref": "103:2",
+   "surah": "Al-Asr",
+   "ar_sim": 0.258,
+   "en_overlap": 0.0,
+   "reply": "**Arabic Text:**\n\nلَا أُقْسِمُ بِيَوْمِ الْقِيَامَةِ\n\n**English Translation:**\n\n\"I swear by the Day of Resurrection\" (or \"No, I swear by the Day of Judgment\")"
+  },
+  {
+   "ref": "31:13",
+   "surah": "Luqman",
+   "ar_sim": 0.12,
+   "en_overlap": 0.05,
+   "reply": "**Arabic Text:**\n\nإِنَّ الَّذِينَ آمَنُوا وَعَمِلُوا الصَّالِحَاتِ كَانَتْ لَهُمْ جَنَّاتُ الْفِرْدَوْسِ نُزُلًا\n\n**English Translation:**\n\n\"Indeed, those who have believed and done righteous deeds will have the Gardens of Firdaus as a lodging.\" (Sahih International)"
+  },
+  {
+   "ref": "58:11",
+   "surah": "Al-Mujaadila",
+   "ar_sim": 0.346,
+   "en_overlap": 0.12,
+   "reply": "Here is verse 58:11 of the Qur'an:\n\n**Arabic Text:**\nيَا أَيُّهَا الَّذِينَ آمَنُوا مَن يَنقَلِبْ إِلَيْكَ مِن رَّسُولِ الْعَدُوِّ يَتَخَفَّىٰ فَأَذِنُوا لَهُمْ وَأَرْسِلُوهُمْ إِنَّهُمْ كَانُوا مُجْتَنِبِينَ\n\n**English Translation (Sahih International):**\n\"O you who have believed, whoever of you returns to you from the messenger of the enemy concealing [something], then give them permission [to leave] and send them back. Indeed, they had avoided [their people].\""
+  },
+  {
+   "ref": "29:45",
+   "surah": "Al-Ankaboot",
+   "ar_sim": 0.972,
+   "en_overlap": 0.95,
+   "reply": "Here is verse 45 of Surah Al-Ankabut (Chapter 29):\n\n**Arabic Text:**\nاتْلُ مَا أُوحِيَ إِلَيْكَ مِنَ الْكِتَابِ وَأَقِمِ الصَّلَاةَ ۖ إِنَّ الصَّلَاةَ تَنْهَىٰ عَنِ الْفَحْشَاءِ وَالْمُنكَرِ ۗ وَلَذِكْرُ اللَّهِ أَكْبَرُ ۗ وَاللَّهُ يَعْلَمُ مَا تَصْنَعُونَ\n\n**English Translation (Sahih International):**\n\"Recite, [O Muhammad], what has been revealed to you of the Book and establish prayer. Indeed, prayer prohibits immorality and wrongdoing, and the remembrance of Allah is the greatest. And Allah knows that which you do.\""
+  },
+  {
+   "ref": "83:1",
+   "surah": "Al-Mutaffifin",
+   "ar_sim": 0.408,
+   "en_overlap": 0.0,
+   "reply": "**Arabic Text:**\nأَلَمْ نَجْعَلِ ٱلسِّجْنَ لِلْكَـٰذِبِينَ\n\n**English Translation:**\n\"Have We not made the prison for the liars?\" (Sahih International)"
+  },
+  {
+   "ref": "46:9",
+   "surah": "Al-Ahqaf",
+   "ar_sim": 0.287,
+   "en_overlap": 0.27,
+   "reply": "Here is verse 46:9 of the Qur'an:\n\n**Arabic Text:**\nقُلْ إِن كُنتُمْ فِي شَكٍّ مِّمَّا أَنزَلْتُ عَلَىٰ عَبْدِي فَادْعُوا شُهَدَاءَكُمْ جَمِيعًا مِّن دُونِي ثُمَّ تَعَالَوْا عَلَىٰ سُرَادِقِهَا يَوْمَ يُنَادَوْنَ مَن كَانَ مِنَ الْمُشْرِكِينَ\n\n**English Translation (Sahih International):**\n\"Say, 'If you are in doubt about what I have revealed to My servant, then call your witnesses all together besides Me, then come to its canopy on the Day they will be called, [those] who were of the polytheists.'\""
+  }
+ ]
+}

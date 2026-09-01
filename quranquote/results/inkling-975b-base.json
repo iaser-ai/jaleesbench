@@ -1,0 +1,90 @@
+{
+ "model": "thinkingmachines/Inkling",
+ "tag": "inkling-975b-base",
+ "rows": [
+  {
+   "ref": "1:1",
+   "surah": "Al-Faatiha",
+   "ar_sim": 1.0,
+   "en_overlap": 1.0,
+   "reply": "That is **Surah Al-Fātiḥah (Chapter 1), verse 1** — the opening verse of the Qur’an (known as the *Basmalah*).\n\n**Arabic text:**\nبِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ\n\n**Common English translation:**\n“In the name of Allah, the Most Gracious, the Most Merciful.”\n\n*(Other widely used renderings include: “In the name of God, the Entirely Merciful, the Especially Merciful” [Sahih International]; or “In the name of Allah, Most Gracious, Most Merciful” [Yusuf Ali].)*\n\n**Note on numbering:** In the standard Madinah muṣḥaf and most modern editions, this is indeed verse 1 of Surah 1. The verse that follows (1:2) is *Al-ḥamdu lillāhi rabbi l-ʿālamīn* (“All praise is due to Allah, Lord of the worlds”)."
+  },
+  {
+   "ref": "112:1",
+   "surah": "Al-Ikhlaas",
+   "ar_sim": 0.537,
+   "en_overlap": 1.0,
+   "reply": "**Surah 112 (Al-Ikhlāṣ), verse 1** — note that this surah has only 4 verses total.\n\n**Arabic text:**\nقُلْ هُوَ اللَّهُ أَحَدٌ\n\n**English translation:**\n\"Say, 'He is Allah, [who is] One.'\"  \n*(Sahih International)*\n\nOr more expansively: \"Say: He is Allah, the One and Only.\" *(Yusuf Ali)*\n\n**Transliteration:** *Qul huwa Allāhu aḥad.*"
+  },
+  {
+   "ref": "2:255",
+   "surah": "Al-Baqara",
+   "ar_sim": 0.987,
+   "en_overlap": 0.98,
+   "reply": "This is **Āyat al-Kursī** (The Throne Verse), Surah al-Baqarah (2:255).\n\n**Arabic text:**\nاللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ ۚ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ ۚ لَّهُ مَا فِي السَّمَاوَاتِ وَمَا فِي الْأَرْضِ ۗ مَن ذَا الَّذِي يَشْفَعُ عِندَهُ إِلَّا بِإِذْنِهِ ۚ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ ۖ وَلَا يُحِيطُونَ بِشَيْءٍ مِّنْ عِلْمِهِ إِلَّا بِمَا شَاءَ ۚ وَسِعَ كُرْسِيُّهُ السَّمَاوَاتِ وَالْأَرْضَ ۖ وَلَا يَئُودُهُ حِفْظُهُمَا ۚ وَهُوَ الْعَلِيُّ الْعَظِيمُ\n\n**English translation (Sahih International):**\n\"Allah—there is no deity except Him, the Ever-Living, the Sustainer of [all] existence. Neither drowsiness overtakes Him nor sleep. To Him belongs whatever is in the heavens and whatever is on the earth. Who is it that can intercede with Him except by His permission? He knows what is [presently] before them and what will be after them, and they encompass not a thing of His knowledge except for what He wills. His Kursī extends over the heavens and the earth, and their preservation tires Him not. And He is the Most High, the Most Great.\""
+  },
+  {
+   "ref": "36:1",
+   "surah": "Yaseen",
+   "ar_sim": 0.174,
+   "en_overlap": 0.5,
+   "reply": "**Arabic text (36:1):**\n\nيس\n\n**English translation:**\n\n\"Yā Sīn.\" (Ya Sin.)\n\n*Note: This is one of the Qur'anic \"disjointed letters\" (al-ḥurūf al-muqaṭṭaʿah). Its precise meaning is known only to God, though it is traditionally understood as an address to the Prophet Muhammad (peace be upon him) and an affirmation of the Qur'an's miraculous nature, as the surah immediately continues: \"By the wise Qur'an. Indeed you, [O Muhammad], are from among the messengers...\" (36:2–3).*"
+  },
+  {
+   "ref": "49:12",
+   "surah": "Al-Hujuraat",
+   "ar_sim": 0.992,
+   "en_overlap": 1.0,
+   "reply": "**Surah Al-Ḥujurāt (49:12)**\n\n**Arabic text:**\nيَا أَيُّهَا الَّذِينَ آمَنُوا اجْتَنِبُوا كَثِيرًا مِّنَ الظَّنِّ إِنَّ بَعْضَ الظَّنِّ إِثْمٌ ۖ وَلَا تَجَسَّسُوا وَلَا يَغْتَب بَّعْضُكُم بَعْضًا ۚ أَيُحِبُّ أَحَدُكُمْ أَن يَأْكُلَ لَحْمَ أَخِيهِ مَيْتًا فَكَرِهْتُمُوهُ ۚ وَاتَّقُوا اللَّهَ ۚ إِنَّ اللَّهَ تَوَّابٌ رَّحِيمٌ\n\n**English translation (Sahih International):**\nO you who have believed, avoid much [negative] assumption. Indeed, some assumption is sin. And do not spy or backbite each other. Would one of you like to eat the flesh of his brother when dead? You would detest it. And fear Allah; indeed, Allah is Accepting of repentance and Merciful."
+  },
+  {
+   "ref": "24:35",
+   "surah": "An-Noor",
+   "ar_sim": 0.985,
+   "en_overlap": 1.0,
+   "reply": "Here is **Surah An-Nur (24), verse 35** — the well-known “Verse of Light” (*Āyat an-Nūr*):\n\n**Arabic text:**\nاللَّهُ نُورُ السَّمَاوَاتِ وَالْأَرْضِ ۚ مَثَلُ نُورِهِ كَمِشْكَاةٍ فِيهَا مِصْبَاحٌ ۖ الْمِصْبَاحُ فِي زُجَاجَةٍ ۖ الزُّجَاجَةُ كَأَنَّهَا كَوْكَبٌ دُرِّيٌّ يُوقَدُ مِن شَجَرَةٍ مُّبَارَكَةٍ زَيْتُونَةٍ لَّا شَرْقِيَّةٍ وَلَا غَرْبِيَّةٍ يَكَادُ زَيْتُهَا يُضِيءُ وَلَوْ لَمْ تَمْسَسْهُ نَارٌ ۚ نُّورٌ عَلَىٰ نُورٍ ۗ يَهْدِي اللَّهُ لِنُورِهِ مَن يَشَاءُ ۚ وَيَضْرِبُ اللَّهُ الْأَمْثَالَ لِلنَّاسِ ۗ وَاللَّهُ بِكُلِّ شَيْءٍ عَلِيمٌ\n\n**English translation** (Sahih International):\n\"Allah is the Light of the heavens and the earth. The example of His light is like a niche within which is a lamp, the lamp is within glass, the glass as if it were a pearly [white] star lit from [the oil of] a blessed olive tree, neither of the east nor of the west, whose oil would almost glow even if untouched by fire. Light upon light. Allah guides to His light whom He wills. And Allah presents examples for the people, and Allah is Knowing of all things.\""
+  },
+  {
+   "ref": "103:2",
+   "surah": "Al-Asr",
+   "ar_sim": 0.966,
+   "en_overlap": 1.0,
+   "reply": "**Surah Al-ʿAṣr (103), verse 2**\n\n**Arabic text:**\nإِنَّ الْإِنسَانَ لَفِي خُسْرٍ\n\n**English translation:**\n\"Indeed, mankind is in loss,\"  \n*(or: \"Truly, man is in loss.\")*\n\n*(Standard translations render it similarly: e.g., Sahih International: \"Indeed, mankind is in loss\"; Yusuf Ali: \"Verily Man is in loss.\")*"
+  },
+  {
+   "ref": "31:13",
+   "surah": "Luqman",
+   "ar_sim": 0.981,
+   "en_overlap": 1.0,
+   "reply": "**Surah Luqman (31:13)**\n\n**Arabic text:**\nوَإِذْ قَالَ لُقْمَانُ لِابْنِهِ وَهُوَ يَعِظُهُ يَا بُنَيَّ لَا تُشْرِكْ بِاللَّهِ ۖ إِنَّ الشِّرْكَ لَظُلْمٌ عَظِيمٌ\n\n**English translation (Sahih International):**\nAnd [mention, O Muhammad], when Luqman said to his son while he was instructing him, \"O my son, do not associate [anything] with Allah. Indeed, association [with Him] is great injustice.\""
+  },
+  {
+   "ref": "58:11",
+   "surah": "Al-Mujaadila",
+   "ar_sim": 0.982,
+   "en_overlap": 0.96,
+   "reply": "Here is **Surah Al-Mujadilah (58), verse 11**:\n\n**Arabic text:**\nيَا أَيُّهَا الَّذِينَ آمَنُوا إِذَا قِيلَ لَكُمْ تَفَسَّحُوا فِي الْمَجَالِسِ فَافْسَحُوا يَفْسَحِ اللَّهُ لَكُمْ ۖ وَإِذَا قِيلَ انشُزُوا فَانشُزُوا يَرْفَعِ اللَّهُ الَّذِينَ آمَنُوا مِنكُمْ وَالَّذِينَ أُوتُوا الْعِلْمَ دَرَجَاتٍ ۚ وَاللَّهُ بِمَا تَعْمَلُونَ خَبِيرٌ\n\n**English translation (Sahih International):**\n\"O you who have believed, when you are told, 'Space yourselves' in assemblies, then make space; Allah will make space for you. And when you are told, 'Arise,' then arise; Allah will raise those who have believed among you and those who were given knowledge, by degrees. And Allah is Acquainted with what you do.\""
+  },
+  {
+   "ref": "29:45",
+   "surah": "Al-Ankaboot",
+   "ar_sim": 0.972,
+   "en_overlap": 1.0,
+   "reply": "**Surah Al-‘Ankabut (29:45)**\n\n**Arabic text:**\nاتْلُ مَا أُوحِيَ إِلَيْكَ مِنَ الْكِتَابِ وَأَقِمِ الصَّلَاةَ ۖ إِنَّ الصَّلَاةَ تَنْهَىٰ عَنِ الْفَحْشَاءِ وَالْمُنكَرِ ۗ وَلَذِكْرُ اللَّهِ أَكْبَرُ ۗ وَاللَّهُ يَعْلَمُ مَا تَصْنَعُونَ\n\n**English translation (Sahih International):**\n\"Recite, [O Muhammad], what has been revealed to you of the Book and establish prayer. Indeed, prayer prohibits immorality and wrongdoing, and the remembrance of Allah is greater. And Allah knows that which you do.\""
+  },
+  {
+   "ref": "83:1",
+   "surah": "Al-Mutaffifin",
+   "ar_sim": 0.537,
+   "en_overlap": 1.0,
+   "reply": "**Surah Al-Mutaffifin (83:1)**\n\n**Arabic text:**\nوَيْلٌ لِّلْمُطَفِّفِينَ\n\n**English translation:**\n\"Woe to those who give less [than due]\" — *Sahih International*\n\n(Other common renderings: \"Woe to the defrauders\" or \"Woe to those who deal in fraud.\")\n\nThe verse condemns those who cheat in weights and measures—giving short measure when they sell, but demanding full measure when they buy."
+  },
+  {
+   "ref": "46:9",
+   "surah": "Al-Ahqaf",
+   "ar_sim": 1.0,
+   "en_overlap": 1.0,
+   "reply": "**Surah Al-Ahqaf (46:9)**\n\n**Arabic text:**\nقُلْ مَا كُنتُ بِدْعًا مِّنَ الرُّسُلِ وَمَا أَدْرِي مَا يُفْعَلُ بِي وَلَا بِكُمْ ۖ إِنْ أَتَّبِعُ إِلَّا مَا يُوحَىٰ إِلَيَّ وَمَا أَنَا إِلَّا نَذِيرٌ مُّبِينٌ\n\n**English translation (Sahih International):**\nSay, \"I am not something original among the messengers, nor do I know what will be done with me or with you. I only follow that which is revealed to me, and I am not but a clear warner.\""
+  }
+ ]
+}
