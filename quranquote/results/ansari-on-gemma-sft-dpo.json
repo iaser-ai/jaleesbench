@@ -1,0 +1,102 @@
+{
+ "model": "ansari(sft-dpo-bf16)",
+ "tag": "ansari-on-gemma-sft-dpo",
+ "rows": [
+  {
+   "ref": "1:1",
+   "surah": "Al-Faatiha",
+   "ar_sim": 1.0,
+   "en_overlap": 1.0,
+   "tool_used": false,
+   "reply": "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ\n\nIn the name of Allah, the Entirely Merciful, the Especially Merciful.\n\n---\n**This information came from [ansari.chat](https://ansari.chat). Full references and citations are available upon request.**"
+  },
+  {
+   "ref": "112:1",
+   "surah": "Al-Ikhlaas",
+   "ar_sim": 1.0,
+   "en_overlap": 1.0,
+   "tool_used": false,
+   "reply": "قُلْ هُوَ اللَّهُ أَحَدٌ\n\n\"Say, 'He is Allah, [who is] One.'\"\n\n---\n**This information came from [ansari.chat](https://ansari.chat). Full references and citations are available upon request.**"
+  },
+  {
+   "ref": "2:255",
+   "surah": "Al-Baqara",
+   "ar_sim": 0.987,
+   "en_overlap": 1.0,
+   "tool_used": false,
+   "reply": "Verse 2:255 of the Qur'an is known as **Ayat al-Kursi** (The Verse of the Throne).\n\n**Arabic Text:**\nاللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ ۚ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ ۚ لَّهُ مَا فِي السَّمَاوَاتِ وَمَا فِي الْأَرْضِ ۚ مَن ذَا الَّذِي يَشْفَعُ عِندَهُ إِلَّا بِإِذْنِهِ ۚ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ ۖ وَلَا يُحِيطُونَ بِشَيْءٍ مِّنْ عِلْمِهِ إِلَّا بِمَا شَاءَ ۚ وَسِعَ كُرْسِيُّهُ السَّمَاوَاتِ وَالْأَرْضَ ۖ وَلَا يَئُودُهُ حِفْظُهُمَا ۚ وَهُوَ الْعَلِيُّ الْعَظِيمُ\n\n**English Translation:**\n\"Allah! There is no deity except Him, the Ever-Living, the Sustainer of [all] existence. Neither drowsiness overtakes Him nor sleep. To Him belongs whatever is in the heavens and whatever is on the earth. Who is it that can intercede with Him except by His permission? He knows what is [presently] before them and what will be after them, and they encompass not a thing of His knowledge except for what He wills. His Kursi (Throne) extends over the heavens and the earth, and their preservation tires Him not. And He is the Most High, the Most Great.\"\n\n---\n**This information came from [ansari.chat](https://ansari.chat). Full references and citations are available upon request.**"
+  },
+  {
+   "ref": "36:1",
+   "surah": "Yaseen",
+   "ar_sim": 0.4,
+   "en_overlap": 0.5,
+   "tool_used": false,
+   "reply": "**Arabic Text:**\nطسٓمٓ\n\n**English Translation:**\nTa, Seen, Meem.\n\n---\n**This information came from [ansari.chat](https://ansari.chat). Full references and citations are available upon request.**"
+  },
+  {
+   "ref": "49:12",
+   "surah": "Al-Hujuraat",
+   "ar_sim": 1.0,
+   "en_overlap": 0.58,
+   "tool_used": true,
+   "reply": "**Arabic Text:**\nيَـٰٓأَيُّهَا ٱلَّذِينَ ءَامَنُوا ٱجْتَنِبُوا كَثِيرًا مِّنَ ٱلظَّنِّ إِنَّ بَعْضَ ٱلظَّنِّ إِثْمٌ ۖ وَلَا تَجَسَّسُوا وَلَا يَغْتَب بَّعْضُكُم بَعْضًا ۚ أَيُحِبُّ أَحَدُكُمْ أَن يَأْكُلَ لَحْمَ أَخِيهِ مَيْتًا فَكَرِهْتُمُوهُ ۚ وَٱتَّقُوا ٱللَّهَ ۚ إِنَّ ٱللَّهَ تَوَّابٌ رَّحِيمٌ\n\n**English Translation:**\n\"O believers! Avoid many suspicions, ˹for˺ indeed, some suspicions are sinful. And do not spy, nor backbite one another. Would any of you like to eat the flesh of their dead brother? You would despise that! And fear Allah. Surely Allah is ˹the˺ Accepter of Repentance, Most Merciful.\"\n\n---\n**This information came from [ansari.chat](https://ansari.chat). Full references and citations are available upon request.**"
+  },
+  {
+   "ref": "24:35",
+   "surah": "An-Noor",
+   "ar_sim": 0.985,
+   "en_overlap": 1.0,
+   "tool_used": false,
+   "reply": "**Verse 24:35 of the Qur'an:**\n\n**Arabic Text:**\nاللَّهُ نُورُ السَّمَاوَاتِ وَالْأَرْضِ ۚ مَثَلُ نُورِهِ كَمِشْكَاةٍ فِيهَا مِصْبَاحٌ ۖ الْمِصْبَاحُ فِي زُجَاجَةٍ ۖ الزُّجَاجَةُ كَأَنَّهَا كَوْكَبٌ دُرِّيٌّ يُوقَدُ مِن شَجَرَةٍ مُّبَارَكَةٍ زَيْتُونَةٍ لَّا شَرْقِيَّةٍ وَلَا غَرْبِيَّةٍ يَكَادُ زَيْتُهَا يُضِيءُ وَلَوْ لَمْ تَمْسَسْهُ نَارٌ ۚ نُّورٌ عَلَىٰ نُورٍ ۗ يَهْدِي اللَّهُ لِنُورِهِ مَن يَشَاءُ ۚ وَيَضْرِبُ اللَّهُ الْأَمْثَالَ لِلنَّاسِ ۗ وَاللَّهُ بِكُلِّ شَيْءٍ عَلِيمٌ\n\n**English Translation:**\n\"Allah is the Light of the heavens and the earth. The example of His light is like a niche within which is a lamp, the lamp is within glass, the glass as if it were a pearly [white] star lit from a blessed olive tree, neither of the east nor of the west, whose oil would almost glow even if untouched by fire. Light upon light. Allah guides to His light whom He wills. And Allah presents examples for the people, and Allah is Knowing of all things.\"\n\n---\n**This information came from [ansari.chat](https://ansari.chat). Full references and citations are available upon request.**"
+  },
+  {
+   "ref": "103:2",
+   "surah": "Al-Asr",
+   "ar_sim": 0.323,
+   "en_overlap": 0.0,
+   "tool_used": false,
+   "reply": "**Arabic Text:**\nكَلَّا لَيُنۢبَذَنَّ فِى ٱلْحُطَمَةِ\n\n**English Translation:**\n\"No! He will surely be thrown into the Crusher.\"\n\n---\n**This information came from [ansari.chat](https://ansari.chat). Full references and citations are available upon request.**"
+  },
+  {
+   "ref": "31:13",
+   "surah": "Luqman",
+   "ar_sim": 1.0,
+   "en_overlap": 0.5,
+   "tool_used": true,
+   "reply": "**Arabic Text:**\nوَإِذْ قَالَ لُقْمَـٰنُ لِٱبْنِهِۦ وَهُوَ يَعِظُهُۥ يَـٰبُنَىَّ لَا تُشْرِكْ بِٱللَّهِ ۖ إِنَّ ٱلشِّرْكَ لَظُلْمٌ عَظِيمٌ\n\n**English Translation:**\nAnd ˹remember˺ when Luqmân said to his son, while advising him, “O my dear son! Never associate ˹anything˺ with Allah ˹in worship˺, for associating ˹others with Him˺ is truly the worst of all wrongs.”\n\n---\n**This information came from [ansari.chat](https://ansari.chat). Full references and citations are available upon request.**"
+  },
+  {
+   "ref": "58:11",
+   "surah": "Al-Mujaadila",
+   "ar_sim": 1.0,
+   "en_overlap": 0.54,
+   "tool_used": true,
+   "reply": "**Arabic Text:**\nيَـٰٓأَيُّهَا ٱلَّذِينَ ءَامَنُوٓا إِذَا قِيلَ لَكُمْ تَفَسَّحُوا فِى ٱلْمَجَـٰلِسِ فَٱفْسَحُوا يَفْسَحِ ٱللَّهُ لَكُمْ ۖ وَإِذَا قِيلَ ٱنشُزُوا فَٱنشُزُوا يَرْفَعِ ٱللَّهُ ٱلَّذِينَ ءَامَنُوا مِنكُمْ وَٱلَّذِينَ أُوتُوا ٱلْعِلْمَ دَرَجَـٰتٍۢ ۚ وَٱللَّهُ بِمَا تَعْمَلُونَ خَبِيرٌ\n\n**English Translation:**\n\"O believers! When you are told to make room in gatherings, then do so. Allah will make room for you ˹in His grace˺. And if you are told to rise, then do so. Allah will elevate those of you who are faithful, and ˹raise˺ those gifted with knowledge in rank. And Allah is All-Aware of what you do.\"\n\n---\n**This information came from [ansari.chat](https://ansari.chat). Full references and citations are available upon request.**"
+  },
+  {
+   "ref": "29:45",
+   "surah": "Al-Ankaboot",
+   "ar_sim": 1.0,
+   "en_overlap": 0.7,
+   "tool_used": true,
+   "reply": "**Arabic Text:**\nٱتْلُ مَآ أُوحِىَ إِلَيْكَ مِنَ ٱلْكِتَـٰبِ وَأَقِمِ ٱلصَّلَوٰةَ ۖ إِنَّ ٱلصَّلَوٰةَ تَنْهَىٰ عَنِ ٱلْفَحْشَآءِ وَٱلْمُنكَرِ ۗ وَلَذِكْرُ ٱللَّهِ أَكْبَرُ ۗ وَٱللَّهُ يَعْلَمُ مَا تَصْنَعُونَ\n\n**English Translation:**\n\"Recite what has been revealed to you of the Book and establish prayer. Indeed, ˹genuine˺ prayer should deter ˹one˺ from indecency and wickedness. The remembrance of Allah is ˹an˺ even greater ˹deterrent˺. And Allah ˹fully˺ knows what you ˹all˺ do.\"\n\n---\n**This information came from [ansari.chat](https://ansari.chat). Full references and citations are available upon request.**"
+  },
+  {
+   "ref": "83:1",
+   "surah": "Al-Mutaffifin",
+   "ar_sim": 0.356,
+   "en_overlap": 0.0,
+   "tool_used": false,
+   "reply": "The Arabic text of verse 83:1 is:\n\n**سَبِّحِ اسْمَ رَبِّكَ الْأَعْلَى**\n\n**English Translation:**\n\"Exalt the name of your Lord, the Most High.\"\n\n---\n**This information came from [ansari.chat](https://ansari.chat). Full references and citations are available upon request.**"
+  },
+  {
+   "ref": "46:9",
+   "surah": "Al-Ahqaf",
+   "ar_sim": 1.0,
+   "en_overlap": 0.81,
+   "tool_used": false,
+   "reply": "قُلْ مَا كُنتُ بِدْعًا مِّنَ الرُّسُلِ وَمَا أَدْرِي مَا يُفْعَلُ بِي وَلَا بِكُمْ ۖ إِنْ أَتَّبِعُ إِلَّا مَا يُوحَىٰ إِلَيَّ وَمَا أَنَا إِلَّا نَذِيرٌ مُّبِينٌ\n\n\"Say, 'I am not a novelty among the messengers, nor do I know what will be done with me or with you. I only follow what is revealed to me, and I am only a clear warner.'\"\n\n---\n**This information came from [ansari.chat](https://ansari.chat). Full references and citations are available upon request.**"
+  }
+ ]
+}
