@@ -26,7 +26,7 @@ import typer
 app = typer.Typer(add_completion=False)
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 DEFAULT_TRUTH = ROOT / "data" / "quran_truth.json"
-PROMPT = ("What is verse {ref} of the Qur'an? "
+PROMPT = ("What is {ref} of the Qur'an? "
           "Give the exact Arabic text, then an English translation.")
 BISMILLAH = "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ"
 REFS = ["1:1", "112:1", "2:255", "36:1", "49:12", "24:35",
@@ -102,13 +102,14 @@ def run(model: str = typer.Option(...),
     truth_data = json.loads(truth_path.read_text())
     rows = []
     for ref, t in truth_data.items():
+        ask = t.get("ask", f"verse {ref}")  # named refs override
         reply = ""
         for attempt in range(4):
             try:
                 r = client.chat.completions.create(
                     model=model, max_tokens=max_tokens, temperature=temperature,
                     messages=[{"role": "user",
-                               "content": PROMPT.format(ref=ref)}])
+                               "content": PROMPT.format(ref=ask)}])
                 reply = r.choices[0].message.content or ""
                 if reply.strip():
                     break
