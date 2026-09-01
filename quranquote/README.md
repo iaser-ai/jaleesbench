@@ -37,6 +37,22 @@ Readings:
   benchmark. `ar_sim` below ~0.9 flags a row for manual reading; very short
   verses (muqatta'at) can flag spuriously.
 
+## Sampling-temperature probe (2026-09-01)
+
+The greedy failures prompted an 18-draw resample of the two hardest cells
+(2:255, 46:9) on the three Inkling-Small checkpoints, at temperatures 0.7 and
+0.4. Findings: (1) the fine-tune did **not** damage verse recall — base wobbles
+on the hard tail as much as the tuned checkpoints, and the leak/degeneration
+draws occur in base too; (2) temp 0.4 gave the best accuracy (17/18 draws
+correct vs 14/18 at 0.7; greedy is loop-prone); (3) a "reasoning leaks into
+visible content and rambles 20K+ chars" mode fires on hard verses at ~1-in-5
+draws at every temperature and on every checkpoint, usually still converging
+on the correct verse — a serving-layer issue (output cap + repetition guard +
+reasoning-channel separation), not a knowledge one. Through-Ansari results
+(`results/ansari-on-gemma-sft-dpo.json`): retrieval was 4/4 perfect when
+invoked but was invoked only 4/12 times; all three failures were fast,
+confident, tool-free wrong-verse answers.
+
 ## Usage
 
 ```bash
