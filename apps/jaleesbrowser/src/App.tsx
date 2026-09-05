@@ -115,6 +115,14 @@ export function App({ dataSource }: { dataSource: DataSource }) {
       <aside className="sidebar">
         <header className="app-header">
           <h1>{index.dataset.title}</h1>
+          <a
+            className="paper-link"
+            href="https://arxiv.org/abs/2608.07508"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Paper (arXiv)
+          </a>
           <ThemeToggle />
         </header>
 

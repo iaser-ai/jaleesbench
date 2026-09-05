@@ -44,6 +44,12 @@ body {
   gap: 1rem;
 }
 
+.paper-link {
+  font-size: 0.85rem;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
 .theme-toggle {
   font: inherit;
   font-size: 0.85rem;
