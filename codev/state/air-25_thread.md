@@ -131,3 +131,19 @@ mini_v1 frozen list (#24 lane) does not exist yet. Both need the architect.
 - Re-plan: concurrency 6 (~730 req/h), 300-sitting chunks, waiter probes from 21:01Z
   every 5 min and launches chunk 3 on the first 200. Details in
   /private/tmp/agent-mail/air-25-req-per-hour-replan.md
+
+## 2026-09-09 — hourly window is FIXED (top-of-hour); chunk 3 → continuous run
+
+- Probe 21:01:01Z → 200 on first try (a rolling window from 20:31 would still be closed)
+  → hourly cap resets at the top of the hour.
+- Chunk 3 (conc 6): 300/300 in 48.4 min, 752 req/h incl. retries (60% of ceiling),
+  7/600 retries all per-SECOND throttles (Retry-After: 1). Zero per-hour 429s.
+- Architect proposed continuous if ≤ ~700 req/h; measured 752 → chose continuous at
+  conc 6 anyway (500 req/h margin, no stacking), told them plainly, offered conc 5.
+  Continuous run: --limit 1600 (self-stops at the 16M line), unbuffered, monitor
+  reverts to hourly gate on any "per hour" 429. ETA ~02:10Z; ~238 sittings to day 2.
+- PR #31 (per-hour backoff) closed unmerged per architect — pacing over code.
+- Checkpoint 682/2520, 4.73M; projected 17.46M. Refusals: 58 cells / 38 probes;
+  57 BARE vs 34 REFUSAL+COUNSEL replies; flagged JLS-010 (10/18 t1).
+- Open question to architect: is the 20M/day cap a fixed UTC-day window? If so the
+  16M line may be moot after 00:00Z — not acting on it without their word.
