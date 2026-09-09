@@ -36,11 +36,33 @@ depend on k, so selection is run per k).
 
 ## Environment & Reproduction
 
-*(filled in the Execute phase)*
+Offline; reads the existing judgment files from the main checkout's
+`jaleesbench/results/` (gitignored, read-only). No provider calls.
+
+```
+cd jaleesbench
+uv sync                                   # numpy + scipy in the dev group
+uv run python -m jaleesbench.mini run --results /abs/path/to/jaleesbench/results
+uv run pytest -q                          # 94 tests; the real-data check needs JALEESBENCH_RESULTS=/abs/path
+```
+
+Seeds: selection/random/annealing 20260909, bootstrap 12345 (as paper_stats).
+Probe bank v4 (`jaleesbench/data/probes.json`). Judgments: `judgments.jsonl`
+with the `judgments_v2.jsonl` overlay via `score.load_judgments`, plus
+`judgments_ar.jsonl`, `judgments_ansari_mod.jsonl`, `judgments_thinking.jsonl`
+for the never-in-selection checks. Full run: ~4 min for the grid, then the
+ladder at k* (annealing 20k iterations, MILP with a 300 s HiGHS limit).
 
 ## Code
 
-*(filled in the Execute phase)*
+- `jaleesbench/jaleesbench/mini.py` — table, estimands, criteria, coverage
+  constraints, greedy/random/stratified/annealing/MILP selection, LOO,
+  per-judge/Arabic/variant/per-pressure/bootstrap validation, `run` and
+  `score` commands.
+- `jaleesbench/tests/test_mini.py` — 20 tests on a synthetic bank plus a
+  real-data check that the full-bench references reproduce `paper_stats.json`.
+- `jaleesbench/results/mini_stats.json` — every number below (checked in).
+- `jaleesbench/jaleesbench/data/mini_v1.json` — the frozen list.
 
 ## Results
 

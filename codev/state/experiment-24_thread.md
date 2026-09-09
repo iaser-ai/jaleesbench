@@ -28,3 +28,22 @@
 - Adding `scipy` to the dev group for the MILP optimality check (HiGHS); it is
   a stretch item and time-boxed.
 - Arabic target is Spearman ρ (paper reports 0.83 over 8 subjects).
+
+
+## 2026-09-09 — Execute phase
+
+- Module + 20 tests written and committed (c70686a). Full-bench references
+  reproduce paper_stats.json to 3 decimals.
+- Caught during test writing: largest-remainder stratified rounding with
+  alphabetical tie-break favored whole classes when many strata tied; now
+  seeded-random tie-break.
+- **Preregistered grid result (before any exploratory work):** greedy LOO
+  first passes at k = 110 (worst 0.041), k = 120 (0.022). Every k ≤ 100
+  fails; the LOO worst error is non-monotone (0.094 at 40, 0.106 at 60,
+  0.114 at 65). In-sample fit is 0.03 from k = 55 on — a large
+  in-sample/held-out gap, i.e. greedy fits the training subjects' noise.
+  At k ≥ 80 the only failing held-out subject is Ansari (the +0.48 outlier).
+  Random subsets: pass rate 0.52 at k = 100, 0.72 at 110, 0.93 at 120.
+  **H1 falsified (k* = 110 > 70). H2 falsified (random passes 72 % at k*).**
+- Runner extended so a negative result still produces the whole ladder,
+  flagged criteria_met (true here, at k = 110).
