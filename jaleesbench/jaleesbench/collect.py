@@ -6,8 +6,8 @@ import os
 from pathlib import Path
 
 from .prompts import FRAMINGS
-from .providers import (anthropic_complete, gemini_complete, make_clients,
-                        openai_complete)
+from .providers import (anthropic_complete, gemini_complete, k2_model,
+                        make_clients, openai_complete)
 
 ROOT = Path(__file__).resolve().parent
 RESULTS = ROOT.parent / "results"
@@ -87,6 +87,14 @@ SUBJECTS = {
     # Ansari, a purpose-built Islamic assistant — Unstated only (same ruling).
     "fanar-sadiq": {"provider": "fanar", "model": "Fanar-Sadiq",
                     "max_tokens": 8192, "framings": ["unstated"]},
+    # IFM K2-Horizon-375B-A23B (subject 13; issue #25). Host + key + model id
+    # come from K2_HOST / K2_MODEL (see providers.K2_HOSTS), so the model id is
+    # resolved at call time, not here. Reasoning model: thinking lands in
+    # reasoning_content, the answer in content; IFM's card runs 32,768 output
+    # tokens, so this subject overrides the global cap for reasoning headroom
+    # (the nemotron lesson: too little and content arrives null).
+    "k2-horizon": {"provider": "k2", "max_tokens": 32768,
+                   "framings": ["unstated", "stated", "guided"]},
     # Ansari via its OpenAI-compatible route (ansari-multisage spec 19):
     # drives the real facilitator pipeline, accepts the system role, reports
     # usage, no marketing footer, and the leaderboard bearer bypasses the
@@ -111,6 +119,7 @@ SUBJECTS = {
 MAX_TOKENS = 16384
 CONCURRENCY = 24  # interleaved across 8 providers (~3 in flight per provider)
 RETRIES = 2
+PATIENT_PROVIDERS = ("ansari", "tinker", "fanar", "k2")  # 5 retries, 30s+ backoff
 
 
 ENV_PATH = ROOT.parent.parent / ".env"  # repo-root .env
@@ -150,6 +159,14 @@ def ctx_block(ctx: str) -> str:
     return f"[Context for this conversation: {ctx}]"
 
 
+def subject_model(subject: str) -> str:
+    """The provider-side model id a subject is served as."""
+    spec = SUBJECTS[subject]
+    if spec["provider"] == "k2":
+        return k2_model()
+    return spec.get("model", subject)
+
+
 async def call_subject(subject: str, ctx: str | None, messages: list[dict],
                        clients: dict) -> tuple[str, dict, int]:
     """Returns (content, usage, attempts).
@@ -160,9 +177,10 @@ async def call_subject(subject: str, ctx: str | None, messages: list[dict],
     holds the clean probe turns; the fold happens here, per provider.
     """
     spec = SUBJECTS[subject]
-    # Ansari (free community endpoint) and Tinker (in-flight request cap that
-    # 429s under launch load): be patient with rate limits.
-    retries = 5 if spec["provider"] in ("ansari", "tinker", "fanar") else RETRIES
+    # Ansari (free community endpoint), Tinker (in-flight request cap that
+    # 429s under launch load), Fanar, and K2 (brand-new hosting): be patient
+    # with rate limits.
+    retries = 5 if spec["provider"] in PATIENT_PROVIDERS else RETRIES
     max_tokens = spec.get("max_tokens", MAX_TOKENS)
 
     def folded(m: dict) -> dict:
@@ -174,9 +192,9 @@ async def call_subject(subject: str, ctx: str | None, messages: list[dict],
     for attempt in range(retries + 1):
         try:
             provider = spec["provider"]
-            model = spec.get("model", subject)
+            model = subject_model(subject)
             if provider in ("openai", "friendli", "blackbox", "ansari", "tinker",
-                            "fanar"):
+                            "fanar", "k2"):
                 msgs = [folded(m) for m in messages]
                 # Friendli thinking arms turn on the gemma4/GLM reasoning pass;
                 # the final answer still arrives in message.content.
@@ -227,7 +245,7 @@ async def call_subject(subject: str, ctx: str | None, messages: list[dict],
         except Exception as e:  # noqa: BLE001 — retry transient, then fail loudly
             last_err = e
             if attempt < retries:
-                backoff = 30 * (attempt + 1) if spec["provider"] in ("ansari", "tinker", "fanar") \
+                backoff = 30 * (attempt + 1) if spec["provider"] in PATIENT_PROVIDERS \
                     else 2 * (attempt + 1)
                 await asyncio.sleep(backoff)
     raise RuntimeError(f"subject {subject} failed after {retries + 1} attempts: {last_err}")
@@ -249,7 +267,7 @@ async def run_sitting(subject: str, probe: dict, pressure: str, framing: str,
     return {
         "subject": subject, "probe_id": probe["id"], "pressure": pressure,
         "framing": framing,
-        "model": SUBJECTS[subject].get("model", subject),
+        "model": subject_model(subject),
         "context_prefix": ctx_block(ctx) if ctx else None,
         "ts": datetime.now(timezone.utc).isoformat(),
         "attempts": [att1, att2],
@@ -270,6 +288,10 @@ async def collect(limit: int | None = None,
                   probes_path: str = "probes.json",
                   framings: dict | None = None) -> None:
     load_env()
+    unknown = sorted((subjects or set()) - set(SUBJECTS))
+    if unknown:
+        raise ValueError(f"unknown subject(s): {', '.join(unknown)}; "
+                         f"known: {', '.join(SUBJECTS)}")
     RESULTS.mkdir(exist_ok=True)
     if out_path is None:
         out_path = RESULTS / "collect.jsonl"
@@ -296,7 +318,9 @@ async def collect(limit: int | None = None,
     if not todo:
         return
 
-    clients = make_clients()
+    # Build only the providers this run touches, so a run that excludes a
+    # subject never needs that subject's key (K2's host key is host-dependent).
+    clients = make_clients({SUBJECTS[g[0]]["provider"] for g in todo} | {"httpx"})
     sem = asyncio.Semaphore(concurrency or CONCURRENCY)
     lock = asyncio.Lock()
     completed = 0

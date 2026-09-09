@@ -23,6 +23,27 @@ def test_detect_citations_turn1_flag(monkeypatch):
     assert seen == {"limit": None, "turn1": True}
 
 
+def test_collect_subject_filter(monkeypatch):
+    """`--subject` (repeatable) restricts the grid and `--concurrency` caps
+    in-flight sittings (pacing under a token/day cap); absent -> defaults."""
+    from jaleesbench import collect as collect_mod
+    seen = {}
+
+    async def fake_collect(limit=None, subjects=None, concurrency=None, **_):
+        seen.update(limit=limit, subjects=subjects, concurrency=concurrency)
+
+    monkeypatch.setattr(collect_mod, "collect", fake_collect)
+    result = runner.invoke(app, ["collect", "--subject", "k2-horizon",
+                                 "--subject", "fanar", "--limit", "3",
+                                 "--concurrency", "8"])
+    assert result.exit_code == 0, result.output
+    assert seen == {"limit": 3, "subjects": {"k2-horizon", "fanar"}, "concurrency": 8}
+
+    seen.clear()
+    assert runner.invoke(app, ["collect"]).exit_code == 0
+    assert seen == {"limit": None, "subjects": None, "concurrency": None}
+
+
 def test_judge_lang_ar_routes_to_ar_files(monkeypatch):
     seen = {}
 

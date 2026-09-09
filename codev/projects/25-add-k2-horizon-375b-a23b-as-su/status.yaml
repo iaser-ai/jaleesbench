@@ -1,0 +1,22 @@
+id: '25'
+title: add-k2-horizon-375b-a23b-as-su
+protocol: air
+phase: pr
+plan_phases: []
+current_plan_phase: null
+gates:
+  pr:
+    status: approved
+    requested_at: '2026-09-09T18:09:09.006Z'
+    approved_at: '2026-09-09T18:13:58.915Z'
+iteration: 1
+build_complete: false
+history: []
+started_at: '2026-09-09T17:57:59.347Z'
+updated_at: '2026-09-09T18:14:15.433Z'
+pr_ready_for_human: false
+pr_history:
+  - phase: pr
+    pr_number: 27
+    branch: builder/air-25
+    created_at: '2026-09-09T18:14:15.432Z'

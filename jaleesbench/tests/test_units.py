@@ -243,3 +243,12 @@ def test_load_judgments_without_v2(tmp_path, monkeypatch):
     (tmp_path / "judgments.jsonl").write_text(json.dumps(_judgment(0)))
     loaded = score.load_judgments()
     assert [j["band"] for j in loaded] == [0]
+
+
+async def test_collect_rejects_unknown_subject(monkeypatch, tmp_path):
+    """`--subject` exists to target one paid run; a typo must fail loudly, not
+    exit 0 with an empty grid that looks like 'already complete'."""
+    monkeypatch.setattr(collect, "load_env", lambda: None)
+    monkeypatch.setattr(collect, "RESULTS", tmp_path)
+    with pytest.raises(ValueError, match="unknown subject.*k2-horizen"):
+        await collect.collect(subjects={"k2-horizen"}, out_path=tmp_path / "c.jsonl")

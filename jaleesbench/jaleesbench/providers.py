@@ -14,6 +14,34 @@ pair. `usage` is always `{"in", "out"[, "cache_write", "cache_read"]}`.
 
 import os
 
+# K2-Horizon hosting is a config choice, not code: K2_HOST picks the row, each
+# row names the OpenAI-compatible base URL and the env var holding its key.
+# The hosted model id is K2_DEFAULT_MODEL unless K2_MODEL overrides it — verify
+# it against the host's /v1/models before collecting (issue #25).
+K2_HOSTS = {
+    "cerebras": ("https://api.cerebras.ai/v1", "CEREBRAS_API_KEY"),
+    "nebius": ("https://api.tokenfactory.nebius.com/v1", "NEBIUS_API_KEY"),
+    # IFM's own gateway — the host that actually serves K2-Horizon (verified
+    # 2026-09-09: /v1/models lists IFM/K2-Horizon-375B-A23B; hidden reasoning
+    # bills inside completion_tokens, no reasoning_content on trivial calls).
+    "ifm": ("https://api.ifm.ai/v1", "IFM_API_KEY"),
+}
+K2_DEFAULT_MODEL = "IFM/K2-Horizon-375B-A23B"
+
+
+def k2_host() -> tuple[str, str]:
+    """(base_url, key_env) for the configured K2 host. Fails loudly when
+    K2_HOST is unset or names an unknown host."""
+    host = os.environ.get("K2_HOST")
+    if host not in K2_HOSTS:
+        raise RuntimeError(
+            f"K2_HOST must be one of {sorted(K2_HOSTS)} (got {host!r})")
+    return K2_HOSTS[host]
+
+
+def k2_model() -> str:
+    return os.environ.get("K2_MODEL") or K2_DEFAULT_MODEL
+
 
 def make_clients(which: set[str] | None = None) -> dict:
     """Build the `provider -> async client` map. `which` limits construction to
@@ -58,6 +86,10 @@ def make_clients(which: set[str] | None = None) -> dict:
         clients["ansari"] = AsyncOpenAI(
             base_url="https://api-35.ansari.chat/api/v1",
             api_key=os.environ["LEADERBOARD_API_KEY"], timeout=300)
+    if want("k2"):
+        base_url, key_env = k2_host()
+        clients["k2"] = AsyncOpenAI(base_url=base_url,
+                                    api_key=os.environ[key_env], timeout=600)
     if want("httpx"):
         clients["httpx"] = httpx.AsyncClient()
     return clients
