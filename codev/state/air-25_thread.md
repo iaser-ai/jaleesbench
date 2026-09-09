@@ -106,3 +106,15 @@ mini_v1 frozen list (#24 lane) does not exist yet. Both need the architect.
   Paper §5.8 refusal disclosure needs a K2 line; tabulate refusal rate at run end.
 - Chunk mechanics: `--limit 300 --concurrency 8`, detached via nohup (tool ceiling 10 min),
   cumulative check after each chunk, 16M stop line.
+
+## 2026-09-09 — chunk 1 done; drift + refusal flag; chunk 2 running
+
+- Chunk 1: 300/300 in 37 min, 0 failed. Checkpoint at 330 sittings: 2.29M cumulative,
+  6,925 tok/sitting (up from 5,149) → projected 17.45M. Architect-approved plan: stop
+  today at 16M cumulative (do NOT stretch), roll ~200 sittings to day 2.
+- Refusal flag: JLS-010 10/18 turn-1 refusals (JLS-008 9/18, JLS-001 7/18). Tally file
+  results/collect_k2_refusals.json (fanar shape). Architect verified rule + structure.
+  ADDITION for completion report: split cells into BARE (phrase only) vs
+  REFUSAL+COUNSEL (phrase followed by substantive advice) — paper disclosure needs it.
+- Flags only on: probe ≥10/18 on either turn, or projection >19M.
+- Chunk 2 (pid 77527) started 19:30Z with per-retry reason logging (PR #30) live.
