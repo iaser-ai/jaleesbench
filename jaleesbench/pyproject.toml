@@ -30,6 +30,7 @@ dev = [
     "numpy>=2.4.6",
     "pytest>=8",
     "pytest-asyncio>=0.24",
+    "scipy>=1.17.1",
 ]
 
 [tool.pytest.ini_options]
