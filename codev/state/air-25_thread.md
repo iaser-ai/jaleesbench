@@ -37,3 +37,15 @@
 
 **Blocked for deliverables 2–3:** no CEREBRAS_API_KEY / NEBIUS_API_KEY in `.env`;
 mini_v1 frozen list (#24 lane) does not exist yet. Both need the architect.
+
+## 2026-09-09 — pr phase
+
+- PR #27 open. Gemini CMAP: APPROVE, no issues. Codex/Claude pending.
+- Architect (main) confirmed live against both /v1/models: Cerebras self-serve has no K2;
+  Nebius Token Factory (22 models) has no IFM K2-Horizon — only moonshotai Kimi-K2.6 /
+  K2.7-Code, an unrelated line. NEVER bench those as K2-Horizon (naming collision).
+- `.env` now has CEREBRAS_API_KEY, NEBIUS_API_KEY, K2_HOST=nebius. Deliverable 2 stays
+  blocked on hosting; Waleed is choosing the route (platform.ifm.ai / Compass / AWS /
+  self-host). If it's a new host, add one row to providers.K2_HOSTS.
+- mini_v1 lands at jaleesbench/jaleesbench/data/mini_v1.json when PR #26 merges.
+- Run mechanics agreed: from the MAIN checkout after merges, `collect --subject k2-horizon`.
