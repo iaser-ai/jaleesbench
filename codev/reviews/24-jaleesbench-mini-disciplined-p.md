@@ -55,9 +55,13 @@
 
 None observed. Full suite: 94 passed.
 
-## Open items for the architect
+## Follow-up: V4 pending data
 
-- Name the V4 subject (new model, or a fresh re-collect of an existing one).
-- Decide whether the paper should headline the preregistered k = 110 only, or
-  also offer the exploratory 0.075-tolerance (k = 95) and headline-only
-  (k = 35 at 0.075) options as clearly labeled alternatives.
+Gate approved by Waleed 2026-09-09 with two decisions: the V4 subject is
+**IFM K2-Horizon-375B-A23B** (released 2026-09-03, never seen by selection),
+to be collected on the full 140 as a separate main-bench project once
+Cerebras API access lands; and the paper keeps its exploratory
+looser-tolerance subsection, labeled as such. When the judgments exist, run
+`python -m jaleesbench.mini score --results <path> --subject <name>`, record
+the result in the notes, and fill the paper's prospective-test subsection.
+The experiment closes with V4 marked pending-data.

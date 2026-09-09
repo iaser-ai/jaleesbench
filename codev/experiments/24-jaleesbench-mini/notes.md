@@ -1,6 +1,6 @@
 # Experiment 24: JaleesBench-Mini — disciplined probe-subset reduction
 
-**Status**: Complete (both preregistered hypotheses falsified; prospective test pending Waleed's subject choice) · **Date**: 2026-09-09 · **Issue**: #24
+**Status**: Complete (both preregistered hypotheses falsified; V4 prospective test pending data for the designated subject IFM K2-Horizon-375B-A23B) · **Date**: 2026-09-09 · **Issue**: #24
 
 ## Goal
 
@@ -121,9 +121,12 @@ tie-break before the full run.
 
 ## Next Steps
 
-1. **V4 prospective test** — Waleed names the subject; run mini (110 probes)
-   and full 140, compare at 0.05 via `python -m jaleesbench.mini score`.
-   Costs money; not started.
+1. **V4 prospective test** — subject designated by Waleed (2026-09-09):
+   IFM K2-Horizon-375B-A23B (released 2026-09-03, never seen by selection).
+   Full-140 collection runs as a separate main-bench project once Cerebras
+   API access lands; when its judgments exist, score with
+   `python -m jaleesbench.mini score --results <path> --subject <name>` and
+   fill the paper's prospective-test subsection. Pending data.
 2. Decide the mini's stated use. As preregistered it is a 21 % saving, so it
    is a screening tool only; a 0.075 tolerance would allow k = 95 (32 %) and a
    headline-only mini at 0.075 would allow k = 35 (75 %), but those are

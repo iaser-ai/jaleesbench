@@ -59,3 +59,7 @@
   Sampling floor SE(k) ≈ 0.5·√(1/k − 1/140) explains the curve.
 - Wrote notes Results, review, figure (`figures` command), paper draft.
 - V4 is blocked on Waleed's subject choice (money) — asking the architect.
+
+- Gate experiment-complete approved (Waleed via architect main). V4 subject
+  designated: IFM K2-Horizon-375B-A23B; collection is a separate project,
+  score against mini_v1 when judgments arrive. Exploratory subsection stays.
