@@ -724,5 +724,97 @@ def score(results: Path = typer.Option(..., help="Results directory"),
     typer.echo(json.dumps(_py(out), indent=1))
 
 
+# --------------------------------------------------------------------------
+# Exploratory analyses (NOT preregistered; reported as such)
+# --------------------------------------------------------------------------
+
+def _pass_under(ev_errors, full, mini_e1, threshold, estimand_set):
+    """Re-score stored per-subject errors under a different threshold and
+    estimand set (E2 always applies)."""
+    worst = max(v[e] for v in ev_errors.values() for e in estimand_set if v[e] is not None)
+    rk = ranking_check(full, mini_e1)
+    return worst <= threshold and not rk["sign_flips"] and not rk["discordant_pairs"], worst
+
+
+@app.command()
+def explore(results: Path = typer.Option(..., help="Results directory"),
+            stats: Path = typer.Option(None, help="mini_stats.json from `run`"),
+            out: Path = typer.Option(None, help="Output JSON (default: <results>/mini_explore.json)"),
+            n_draws: int = typer.Option(N_DRAWS)):
+    """Exploratory, not preregistered: threshold / estimand-set sensitivity of
+    k*, the in-sample vs held-out gap, held-out failure attribution, and the
+    analytic sampling floor for a random subset of size k."""
+    stats = stats or RESULTS / "mini_stats.json"
+    out = out or RESULTS / "mini_explore.json"
+    st = json.loads(Path(stats).read_text())
+    bank, meta, probe_ids, main, _, _ = load_tables(results)
+    subjects = st["meta"]["subjects"]
+    k_grid = st["meta"]["k_grid"]
+    full = {s: estimands(main, s) for s in subjects}
+    full_e1 = {s: full[s]["E1"] for s in subjects}
+    thresholds = [0.05, 0.075, 0.10]
+    sets = {"full_suite": ESTIMANDS, "headline_only": ["E1"], "headline_steadfastness": ["E1", "E3"]}
+    ex = {"note": "exploratory; not preregistered", "thresholds": thresholds, "estimand_sets": sets}
+
+    # (a) greedy-LOO k* under alternative criteria, from the stored fold errors.
+    ex["greedy_loo_k_star"] = {}
+    for name, es in sets.items():
+        for th in thresholds:
+            ks = []
+            for k in k_grid:
+                g = st["methods"]["greedy_loo"][str(k)]
+                # rebuild the LOO prediction vector for E1 from stored errors is not
+                # possible (errors are absolute); re-score the folds directly.
+                fold_idx = {h: [main.pidx[p] for p in ps] for h, ps in g["folds"].items()}
+                mini_e1 = {s: estimands(main, s, fold_idx[s])["E1"] for s in subjects}
+                ok, _ = _pass_under(g["errors"], full_e1, mini_e1, th, es)
+                if ok:
+                    ks.append(k)
+            ex["greedy_loo_k_star"][f"{name}@{th}"] = ks[0] if ks else None
+
+    # (b)+(c) in-sample vs held-out gap and worst held-out cell per k.
+    ex["gap"] = {}
+    for k in k_grid:
+        g = st["methods"]["greedy_loo"][str(k)]
+        cells = [(v[e], s, e) for s, v in g["errors"].items() for e in ESTIMANDS if v[e] is not None]
+        w = max(cells)
+        ex["gap"][k] = {"insample_worst": st["methods"]["greedy_insample"][str(k)]["worst_abs_err"],
+                        "loo_worst": g["worst_abs_err"], "worst_subject": w[1], "worst_estimand": w[2],
+                        "n_cells_over": sum(c[0] > THRESHOLD for c in cells)}
+
+    # (d) random draws under alternative criteria (same seed as `run`).
+    rng = np.random.default_rng(SEED)
+    ex["random_pass_rate"] = {}
+    for k in k_grid:
+        draws = [random_draw(rng, k, main.n) for _ in range(n_draws)]
+        acc = {f"{name}@{th}": 0 for name in sets for th in thresholds}
+        for idx in draws:
+            mini = {s: estimands(main, s, idx) for s in subjects}
+            errs = {s: {e: (None if full[s][e] is None else abs(mini[s][e] - full[s][e]))
+                        for e in ESTIMANDS} for s in subjects}
+            mini_e1 = {s: mini[s]["E1"] for s in subjects}
+            for name, es in sets.items():
+                for th in thresholds:
+                    ok, _ = _pass_under(errs, full_e1, mini_e1, th, es)
+                    acc[f"{name}@{th}"] += ok
+        ex["random_pass_rate"][k] = {kk: v / n_draws for kk, v in acc.items()}
+
+    # (e) analytic floor: finite-population SE of a size-k random subset for E1,
+    # from the per-probe SD of probe means; and the SE at which the max over
+    # 12 subjects stays under 0.05 (max of 12 |N(0,1)| ~ 2.3 SD).
+    ex["sampling_floor"] = {}
+    for s in subjects:
+        a = main.slice(s, *SLICES["E1"])
+        with np.errstate(divide="ignore", invalid="ignore"):
+            pm = np.where(a[1] > 0, a[0] / a[1], np.nan) * SCORE_SCALE
+        sd = float(np.nanstd(pm, ddof=1))
+        ex["sampling_floor"][s] = {"probe_sd": sd,
+                                   "se_by_k": {k: sd * math.sqrt(1 / k - 1 / main.n) for k in k_grid}}
+    out.write_text(json.dumps(_py(ex), indent=1))
+    typer.echo(f"wrote {out}")
+    for kk, v in ex["greedy_loo_k_star"].items():
+        typer.echo(f"  greedy LOO k* {kk}: {v}")
+
+
 if __name__ == "__main__":
     app()

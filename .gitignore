@@ -32,6 +32,7 @@ jaleesbench/results/*
 !jaleesbench/results/paper_stats.json
 # JaleesBench-Mini selection/validation results (experiment 24)
 !jaleesbench/results/mini_stats.json
+!jaleesbench/results/mini_explore.json
 __pycache__/
 *.egg-info/
 
