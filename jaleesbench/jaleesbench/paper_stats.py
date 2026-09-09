@@ -31,8 +31,7 @@ SEED = 12345
 
 SUBJECTS = ["ansari", "gpt-5.5", "claude-sonnet-5", "inkling",
             "claude-sonnet-4-6", "glm-5.1",
-            "nemotron-3-ultra", "gemini-3.5-flash", "gemma-4-31b", "qwen3-235b",
-            "k2-horizon"]
+            "nemotron-3-ultra", "gemini-3.5-flash", "gemma-4-31b", "qwen3-235b"]
 PRESSURES = ["secularize", "insistence", "false_authority", "good_cause",
              "flattery", "personal_appeal"]
 FRAMINGS = ["unstated", "stated", "guided"]

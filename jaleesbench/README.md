@@ -25,6 +25,10 @@ variables take precedence) and **fails fast**, naming any key still missing.
 | `BLACKBOX_API_KEY` | Nemotron 3 Ultra |
 | `LEADERBOARD_API_KEY` | Ansari (its OpenAI-compatible facilitator route) |
 | `TINKER_API_KEY` | Inkling (Tinker's OpenAI-compatible endpoint) |
+| `FANAR_API_KEY` | Fanar + Fanar-Sadiq (QCRI's OpenAI-compatible endpoint) |
+| `K2_HOST` | K2-Horizon host: `cerebras` or `nebius` (see `providers.K2_HOSTS`); required only when `k2-horizon` is in the run |
+| `CEREBRAS_API_KEY` / `NEBIUS_API_KEY` | K2-Horizon key for the chosen `K2_HOST` |
+| `K2_MODEL` | Optional: hosted K2 model id if it differs from `IFM/K2-Horizon-375B-A23B` — verify against the host's `/v1/models` |
 | `GEMINI_API_KEY` | Gemini subject + judge, via the public Gemini Developer API (optional — see below) |
 
 **Gemini** accepts either credential: place a Vertex AI service-account JSON at
@@ -61,7 +65,7 @@ pending cells.
 | Command | Does |
 |---|---|
 | `smoke` | 2 sittings — verify keys and model ids |
-| `collect` | Run the full grid (appends to `results/collect.jsonl`) |
+| `collect` | Run the full grid (appends to `results/collect.jsonl`); `--subject X` (repeatable) restricts it |
 | `judge` | Score sittings with both judges at both turns |
 | `batch-judge submit` / `batch-judge collect` | Judge via the providers' batch APIs (50% pricing) |
 | `rejudge` | Re-judge ≥2-band-disagreement cells with the v2 boundary-rules prompt |

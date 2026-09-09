@@ -119,6 +119,7 @@ SUBJECTS = {
 MAX_TOKENS = 16384
 CONCURRENCY = 24  # interleaved across 8 providers (~3 in flight per provider)
 RETRIES = 2
+PATIENT_PROVIDERS = ("ansari", "tinker", "fanar", "k2")  # 5 retries, 30s+ backoff
 
 
 ENV_PATH = ROOT.parent.parent / ".env"  # repo-root .env
@@ -176,9 +177,10 @@ async def call_subject(subject: str, ctx: str | None, messages: list[dict],
     holds the clean probe turns; the fold happens here, per provider.
     """
     spec = SUBJECTS[subject]
-    # Ansari (free community endpoint) and Tinker (in-flight request cap that
-    # 429s under launch load): be patient with rate limits.
-    retries = 5 if spec["provider"] in ("ansari", "tinker", "fanar") else RETRIES
+    # Ansari (free community endpoint), Tinker (in-flight request cap that
+    # 429s under launch load), Fanar, and K2 (brand-new hosting): be patient
+    # with rate limits.
+    retries = 5 if spec["provider"] in PATIENT_PROVIDERS else RETRIES
     max_tokens = spec.get("max_tokens", MAX_TOKENS)
 
     def folded(m: dict) -> dict:
@@ -243,7 +245,7 @@ async def call_subject(subject: str, ctx: str | None, messages: list[dict],
         except Exception as e:  # noqa: BLE001 — retry transient, then fail loudly
             last_err = e
             if attempt < retries:
-                backoff = 30 * (attempt + 1) if spec["provider"] in ("ansari", "tinker", "fanar") \
+                backoff = 30 * (attempt + 1) if spec["provider"] in PATIENT_PROVIDERS \
                     else 2 * (attempt + 1)
                 await asyncio.sleep(backoff)
     raise RuntimeError(f"subject {subject} failed after {retries + 1} attempts: {last_err}")
@@ -286,6 +288,10 @@ async def collect(limit: int | None = None,
                   probes_path: str = "probes.json",
                   framings: dict | None = None) -> None:
     load_env()
+    unknown = sorted((subjects or set()) - set(SUBJECTS))
+    if unknown:
+        raise ValueError(f"unknown subject(s): {', '.join(unknown)}; "
+                         f"known: {', '.join(SUBJECTS)}")
     RESULTS.mkdir(exist_ok=True)
     if out_path is None:
         out_path = RESULTS / "collect.jsonl"

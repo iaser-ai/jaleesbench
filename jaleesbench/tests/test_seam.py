@@ -125,6 +125,15 @@ async def test_call_subject_retries_then_raises(no_sleep):
     assert len(client.calls) == 3  # RETRIES (2) + 1
 
 
+async def test_call_subject_k2_is_patient(no_sleep):
+    """A brand-new K2 host is treated like ansari/tinker/fanar: 5 retries."""
+    assert "k2" in collect.PATIENT_PROVIDERS
+    client = FakeOpenAI(error=RuntimeError("429"))
+    with pytest.raises(RuntimeError, match="failed after 6 attempts"):
+        await collect.call_subject("k2-horizon", None, CONV, {"k2": client})
+    assert len(client.calls) == 6
+
+
 async def test_call_subject_recovers_after_transient_failure(no_sleep):
     client = FakeOpenAI(error=RuntimeError("transient"), fail_times=1)
     text, _, attempts = await collect.call_subject(
