@@ -20,3 +20,11 @@
   override here (unlike AIR/BUGFIX).
 - V4 (prospective) costs money: will stop and ask the architect for the subject
   before any collection.
+
+## 2026-09-09 — Design phase
+
+- Plan written. One pure-numpy module `jaleesbench/mini.py`; per-probe
+  (sum, count) table so estimands are masked ratios and greedy is vectorized.
+- Adding `scipy` to the dev group for the MILP optimality check (HiGHS); it is
+  a stretch item and time-boxed.
+- Arabic target is Spearman ρ (paper reports 0.83 over 8 subjects).

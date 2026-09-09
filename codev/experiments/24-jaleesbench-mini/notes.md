@@ -22,7 +22,17 @@ selection code ran). In short:
 
 ## Approach
 
-*(filled in the Design phase)*
+Constrained greedy forward selection on a per-probe aggregate table, scored
+by the max absolute deviation over all defined estimands × training subjects,
+with random and stratified draws as baselines and annealing/MILP as an
+optimality check. Leave-one-subject-out CV is the headline validation; the
+Arabic run and four follow-up variants are extra never-in-selection checks.
+Full design in `codev/plans/24-jaleesbench-mini-disciplined-p.md`.
+
+Alternatives considered: selecting on the headline alone (the pilot; rejected
+because it distorted steadfastness by up to 0.13), and nested greedy (one
+ranking of probes cut at each k; rejected because the coverage constraints
+depend on k, so selection is run per k).
 
 ## Environment & Reproduction
 
