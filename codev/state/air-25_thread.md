@@ -75,3 +75,21 @@ mini_v1 frozen list (#24 lane) does not exist yet. Both need the architect.
   stop the day at 16M cumulative, resume next day via existing done-set skip.
 - Judging per subject ≈ $112 full rate / ≈ $56 batch (from nemotron's judgments).
 - No K2 call made yet. Waiting: pr gate on #27 + go for calibration.
+
+## 2026-09-09 — calibration failed at turn 2; IFM multi-turn contract
+
+- Calibration chunk: 0/24 collected. Turn 1 fine; every turn-2 request rejected with a
+  NON-retryable 400: IFM's gateway requires a `reasoning` field on every assistant
+  history message. Our patient retry loop burned 5 × 30s+ backoffs per sitting on it.
+- Probes (5 tiny curl calls): response message carries `reasoning`; history accepts
+  `reasoning` (full OR empty) and `reasoning_content`; `thinking` is rejected.
+  docs.ifm.ai is Cloudflare-403 to fetch/curl — probes were the only source.
+- ARCHITECT DECISION (paper note): EMPTY echo. Every reasoning subject in the bench
+  (nemotron, inkling, thinking arms) has hidden reasoning discarded between turns;
+  echoing K2's real chain-of-thought would give it an information-state advantage no
+  other subject had. Empty keeps protocol parity; IFM's intended usage is the real echo,
+  so the paper must document this as a choice. Wire-only: stored records + judged
+  transcripts stay answer-only, schema unchanged.
+- Also: 4xx (400/401/403/404/422) now fail on the first attempt; 408/429/5xx still retry.
+- Branch builder/air-25-k2-multiturn from main; tests: echo present, reasoning absent in
+  response, record stays answer-only, 400 fail-fast, 429 still retries.
