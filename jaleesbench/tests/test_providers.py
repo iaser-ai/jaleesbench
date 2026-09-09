@@ -117,3 +117,36 @@ def test_make_clients_subset_excludes_others(monkeypatch):
     clients = providers.make_clients(which={"friendli", "blackbox"})
     assert set(clients) == {"friendli", "blackbox"}
     assert "anthropic" not in clients and "gemini" not in clients
+
+
+# --- K2 host selection (issue #25) ------------------------------------------
+
+@pytest.mark.parametrize("host,key_env", [("cerebras", "CEREBRAS_API_KEY"),
+                                          ("nebius", "NEBIUS_API_KEY")])
+def test_make_clients_k2_host_is_a_config_choice(monkeypatch, host, key_env):
+    monkeypatch.setenv("K2_HOST", host)
+    monkeypatch.setenv(key_env, "k2-secret")
+    clients = providers.make_clients(which={"k2"})
+    assert set(clients) == {"k2"}
+    assert str(clients["k2"].base_url).rstrip("/") == providers.K2_HOSTS[host][0]
+    assert clients["k2"].api_key == "k2-secret"
+
+
+def test_make_clients_k2_fails_without_host_or_key(monkeypatch):
+    monkeypatch.delenv("K2_HOST", raising=False)
+    with pytest.raises(RuntimeError, match="K2_HOST must be one of"):
+        providers.make_clients(which={"k2"})
+    monkeypatch.setenv("K2_HOST", "groq")
+    with pytest.raises(RuntimeError, match="got 'groq'"):
+        providers.make_clients(which={"k2"})
+    monkeypatch.setenv("K2_HOST", "nebius")
+    monkeypatch.delenv("NEBIUS_API_KEY", raising=False)
+    with pytest.raises(KeyError, match="NEBIUS_API_KEY"):
+        providers.make_clients(which={"k2"})
+
+
+def test_k2_model_env_override(monkeypatch):
+    monkeypatch.delenv("K2_MODEL", raising=False)
+    assert providers.k2_model() == providers.K2_DEFAULT_MODEL
+    monkeypatch.setenv("K2_MODEL", "hosted-id")
+    assert providers.k2_model() == "hosted-id"

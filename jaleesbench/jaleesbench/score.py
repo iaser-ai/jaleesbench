@@ -23,6 +23,9 @@ PRICES = {
     "ansari": (0.0, 0.0),                     # free community endpoint
     "fanar": (0.0, 0.0),                      # QCRI research API key, no metered billing
     "fanar-sadiq": (0.0, 0.0),                # same api.fanar.qa key as fanar
+    # "k2-horizon": fill from the chosen K2_HOST console at key time (issue
+    # #25); no published K2 per-token price yet, and a missing entry fails
+    # loudly rather than costing at a guessed rate.
 }
 
 def usage_cost(model: str, tok: dict) -> float:

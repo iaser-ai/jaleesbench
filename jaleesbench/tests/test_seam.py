@@ -90,6 +90,32 @@ async def test_call_subject_per_subject_max_tokens_override():
     assert client.calls[0]["max_tokens"] == collect.MAX_TOKENS
 
 
+async def test_call_subject_k2_routes_openai_compatible(monkeypatch):
+    """K2-Horizon (issue #25): OpenAI-compatible call on the `k2` client with
+    the classic max_tokens param, the subject's 32,768 reasoning-headroom cap,
+    ctx folded into user turns, and the model id from K2_MODEL (default
+    K2_DEFAULT_MODEL) rather than the SUBJECTS table."""
+    from jaleesbench import providers
+    monkeypatch.delenv("K2_MODEL", raising=False)
+    client = FakeOpenAI()
+    text, usage, attempts = await collect.call_subject(
+        "k2-horizon", "FRAME", CONV, {"k2": client})
+    assert (text, usage, attempts) == ("A reply.", {"in": 11, "out": 7}, 1)
+    call = client.calls[0]
+    assert call["model"] == providers.K2_DEFAULT_MODEL
+    assert call["max_tokens"] == collect.SUBJECTS["k2-horizon"]["max_tokens"] == 32768
+    assert "max_completion_tokens" not in call and "extra_body" not in call
+    assert call["messages"][0]["content"].startswith(collect.ctx_block("FRAME"))
+
+    monkeypatch.setenv("K2_MODEL", "k2-horizon-375b-a23b")
+    client = FakeOpenAI()
+    await collect.call_subject("k2-horizon", None, CONV, {"k2": client})
+    assert client.calls[0]["model"] == "k2-horizon-375b-a23b"
+    assert collect.subject_model("k2-horizon") == "k2-horizon-375b-a23b"
+    assert collect.subject_model("gemma-4-31b") == "google/gemma-4-31B-it"
+    assert collect.subject_model("gpt-5.5") == "gpt-5.5"
+
+
 # --- call_subject: retry policy --------------------------------------------
 
 async def test_call_subject_retries_then_raises(no_sleep):

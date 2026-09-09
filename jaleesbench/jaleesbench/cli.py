@@ -8,10 +8,12 @@ app = typer.Typer(no_args_is_help=True, add_completion=False)
 
 
 @app.command()
-def collect(limit: int = typer.Option(None, help="Run only the first N pending sittings")):
+def collect(limit: int = typer.Option(None, help="Run only the first N pending sittings"),
+            subject: list[str] = typer.Option(
+                None, help="Restrict to these subjects (repeatable); default all")):
     """Collect subject-model responses for the pilot grid."""
     from .collect import collect as _collect
-    asyncio.run(_collect(limit=limit))
+    asyncio.run(_collect(limit=limit, subjects=set(subject) if subject else None))
 
 
 @app.command()
