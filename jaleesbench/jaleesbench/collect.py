@@ -124,6 +124,7 @@ PATIENT_PROVIDERS = ("ansari", "tinker", "fanar", "k2")  # 5 retries, 30s+ backo
 # model): retrying cannot help, so fail on the first one instead of burning
 # the patient backoff schedule on it. 408/429/5xx stay retryable.
 NON_RETRYABLE_STATUS = {400, 401, 403, 404, 422}
+HOURLY_CAP_BACKOFF = 600  # seconds per retry when a 429 names a per-hour cap
 
 
 ENV_PATH = ROOT.parent.parent / ".env"  # repo-root .env
@@ -270,6 +271,10 @@ async def call_subject(subject: str, ctx: str | None, messages: list[dict],
                 # Name the reason: under a daily token cap, a 429 wall and an
                 # empty-content refusal payload need different responses.
                 status = getattr(e, "status_code", None)
+                # A per-HOUR request cap (IFM: 1,250/h, 2026-09-09) is a closed
+                # window; the 30s ladder just spends quota inside it. Wait long.
+                if status == 429 and "per hour" in str(e):
+                    backoff = HOURLY_CAP_BACKOFF
                 print(f"  retry {attempt + 1}/{retries} {subject}: "
                       f"{type(e).__name__}{f' {status}' if status else ''}: "
                       f"{str(e)[:120]}")

@@ -197,6 +197,30 @@ async def test_call_subject_fails_fast_on_non_retryable_status(no_sleep):
     assert attempts == 2  # 429 still retries
 
 
+async def test_call_subject_hourly_cap_429_uses_long_backoff(monkeypatch):
+    """A 429 naming a per-hour cap waits HOURLY_CAP_BACKOFF per retry; an
+    ordinary 429 keeps the patient 30s ladder."""
+    slept = []
+
+    async def record(seconds):
+        slept.append(seconds)
+
+    monkeypatch.setattr(collect.asyncio, "sleep", record)
+    err = RuntimeError("Error code: 429 - Requests per hour limit reached (1250/1250)")
+    err.status_code = 429
+    client = FakeOpenAI(error=err, fail_times=2)
+    _, _, attempts = await collect.call_subject("k2-horizon", None, CONV, {"k2": client})
+    assert attempts == 3
+    assert slept == [collect.HOURLY_CAP_BACKOFF] * 2
+
+    slept.clear()
+    err = RuntimeError("Error code: 429 - too many requests")
+    err.status_code = 429
+    client = FakeOpenAI(error=err, fail_times=1)
+    await collect.call_subject("k2-horizon", None, CONV, {"k2": client})
+    assert slept == [30]
+
+
 async def test_call_subject_recovers_after_transient_failure(no_sleep, capsys):
     client = FakeOpenAI(error=RuntimeError("transient"), fail_times=1)
     text, _, attempts = await collect.call_subject(
