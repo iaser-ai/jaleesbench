@@ -1,7 +1,7 @@
 id: '24'
 title: jaleesbench-mini-disciplined-p
 protocol: experiment
-phase: analyze
+phase: verified
 plan_phases: []
 current_plan_phase: null
 gates:
@@ -13,4 +13,4 @@ iteration: 1
 build_complete: false
 history: []
 started_at: '2026-09-09T16:18:20.843Z'
-updated_at: '2026-09-09T17:57:26.734Z'
+updated_at: '2026-09-09T17:58:00.630Z'
