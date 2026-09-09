@@ -267,6 +267,12 @@ async def call_subject(subject: str, ctx: str | None, messages: list[dict],
             if attempt < retries:
                 backoff = 30 * (attempt + 1) if spec["provider"] in PATIENT_PROVIDERS \
                     else 2 * (attempt + 1)
+                # Name the reason: under a daily token cap, a 429 wall and an
+                # empty-content refusal payload need different responses.
+                status = getattr(e, "status_code", None)
+                print(f"  retry {attempt + 1}/{retries} {subject}: "
+                      f"{type(e).__name__}{f' {status}' if status else ''}: "
+                      f"{str(e)[:120]}")
                 await asyncio.sleep(backoff)
     raise RuntimeError(f"subject {subject} failed after {retries + 1} attempts: {last_err}")
 

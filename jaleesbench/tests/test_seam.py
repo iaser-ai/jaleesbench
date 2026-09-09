@@ -197,12 +197,13 @@ async def test_call_subject_fails_fast_on_non_retryable_status(no_sleep):
     assert attempts == 2  # 429 still retries
 
 
-async def test_call_subject_recovers_after_transient_failure(no_sleep):
+async def test_call_subject_recovers_after_transient_failure(no_sleep, capsys):
     client = FakeOpenAI(error=RuntimeError("transient"), fail_times=1)
     text, _, attempts = await collect.call_subject(
         "gpt-5.5", None, CONV, {"openai": client})
     assert text == "A reply."
     assert attempts == 2  # failed once, succeeded on the second attempt
+    assert "retry 1/2 gpt-5.5: RuntimeError: transient" in capsys.readouterr().out
 
 
 # --- call_judge: routing + parse + usage -----------------------------------

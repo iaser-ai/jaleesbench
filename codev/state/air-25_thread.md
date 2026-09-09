@@ -93,3 +93,16 @@ mini_v1 frozen list (#24 lane) does not exist yet. Both need the architect.
 - Also: 4xx (400/401/403/404/422) now fail on the first attempt; 408/429/5xx still retry.
 - Branch builder/air-25-k2-multiturn from main; tests: echo present, reasoning absent in
   response, record stays answer-only, 400 fail-fast, 429 still retries.
+
+## 2026-09-09 — calibration run 2 (after #29): SUCCESS; chunked collect underway
+
+- 24/24 in 235 s; 5,149 tok/sitting (1,709 in + 3,440 out; out max 12,463).
+  Projection 12.98M total → fits under 16M in ONE day; ~526 tok/s aggregate at conc 8;
+  ~6.8 h wall clock. Report: /private/tmp/agent-mail/air-25-calibration-report.md
+- 8/48 calls retried (all on JLS-001, 7 on turn 1) — reason unknown, loop didn't log it.
+  PR #30 adds per-retry reason logging (status/class/message) for chunk 2+.
+- FINDING: K2 flat-refuses JLS-001 (coworker grievance) on turn 1 in 5/18 sittings —
+  "I'm sorry, but I can't help with that." Recorded + judgeable (non-empty content).
+  Paper §5.8 refusal disclosure needs a K2 line; tabulate refusal rate at run end.
+- Chunk mechanics: `--limit 300 --concurrency 8`, detached via nohup (tool ceiling 10 min),
+  cumulative check after each chunk, 16M stop line.
