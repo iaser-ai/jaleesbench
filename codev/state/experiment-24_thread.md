@@ -47,3 +47,15 @@
   **H1 falsified (k* = 110 > 70). H2 falsified (random passes 72 % at k*).**
 - Runner extended so a negative result still produces the whole ladder,
   flagged criteria_met (true here, at k = 110).
+
+## 2026-09-09 — Analyze phase
+
+- Frozen mini at k = 110 (f7989c5). Ladder: LOO 0.041 pass; per-judge Opus
+  pass / Gemini 0.052 fail (glm-5.1 E1); Arabic 0.034 pass, ρ = 0.833
+  preserved; variants 0.024 pass; per-pressure 3/72 cells > 0.05; CI
+  inflation 1.04–1.09 vs √(140/110) = 1.13; annealing/MILP show greedy's
+  in-sample gap ≥ 0.011 with no held-out relevance.
+- Exploratory: k* = 95 at 0.075, 40 at 0.10; headline-only 35 at 0.075.
+  Sampling floor SE(k) ≈ 0.5·√(1/k − 1/140) explains the curve.
+- Wrote notes Results, review, figure (`figures` command), paper draft.
+- V4 is blocked on Waleed's subject choice (money) — asking the architect.

@@ -816,5 +816,66 @@ def explore(results: Path = typer.Option(..., help="Results directory"),
         typer.echo(f"  greedy LOO k* {kk}: {v}")
 
 
+# --------------------------------------------------------------------------
+# Paper figure
+# --------------------------------------------------------------------------
+
+@app.command()
+def figures(stats: Path = typer.Option(None, help="mini_stats.json"),
+            explore_json: Path = typer.Option(None, help="mini_explore.json"),
+            out_dir: Path = typer.Option(None, help="default: docs/paper/figures")):
+    """Render fig_mini_k.pdf/.png: held-out error vs k (greedy held-out,
+    greedy in-sample, random median/p90) and random pass rate vs k."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    stats = stats or RESULTS / "mini_stats.json"
+    explore_json = explore_json or RESULTS / "mini_explore.json"
+    out_dir = out_dir or RESULTS.parent.parent / "docs" / "paper" / "figures"
+    st = json.loads(Path(stats).read_text())
+    ex = json.loads(Path(explore_json).read_text())
+    ks = st["meta"]["k_grid"]
+    g_loo = [st["methods"]["greedy_loo"][str(k)]["worst_abs_err"] for k in ks]
+    g_in = [st["methods"]["greedy_insample"][str(k)]["worst_abs_err"] for k in ks]
+    r_med = [st["methods"]["random"][str(k)]["worst_abs_err_median"] for k in ks]
+    r_p90 = [st["methods"]["random"][str(k)]["worst_abs_err_p90"] for k in ks]
+    BLUE, AQUA, ORANGE = "#2a78d6", "#1baf7a", "#eb6834"
+    INK, MUTED, GRID = "#0b0b0b", "#52514e", "#e6e6e6"
+    plt.rcParams.update({"font.family": "serif", "font.serif": ["STIX Two Text", "DejaVu Serif"],
+                         "font.size": 9.5, "axes.edgecolor": MUTED, "axes.linewidth": 0.6,
+                         "axes.grid": True, "grid.color": GRID, "grid.linewidth": 0.6,
+                         "xtick.color": INK, "ytick.color": INK, "axes.labelcolor": INK,
+                         "legend.frameon": False, "figure.facecolor": "white"})
+    fig, (ax, bx) = plt.subplots(1, 2, figsize=(7.2, 3.0), constrained_layout=True)
+    for a in (ax, bx):
+        a.spines[["top", "right"]].set_visible(False)
+        a.set_xlabel("probes in the mini, $k$")
+        a.set_xlim(15, 125)
+    ax.fill_between(ks, r_med, r_p90, color=ORANGE, alpha=0.15, linewidth=0)
+    ax.plot(ks, r_p90, color=ORANGE, lw=1.4, ls=(0, (3, 2)), label="random, 90th pct.")
+    ax.plot(ks, r_med, color=ORANGE, lw=2, label="random, median")
+    ax.plot(ks, g_in, color=AQUA, lw=2, marker="o", ms=4, label="greedy, in-sample")
+    ax.plot(ks, g_loo, color=BLUE, lw=2, marker="o", ms=4, label="greedy, held-out (LOO)")
+    ax.axhline(THRESHOLD, color=MUTED, lw=1, ls=(0, (1, 2)))
+    ax.text(58, THRESHOLD + 0.005, "0.05 threshold", color=MUTED, fontsize=8.5)
+    ax.set_ylim(0, 0.28)
+    ax.set_ylabel("worst |mini − full| over subjects × estimands")
+    ax.legend(loc="upper right", fontsize=8.5)
+    ax.set_title("(a) held-out error", loc="left", fontsize=10, color=INK)
+    RAMP = {"0.05": "#184f95", "0.075": "#2a78d6", "0.1": "#6da7ec"}
+    for th, col in RAMP.items():
+        y = [ex["random_pass_rate"][str(k)][f"full_suite@{th}"] for k in ks]
+        bx.plot(ks, y, color=col, lw=2, label=f"threshold {th}")
+    bx.set_ylim(0, 1.02)
+    bx.set_ylabel("share of random draws passing all criteria")
+    bx.legend(loc="upper left", fontsize=8.5)
+    bx.set_title("(b) random subsets, full-suite criteria", loc="left", fontsize=10, color=INK)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for ext in ("pdf", "png"):
+        fig.savefig(out_dir / f"fig_mini_k.{ext}", dpi=200)
+    typer.echo(f"wrote {out_dir / 'fig_mini_k.pdf'}")
+
+
 if __name__ == "__main__":
     app()
