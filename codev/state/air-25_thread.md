@@ -49,3 +49,18 @@ mini_v1 frozen list (#24 lane) does not exist yet. Both need the architect.
   self-host). If it's a new host, add one row to providers.K2_HOSTS.
 - mini_v1 lands at jaleesbench/jaleesbench/data/mini_v1.json when PR #26 merges.
 - Run mechanics agreed: from the MAIN checkout after merges, `collect --subject k2-horizon`.
+
+## 2026-09-09 — hosting solved: IFM gateway
+
+- Architect: K2_HOST=ifm, IFM_API_KEY in .env. `api.ifm.ai/v1/models` lists
+  `IFM/K2-Horizon-375B-A23B` (default id correct). Smoke: answer in content,
+  finish_reason stop, usage present; hidden reasoning bills inside completion_tokens
+  (one-word answer = 90 completion tokens); no reasoning_content on trivial calls.
+- Added `ifm` row to K2_HOSTS (c7e72aa). PR #27 awaits the human pr gate.
+- Cost-estimate inputs (main results/collect.jsonl, per sitting = 2 calls):
+  reasoning subjects run ~1.7–2.1K input and 1.9K (nemotron) to 4.7K (inkling) output.
+  K2 planning range: 2520 sittings × ~1.8K in = ~4.6M input; output 2K–8K/sitting =
+  5M–20M, central ~12.6M at 5K. Cost = 4.6M×p_in + (5–20)M×p_out (per-million prices).
+  Judging is on the known Anthropic/Gemini judge prices, same as every prior subject.
+- Still required before the first paid call: PRICES entry from IFM console (Waleed
+  checking) → estimate → STOP-AND-ASK.
