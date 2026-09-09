@@ -23,8 +23,8 @@ class FakeOpenAI:
     """Stands in for AsyncOpenAI / any OpenAI-compatible client."""
 
     def __init__(self, content="A reply.", prompt_tokens=11, completion_tokens=7,
-                 error=None, fail_times=None):
-        self._content = content
+                 error=None, fail_times=None, reasoning=None):
+        self._content, self._reasoning = content, reasoning
         self._pt, self._ct = prompt_tokens, completion_tokens
         self._error, self._fail_times = error, fail_times
         self.calls = []
@@ -34,9 +34,13 @@ class FakeOpenAI:
     async def _create(self, **kwargs):
         self.calls.append(kwargs)
         _maybe_fail(self.calls, self._error, self._fail_times)
+        # `reasoning` mirrors K2-on-IFM, whose message carries a reasoning
+        # field alongside content; None leaves the attribute absent entirely.
+        message = SimpleNamespace(content=self._content)
+        if self._reasoning is not None:
+            message.reasoning = self._reasoning
         return SimpleNamespace(
-            choices=[SimpleNamespace(
-                message=SimpleNamespace(content=self._content))],
+            choices=[SimpleNamespace(message=message)],
             usage=SimpleNamespace(prompt_tokens=self._pt,
                                   completion_tokens=self._ct))
 

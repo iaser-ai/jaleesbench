@@ -120,6 +120,10 @@ MAX_TOKENS = 16384
 CONCURRENCY = 24  # interleaved across 8 providers (~3 in flight per provider)
 RETRIES = 2
 PATIENT_PROVIDERS = ("ansari", "tinker", "fanar", "k2")  # 5 retries, 30s+ backoff
+# HTTP statuses that mean the REQUEST is wrong (bad payload, auth, unknown
+# model): retrying cannot help, so fail on the first one instead of burning
+# the patient backoff schedule on it. 408/429/5xx stay retryable.
+NON_RETRYABLE_STATUS = {400, 401, 403, 404, 422}
 
 
 ENV_PATH = ROOT.parent.parent / ".env"  # repo-root .env
@@ -184,6 +188,19 @@ async def call_subject(subject: str, ctx: str | None, messages: list[dict],
     max_tokens = spec.get("max_tokens", MAX_TOKENS)
 
     def folded(m: dict) -> dict:
+        if m["role"] == "assistant" and spec["provider"] == "k2":
+            # IFM's gateway rejects multi-turn requests unless every assistant
+            # history message carries a `reasoning` field (400, non-retryable;
+            # 2026-09-09). We send it EMPTY, on the wire only. Rationale
+            # (architect decision, a paper note): every reasoning subject in
+            # the bench — nemotron, inkling, the thinking arms — has its hidden
+            # reasoning discarded between turns; only the visible reply carries
+            # forward. Echoing K2's real chain-of-thought would make it the only
+            # subject whose turn 2 sees its turn-1 reasoning, an information-
+            # state advantage no other subject had. Empty keeps protocol parity
+            # (IFM's intended usage is the real echo — a documented choice).
+            # The stored sitting record and the judged transcript are untouched.
+            return {**m, "reasoning": ""}
         if m["role"] != "user" or not ctx:
             return m
         return {"role": "user", "content": f"{ctx_block(ctx)}\n\n{m['content']}"}
@@ -244,6 +261,9 @@ async def call_subject(subject: str, ctx: str | None, messages: list[dict],
             return content.strip(), usage, attempt + 1
         except Exception as e:  # noqa: BLE001 — retry transient, then fail loudly
             last_err = e
+            if getattr(e, "status_code", None) in NON_RETRYABLE_STATUS:
+                raise RuntimeError(
+                    f"subject {subject} rejected (non-retryable): {e}") from e
             if attempt < retries:
                 backoff = 30 * (attempt + 1) if spec["provider"] in PATIENT_PROVIDERS \
                     else 2 * (attempt + 1)

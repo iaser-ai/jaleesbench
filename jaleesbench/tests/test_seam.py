@@ -5,6 +5,9 @@ judge's three blocks) and the retry policy, then hand a single call to a
 provider. Fakes capture the request so we can assert the layout exactly.
 """
 
+import asyncio
+import json
+
 import pytest
 
 from jaleesbench import collect, judge
@@ -125,6 +128,49 @@ async def test_call_subject_retries_then_raises(no_sleep):
     assert len(client.calls) == 3  # RETRIES (2) + 1
 
 
+async def test_call_subject_k2_echoes_empty_reasoning_on_assistant_turns():
+    """IFM's multi-turn contract: every assistant history message needs a
+    `reasoning` field. We send it empty (protocol parity — no subject carries
+    its hidden reasoning across turns); user turns and other providers are
+    untouched."""
+    client = FakeOpenAI(reasoning="hidden chain of thought")
+    text, _, _ = await collect.call_subject("k2-horizon", "FRAME", CONV, {"k2": client})
+    assert text == "A reply."  # the response's reasoning is never surfaced
+    sent = client.calls[0]["messages"]
+    assert sent[1] == {"role": "assistant", "content": "reply1", "reasoning": ""}
+    assert "reasoning" not in sent[0] and "reasoning" not in sent[2]
+    assert sent[0]["content"].startswith(collect.ctx_block("FRAME"))
+
+    client = FakeOpenAI()
+    await collect.call_subject("gemma-4-31b", None, CONV, {"friendli": client})
+    assert client.calls[0]["messages"][1] == {"role": "assistant", "content": "reply1"}
+
+
+async def test_call_subject_k2_tolerates_absent_reasoning_in_response():
+    """A trivial prompt can come back with no reasoning field at all (architect's
+    smoke test); the seam reads content only, so nothing depends on it."""
+    client = FakeOpenAI(reasoning=None)
+    assert not hasattr(client, "reasoning")
+    text, usage, attempts = await collect.call_subject(
+        "k2-horizon", None, CONV, {"k2": client})
+    assert (text, usage, attempts) == ("A reply.", {"in": 11, "out": 7}, 1)
+
+
+async def test_run_sitting_k2_record_stays_answer_only(monkeypatch):
+    """The wire-only echo never reaches the stored record: turns are the four
+    clean strings every other subject stores, no reasoning key anywhere."""
+    client = FakeOpenAI(reasoning="hidden")
+    probe = {"id": "JLS-001", "turn1": "q1", "pressure_turns": {"flattery": "q2"}}
+    rec = await collect.run_sitting("k2-horizon", probe, "flattery", "unstated",
+                                    asyncio.Semaphore(1), {"k2": client},
+                                    framings={"unstated": None})
+    assert [t["role"] for t in rec["turns"]] == ["user", "assistant", "user", "assistant"]
+    assert all(set(t) == {"role", "content"} for t in rec["turns"])
+    assert "reasoning" not in json.dumps(rec)
+    # ...but the turn-2 request did carry the empty echo on the wire.
+    assert client.calls[1]["messages"][1]["reasoning"] == ""
+
+
 async def test_call_subject_k2_is_patient(no_sleep):
     """A brand-new K2 host is treated like ansari/tinker/fanar: 5 retries."""
     assert "k2" in collect.PATIENT_PROVIDERS
@@ -132,6 +178,23 @@ async def test_call_subject_k2_is_patient(no_sleep):
     with pytest.raises(RuntimeError, match="failed after 6 attempts"):
         await collect.call_subject("k2-horizon", None, CONV, {"k2": client})
     assert len(client.calls) == 6
+
+
+async def test_call_subject_fails_fast_on_non_retryable_status(no_sleep):
+    """A 400 means the request itself is wrong (IFM's multi-turn contract,
+    2026-09-09): one attempt, loud error, no backoff schedule burned."""
+    err = RuntimeError("Error code: 400 - invalid_request")
+    err.status_code = 400
+    client = FakeOpenAI(error=err)
+    with pytest.raises(RuntimeError, match="rejected \\(non-retryable\\).*400"):
+        await collect.call_subject("k2-horizon", None, CONV, {"k2": client})
+    assert len(client.calls) == 1
+
+    err = RuntimeError("Error code: 429 - rate limited")
+    err.status_code = 429
+    client = FakeOpenAI(error=err, fail_times=1)
+    _, _, attempts = await collect.call_subject("k2-horizon", None, CONV, {"k2": client})
+    assert attempts == 2  # 429 still retries
 
 
 async def test_call_subject_recovers_after_transient_failure(no_sleep):
