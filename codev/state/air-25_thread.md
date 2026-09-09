@@ -64,3 +64,14 @@ mini_v1 frozen list (#24 lane) does not exist yet. Both need the architect.
   Judging is on the known Anthropic/Gemini judge prices, same as every prior subject.
 - Still required before the first paid call: PRICES entry from IFM console (Waleed
   checking) → estimate → STOP-AND-ASK.
+
+## 2026-09-09 — IFM console: free, 20M tokens/day cap
+
+- PRICES["k2-horizon"] = (0.0, 0.0) with the cap in the comment; `collect --concurrency`
+  added for pacing (585e44b). 83 tests.
+- Token budget sent to architect (/private/tmp/agent-mail/air-25-k2-token-budget.md):
+  ~4.5M input + 5–20M output; central 17.1M of the 20M/day cap → 1–2 days.
+- Pacing: 24-sitting calibration at concurrency 8 → re-project → `--limit 300` chunks,
+  stop the day at 16M cumulative, resume next day via existing done-set skip.
+- Judging per subject ≈ $112 full rate / ≈ $56 batch (from nemotron's judgments).
+- No K2 call made yet. Waiting: pr gate on #27 + go for calibration.
