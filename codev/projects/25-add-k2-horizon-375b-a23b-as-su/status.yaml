@@ -1,7 +1,7 @@
 id: '25'
 title: add-k2-horizon-375b-a23b-as-su
 protocol: air
-phase: pr
+phase: verified
 plan_phases: []
 current_plan_phase: null
 gates:
@@ -13,7 +13,7 @@ iteration: 1
 build_complete: false
 history: []
 started_at: '2026-09-09T17:57:59.347Z'
-updated_at: '2026-09-09T18:14:30.179Z'
+updated_at: '2026-09-09T18:14:44.132Z'
 pr_ready_for_human: false
 pr_history:
   - phase: pr
