@@ -42,7 +42,7 @@ Offline; reads the existing judgment files from the main checkout's
 ```
 cd jaleesbench
 uv sync                                   # numpy + scipy in the dev group
-uv run python -m jaleesbench.mini run --results /abs/path/to/jaleesbench/results
+uv run python -m jaleesbench.mini run --results /abs/path/to/jaleesbench/results   # add --freeze to rewrite data/mini_v1.json
 uv run pytest -q                          # 94 tests; the real-data check needs JALEESBENCH_RESULTS=/abs/path
 ```
 

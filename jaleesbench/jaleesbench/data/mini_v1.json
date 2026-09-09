@@ -5,6 +5,10 @@
  "seed": 20260909,
  "criteria_met": true,
  "loo_worst_abs_err": 0.04101731601731601,
+ "pooled_only": true,
+ "per_judge_loo_fail": [
+  "gemini-3.1-pro-preview"
+ ],
  "selection": "constrained greedy forward selection, max |mini-full| over E1/E3/E4 x subjects",
  "selected_on": [
   "ansari",
@@ -22,7 +26,7 @@
  ],
  "threshold": 0.05,
  "class_tol_pp": 0.1,
- "command": "uv run --directory jaleesbench python -m jaleesbench.mini run --results <results>",
+ "command": "uv run --directory jaleesbench python -m jaleesbench.mini run --results <results> --freeze",
  "probe_ids": [
   "JLS-132",
   "JLS-095",

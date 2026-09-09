@@ -514,12 +514,27 @@ def run(results: Path = typer.Option(..., help="Results directory with the judgm
         quick: bool = typer.Option(False, help="Smoke run: 50 draws, 200 bootstraps, short grid"),
         skip_milp: bool = typer.Option(False, help="Skip the MILP optimality check"),
         milp_time_limit: float = typer.Option(300.0, help="HiGHS time limit (s)"),
-        anneal_iters: int = typer.Option(20000, help="Annealing iterations")):
+        anneal_iters: int = typer.Option(20000, help="Annealing iterations"),
+        freeze_artifact: bool = typer.Option(False, "--freeze/--no-freeze",
+                                             help="(Re)write the frozen data/mini_v1.json. Off by "
+                                                  "default and always off under --quick, so a re-run "
+                                                  "cannot silently overwrite the paper-cited list.")):
     """Run every selection method over the k grid, validate (LOO, per-judge,
     Arabic, variants, per-pressure, bootstrap, optimality gap), freeze the
     mini at k*, and write mini_stats.json + data/mini_v1.json."""
     t_start = time.time()
     out = out or RESULTS / "mini_stats.json"
+    if quick and freeze_artifact:
+        typer.echo("--quick never rewrites the frozen artifact; ignoring --freeze")
+        freeze_artifact = False
+    if not skip_milp:
+        # Fail fast: scipy is a dev-only dependency. Check it before the
+        # multi-minute grid rather than inside freeze(), after the work is done.
+        try:
+            import scipy.optimize  # noqa: F401
+        except ImportError as e:
+            raise RuntimeError("scipy is required for the MILP check (uv sync --group dev), "
+                               "or pass --skip-milp") from e
     n_draws = 50 if quick else N_DRAWS
     n_boot = 200 if quick else N_BOOT
     k_grid = [20, 40, 60, 80, 100] if quick else K_GRID
@@ -577,7 +592,7 @@ def run(results: Path = typer.Option(..., help="Results directory with the judgm
                    "stratified_pass_rate": stats["methods"]["stratified"][k_ref]["pass_rate"]}
     stats["frozen"] = freeze(main, variants, arabic, meta, probe_ids, subjects, k_ref,
                              stats, rng, n_boot, skip_milp, milp_time_limit, anneal_iters,
-                             criteria_met=k_star is not None)
+                             criteria_met=k_star is not None, write_frozen=freeze_artifact)
     stats["meta"]["wall_seconds"] = round(time.time() - t_start, 1)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(_py(stats), indent=1))
@@ -586,10 +601,10 @@ def run(results: Path = typer.Option(..., help="Results directory with the judgm
 
 
 def freeze(main, variants, arabic, meta, probe_ids, subjects, k, stats, rng, n_boot,
-           skip_milp, milp_time_limit, anneal_iters, criteria_met=True):
-    """Everything about the frozen mini at k: in-sample + LOO fit, per-judge,
-    Arabic, variants, per-pressure, bootstrap, optimality gap; writes
-    data/mini_v1.json."""
+           skip_milp, milp_time_limit, anneal_iters, criteria_met=True, write_frozen=False):
+    """Everything about the mini at k: in-sample + LOO fit, per-judge, Arabic,
+    variants, per-pressure, bootstrap, optimality gap. Writes data/mini_v1.json
+    only when `write_frozen` is set (the frozen list is a paper-cited artifact)."""
     cov = Coverage(meta, probe_ids, k)
     idx = greedy_select(main, subjects, k, cov)
     ids = [probe_ids[i] for i in idx]
@@ -674,16 +689,30 @@ def freeze(main, variants, arabic, meta, probe_ids, subjects, k, stats, rng, n_b
                       "probe_ids": None if m_idx is None else [probe_ids[i] for i in m_idx],
                       "seconds": round(time.time() - t0, 1)}
 
-    MINI_PATH.write_text(json.dumps({
+    fz["frozen_artifact"] = frozen_record(k, ids, subjects, criteria_met,
+                                          stats["methods"]["greedy_loo"][k]["worst_abs_err"],
+                                          fz["per_judge"])
+    if write_frozen:
+        MINI_PATH.write_text(json.dumps(fz["frozen_artifact"], indent=1))
+        typer.echo(f"froze k={k} -> {MINI_PATH}")
+    else:
+        typer.echo(f"k={k} evaluated; frozen artifact NOT written (pass --freeze to rewrite {MINI_PATH.name})")
+    return fz
+
+
+def frozen_record(k, ids, subjects, criteria_met, loo_worst, per_judge):
+    """The content of data/mini_v1.json. `pooled_only` carries the per-judge
+    caveat with the artifact: True when any single judge fails held-out."""
+    judge_fail = [j for j, v in per_judge.items() if not v["loo"]["pass"]]
+    return {
         "version": 1, "bank_version": load_probes()["version"], "k": k, "seed": SEED,
-        "criteria_met": criteria_met,
-        "loo_worst_abs_err": stats["methods"]["greedy_loo"][k]["worst_abs_err"],
+        "criteria_met": criteria_met, "loo_worst_abs_err": loo_worst,
+        "pooled_only": bool(judge_fail),
+        "per_judge_loo_fail": judge_fail,
         "selection": "constrained greedy forward selection, max |mini-full| over E1/E3/E4 x subjects",
         "selected_on": subjects, "threshold": THRESHOLD, "class_tol_pp": CLASS_TOL,
-        "command": "uv run --directory jaleesbench python -m jaleesbench.mini run --results <results>",
-        "probe_ids": ids}, indent=1))
-    typer.echo(f"froze k={k} -> {MINI_PATH}")
-    return fz
+        "command": "uv run --directory jaleesbench python -m jaleesbench.mini run --results <results> --freeze",
+        "probe_ids": ids}
 
 
 @app.command()

@@ -68,8 +68,9 @@ arithmetic: a subject's per-scenario scores have a standard deviation near
 0.5 on the $-1$ to $+1$ scale, so any $k$-subset carries a sampling error of
 about $0.5\sqrt{1/k-1/140}$, and keeping the worst of some forty held-out
 quantities under 0.05 needs $k\approx110$ whatever the selection method.
-Greedy, annealing and an exact MILP all fit the training subjects better
-(worst in-sample error 0.018, 0.012, 0.007) with no held-out benefit. The
+Greedy, annealing and a time-limited MILP all fit the training subjects
+better (worst in-sample error 0.018, 0.012, and a 0.007 incumbent) with no
+held-out benefit. The
 110-scenario mini passes every never-in-selection check we had on hand ---
 the Arabic replication (worst error 0.034, rank correlation 0.83 preserved)
 and four follow-up model variants (0.024) --- and is released frozen against

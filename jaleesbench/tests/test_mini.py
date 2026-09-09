@@ -254,6 +254,30 @@ def test_bootstrap_ci_contains_point_and_widens_for_mini(table):
     assert mini.bootstrap(table, "gamma", None, rng, 50)["E4_stated"] is None
 
 
+def test_freeze_writes_artifact_only_when_asked(table, tmp_path, monkeypatch):
+    monkeypatch.setattr(mini, "MINI_PATH", tmp_path / "mini_v1.json")
+    monkeypatch.setattr(mini, "load_probes", lambda: {"version": 4})
+    cov = mini.Coverage(META, PROBE_IDS, k=10)
+    ev, folds = mini.loo_greedy(table, SUBJECTS, 10, cov)
+    ev_in = mini.evaluate({s: mini.estimands(table, s) for s in SUBJECTS},
+                          {s: mini.estimands(table, s, mini.greedy_select(table, SUBJECTS, 10, cov))
+                           for s in SUBJECTS})
+    stats = {"methods": {"greedy_loo": {10: {**ev, "folds": {h: [PROBE_IDS[i] for i in ix]
+                                                            for h, ix in folds.items()}}},
+                         "greedy_insample": {10: ev_in}}}
+    rng = np.random.default_rng(0)
+    fz = mini.freeze(table, mini.Table(PROBE_IDS), None, META, PROBE_IDS, SUBJECTS, 10, stats,
+                     rng, 30, skip_milp=True, milp_time_limit=1, anneal_iters=20)
+    assert not (tmp_path / "mini_v1.json").exists()          # default: never overwrite
+    rec = fz["frozen_artifact"]
+    assert rec["k"] == 10 and len(rec["probe_ids"]) == 10 and rec["bank_version"] == 4
+    assert rec["pooled_only"] == (not all(v["loo"]["pass"] for v in fz["per_judge"].values()))
+    fz2 = mini.freeze(table, mini.Table(PROBE_IDS), None, META, PROBE_IDS, SUBJECTS, 10, stats,
+                      np.random.default_rng(0), 30, skip_milp=True, milp_time_limit=1,
+                      anneal_iters=20, write_frozen=True)
+    assert json.loads((tmp_path / "mini_v1.json").read_text())["probe_ids"] == fz2["frozen_artifact"]["probe_ids"]
+
+
 def test_spearman():
     assert mini.spearman([1, 2, 3, 4], [10, 20, 30, 40]) == pytest.approx(1.0)
     assert mini.spearman([1, 2, 3, 4], [4, 3, 2, 1]) == pytest.approx(-1.0)

@@ -66,3 +66,8 @@
 - PR #26 opened (Refs #24) at the architect's request so the work merges
   before air-25 touches jaleesbench/ for the K2-Horizon subject. V4 numbers
   will be a small follow-up PR. Waiting on integration review; not merging.
+- Integration review on #26: science verified; three pre-merge fixes applied
+  (frozen artifact now written only with --freeze and never under --quick;
+  scipy import checked before the grid; abstract says time-limited MILP
+  incumbent). mini_v1.json carries pooled_only=true. 95 tests pass. Merging
+  per the architect's instruction.
