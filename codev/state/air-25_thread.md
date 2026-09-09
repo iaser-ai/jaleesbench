@@ -118,3 +118,16 @@ mini_v1 frozen list (#24 lane) does not exist yet. Both need the architect.
   REFUSAL+COUNSEL (phrase followed by substantive advice) — paper disclosure needs it.
 - Flags only on: probe ≥10/18 on either turn, or projection >19M.
 - Chunk 2 (pid 77527) started 19:30Z with per-retry reason logging (PR #30) live.
+
+## 2026-09-09 — 1,250 requests/HOUR wall (second cap on the IFM key)
+
+- Chunk 2 stalled 19:37Z after 52 sittings; probe 20:31Z → 429 "Requests per hour
+  limit reached (1250/1250)". Distinct from the 20M tokens/day cap; not in the console.
+- Chunk 1 alone ≈ 1,000 req/h (486 sittings/h at conc 8); stacking chunk 2 crossed it,
+  and patient retries then fed the wall (~300 req/h) so it never drained.
+- Killed 20:31:49Z; 382 sittings / 2.61M tokens on disk; file clean.
+- LESSON: nohup + redirected stdout is block-buffered → no live progress and the buffer
+  dies with SIGTERM. Use PYTHONUNBUFFERED=1 for detached runs.
+- Re-plan: concurrency 6 (~730 req/h), 300-sitting chunks, waiter probes from 21:01Z
+  every 5 min and launches chunk 3 on the first 200. Details in
+  /private/tmp/agent-mail/air-25-req-per-hour-replan.md
