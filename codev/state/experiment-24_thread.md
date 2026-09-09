@@ -63,3 +63,6 @@
 - Gate experiment-complete approved (Waleed via architect main). V4 subject
   designated: IFM K2-Horizon-375B-A23B; collection is a separate project,
   score against mini_v1 when judgments arrive. Exploratory subsection stays.
+- PR #26 opened (Refs #24) at the architect's request so the work merges
+  before air-25 touches jaleesbench/ for the K2-Horizon subject. V4 numbers
+  will be a small follow-up PR. Waiting on integration review; not merging.
