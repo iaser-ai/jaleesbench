@@ -122,7 +122,8 @@ def test_make_clients_subset_excludes_others(monkeypatch):
 # --- K2 host selection (issue #25) ------------------------------------------
 
 @pytest.mark.parametrize("host,key_env", [("cerebras", "CEREBRAS_API_KEY"),
-                                          ("nebius", "NEBIUS_API_KEY")])
+                                          ("nebius", "NEBIUS_API_KEY"),
+                                          ("ifm", "IFM_API_KEY")])
 def test_make_clients_k2_host_is_a_config_choice(monkeypatch, host, key_env):
     monkeypatch.setenv("K2_HOST", host)
     monkeypatch.setenv(key_env, "k2-secret")

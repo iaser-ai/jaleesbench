@@ -26,8 +26,8 @@ variables take precedence) and **fails fast**, naming any key still missing.
 | `LEADERBOARD_API_KEY` | Ansari (its OpenAI-compatible facilitator route) |
 | `TINKER_API_KEY` | Inkling (Tinker's OpenAI-compatible endpoint) |
 | `FANAR_API_KEY` | Fanar + Fanar-Sadiq (QCRI's OpenAI-compatible endpoint) |
-| `K2_HOST` | K2-Horizon host: `cerebras` or `nebius` (see `providers.K2_HOSTS`); required only when `k2-horizon` is in the run |
-| `CEREBRAS_API_KEY` / `NEBIUS_API_KEY` | K2-Horizon key for the chosen `K2_HOST` |
+| `K2_HOST` | K2-Horizon host: `ifm` (IFM's gateway, the one that serves it), `cerebras`, or `nebius` (see `providers.K2_HOSTS`); required only when `k2-horizon` is in the run |
+| `IFM_API_KEY` / `CEREBRAS_API_KEY` / `NEBIUS_API_KEY` | K2-Horizon key for the chosen `K2_HOST` |
 | `K2_MODEL` | Optional: hosted K2 model id if it differs from `IFM/K2-Horizon-375B-A23B` — verify against the host's `/v1/models` |
 | `GEMINI_API_KEY` | Gemini subject + judge, via the public Gemini Developer API (optional — see below) |
 

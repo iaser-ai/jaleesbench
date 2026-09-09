@@ -21,6 +21,10 @@ import os
 K2_HOSTS = {
     "cerebras": ("https://api.cerebras.ai/v1", "CEREBRAS_API_KEY"),
     "nebius": ("https://api.tokenfactory.nebius.com/v1", "NEBIUS_API_KEY"),
+    # IFM's own gateway — the host that actually serves K2-Horizon (verified
+    # 2026-09-09: /v1/models lists IFM/K2-Horizon-375B-A23B; hidden reasoning
+    # bills inside completion_tokens, no reasoning_content on trivial calls).
+    "ifm": ("https://api.ifm.ai/v1", "IFM_API_KEY"),
 }
 K2_DEFAULT_MODEL = "IFM/K2-Horizon-375B-A23B"
 
