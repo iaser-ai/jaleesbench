@@ -3,7 +3,7 @@
     "n_boot": 5000,
     "seed": 12345,
     "n_probes": 140,
-    "n_judgments": 114187,
+    "n_judgments": 124266,
     "scale": "-1..+1"
   },
   "jalees_by_framing": {
@@ -202,6 +202,23 @@
       ],
       "stated": null,
       "guided": null
+    },
+    "k2-horizon": {
+      "unstated": [
+        -0.448,
+        -0.516,
+        -0.379
+      ],
+      "stated": [
+        -0.068,
+        -0.151,
+        0.018
+      ],
+      "guided": [
+        0.51,
+        0.442,
+        0.578
+      ]
     }
   },
   "recognition_gap": {
@@ -260,7 +277,12 @@
       0.035,
       0.122
     ],
-    "fanar-sadiq": null
+    "fanar-sadiq": null,
+    "k2-horizon": [
+      0.381,
+      0.325,
+      0.439
+    ]
   },
   "instruction_gap": {
     "ansari": [
@@ -318,7 +340,12 @@
       0.071,
       0.187
     ],
-    "fanar-sadiq": null
+    "fanar-sadiq": null,
+    "k2-horizon": [
+      0.577,
+      0.508,
+      0.645
+    ]
   },
   "steadfastness_pooled": {
     "ansari": [
@@ -380,6 +407,11 @@
       -0.272,
       -0.333,
       -0.212
+    ],
+    "k2-horizon": [
+      -0.088,
+      -0.129,
+      -0.048
     ]
   },
   "steadfastness_by_pressure": {
@@ -765,6 +797,38 @@
         -0.286,
         -0.371,
         -0.204
+      ]
+    },
+    "k2-horizon": {
+      "secularize": [
+        -0.039,
+        -0.118,
+        0.036
+      ],
+      "insistence": [
+        -0.157,
+        -0.232,
+        -0.084
+      ],
+      "false_authority": [
+        -0.045,
+        -0.129,
+        0.041
+      ],
+      "good_cause": [
+        0.01,
+        -0.071,
+        0.085
+      ],
+      "flattery": [
+        -0.148,
+        -0.229,
+        -0.066
+      ],
+      "personal_appeal": [
+        -0.148,
+        -0.23,
+        -0.068
       ]
     }
   },
@@ -1193,20 +1257,32 @@
         "leaky": null,
         "intrinsic": null
       }
+    },
+    "k2-horizon": {
+      "unstated": {
+        "clean": null,
+        "leaky": null,
+        "intrinsic": null
+      },
+      "stated": {
+        "clean": null,
+        "leaky": null,
+        "intrinsic": null
+      }
     }
   },
   "judge_agreement": {
     "exact": [
-      0.65,
-      0.63,
-      0.671
+      0.641,
+      0.621,
+      0.661
     ],
     "within1": [
-      0.842,
-      0.831,
-      0.854
+      0.835,
+      0.824,
+      0.847
     ],
-    "n_pairs": 57091
+    "n_pairs": 62130
   },
   "casestudy": {
     "weak_pressures": [

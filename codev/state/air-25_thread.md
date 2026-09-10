@@ -106,3 +106,37 @@ mini_v1 frozen list (#24 lane) does not exist yet. Both need the architect.
   Paper §5.8 refusal disclosure needs a K2 line; tabulate refusal rate at run end.
 - Chunk mechanics: `--limit 300 --concurrency 8`, detached via nohup (tool ceiling 10 min),
   cumulative check after each chunk, 16M stop line.
+
+## 2026-09-10 02:30Z — judging released and running; post-collection prep
+
+- Opus: one Anthropic batch msgbatch_01FanqCx2gHJgoJSFyNREDWx (5,040 requests, 50%).
+  Gemini (no Vertex batch): live judge_all(judges={'gemini-3.1-pro-preview'}) detached,
+  5,045 todo (5,040 K2 + 5 pre-existing fanar gaps — those fail with 'band' parse
+  errors as before; not K2). Pace ~47/min → ETA ~04:20Z. Batch collect waits until the
+  Gemini judge exits (both append judgments.jsonl; avoid interleaved writes).
+- Issue #28 CONFIRMED: regenerating paper_stats with the 12-subject list against main's
+  data reproduces the committed JSON leaf-for-leaf (only meta.n_judgments differs, by
+  the in-flight K2 judgments). Branch builder/air-25-paper-grid (b031ed2, local) has
+  SUBJECTS = 13 + test; JSON regen + PR after K2 judgments land.
+- V4 instrument = the #24 lane's own command:
+  `uv run --directory jaleesbench python -m jaleesbench.mini score --results jaleesbench/results --subject k2-horizon`
+  (E1/E3/E4 on frozen mini_v1 k=110 vs full 140, abs_err per estimand, pass at ≤0.05).
+
+## 2026-09-10 ~04:00Z — JUDGED + SCORED
+
+- Judgments: K2 10,079/10,080 (Opus 5,040 — 4,987 batch + 53 live; Gemini 5,039).
+  One documented gap: k2-horizon|JLS-055|good_cause|unstated|gemini|full — Gemini emits
+  garbage on all 6 attempts (same species as fanar's 5 chronic cells). No dupes.
+- Judge cost ACTUAL $202.46 (Gemini $139.82 live — Vertex has no batch; Opus $62.63,
+  4,987 batched) vs my ~$56 estimate: I wrongly assumed both judges batch, and K2's
+  long replies inflate transcripts. Reported plainly to the architect.
+- Full-140 Jalees Score (unstated/full): −0.448 [−0.516, −0.379] — 12th of 13, above
+  qwen3-235b (−0.476, last); statistically indistinguishable from qwen3-235b and
+  fanar-sadiq (−0.43), whose CIs overlap its own. Stated −0.068, guided
+  +0.510 (instruction gap +0.58, the largest staircase in the pool). Steadfastness
+  −0.088 [−0.129, −0.048].
+- V4 PROSPECTIVE (mini_v1, k=110): abs_err E1 0.0107, E3 0.0085, E4_stated 0.0187,
+  E4_guided 0.0110 → PASS at the 0.05 bound. Saved results/mini_v4_k2-horizon.json.
+- paper_stats.json regenerated with 13 subjects; only non-K2 leaves that move are the
+  pooled judge_agreement (now includes K2 pairs) and meta counts. PR on
+  builder/air-25-paper-grid closes #28.
