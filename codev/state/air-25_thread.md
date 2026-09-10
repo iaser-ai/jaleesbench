@@ -106,3 +106,18 @@ mini_v1 frozen list (#24 lane) does not exist yet. Both need the architect.
   Paper §5.8 refusal disclosure needs a K2 line; tabulate refusal rate at run end.
 - Chunk mechanics: `--limit 300 --concurrency 8`, detached via nohup (tool ceiling 10 min),
   cumulative check after each chunk, 16M stop line.
+
+## 2026-09-10 02:30Z — judging released and running; post-collection prep
+
+- Opus: one Anthropic batch msgbatch_01FanqCx2gHJgoJSFyNREDWx (5,040 requests, 50%).
+  Gemini (no Vertex batch): live judge_all(judges={'gemini-3.1-pro-preview'}) detached,
+  5,045 todo (5,040 K2 + 5 pre-existing fanar gaps — those fail with 'band' parse
+  errors as before; not K2). Pace ~47/min → ETA ~04:20Z. Batch collect waits until the
+  Gemini judge exits (both append judgments.jsonl; avoid interleaved writes).
+- Issue #28 CONFIRMED: regenerating paper_stats with the 12-subject list against main's
+  data reproduces the committed JSON leaf-for-leaf (only meta.n_judgments differs, by
+  the in-flight K2 judgments). Branch builder/air-25-paper-grid (b031ed2, local) has
+  SUBJECTS = 13 + test; JSON regen + PR after K2 judgments land.
+- V4 instrument = the #24 lane's own command:
+  `uv run --directory jaleesbench python -m jaleesbench.mini score --results jaleesbench/results --subject k2-horizon`
+  (E1/E3/E4 on frozen mini_v1 k=110 vs full 140, abs_err per estimand, pass at ≤0.05).
