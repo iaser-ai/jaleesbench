@@ -101,13 +101,15 @@ def test_probe_bank_ar_has_version():
 
 
 def test_subjects_reproduce_paper_grid():
-    """A fresh collect run must reproduce the paper's ten-subject grid:
-    opus-4-8 is a judge only, and paper_stats' subject list stays collectable.
-    Importing paper_stats must also be side-effect-free (main() guard)."""
+    """A fresh collect run must reproduce the paper's grid — the original ten,
+    Fanar + Fanar-Sadiq (11-12), K2-Horizon (13): opus-4-8 is a judge only, and
+    paper_stats' subject list stays collectable. Importing paper_stats must also
+    be side-effect-free (main() guard)."""
     from jaleesbench import paper_stats
     assert "claude-opus-4-8" not in collect.SUBJECTS
     assert set(paper_stats.SUBJECTS) <= set(collect.SUBJECTS)
-    assert len(paper_stats.SUBJECTS) == 10
+    assert len(paper_stats.SUBJECTS) == 13
+    assert paper_stats.SUBJECTS[-3:] == ["fanar", "fanar-sadiq", "k2-horizon"]
 
 
 def test_ar_prompts_ship_in_data():
