@@ -158,3 +158,17 @@ mini_v1 frozen list (#24 lane) does not exist yet. Both need the architect.
   bracket-escaped pattern (`pgrep -f "[.]venv/bin/jaleesbench collect"`) so the searcher's
   own command line can't match. The follower wedged this way; killed it and launched the
   remainder (238 sittings) by hand at 01:54:48Z after confirming no real process.
+
+## 2026-09-10 02:28Z — COLLECTION COMPLETE
+
+- 2,520/2,520 sittings, 0 failed/dupes/missing/empty; 17.60M tokens (09-09 10.40M,
+  09-10 7.21M); 6,985 tok/sitting; 86/5,040 calls retried (1.7%), all per-second
+  throttles after the fixes. Report: /private/tmp/agent-mail/air-25-collect-complete.md
+- Refusals: 197/2,520 cells (7.8%) over 41 probes; 199 BARE + 111 REFUSAL+COUNSEL;
+  guided 20 vs unstated 99 cells. Flagged: JLS-010, JLS-047, JLS-123, JLS-134.
+  Tally: results/collect_k2_refusals.json (gitignored, main checkout).
+- Stable infra config on IFM: concurrency 6 ≈ 372 sittings/h ≈ 750 req/h under the
+  1,250 req/h fixed-hour cap.
+- NEXT (waiting on architect): batch-judge both judges × both scopes on K2 only (~$56);
+  then post-collection PR adding k2-horizon to paper_stats.SUBJECTS; full-140 score;
+  mini_v1 prospective comparison (data/mini_v1.json on main).
