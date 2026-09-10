@@ -71,3 +71,12 @@
   scipy import checked before the grid; abstract says time-limited MILP
   incumbent). mini_v1.json carries pooled_only=true. 95 tests pass. Merging
   per the architect's instruction.
+
+## 2026-09-10 — V4 follow-up
+
+- Architect reported the prospective result; verified the artifact on disk
+  (`mini_v4_k2-horizon.json`): worst 0.0187 (E4_stated), E1 0.0107, E3 0.0085,
+  E4_guided 0.0110, pass. Numbers match the message exactly.
+- New branch builder/experiment-24-v4 from origin/main. Paper V4 subsection,
+  abstract, ladder table and limitations updated; notes/review updated;
+  artifact whitelisted and committed. PR with Closes #24.

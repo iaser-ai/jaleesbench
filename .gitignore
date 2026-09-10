@@ -33,6 +33,7 @@ jaleesbench/results/*
 # JaleesBench-Mini selection/validation results (experiment 24)
 !jaleesbench/results/mini_stats.json
 !jaleesbench/results/mini_explore.json
+!jaleesbench/results/mini_v4_k2-horizon.json
 __pycache__/
 *.egg-info/
 
