@@ -36,8 +36,8 @@
 % Status: DRAFT (2026-09-09). Every number comes from
 % jaleesbench/results/mini_stats.json and mini_explore.json, produced by
 % `python -m jaleesbench.mini run` / `explore` (seed 20260909).
-% The prospective test (Section 5.5) is pending data: subject designated
-% (IFM K2-Horizon-375B-A23B), collection scheduled separately.
+% Prospective test (V4) run 2026-09-10 on IFM K2-Horizon-375B-A23B:
+% results/mini_v4_k2-horizon.json (produced by `python -m jaleesbench.mini score`).
 % ------------------------------------------------------------------
 
 \title{JaleesBench-Mini: A Preregistered Item-Reduction Study\\
@@ -73,7 +73,9 @@ better (worst in-sample error 0.018, 0.012, and a 0.007 incumbent) with no
 held-out benefit. The
 110-scenario mini passes every never-in-selection check we had on hand ---
 the Arabic replication (worst error 0.034, rank correlation 0.83 preserved)
-and four follow-up model variants (0.024) --- and is released frozen against
+and four follow-up model variants (0.024) --- and a prospective test on a
+thirteenth subject released after the freeze, IFM K2-Horizon-375B-A23B,
+passes with a worst error of 0.019. The mini is released frozen against
 probe-bank v4 as a screening instrument. The full bench remains the citable
 number. We argue that the sampling floor should be step zero of any benchmark
 item-reduction study.
@@ -118,7 +120,8 @@ subset below 110 scenarios meets a 0.05 tolerance on every quantity for a
 held-out subject, and at 110 the optimized subset is no better than a random
 one. The mechanism is not subtle, and \cref{sec:floor} gives it in one line.
 The 110-scenario subset itself is sound: it passes every out-of-sample check
-we had, and we release it frozen. The contribution of the paper is as much
+we had, including a prospective test on a model released after the freeze,
+and we release it frozen. The contribution of the paper is as much
 the negative methodological result as the artifact: on a benchmark of this
 shape, item selection cannot beat the sampling floor, and the floor can be
 computed before any selection is attempted.
@@ -346,7 +349,7 @@ V2 per judge, Gemini 3.1 Pro only & held-out & 0.052 & no \\
 V3 Arabic replication & 9 subjects, never in selection & 0.034 & yes \\
 Follow-up variants & 4 subjects, never in selection & 0.024 & yes \\
 Per-pressure steadfastness (not gated) & 72 cells & 0.062 & 3 cells over \\
-V4 prospective & pending & --- & --- \\
+V4 prospective & K2-Horizon-375B, released after the freeze & 0.019 & yes \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -391,14 +394,28 @@ the headline at a loose tolerance; it was wrong about what a mini must
 reproduce and how tightly. None of these looser variants was preregistered
 and we do not release a subset for them.
 
-\subsection{Prospective test (pending)}\label{sec:v4}
+\subsection{Prospective test}\label{sec:v4}
 
 The final rung runs one subject never used in any of the above on both the
-110-scenario mini and the full bank, and compares at 0.05. The subject has
-been designated: IFM K2-Horizon-375B-A23B, released on 3 September 2026,
-after the selection was frozen. Its full-bank collection and judging are
-scheduled as a separate run; this section will report the comparison when
-the judgments exist. It is the only step that spends money.
+110-scenario mini and the full bank, and compares at 0.05. It is the only
+step that spends money, and the only one whose data did not exist when the
+mini was frozen. The subject is IFM K2-Horizon-375B-A23B, a reasoning model
+released on 3 September 2026, after the freeze; it was collected on the full
+bank in all three framings on 9--10 September as the benchmark's thirteenth
+subject and judged by both judges, then scored with the same command that
+scores any subject against the frozen list.
+
+The mini reproduces every estimand inside the preregistered bound. Headline:
+$-0.438$ on the mini against $-0.448$ on the full bank (error 0.011).
+Steadfastness: $-0.097$ against $-0.088$ (0.009). Faith stated: $-0.049$
+against $-0.068$ (0.019). Guided: $+0.521$ against $+0.510$ (0.011). The
+worst error, 0.019, is below the mini's own held-out worst on the twelve
+selection subjects. One disclosure about the collection: IFM's gateway
+rejects a multi-turn request unless every assistant message in the history
+carries a \texttt{reasoning} field, so the collection sent that field empty,
+on the wire only. This keeps K2-Horizon on the same footing as every other
+reasoning subject in the bench, whose hidden reasoning is likewise discarded
+between turns; the stored transcripts and the judgments are unaffected.
 
 \section{Discussion}\label{sec:discussion}
 
@@ -434,7 +451,8 @@ Twelve subjects is a small population to validate on, and one of them
 direction could fail the mini at 110. The per-judge rung fails by 0.002 for
 one judge, which we report rather than round away. The 0.05 tolerance is a
 choice, and \cref{sec:results} shows how much it costs. The prospective test
-is not yet run. And the selection methods compared are the ones fixed in
+is a single subject, and one that sits in the crowded lower half of the
+scale. And the selection methods compared are the ones fixed in
 advance; a method that borrows strength across subjects with an explicit
 item model might do better with more subjects, though \cref{sec:floor}
 bounds how much better on this bank.

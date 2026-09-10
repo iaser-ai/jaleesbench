@@ -1,6 +1,6 @@
 # Review 24: JaleesBench-Mini — disciplined probe-subset reduction
 
-**Protocol**: EXPERIMENT (soft) · **Issue**: #24 · **Outcome**: both preregistered hypotheses falsified; frozen mini at k = 110 meets the criteria
+**Protocol**: EXPERIMENT (soft) · **Issue**: #24 · **Outcome**: both preregistered hypotheses falsified; frozen mini at k = 110 meets the criteria, including the prospective test
 **Record**: `codev/experiments/24-jaleesbench-mini/notes.md`
 
 ## What was built
@@ -64,4 +64,8 @@ Cerebras API access lands; and the paper keeps its exploratory
 looser-tolerance subsection, labeled as such. When the judgments exist, run
 `python -m jaleesbench.mini score --results <path> --subject <name>`, record
 the result in the notes, and fill the paper's prospective-test subsection.
-The experiment closes with V4 marked pending-data.
+**Update 2026-09-10: V4 run and passed.** K2-Horizon collected on the full
+140 (air-25), scored with `mini score`: worst error 0.019 (E4 stated), all
+estimands inside 0.05. Artifact `jaleesbench/results/mini_v4_k2-horizon.json`
+(whitelisted). The paper's prospective-test subsection now reports it, with
+the empty-`reasoning` wire disclosure from collect.py.

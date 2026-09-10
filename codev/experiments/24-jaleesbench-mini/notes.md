@@ -1,6 +1,6 @@
 # Experiment 24: JaleesBench-Mini — disciplined probe-subset reduction
 
-**Status**: Complete (both preregistered hypotheses falsified; V4 prospective test pending data for the designated subject IFM K2-Horizon-375B-A23B) · **Date**: 2026-09-09 · **Issue**: #24
+**Status**: Complete (both preregistered hypotheses falsified; frozen k = 110 mini passes every rung including the V4 prospective test on IFM K2-Horizon-375B-A23B) · **Date**: 2026-09-09 · **Issue**: #24
 
 ## Goal
 
@@ -95,6 +95,7 @@ failing fold is almost always Ansari, the +0.48 outlier.
 | Bootstrap CI half-width inflation | 1.04–1.09 | √(140/110) = 1.13 |
 | Greedy in-sample optimality gap | ≥ 0.011 | annealing 0.012, MILP incumbent 0.007 (300 s limit) |
 | Exploratory k\*: threshold 0.075 / 0.10 | 95 / 40 | full suite; headline-only 35 / 20 |
+| **V4 prospective** (K2-Horizon-375B, released after the freeze) worst | 0.019 **pass** | E1 0.011, E3 0.009, E4 stated 0.019, guided 0.011 |
 
 Output artifacts: `jaleesbench/results/mini_stats.json`,
 `jaleesbench/results/mini_explore.json`, `jaleesbench/jaleesbench/data/mini_v1.json`,
@@ -121,12 +122,15 @@ tie-break before the full run.
 
 ## Next Steps
 
-1. **V4 prospective test** — subject designated by Waleed (2026-09-09):
-   IFM K2-Horizon-375B-A23B (released 2026-09-03, never seen by selection).
-   Full-140 collection runs as a separate main-bench project once Cerebras
-   API access lands; when its judgments exist, score with
-   `python -m jaleesbench.mini score --results <path> --subject <name>` and
-   fill the paper's prospective-test subsection. Pending data.
+1. **V4 prospective test — done, passes.** IFM K2-Horizon-375B-A23B
+   (released 2026-09-03, never seen by selection) was collected on the full
+   140 in all three framings on 2026-09-09/10 (issue #25, air-25) and scored
+   with `python -m jaleesbench.mini score`: worst |mini − full| = 0.019
+   (stated), all four estimands inside 0.05. Artifact:
+   `jaleesbench/results/mini_v4_k2-horizon.json`. Disclosure: IFM's gateway
+   requires a `reasoning` field on assistant history messages; collection
+   sent it empty, wire-only, keeping parity with the other reasoning
+   subjects (see the collect.py comment).
 2. Decide the mini's stated use. As preregistered it is a 21 % saving, so it
    is a screening tool only; a 0.075 tolerance would allow k = 95 (32 %) and a
    headline-only mini at 0.075 would allow k = 35 (75 %), but those are

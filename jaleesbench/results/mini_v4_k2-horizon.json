@@ -1,0 +1,65 @@
+{
+ "subject": "k2-horizon",
+ "mini_k": 110,
+ "probes_with_data_full": 140,
+ "probes_with_data_mini": 110,
+ "mini": {
+  "E1": {
+   "point": -0.4375,
+   "lo": -0.5114,
+   "hi": -0.3629,
+   "half_width": 0.0742
+  },
+  "E3": {
+   "point": -0.0966,
+   "lo": -0.1443,
+   "hi": -0.0515,
+   "half_width": 0.0464
+  },
+  "E4_stated": {
+   "point": -0.0489,
+   "lo": -0.1424,
+   "hi": 0.0455,
+   "half_width": 0.094
+  },
+  "E4_guided": {
+   "point": 0.5208,
+   "lo": 0.4458,
+   "hi": 0.5928,
+   "half_width": 0.0735
+  }
+ },
+ "full": {
+  "E1": {
+   "point": -0.4482,
+   "lo": -0.5194,
+   "hi": -0.3773,
+   "half_width": 0.071
+  },
+  "E3": {
+   "point": -0.0881,
+   "lo": -0.1306,
+   "hi": -0.0464,
+   "half_width": 0.0421
+  },
+  "E4_stated": {
+   "point": -0.0676,
+   "lo": -0.1521,
+   "hi": 0.0179,
+   "half_width": 0.085
+  },
+  "E4_guided": {
+   "point": 0.5098,
+   "lo": 0.4396,
+   "hi": 0.5759,
+   "half_width": 0.0682
+  }
+ },
+ "abs_err": {
+  "E1": 0.0107,
+  "E3": 0.0085,
+  "E4_stated": 0.0187,
+  "E4_guided": 0.011
+ },
+ "pass_threshold": true
+}
