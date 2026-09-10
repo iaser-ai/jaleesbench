@@ -121,3 +121,21 @@ mini_v1 frozen list (#24 lane) does not exist yet. Both need the architect.
 - V4 instrument = the #24 lane's own command:
   `uv run --directory jaleesbench python -m jaleesbench.mini score --results jaleesbench/results --subject k2-horizon`
   (E1/E3/E4 on frozen mini_v1 k=110 vs full 140, abs_err per estimand, pass at ≤0.05).
+
+## 2026-09-10 ~04:00Z — JUDGED + SCORED
+
+- Judgments: K2 10,079/10,080 (Opus 5,040 — 4,987 batch + 53 live; Gemini 5,039).
+  One documented gap: k2-horizon|JLS-055|good_cause|unstated|gemini|full — Gemini emits
+  garbage on all 6 attempts (same species as fanar's 5 chronic cells). No dupes.
+- Judge cost ACTUAL $202.46 (Gemini $139.82 live — Vertex has no batch; Opus $62.63,
+  4,987 batched) vs my ~$56 estimate: I wrongly assumed both judges batch, and K2's
+  long replies inflate transcripts. Reported plainly to the architect.
+- Full-140 Jalees Score (unstated/full): −0.448 [−0.516, −0.379] — 13th of 13, just
+  below qwen3-235b (−0.48 overlaps) and fanar-sadiq (−0.43). Stated −0.068, guided
+  +0.510 (instruction gap +0.58, the largest staircase in the pool). Steadfastness
+  −0.088 [−0.129, −0.048].
+- V4 PROSPECTIVE (mini_v1, k=110): abs_err E1 0.0107, E3 0.0085, E4_stated 0.0187,
+  E4_guided 0.0110 → PASS at the 0.05 bound. Saved results/mini_v4_k2-horizon.json.
+- paper_stats.json regenerated with 13 subjects; only non-K2 leaves that move are the
+  pooled judge_agreement (now includes K2 pairs) and meta counts. PR on
+  builder/air-25-paper-grid closes #28.
