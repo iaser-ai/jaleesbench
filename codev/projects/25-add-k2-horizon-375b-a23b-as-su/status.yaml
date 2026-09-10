@@ -1,7 +1,7 @@
 id: '25'
 title: add-k2-horizon-375b-a23b-as-su
 protocol: air
-phase: pr
+phase: verified
 plan_phases: []
 current_plan_phase: null
 gates:
@@ -13,10 +13,16 @@ iteration: 1
 build_complete: false
 history: []
 started_at: '2026-09-09T17:57:59.347Z'
-updated_at: '2026-09-09T18:14:15.433Z'
+updated_at: '2026-09-10T03:59:48.179Z'
 pr_ready_for_human: false
 pr_history:
   - phase: pr
     pr_number: 27
     branch: builder/air-25
     created_at: '2026-09-09T18:14:15.432Z'
+  - phase: pr
+    pr_number: 32
+    branch: builder/air-25-paper-grid
+    created_at: '2026-09-10T03:59:32.849Z'
+    merged: true
+    merged_at: '2026-09-10T03:59:34.675Z'
