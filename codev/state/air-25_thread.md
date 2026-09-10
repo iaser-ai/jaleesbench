@@ -130,8 +130,9 @@ mini_v1 frozen list (#24 lane) does not exist yet. Both need the architect.
 - Judge cost ACTUAL $202.46 (Gemini $139.82 live — Vertex has no batch; Opus $62.63,
   4,987 batched) vs my ~$56 estimate: I wrongly assumed both judges batch, and K2's
   long replies inflate transcripts. Reported plainly to the architect.
-- Full-140 Jalees Score (unstated/full): −0.448 [−0.516, −0.379] — 13th of 13, just
-  below qwen3-235b (−0.48 overlaps) and fanar-sadiq (−0.43). Stated −0.068, guided
+- Full-140 Jalees Score (unstated/full): −0.448 [−0.516, −0.379] — 12th of 13, above
+  qwen3-235b (−0.476, last); statistically indistinguishable from qwen3-235b and
+  fanar-sadiq (−0.43), whose CIs overlap its own. Stated −0.068, guided
   +0.510 (instruction gap +0.58, the largest staircase in the pool). Steadfastness
   −0.088 [−0.129, −0.048].
 - V4 PROSPECTIVE (mini_v1, k=110): abs_err E1 0.0107, E3 0.0085, E4_stated 0.0187,
