@@ -147,3 +147,14 @@ mini_v1 frozen list (#24 lane) does not exist yet. Both need the architect.
   57 BARE vs 34 REFUSAL+COUNSEL replies; flagged JLS-010 (10/18 t1).
 - Open question to architect: is the 20M/day cap a fixed UTC-day window? If so the
   16M line may be moot after 00:00Z — not acting on it without their word.
+
+## 2026-09-10 — 1,600-sitting run done; remainder launched by hand
+
+- Continuous run 21:50:29Z → ~01:52Z: 1,600/1,600, 0 failed, stopped on --limit.
+  Midpoint flag at 23:58Z: JLS-047 11/18 turn-1 refusals (second flag after JLS-010).
+  Day-1 ledger at 00:00Z: 10.30M cumulative (1,483 sittings).
+- LESSON: `pgrep -f "<pattern>"` inside a nohup'd waiter/Monitor matches the *monitor's
+  own shell* whose command text contains the pattern → wait loops never end. Use a
+  bracket-escaped pattern (`pgrep -f "[.]venv/bin/jaleesbench collect"`) so the searcher's
+  own command line can't match. The follower wedged this way; killed it and launched the
+  remainder (238 sittings) by hand at 01:54:48Z after confirming no real process.
