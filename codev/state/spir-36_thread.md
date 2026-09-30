@@ -100,3 +100,26 @@ new owner question 9 with default **Gemma-4-12B, bf16, one 80 GB GPU (48 GB work
 smaller serving window)**, alternatives E4B on 24 GB and 31B on 80 GB, trade-offs stated.
 Modal-path run order restored to Modal-only; separate demonstration run order added.
 Gate re-requested.
+
+## 2026-09-30 (night) — plan drafted, reviewed, at the plan-approval gate
+
+Spec approved (relayed by the architect; `porch approve` run). Plan written: eight phases,
+one commit each — (1) as-run scripts at their final paths with the three comments reworded
+first; (2) installable `uv` project, clone-relative paths, key loading scoped per step;
+(3) data archives + checksums + fetch step (staged locally, nothing uploaded);
+(4) free steps ported and proven byte-identical; (5) judging + Tinker steps;
+(6) Modal drivers with configurable account names; (7) local demonstration;
+(8) README, archive index, fresh-clone walk-through, owner report, PR.
+
+Plan review: Gemini approve; Codex and Claude request-changes. All points accepted:
+a common "preflight + --dry-run" shape for every paid step; counts corrected (43 kept
+scripts; 88-member data archive); exhaustive checksum comparison of the archives;
+Inkling-Small scoring declared as new code ported from the sweep script; GPU dependency
+group with Linux markers and torch; three Modal images kept distinct; `uv.lock` as the 1 MB
+exception; `config.json` original-machine paths kept and disclosed to the owner; release
+tag fixed as `jaleesweights-data-v1`. Waiting at the gate.
+
+Useful facts for implementation: `modal run <driver> --help` works with no Modal account
+(tested with a fake HOME). `judge_all` builds both Anthropic and Gemini clients whenever
+work remains — that is the second small change needed in the benchmark, beside
+`load_env` narrowing.
