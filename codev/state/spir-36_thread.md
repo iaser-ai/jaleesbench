@@ -36,3 +36,27 @@ issue (#21). Wrote the spec draft.
 
 **Standing limits**: no release (draft or public) and no paid Modal / Tinker / judging step
 without the owner's approval relayed by the architect.
+
+## 2026-09-30 — spec reviewed, at the spec-approval gate
+
+Three-way review: Gemini approve; Codex request-changes (5 points); Claude comment (7 points).
+All accepted (one in part). The changes that matter to later phases:
+
+- **Reword before the first commit.** My draft said "commit the as-run originals, then
+  port". Codex pointed out that would put the private wording into public git history.
+  The spec now requires the comment rewording first, and the private-material search covers
+  every commit on the branch, not just the final tree. Run it before pushing.
+- **Benchmark package finds its data from its installed position.** If it is installed as a
+  non-editable dependency, its results folder and key-file paths point into the
+  environment, not the clone. The plan must handle this.
+- **Eight rebuilt files, not six.** Six builder scripts; eight files to compare.
+- **Paired-interval bootstrap is not repeatable** and two intervals printed in the paper
+  cannot be recovered exactly. Making it repeatable is the one authorised change to
+  behaviour. Whether the paper is corrected is an owner question.
+- **Reference data is read-only; a new run writes elsewhere** and chains step to step.
+- An owner-facing report outside git will list all 204 scratch files with class and
+  destination, plus the search result.
+
+Eight questions for the owner are in the spec (weights, capability results, two existing
+comment lines, linking issue 21, sibling-project files, console logs, redistribution terms,
+the paper's two paired intervals). Waiting at the gate.
