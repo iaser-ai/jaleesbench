@@ -1,0 +1,662 @@
+# Specification: JaleesWeights — commit the fine-tuning work as a runnable `jaleesweights/` folder for handoff
+
+<!--
+SPEC vs PLAN BOUNDARY:
+This spec defines WHAT and WHY. The plan defines HOW and WHEN.
+Keep implementation phases, file paths, code, and "first we will… then we will…"
+out of the spec — those belong in codev/plans/XXXX-*.md.
+-->
+
+## Problem Statement
+
+The JaleesWeights paper (`docs/paper/jaleesweights-paper.tex`) reports a two-stage
+fine-tuning recipe that makes two open models behave as good Islamic companions with no
+system prompt. The paper is in this repository. The work behind it is not: the scripts,
+data, logs and run records exist only as uncommitted scratch files on one machine.
+
+The project is being handed to a new team. Today that team could read the paper but could
+not run, check or extend the recipe, because:
+
+- the scripts are not in git;
+- the data they read and wrote is not in git and is not downloadable anywhere;
+- the scripts assume the original machine's folder layout, one hardcoded file path, and the
+  original owner's cloud accounts;
+- nothing says which of the 44 scripts are the recipe the paper reports and which belong to
+  approaches that were tried and dropped.
+
+The people affected are the new team (who must be able to run the recipe with their own
+accounts), the project owner (who must be sure nothing private or secret is published, and
+who approves anything that becomes public), and readers of the paper (who should be able to
+check its numbers against released data).
+
+## Current State
+
+### What exists
+
+One scratch folder holding 204 files, 338 MB:
+
+| Kind | Count | Size | Notes |
+|---|---|---|---|
+| Python scripts | 44 | 0.2 MB | plain scripts, no package |
+| Top-level `.jsonl` data | 58 | 325 MB (73 MB gzipped) | collected conversations, judgments, training sets, training logs |
+| Per-run folders from Tinker training | 10 folders, 6 files each | 9 MB | settings, per-step metrics, checkpoint index, console log, timing records, and a `code.diff` |
+| Console output captures (`.log`, `.out`) | 27 | 3.7 MB | progress output of collection, judging and training |
+| Other | 7 + 9 cache files | small | the 70/70 split, the guide text, three notes, one account cleanup record, Python bytecode cache |
+
+Separately, the benchmark's main run — which the training-set builders read — sits in the
+benchmark's results folder and is ignored by git: conversations (281 MB), judgments
+(236 MB) and citation flags (5 MB); 111 MB gzipped in total.
+
+### What stops a new team from running it
+
+Each item was confirmed by reading the scripts.
+
+1. **Import path.** 15 scripts reach the benchmark package by inserting a path three folders
+   above themselves into Python's search path. It only works from the scratch location.
+2. **Working directory.** Scripts that read the main run disagree about where they are
+   launched from: four expect to be run from inside the benchmark folder, one from the
+   repository root, one computes the location from its own position.
+3. **Hardcoded path.** One script reads the Tinker key from an absolute path to the original
+   machine's `.env` file.
+4. **Hardcoded checkpoints.** The Inkling-Small stage-2 training script starts from a
+   checkpoint address in the original owner's Tinker account. A new team's stage-1 run
+   produces a different address, so this must be an input, not a constant.
+5. **Owner's cloud account.** The Gemma scripts use a Modal storage volume and a Modal secret
+   that exist only in the original owner's Modal account, and nothing documents how to
+   create them or what to upload.
+6. **Too many keys demanded.** The benchmark's key loader refuses to start unless seven
+   provider keys are set (Anthropic, OpenAI, Friendli, Blackbox, the Ansari route, Tinker,
+   Fanar). JaleesWeights judging needs two (Anthropic and Gemini); collection from
+   Inkling-Small needs one more (Tinker). A new team with only the keys it needs cannot
+   judge anything.
+7. **Undeclared dependencies.** `modal` is imported on the local machine but declared
+   nowhere. `torch`, `transformers`, `peft`, `vllm` and `lm_eval` are used only inside the
+   rented GPU machines; they are named inside the scripts but nowhere a reader would look.
+8. **Undocumented manual steps.** Copying input files to the Modal volume, copying results
+   back and renaming them, and turning one training set into the trainer's file format were
+   done by hand and are written down nowhere.
+9. **No analysis script for half the paper's main table.** The Gemma rows have scoring
+   scripts. The Inkling-Small rows were computed ad hoc; the only script that touches them
+   belongs to the dose sweep.
+10. **No index.** Nothing maps scripts or data files to the recipe of record or to the
+    dropped approaches.
+
+### What must not be published
+
+- Two notes recording an exchange with another team, and that team's recipe files (the
+  recipe files live outside the experiment folder).
+- Comments in two scripts that name that team and its configuration file.
+- Every per-run `code.diff`. They were thought to be lockfile diffs only; they also contain
+  diffs of an architect state file (which must stay out of git) and, through it, the other
+  team's name.
+- A record of Tinker checkpoints deleted during an account cleanup. Most of the 172 entries
+  are other parties' runs on a shared account.
+
+### What already works (measured for this spec, at no cost)
+
+- The six training-set builders, re-run against today's data in a scratch directory,
+  reproduce the frozen training files **byte for byte** (316 and 310 stage-1 examples, 502
+  and 672 stage-2 pairs, the conversation inputs, the trainer-format export).
+- Recomputing the paper's main results table from the existing judgment files matches
+  **every point estimate to three decimals**, for both models, including the paired
+  comparisons.
+- The confidence-interval ends differ from the paper by up to 0.005 between runs. The
+  existing paired-comparison code iterates over a Python set, whose order changes from one
+  run to the next, so its bootstrap is not repeatable.
+- The guide text file used for the "with guide" condition is identical to the text the
+  benchmark package produces, and identical to what the main run recorded.
+- No key-shaped strings were found in any scratch file.
+
+## Desired State
+
+A new team member clones the repository, opens `jaleesweights/README.md`, and by following
+only that file can:
+
+1. install everything needed on their own machine with one documented command;
+2. see which accounts and keys are needed, and set them up (including the Modal volume and
+   secret, in their own account);
+3. download the data with one documented step, and have it land where the code expects it;
+4. run every step of the recipe of record, for Gemma and for Inkling-Small, in the
+   documented order, with a statement beside each paid step of what it costs roughly and
+   which account it bills;
+5. recompute the paper's main results table from the downloaded data without spending
+   anything;
+6. find the dropped approaches and the dose sweep in a clearly labelled archive, with an
+   index saying what each file was for and which paper claim it supports.
+
+Nothing they run depends on the original machine's paths, account names or untracked files.
+
+### The recipe of record
+
+The paper is the arbiter. The recipe of record is what the paper's Method section
+describes and what its main results table reports:
+
+- **Gemma-4-31B**, the full-precision (bf16) chain on Modal: stage 1 (filtered context
+  distillation, supervised fine-tuning), stage 2 (preference optimization on the stage-1
+  model's own samples, with the stage-1 model as reference), the held-out evaluation of each
+  stage against a base-model control served through the same stack, the "with guide"
+  evaluation of stage 1, and the capability panel.
+- **Inkling-Small**, through the Tinker API: the same two stages and evaluations, with
+  stage 2 at the settings of record (learning rate 1e-5, one epoch).
+- The 70/70 split, the Gemini-selects / Opus-scores separation, and the paired per-cell
+  comparisons.
+
+Everything else the paper mentions is supporting evidence, not the recipe: the five
+preference-optimization attempts on base models, the earlier 4-bit Gemma chain (reported
+as "an independent end-to-end rerun"), and the seven-arm Inkling-Small dose sweep. Those go
+to the archive.
+
+### Run order the README must document
+
+Paid steps are marked with the account that is billed. "Free" means it runs on the local
+machine using downloaded data.
+
+**Gemma-4-31B**
+
+| # | Step | Cost |
+|---|---|---|
+| 1 | Build the conversation inputs for the training half and the held-out half | free |
+| 2 | Build the stage-1 training set: Gemma's own guided answers that Gemini rated good before and after pushback, screened for guide references and dangling citations (316 conversations) | free |
+| 3 | Upload inputs and the training set to the Modal volume | free |
+| 4 | Stage-1 training (LoRA rank 32, lr 5e-5, 2 epochs) | Modal, one B200 |
+| 5 | Collect held-out answers: base model with no adapter (the control), stage 1 bare, stage 1 with guide | Modal, one H200 |
+| 6 | Opus scores those answers | Anthropic |
+| 7 | Sample four answers per training scenario from the stage-1 model at temperature 1.3 | Modal, one H200 |
+| 8 | Gemini rates the 1,680 samples | Gemini |
+| 9 | Build stage-2 pairs from the rated samples (502 pairs) | free |
+| 10 | Stage-2 training (β 0.1, lr 1e-5, 1 epoch; stage 1 as reference) | Modal, one B200 |
+| 11 | Collect held-out answers from the stage-2 model, bare | Modal, one H200 |
+| 12 | Opus scores them | Anthropic |
+| 13 | Scores with intervals, and the paired stage-2-versus-stage-1 comparison | free |
+| 14 | Capability panel (MMLU, GSM8K, IFEval) on base, stage 1, stage 2 | Modal, one H200 |
+
+**Inkling-Small**
+
+| # | Step | Cost |
+|---|---|---|
+| 1 | Collect base-model answers: training half with guide; held-out half bare and with guide | Tinker |
+| 2 | Gemini rates the guided training-half answers | Gemini |
+| 3 | Build the stage-1 training set (310 conversations) and write it in the trainer's format | free |
+| 4 | Stage-1 training | Tinker |
+| 5 | Collect held-out answers from the stage-1 checkpoint, bare and with guide | Tinker |
+| 6 | Opus scores base and stage-1 held-out answers | Anthropic |
+| 7 | Sample four answers per training scenario from the stage-1 checkpoint | Tinker |
+| 8 | Gemini rates the 1,680 samples | Gemini |
+| 9 | Build stage-2 pairs (672) and write them in the trainer's format | free |
+| 10 | Stage-2 training, starting from the stage-1 checkpoint | Tinker |
+| 11 | Collect held-out answers from the stage-2 checkpoint, bare; Opus scores them | Tinker, Anthropic |
+| 12 | Scores with intervals, and the paired comparisons (stage 1 versus base, stage 2 versus stage 1) | free |
+
+Steps copying files to and from Modal, which were manual, become documented steps.
+
+### Classification of every existing file
+
+Three classes. **Final pipeline**: part of the recipe of record; ported so it runs from a
+fresh clone. **Archive**: committed or released as it was, labelled not maintained.
+**Left out**: neither committed nor put in a release archive; the originals stay untouched
+on the original machine.
+
+File names are the scratch-folder names. Where a name would itself reveal private
+material, the file is described instead of named.
+
+#### Scripts (44)
+
+**Final pipeline (24)**
+
+| Script | Role |
+|---|---|
+| `build_train_inputs.py` | conversation inputs for both halves of the split |
+| `judge_train_samples.py` | Gemini rating of sampled answers (both models) |
+| `export_comparisons.py` | pairs → the Tinker trainer's format |
+| `score_eval.py` | scores with bootstrap intervals |
+| `build_sft_guided.py` | Gemma stage-1 training set |
+| `modal_gemma_sft_bf16.py` | Gemma stage-1 training |
+| `modal_gemma_eval.py` | Gemma held-out collection (base control, tuned, with guide) |
+| `modal_gemma_sample.py` | Gemma sampling for stage 2 |
+| `judge_eval_basevllm.py`, `judge_eval_bf16.py`, `judge_eval_sftdpo_bf16.py` | Opus scoring of Gemma held-out answers |
+| `build_sftbf16_pairs.py` | Gemma stage-2 pairs |
+| `modal_gemma_dpo2_bf16.py` | Gemma stage-2 training |
+| `paired_sftdpo_bf16.py` | Gemma paired comparison |
+| `modal_gemma_capability.py` | capability panel |
+| `collect_small.py` | every Inkling-Small collection and sampling pass |
+| `judge_small_selection.py` | Gemini rating of Inkling-Small guided answers |
+| `build_sft_small.py` | Inkling-Small stage-1 training set |
+| `train_sft_small.py` | Inkling-Small stage-1 training |
+| `judge_small_baselines.py`, `judge_small_sft.py`, `judge_small_sftdpo.py` | Opus scoring of Inkling-Small held-out answers |
+| `build_small_sft2_pairs.py` | Inkling-Small stage-2 pairs |
+| `train_dpo_small_sft2.py` | Inkling-Small stage-2 training |
+
+**Archive (19)**
+
+| Script | Belongs to |
+|---|---|
+| `build_pairs.py`, `train_dpo_run.py`, `train_dpo_run2.py`, `collect_eval.py`, `judge_eval.py` | first preference-optimization rounds on base Inkling (pairs from other models' answers; 254 and 1,200 pairs) |
+| `modal_gemma_dpo.py` | preference optimization on base Gemma (used by three arms) |
+| `analyze_shifts.py` | per-cell analysis of the first Gemma arms |
+| `build_onpolicy_pairs.py`, `judge_eval_onpol.py` | pairs from base Gemma's own samples (also the source of the paper's "317 of 420 cells" figure) |
+| `build_maxgap_pairs.py`, `judge_eval_maxgap.py` | pooled pairs from existing Gemma answers |
+| `modal_gemma_sft.py`, `modal_gemma_dpo2.py`, `build_sft2_pairs.py`, `judge_eval_sft.py`, `judge_eval_sftG.py`, `judge_eval_sftdpo.py` | the earlier 4-bit Gemma chain (the paper's "independent rerun") |
+| `train_dpo_small_sft2_sweep.py`, `paired_small_sweep.py` | the Inkling-Small dose sweep |
+
+Two archive scripts have comments naming the other team and its configuration file. Those
+comments are reworded; every setting stays. That is the only edit made to archive scripts.
+They are not repaired: their import paths and launch instructions still describe the
+scratch location, and the archive's index says so.
+
+**Left out (1)**
+
+| Script | Why |
+|---|---|
+| a sibling project's copy of the stage-1 training script | differs from our own bf16 stage-1 script only in names and docstring (9 lines); not ours to publish; the architect said to draft with it left out, owner confirms at the gate |
+
+#### Data
+
+**Final pipeline — reference data for the recipe of record**
+
+| Files | What |
+|---|---|
+| `split_70_70.json` | the split of record (seed 3446). Small; committed to git |
+| `guided_prefix.txt` | the guide text as sent to the models. Identical to what the benchmark package produces |
+| `eval_inputs_gemma.jsonl`, `train_inputs_gemma.jsonl` | conversation inputs, held-out and training halves (used for both models despite the name) |
+| `sft_train_guided.jsonl` | Gemma stage-1 training set (316) |
+| `collect_eval_basevllm.jsonl`, `collect_eval_bf16.jsonl`, `collect_eval_bf16_guided.jsonl`, `collect_eval_sftdpo_bf16.jsonl` | Gemma held-out answers: control, stage 1 bare, stage 1 with guide, stage 2 |
+| `collect_sftbf16_samples.jsonl`, `judgments_sftbf16_samples.jsonl` | Gemma stage-1 samples and their Gemini ratings |
+| `pairs_train70_sftbf16.jsonl` | Gemma stage-2 pairs (502) |
+| `judgments_eval_gemma.jsonl` | Opus scores for all Gemma held-out answers. One file holding ten subjects: four of record, six from archived arms. Kept whole |
+| `train_log_bf16sft.jsonl` | Gemma stage-1 training log |
+| `collect_small_train_guided.jsonl`, `judgments_small_selection.jsonl` | Inkling-Small guided training-half answers and their Gemini ratings |
+| `sft_train_small.jsonl`, `sft_train_small_messages.jsonl` | Inkling-Small stage-1 training set (310), and the same in the trainer's format |
+| `collect_small_test_unstated.jsonl`, `collect_small_test_guided.jsonl`, `collect_small_test_unstated_sft.jsonl`, `collect_small_test_guided_sft.jsonl`, `collect_small_test_unstated_sftdpo.jsonl` | Inkling-Small held-out answers: base, stage 1, stage 2 |
+| `collect_small_train_unstated_sft_k4.jsonl`, `judgments_small_sft_k4.jsonl` | Inkling-Small stage-1 samples and their Gemini ratings |
+| `pairs_train70_small_sft2.jsonl`, `comparisons_train_small_sft2.jsonl` | Inkling-Small stage-2 pairs (672), and the same in the trainer's format |
+| `judgments_eval_small.jsonl` | Opus scores for all Inkling-Small held-out answers. One file holding nine subjects: three of record, six from the sweep. Kept whole |
+| `sft_small_run/`, `dpo_small_sft2_run/` — settings, per-step metrics, checkpoint index only | records of the two Inkling-Small training runs of record |
+| the benchmark main run: conversations, judgments, citation flags | read by the builders and by scoring; distributed as its own download |
+
+**Archive**
+
+| Files | Belongs to |
+|---|---|
+| `pairs_train70.jsonl`, `pairs_train70_expanded4.jsonl`, `comparisons_train.jsonl`, `comparisons_train_expanded4.jsonl`, `collect_eval.jsonl`, `judgments_eval.jsonl`, `run1/`, `run2/` | first rounds on base Inkling |
+| `pairs_train70_gemma-4-31b.jsonl`, `pairs_train70_gemma-4-31b_expanded4.jsonl`, `collect_eval_gemma.jsonl` | first round on base Gemma (the expanded set was built but never trained on) |
+| `collect_train_samples.jsonl`, `judgments_train_samples.jsonl`, `pairs_train70_gemma_onpol.jsonl`, `pairs_train70_gemma_onpol_all.jsonl`, `collect_eval_onpol.jsonl`, `train_log_onpol.jsonl` | pairs from base Gemma's own samples |
+| `pairs_train70_gemma_maxgap.jsonl`, `collect_eval_maxgap.jsonl`, `train_log_maxgap.jsonl` | pooled pairs |
+| `collect_eval_sft.jsonl`, `collect_eval_sftG.jsonl`, `collect_sft2_samples.jsonl`, `judgments_sft2_samples.jsonl`, `pairs_train70_sft2.jsonl`, `collect_eval_sftdpo.jsonl`, `train_log_sft.jsonl`, `train_log_sftdpo.jsonl` | the earlier 4-bit Gemma chain |
+| six `collect_small_test_unstated_sftdpo_lr*.jsonl`, six `dpo_small_sft2_sweep_*/` folders | the dose sweep |
+
+From every archived run folder, the same three files are kept as from the runs of record:
+settings, per-step metrics, checkpoint index.
+
+**Left out**
+
+| Files | Why |
+|---|---|
+| two notes recording the exchange with the other team | owner's decision 3 |
+| a methodology note written for a sibling project | repeats the paper and the experiment issue; quotes the 4-bit numbers the paper has replaced; contains original-machine paths; architect said to draft with it left out, owner confirms at the gate |
+| the Tinker cleanup record | lists other parties' runs on a shared account; no experimental content |
+| ten `code.diff` files | contain diffs of an architect state file and the other team's name; no experimental content |
+| ten `logs.log`, ten `timing_spans.jsonl`, 27 `.log` / `.out` console captures | console output only. They carry original-machine paths and session identifiers; nothing in the paper is computed from them; the per-step metrics that the paper does cite are kept separately |
+| Python bytecode cache | generated |
+
+## Success Criteria
+
+- [ ] `jaleesweights/` exists at the top level of the repository with a README, the final
+      pipeline, and an archive folder.
+- [ ] Every one of the 44 scripts and every data file in the scratch folder is in the place
+      its class above says, and nothing classed "left out" is in git or in a release archive.
+- [ ] From a fresh clone in an empty directory, with none of the original machine's files
+      present, following only the README: installation succeeds with one documented command.
+- [ ] From that same clone, the data download step places the reference data and the
+      benchmark main run where the code expects them, checks each archive against a
+      checksum recorded in git, and stops with a clear message if a checksum does not match
+      or the release is not yet public.
+- [ ] From that same clone, every free step of both run-order tables runs, and the six
+      rebuilt training files are byte-identical to the downloaded reference copies.
+- [ ] From that same clone, the scoring step reproduces the paper's main results table:
+      every score and paired difference to three decimals, every interval end within 0.01.
+      The scoring step gives the same output on repeated runs.
+- [ ] Every paid step can be started from that same clone and gets as far as it can without
+      spending: it finds its inputs, and either reports that the reference data already
+      covers all the work (collection and judging steps) or stops before launch naming what
+      it is about to rent (training steps). A missing key or account produces a message that
+      names it.
+- [ ] A JaleesWeights step asks only for the keys it uses. Judging with only an Anthropic
+      key and a Gemini credential set works; nothing demands OpenAI, Friendli, Blackbox,
+      Ansari-route or Fanar keys.
+- [ ] No step reads a path outside the clone, and no step depends on which directory it is
+      launched from beyond what the README states.
+- [ ] No checkpoint address, storage volume or secret from the original owner's accounts is
+      required. Where a later step needs the output of an earlier paid step (a checkpoint, an
+      adapter), it takes it as an input.
+- [ ] A new run never overwrites the downloaded reference data.
+- [ ] The README states: the accounts and keys needed; how to create the Modal volume and
+      secret; the run order for both models; the rough cost and billed account of each paid
+      step; which steps are free; that trained weights are not included; and how the
+      capability panel's numbers relate to the paper's.
+- [ ] The archive has an index naming, for every archived script and data file, the approach
+      it belonged to and the paper claim it supports, and states that the archive is not
+      maintained and its scripts do not run from their new location.
+- [ ] Dependencies are declared: what runs locally in the project's dependency file with a
+      committed lock file; what runs only on rented GPUs is declared where those machines
+      are defined, and the README says so.
+- [ ] A search of everything staged for git and of every release archive finds no key, no
+      content of any `.env` file, no mention of the other team or its configuration file,
+      and none of the left-out files. The search result is reported to the owner with the
+      request to publish.
+- [ ] Nothing is publicly downloadable until the owner has approved it. No release, draft or
+      public, is created without that approval.
+- [ ] No paid Modal, Tinker or judging step is run during this work without the owner's
+      approval.
+- [ ] Existing benchmark tests still pass, and the new code has tests that run offline with
+      no keys and no downloaded data.
+- [ ] `codev/state/*` stays out of git except this builder's thread file. The spec, plan and
+      review are committed.
+
+## Constraints
+
+### Decisions already made (by the project owner) — copied verbatim from the issue, fixed
+
+1. **Location.** The work lives in this repo, in a new top-level `jaleesweights/` folder. No separate repo.
+2. **Large data.** Large data files are distributed as a release download, not committed to git history. This covers both the experiment's own data (about 310 MB raw) and the benchmark main-run data that the training-pair builders read (about 500 MB raw), which is also not in git today.
+3. **Material from a private upstream config.** Some training settings were taken from another team's private configuration. Keep the settings in the scripts, because they are needed to reproduce the runs. Leave out the exchange notes, leave out the upstream recipe files, and reword code comments so they do not name that team or its config.
+4. **Scope.** The final pipeline — the recipe of record that the paper reports — must be runnable end to end, with a README and a documented run order. The abandoned arms and the dose sweep are committed as-is in an archive folder, clearly labelled as not maintained.
+5. **Process.** SPIR protocol. The codev artifacts for this work (spec, plan, review) are committed with it.
+
+### Other constraints
+
+- The repository is public. A published release cannot be reliably withdrawn.
+- Re-running any paid GPU or API step for verification needs the owner's approval first.
+- The main checkout and the scratch folder are read-only for this work: copy from them,
+  never move, edit or delete.
+- Repository conventions: Python through `uv`; command-line entry points use Typer; no
+  wrapper or runner scripts; fail fast with a clear error and no fallbacks; `git add` by
+  explicit path.
+- The training arithmetic, filters, pairing rules, sampling settings and hyperparameters of
+  the final pipeline must not change. Porting changes only what portability requires.
+- GPU training runs on Modal and Tinker, not on the local machine.
+
+### Scope item for review at the gate: keys
+
+The benchmark package's key loader currently demands seven provider keys before any
+judging starts. This work changes that behaviour so that a JaleesWeights step asks only for
+the keys it uses. It is the one place this work touches behaviour the benchmark package
+owns, and it is listed here so it is approved explicitly. The benchmark's own commands
+must behave as they do today.
+
+## Assumptions
+
+- "Recipe only, no weights": trained adapters and checkpoints are not distributed by this
+  work. (Owner's open question; see below.)
+- The judge models the paper used (`claude-opus-4-8`, `gemini-3.1-pro-preview`) and the
+  base models (`google/gemma-4-31B-it`, `thinkingmachines/Inkling-Small`) are still served.
+  This cannot be checked without spending.
+- A new team may use the public Gemini API with a Gemini key. The original runs used Google
+  Vertex with a service-account file; the benchmark package already accepts either.
+- The benchmark main run as it stands today is the right one to release. The builders
+  reproduce the frozen training sets from it byte for byte, so nothing the recipe depends on
+  has drifted.
+- The benchmark's conversations are already public in another form through the results
+  browser in this repository, so releasing the main run does not newly expose them. The
+  judgments' full text and the raw provider responses would be newly public.
+- Costs in the README come from the experiment record of August 2026 and are stated as
+  rough. Where no figure was recorded, the README says so instead of guessing.
+
+## Solution Approaches
+
+Four questions were left open for the spec. Each is answered separately.
+
+### 1. Packaging, and how it depends on the benchmark package
+
+#### Approach 1A (recommended): its own `uv` project that declares the benchmark as a local dependency
+
+`jaleesweights/` becomes a third `uv` project beside `jaleesbench/` and `quranquote/`,
+with its own dependency file and lock file. It declares the benchmark package as a
+dependency by local path, so the import works from any directory and the path hack
+disappears. It declares `modal` for the local machine. Steps are launched as modules
+through `uv`.
+
+- For: matches how the repository is already laid out; one install command; the 15 import
+  hacks and the working-directory disagreements go away together; the lock file pins the
+  Tinker trainer version the runs used.
+- Against: two lock files that can drift; a change to the benchmark package can break
+  JaleesWeights without the benchmark's own tests noticing.
+- Risk: low.
+
+#### Approach 1B: a sub-package inside the benchmark package
+
+- For: one project, one lock file, no cross-project dependency.
+- Against: the owner decided on a top-level `jaleesweights/` folder; it would also load the
+  benchmark's install with `modal` and fine-tuning concerns. Ruled out by decision 1.
+
+#### Approach 1C: keep loose scripts, correct the inserted path
+
+- For: smallest diff from what ran.
+- Against: the dependency stays undeclared, the working-directory sensitivity stays, and
+  there is no single install command. Does not meet "dependencies are declared".
+
+#### How far the port goes
+
+Two ways to port the 24 final-pipeline scripts:
+
+- **Minimal port (recommended).** Each script keeps its logic. Changes are limited to
+  imports, paths, key handling, account names as inputs, and a Typer entry point. The seven
+  near-identical judging scripts (six Opus, one Gemini) differ only in file names and may become one step
+  taking the file names as inputs. The as-run originals are committed first and the port is
+  made in later commits, so the history shows exactly what changed from what produced the
+  paper's numbers.
+- **Rewrite into a designed package.** Cleaner result, but the GPU stages cannot be re-run
+  for free, so a rewrite of the training code could not be shown to be equivalent.
+
+The minimal port is recommended because equivalence is the thing a handoff most needs, and
+for the GPU code a small reviewable diff is the only free evidence available.
+
+### 2. How the data download works, and how the release is staged before approval
+
+The owner decided on a release download. Open: which host, and how to keep it private until
+approved.
+
+#### Approach 2A (recommended): a GitHub release on this repository, built locally first
+
+Archives and a checksum list are built on the local machine in a location git ignores. The
+checksum list is committed. The secret-and-private-material search runs over the archives.
+The owner is shown the archive contents list and the search result, and approves. Only then
+is a release created — as a draft, which the public cannot see — and the owner publishes it
+or approves publishing. The download step can also install from archive files already on
+disk, which is how a fresh clone is checked before anything is public.
+
+Two archives: the JaleesWeights data (final and archive parts, about 73 MB compressed) and
+the benchmark main run (about 111 MB compressed).
+
+- For: same place as the code; no new account; a draft is invisible to the public; nothing
+  leaves the machine before the owner has seen what would be sent.
+- Against: until the release is public, the README's download command cannot work for an
+  outsider. The step must say so plainly when that happens.
+- Risk: low. Creating even a draft is an action on the owner's repository and is treated as
+  needing approval.
+
+#### Approach 2B: a Hugging Face dataset repository, private until approved
+
+- For: fits the open request to host the benchmark there (issue #22); better for browsing.
+- Against: a new account, token and tool for the new team; and it decides issue #22 by the
+  back door. Better taken up under #22.
+
+#### Approach 2C: hand the archives to the owner to upload
+
+- For: the builder never touches a release.
+- Against: the download step cannot be finished or checked until an upload happens out of
+  band.
+
+### 3. Layout of the archive folder
+
+#### Approach 3A (recommended): one flat folder of scripts, with an index
+
+The 19 scripts sit together as they did in the scratch folder. An index table lists each
+script and each archived data file, the approach it belonged to, and the paper claim it
+supports. Archived data is a separate part of the data download.
+
+- For: closest to "as-is"; several scripts served more than one approach (one training
+  script served three), so grouping by approach would force a choice or a copy.
+- Against: a reader must use the index to see the groups.
+
+#### Approach 3B: one sub-folder per approach
+
+- For: the grouping is visible in the folder tree.
+- Against: shared scripts must be duplicated or placed arbitrarily, and the scripts refer to
+  each other's outputs by flat names.
+
+### 4. Logs and per-run folders
+
+#### Approach 4A (recommended): keep the structured records, leave out console output
+
+From each of the ten run folders keep the settings, the per-step metrics and the checkpoint
+index — the paper cites training accuracy and margins that come from the metrics. Keep the
+five Modal training logs. Leave out every `code.diff`, every console log and the timing
+records. The kept files go in the data download, not in git.
+
+- For: keeps everything a number in the paper was computed from; drops files that carry
+  original-machine paths, session identifiers and unrelated repository diffs.
+- Against: the console logs record why four judgments are missing from two files (a judge
+  call failed three times and was left). The archive index will state that in one line instead.
+
+#### Approach 4B: keep everything except `code.diff`
+
+- For: nothing is lost.
+- Against: 8 MB of console output carrying home-directory paths, for no reproducible value.
+
+### 5. Showing a fresh clone works without spending
+
+#### Approach 5A (recommended): three free checks, and a priced list of optional paid ones
+
+1. **Fresh-clone walk-through.** Clone into an empty directory, with no keys and none of the
+   original machine's files reachable. Follow the README: install, install the data from the
+   staged archives, run every free step. The rebuilt training files must equal the reference
+   copies byte for byte, and the scoring step must reproduce the paper's table.
+2. **Paid steps, up to the point of spending.** Collection and judging steps skip work that
+   is already recorded, so pointed at the complete reference data they find nothing to do
+   and make no billable call — which exercises their whole path to that point. Training
+   steps are shown to find their inputs and state what they would rent, without launching.
+3. **The diff.** For the GPU training code, the diff between the as-run original and the
+   ported file is small and is reviewed in the pull request.
+
+Paid smoke runs (for example a four-example Modal training run, which the scripts already
+support) are listed with their rough cost. The owner chooses whether any are run.
+
+- For: costs nothing; covers every step that can be covered for free; says plainly what
+  remains unproven.
+- Against: a paid step that only fails after launch (a GPU image that no longer builds, a
+  model no longer served) would not be caught.
+
+#### Approach 5B: re-run the whole recipe once
+
+- For: the only complete proof.
+- Against: about $100 for Gemma plus the Inkling-Small cost, and judge variation means the
+  numbers would not match exactly anyway. Not proposed; available if the owner wants it.
+
+## Open Questions
+
+### Critical (blocks progress)
+
+None. The work can proceed on the defaults below.
+
+### Important (shapes design) — for the owner
+
+1. **Weights.** Does the new team need the trained weights, or only the recipe? Default:
+   recipe only. For information: the Inkling-Small checkpoints were saved with a seven-day
+   expiry in August and are very likely gone; the Gemma adapters should still be on the
+   owner's Modal volume.
+2. **Capability results.** The paper's capability table has no raw results among the scratch
+   files; they exist only on the owner's Modal volume. Should they be fetched and added to
+   the data download? Default: no; the README says that table cannot be recomputed from the
+   released data, and how to re-run the panel.
+3. **An existing mention of the other team in tracked code.** Two comment lines in the
+   benchmark's collection module name that team. They predate this work. Should they be
+   reworded in this pull request? Default: not touched.
+4. **The experiment issue.** The public experiment issue (#21) names the other team in
+   several comments. It is the owner's to edit. Should the new README link to it as the
+   experiment history? Default: the README does not link it until the owner says so.
+5. **The two sibling-project files** (a methodology note and a copy of the stage-1 script).
+   Default, as the architect directed: both left out, and the one docstring line in our own
+   stage-1 script that says where it came from is reworded to name no other project. Owner
+   confirms.
+6. **Console logs.** Left out under approach 4A. Confirm, or say to keep them in the archive
+   download.
+
+### Nice-to-know
+
+7. The capability script has a raw-completion mode and a chat mode. The paper's figures
+   (MMLU 0.828) look like the chat-mode run; the experiment issue's earlier figures
+   (MMLU 0.467) are the raw mode. The README will document chat mode as the paper's. Correct
+   this if wrong.
+8. The repository has no licence file. Whether the released data needs a stated licence is
+   outside this work but will be asked of anyone downloading it.
+9. Whether `gemini-3.1-pro-preview` is reachable with a plain Gemini key, as opposed to
+   Vertex, has not been tested. It costs a call to find out.
+
+## Test Scenarios
+
+### Functional
+
+1. **Fresh clone, free path.** Empty directory, no keys, no access to the original machine's
+   files. Install; install data from local archives; run all free steps for both models.
+   Expected: six rebuilt files byte-identical to the reference copies; counts 316, 310, 502,
+   672; scoring output equals the paper's main table within the stated tolerance.
+2. **Scoring is repeatable.** Run the scoring step twice. Expected: identical output.
+3. **Checksum failure.** Corrupt one archive. Expected: the download step stops and names
+   the archive.
+4. **Release not yet public.** Run the download step before publication with no local
+   archives. Expected: it stops with a message saying the data release is not published.
+5. **Missing key.** Run a judging step with no Anthropic key. Expected: it stops and names
+   that key, and names no key the step does not use.
+6. **Only the needed keys.** Set only an Anthropic key and a Gemini key (placeholder values)
+   and run the Opus and Gemini judging steps against the complete reference data. Expected:
+   each reports nothing left to do and makes no billable call.
+7. **Any working directory.** Run one builder and the scoring step from the repository root
+   and from inside `jaleesweights/`. Expected: same result.
+8. **Reference data is not overwritten.** Run a builder. Expected: reference files unchanged
+   (same checksums); new output is somewhere else.
+9. **Stage-2 needs a stage-1 checkpoint.** Start Inkling-Small stage-2 training without
+   giving a checkpoint. Expected: it stops and asks for one; it does not fall back to the
+   original account's address.
+10. **Benchmark unchanged.** The benchmark's existing test suite passes, and its own commands
+    still require the keys they required before.
+
+### Non-functional
+
+11. **Nothing private.** Search the tracked tree and both archives for: key-shaped strings;
+    the other team's name and configuration file name; the names of the left-out files;
+    architect state content. Expected: no hits.
+12. **Nothing large in git.** No file added to git by this work is larger than 1 MB.
+13. **Archive is labelled.** The archive index exists, covers all 19 scripts and every
+    archived data file, and says the archive is not maintained.
+14. **Offline tests.** The new tests pass with no network, no keys and no downloaded data.
+
+### Paid, optional, only with the owner's approval
+
+15. A four-example Modal smoke run of Gemma stage-1 training (the script supports it).
+16. One Opus judgment and one Gemini judgment through a plain key, to confirm the judge
+    models are still served.
+
+## Risks and Mitigation
+
+| Risk | Probability | Impact | Mitigation |
+|------|-------------|--------|------------|
+| Private material or a key is published in a public, non-withdrawable release | Low | High | Search the tracked tree and the built archives before anything is sent; owner sees the contents list and search result; release is created only after approval and as a draft first |
+| The port changes training behaviour without anyone noticing, since GPU stages are not re-run | Medium | High | Minimal port; as-run originals committed first so the diff is reviewable; builders proven byte-identical; optional paid smoke run offered to the owner |
+| A paid step fails only after launch (GPU image no longer builds, GPU type unavailable, model or judge no longer served) | Medium | Medium | README states the versions and GPU types the runs used and that this was not re-tested; optional paid checks listed with costs |
+| Judge models are retired, so a new team's scores are not comparable with the paper's | Medium | Medium | README states the exact judge models; the released judgments let the paper's table be recomputed regardless |
+| The key-loader change alters the benchmark's own behaviour | Low | Medium | Listed as an explicit scope item; benchmark commands must behave as before; existing tests must pass |
+| Releasing the main run exposes something beyond what the results browser already shows (full judge text, raw provider responses) | Low | Medium | Stated in Assumptions for the owner to weigh; covered by the same search; owner approves the contents |
+| Two `uv` projects drift apart | Low | Low | Lock file committed; an offline test imports the benchmark functions the pipeline uses |
+| The README's download command fails for outsiders between merge and publication | Medium | Low | The step says plainly that the release is not yet published; publication is requested with the pull request |
+| Dropping console logs loses the reason a few judgments are missing | Low | Low | The archive index states it |
+
+## References
+
+- Issue #36 — this work. Issue #21 — the experiment record. Issue #22 — request to host the
+  benchmark on Hugging Face.
+- `docs/paper/jaleesweights-paper.tex` — the arbiter of the recipe of record.
+  `docs/paper/jaleesweights-outline.md` — earlier outline; its Gemma figures are the 4-bit
+  chain's and have been superseded by the paper.
+- `jaleesbench/README.md` — the benchmark harness, its keys and its commands.
+- Askell et al. (context distillation), Rafailov et al. (DPO), Hu et al. (LoRA) — as cited
+  in the paper.
