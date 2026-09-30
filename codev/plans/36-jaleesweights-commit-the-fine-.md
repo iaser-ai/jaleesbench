@@ -41,6 +41,16 @@ jaleesweights/
   data/                           gitignored: reference/ (downloaded), runs/<name>/ (new runs)
 ```
 
+Two conventions run through the phases. **Preflight:** every command that would spend
+money or rent hardware (the Tinker trainers, the Modal drivers, the collection and judging
+commands, the local demonstration) first checks its inputs — files exist, row counts,
+model id, the keys it needs, the account names or hardware it will use — prints that
+summary, and only then launches; `--dry-run` stops after the summary. That is how the spec's
+"finds its inputs and states what it would rent, without launching" is met, and it is one
+shape reused everywhere. **Size:** no file added to git exceeds 1 MB, with `uv.lock` as the
+one named exception (the benchmark's is already 826 KB; this one adds `modal` and the GPU
+group).
+
 Reference data is installed under `jaleesweights/data/reference/` (flat, original file
 names, Tinker run folders under `tinker-runs/`); the benchmark main run under
 `jaleesbench/results/`, where the benchmark already expects it and git already ignores it.
@@ -104,7 +114,7 @@ separator comment, so the diff stays readable):
 | `sft_small.py` | `build_sft_small.py` |
 | `pairs.py` | `build_sftbf16_pairs.py`, `build_small_sft2_pairs.py` |
 | `comparisons.py` | `export_comparisons.py` |
-| `score.py` | `score_eval.py`, `paired_sftdpo_bf16.py` |
+| `score.py` | `score_eval.py`, `paired_sftdpo_bf16.py`, and a copy of `paired_small_sweep.py` (which also stays in the archive as-is): it is the only as-run code for the Inkling-Small rows and paired comparisons, so the port starts from it |
 | `judge.py` | `judge_train_samples.py`, `judge_eval_basevllm.py`, `judge_eval_bf16.py`, `judge_eval_sftdpo_bf16.py`, `judge_small_selection.py`, `judge_small_baselines.py`, `judge_small_sft.py`, `judge_small_sftdpo.py` |
 | `collect_small.py` | `collect_small.py` |
 | `train_sft_small.py` | `train_sft_small.py` |
@@ -113,7 +123,9 @@ separator comment, so the diff stays readable):
 
 #### Deliverables
 
-- [ ] 44 scripts present: 19 under `archive/`, 24 under the package (in 16 files).
+- [ ] 43 kept scripts present: 19 under `archive/`, 24 under the package (in 16 files, one
+      archive script additionally copied into `score.py` as a port source). The 44th is left
+      out.
 - [ ] `diff` of each copied file against its scratch original is empty, except the three
       reworded comments.
 - [ ] A search of the phase's commit (`git show`) for the other team's name and its
@@ -148,9 +160,14 @@ what a step uses; and the shared constants and filters in one place.
   `jaleesbench` (via `[tool.uv.sources]` as an **editable** path dependency on
   `../jaleesbench`), `modal`, `typer`, `openai`, `tinker`, `tinker-cookbook[inkling]`
   (the last three are already what the benchmark pins; declared here because the Tinker
-  steps import them directly); dependency group `gpu`: `transformers>=4.53`,
-  `peft>=0.15`, `accelerate>=1.3`, `vllm>=0.10` (installed only on the GPU machine); group
-  `dev`: `pytest`, `pytest-asyncio`. `uv.lock` committed.
+  steps import them directly); dependency group `gpu`, every entry marked
+  `sys_platform == 'linux'`: `torch>=2.7` (from the CUDA 12.8 index, declared as a
+  `[tool.uv.sources]` index entry), `transformers>=4.53`, `peft>=0.15`, `accelerate>=1.3`,
+  `vllm>=0.10` — the same versions the Modal images pin; `lm-eval` is not in the group
+  because the capability panel is not part of the local demonstration. `[tool.uv]
+  environments` limited to Linux and macOS so the lock resolves on this Mac without
+  building GPU wheels. Group `dev`: `pytest`, `pytest-asyncio`. `uv.lock` committed (the
+  named exception to the 1 MB rule).
 - `jaleesweights/jaleesweights/paths.py` — `REPO_ROOT` from this file's position;
   `BENCH_RESULTS = REPO_ROOT / "jaleesbench" / "results"`, `REFERENCE`, `RUNS`, all
   overridable by environment variables (`JW_BENCH_RESULTS`, `JW_REFERENCE`, `JW_RUNS`);
@@ -167,7 +184,8 @@ what a step uses; and the shared constants and filters in one place.
   gemini=True)`: default behaviour unchanged; callers may narrow.
 - `jaleesbench/jaleesbench/judge.py` — `judge_all(..., required_keys=None)` passes the
   narrowing through and builds clients only for the providers of the judges it will call
-  (today it always builds both Anthropic and Gemini).
+  (today it always builds both Anthropic and Gemini). `rejudge_disagreements` keeps calling
+  `load_env()` with defaults; it is the benchmark's own command and is not narrowed.
 - `jaleesbench/tests/test_units.py` — tests for the two changes.
 - `jaleesweights/tests/conftest.py`, `tests/test_paths_env.py`.
 - `.gitignore` — `jaleesweights/data/`, `jaleesweights/.venv/`.
@@ -177,6 +195,11 @@ what a step uses; and the shared constants and filters in one place.
 - [ ] `cd jaleesweights && uv sync` succeeds on this Mac (without the `gpu` group).
 - [ ] `uv run python -c "import jaleesbench, jaleesweights"` works from the project
       directory and `jaleesbench.__file__` is inside the clone's `jaleesbench/` (editable).
+      This matters beyond tidiness: the benchmark derives the Vertex service-account path
+      and its `.env` path from its own package location, and `judge_all` → `make_clients`
+      → `gemini_client()` reads the Vertex path. JaleesWeights loads keys itself before
+      calling in, so `.env` is covered either way; the Vertex file is found only because the
+      install is editable, and the README says so (spec scenario 8b).
 - [ ] Key-loader narrowing in the benchmark with its default unchanged.
 - [ ] Tests for this phase.
 
@@ -212,12 +235,18 @@ Nothing is uploaded in this phase.
 #### Files to Create / Modify
 
 - Staging (gitignored, under `jaleesweights/data/staging/`): `jaleesweights-data.tar.gz`
-  (final + archive experiment data: the 58 top-level data files minus the left-out ones,
-  plus `tinker-runs/<10 folders>/{config.json,metrics.jsonl,checkpoints.jsonl}`) and
-  `jaleesbench-main-run.tar.gz` (`collect.jsonl`, `judgments.jsonl`,
+  — all 58 top-level `.jsonl` files (every one is final or archive) plus
+  `tinker-runs/<10 folders>/{config.json,metrics.jsonl,checkpoints.jsonl}` = 88 members —
+  and `jaleesbench-main-run.tar.gz` (`collect.jsonl`, `judgments.jsonl`,
   `citations_llm.jsonl`). Built by a documented one-off command sequence recorded in the
   thread, not by a committed script (the source is the read-only scratch folder on this
-  machine and will not exist for anyone else).
+  machine and will not exist for anyone else). The release tag is fixed now:
+  `jaleesweights-data-v1`; `checksums.sha256`, the fetch module and the README all use it.
+- Decision recorded here, not discovered later: the ten kept `config.json` files contain
+  the original machine's paths in their `log_path` and `train_path` fields. They are kept
+  unaltered — they are identifiers of where a run wrote, not dependencies, and the records
+  are the as-run record — and the owner's report says so, so the owner can ask for them to
+  be rewritten before publication if preferred.
 - `jaleesweights/release/checksums.sha256` — committed; also `release/CONTENTS.md` listing
   every file in each archive with its size (no left-out names appear, by construction).
 - `jaleesweights/jaleesweights/fetch_data.py` — Typer command: `--from-dir PATH` installs
@@ -226,7 +255,8 @@ Nothing is uploaded in this phase.
   the module, overridable); verifies against `checksums.sha256` before extracting; a 404
   produces "the data release <tag> has not been published yet"; a mismatch names the
   archive and stops. Extracts to `data/reference/` and `jaleesbench/results/`; refuses to
-  overwrite an existing reference directory unless `--force`.
+  overwrite an existing reference directory, or an existing main-run file, unless
+  `--force`.
 - `jaleesweights/tests/test_fetch.py`.
 
 #### Deliverables
@@ -238,8 +268,12 @@ Nothing is uploaded in this phase.
 #### Acceptance Criteria
 
 - [ ] Every file in `CONTENTS.md` is one the spec classes final or archive; none is left
-      out; count equals 58 − 1 (the cleanup record) top-level data files + 30 run-record
-      files + `guided_prefix.txt` and `split_70_70.json` are in git instead.
+      out; the experiment archive has exactly 88 members (58 + 30) and the main-run archive
+      3. `guided_prefix.txt` and `split_70_70.json` are in git instead.
+- [ ] Exhaustive, not spot-checked: a `sha256` list of every member of both archives, made
+      from the scratch originals, equals the list made from the files `fetch_data
+      --from-dir` installs (91 lines, all matching). Recorded in the thread.
+- [ ] Both destinations refuse to overwrite existing files without `--force`.
 - [ ] Checksum mismatch → named failure; missing release → the "not published" message
       (tested with a stub HTTP response); `--from-dir` path → extraction succeeds.
 - [ ] Both test suites pass.
@@ -247,9 +281,9 @@ Nothing is uploaded in this phase.
 #### Test Plan
 
 Unit: checksum verify on temp files; the not-published and mismatch paths with a stubbed
-downloader; extraction layout on a tiny fake archive. Manual: build the archives, run
-`fetch_data --from-dir data/staging`, compare a few installed files' checksums to the
-scratch originals.
+downloader; extraction layout and overwrite refusal on a tiny fake archive. Manual: build
+the archives, run `fetch_data --from-dir data/staging`, run the exhaustive 91-file checksum
+comparison against the scratch originals.
 
 ### Phase 4: Free steps ported: builders, exports and repeatable scoring
 
@@ -267,8 +301,10 @@ table.
   `eval_inputs.jsonl`) from the main run; the existing self-check becomes a comparison
   against the reference copy when present.
 - `sft_guided.py` — reads the main run via `paths`; `--out`.
-- `sft_small.py` — reads own collections; writes both the training set and the
-  `_messages` form (the manual conversion becomes a documented output of this step).
+- `sft_small.py` — `--collect` (the guided training-half answers), `--judgments` (their
+  Gemini ratings), `--subject`, `--out`; writes both the training set and the `_messages`
+  form (the manual conversion becomes a documented output of this step). The local
+  demonstration feeds this same command with its own collections.
 - `pairs.py` — one max-gap builder with two documented invocations (`--samples`,
   `--judgments`, `--chain-suffix` for the Inkling-Small `-c{chain}` naming); both as-run
   variants are the same function with different inputs — the diff against phase 1 shows
@@ -277,7 +313,12 @@ table.
 - `score.py` — the main table for both models (base control, stage 1, stage 2, guided
   rows, the Inkling reference row) and the four paired comparisons; iteration over
   `sorted(a.keys() & b.keys())` so the bootstrap is repeatable; `--reference` /
-  `--judgments` options so a new run can be scored the same way.
+  `--judgments` options so a new run can be scored the same way. Honest accounting: the
+  Gemma rows and the Gemma paired comparison are ported from `score_eval.py` and
+  `paired_sftdpo_bf16.py`; the Inkling-Small rows and its two paired comparisons are
+  **written new**, using `paired_small_sweep.py`'s `bands()`/`paired()` as the reference
+  implementation (subjects `inkling-small`, `inkling-small-sft`, `inkling-small-sftdpo`).
+  The spec's table comparison is what proves them.
 - `tests/test_builders.py`, `tests/test_score.py` with small made-up fixtures.
 
 #### Deliverables
@@ -298,11 +339,15 @@ table.
       0.01; two consecutive runs give identical output.
 - [ ] Builders run from the repo root and from inside `jaleesweights/` with the same result.
 - [ ] Reference directory checksums unchanged after all builders ran.
+- [ ] A new run chains (spec scenario 8a): in an empty run directory holding made-up
+      collection and judgment files, `sft_small` writes a training set there and
+      `comparisons` / `pairs` consume outputs from there, never from the reference
+      directory (unit test with tiny fixtures).
 - [ ] Both test suites pass.
 
 #### Test Plan
 
-Unit: filters and screens on made-up conversations; max-gap pairing on a hand-built band
+Unit: filters and screens on made-up conversations; the new-run chain on fixtures; max-gap pairing on a hand-built band
 table (known pair count, both directions, dedup, gap floor); comparison export label
 determinism; scoring on a made-up judgment file (means, repeatability, paired sign counts).
 Manual: the eight-file comparison, the table comparison against the paper, the two-cwd
@@ -331,6 +376,11 @@ complete reference data — find nothing to do.
 - `train_dpo_small.py` — `--sft-checkpoint` **required** (the as-run constant is gone),
   `--comparisons`, `--log-dir`; learning rate and epochs as options defaulting to the
   settings of record (1e-5, 1).
+- Preflight in all five: check inputs (file present, row count), the keys the step uses,
+  and for the trainers the model id, the number of examples or pairs and the settings;
+  print the summary ("will train `thinkingmachines/Inkling-Small` on 672 pairs through
+  Tinker, billed to your Tinker account"); `--dry-run` exits there. `judge` and
+  `collect_small` print the same kind of summary including how many calls remain.
 - `tests/test_steps_offline.py`.
 
 #### Deliverables
@@ -346,6 +396,9 @@ complete reference data — find nothing to do.
       network call.
 - [ ] With no keys set, each command fails naming only the key(s) it uses.
 - [ ] `train_dpo_small` without `--sft-checkpoint` exits with a usage error.
+- [ ] `train_sft_small --dry-run` and `train_dpo_small --dry-run --sft-checkpoint x` with a
+      placeholder Tinker key print the preflight summary naming the model, the data size and
+      the account, and exit without contacting Tinker (stubbed client asserts no call).
 - [ ] `collect_small` pointed at a complete reference collection reports 0 to do.
 - [ ] Both test suites pass.
 
@@ -357,7 +410,7 @@ construction: nothing left to judge or collect).
 
 ### Phase 6: Gemma on Modal: drivers with configurable account names
 
-**Dependencies**: Phase 4
+**Dependencies**: Phase 2
 
 #### Objective
 
@@ -369,12 +422,20 @@ checkpoint table is the bf16 chain. Function bodies are otherwise untouched.
 #### Files to Create / Modify
 
 - `modal/_config.py` — `VOLUME = os.environ.get("JW_MODAL_VOLUME", "gemma-dpo")`,
-  `HF_SECRET = os.environ.get("JW_MODAL_HF_SECRET", "huggingface")`, image definitions
-  shared by the five apps (the two images are identical across drivers today).
+  `HF_SECRET = os.environ.get("JW_MODAL_HF_SECRET", "huggingface")`, and the **three**
+  image definitions exactly as the drivers have them today: training (CUDA 12.8 base,
+  torch cu128, transformers/peft/accelerate), serving (vLLM), capability (vLLM +
+  `lm_eval[vllm,ifeval]`). Nothing is unified across them; the capability image stays its
+  own.
 - The five drivers import from `_config`; `gemma_eval.py` and `gemma_sample.py` take the
   inputs file path on the volume as an option (today hardcoded); `gemma_capability.py`
   checkpoint table = base, sft-bf16, sft-dpo-bf16, and `--chat` documented as the paper's
   mode.
+- Preflight, same shape as phase 5, in each local entrypoint: check that the local inputs
+  the README says to upload exist and have the expected row counts, print the volume and
+  secret names, the volume paths it will read and write, the GPU type and the run name;
+  `--dry-run` exits before any `.remote()`/`.spawn()`. The volume itself cannot be checked
+  without an account and the summary says which checks were local.
 - README fragments (finished in phase 8): `modal volume create`, `modal secret create`,
   `modal volume put` for inputs and training sets, `modal volume get` for outputs, with
   the exact volume paths each driver expects.
@@ -391,7 +452,9 @@ checkpoint table is the bf16 chain. Function bodies are otherwise untouched.
 - [ ] `git diff phase-1..HEAD -- jaleesweights/jaleesweights/modal/` touches no line inside
       a training loop, a sampling call or an lm-eval invocation; reviewed and stated in the
       thread.
-- [ ] Each driver prints its usage without an account.
+- [ ] Each driver prints its usage without an account, and `--dry-run` prints the
+      preflight summary (GPU type, volume, secret, paths, run name) and exits without an
+      account (fake HOME, no credentials).
 - [ ] No paid Modal run is launched (a four-example smoke run is offered to the owner in the
       review, not run).
 - [ ] Both test suites pass.
@@ -417,13 +480,19 @@ CPU-only tokenizer test, and the README names the first smoke test.
 - `local/gemma_collect.py` — from `gemma_eval.py` + `gemma_sample.py` function bodies:
   vLLM collection with `--inputs` (train or eval half), `--guide/--no-guide`, `--k`
   (1 for evaluation, 4 for sampling), `--temperature` (default: model config; 1.3 for
-  sampling), `--adapter`, `--model`, `--max-model-len`, `--gpu-memory-utilization`,
-  `--out`. Writes the harness record schema so `judge` and `pairs` consume it unchanged.
-- `local/gemma_sft.py` — from `gemma_sft_bf16.py`'s body: `--model`, `--data`, `--out`,
-  `--batch`, `--lr`, `--epochs`, `--seed`, `--limit`, `--resume-from`; bf16 by default;
-  the parity check kept.
-- `local/gemma_dpo.py` — from `gemma_dpo2_bf16.py`'s body: `--sft-adapter` required,
-  `--pairs`, `--out`, `--beta`, `--lr`, `--batch`, `--limit`, `--resume-from`.
+  sampling), `--adapter`, `--model` (default `google/gemma-4-12B-it`), `--dtype` (default
+  bf16), `--max-model-len`, `--gpu-memory-utilization`, `--limit` (first N inputs, for the
+  smoke test), `--subject`, `--out`. Writes the harness record schema so `judge` and
+  `pairs` consume it unchanged.
+- `local/gemma_sft.py` — from `gemma_sft_bf16.py`'s body: `--model`, `--dtype` (bf16
+  default), `--data`, `--out`, `--batch`, `--lr`, `--epochs`, `--seed`, `--limit`,
+  `--resume-from`; the 16,384-token cap and the parity check kept as they are.
+- `local/gemma_dpo.py` — from `gemma_dpo2_bf16.py`'s body: `--model`, `--dtype`,
+  `--sft-adapter` required, `--pairs`, `--out`, `--beta`, `--lr`, `--batch`, `--seed`,
+  `--limit`, `--resume-from`.
+- Preflight in all three, same shape: inputs, model id, dtype, settings, and the GPU it
+  sees (`torch.cuda` device name and memory, "none" on this Mac) printed before anything
+  loads; `--dry-run` exits there.
 - `local/_render.py` — the `render`/mask function shared by the three, imported lazily
   from `transformers` so `--help` works without the `gpu` group.
 - `tests/test_local_demo.py` — compile + `--help` for the three commands on a machine
@@ -439,8 +508,9 @@ CPU-only tokenizer test, and the README names the first smoke test.
 
 #### Acceptance Criteria
 
-- [ ] On this Mac, each command compiles and prints usage; a missing GPU dependency is
-      reported by name when a command is actually run.
+- [ ] On this Mac, each command compiles and prints usage; `--dry-run` prints the preflight
+      summary with "GPU: none" and exits; a missing GPU dependency is reported by name when
+      a command is actually run.
 - [ ] The mask test passes when the tokenizer can be fetched: rendering is prefix-stable and
       exactly the assistant turns are masked in a made-up conversation.
 - [ ] The diff summary is in the pull request description.
@@ -471,7 +541,8 @@ Open the pull request.
   orders with cost/hardware column (figures from the experiment record, dated, "not
   recorded" where none); the hardware section (measured vs derived, from the spec); what
   was and was not verified before handoff and the smoke tests; scoring and the two paired
-  intervals note; weights not included; capability panel: chat mode is the paper's, raw
+  intervals note, with the table of the eight rebuilt files and the command that produces
+  each; weights not included; capability panel: chat mode is the paper's, raw
   results not in the release; the demonstration's numbers are not the paper's; the
   archive.
 - `jaleesweights/archive/README.md` — the index: every archived script and data file, the
@@ -499,7 +570,7 @@ Open the pull request.
 
 - [ ] Walk-through succeeds end to end on the free steps from the empty directory.
 - [ ] Search finds nothing.
-- [ ] No file added to git by this work exceeds 1 MB.
+- [ ] No file added to git by this work exceeds 1 MB, except `jaleesweights/uv.lock`.
 - [ ] Both test suites pass.
 
 #### Test Plan
@@ -512,7 +583,8 @@ Automated: the existing suites.
 | Risk | Probability | Impact | Mitigation |
 |------|-------------|--------|------------|
 | Phase 1 copies carry private wording into history | Low | High | Reword first; search `git show` of the commit before pushing; phase 8 repeats the search over the whole branch |
-| The editable path dependency does not behave as expected under `uv` (non-editable copy in the environment) | Low | Medium | Phase 2 asserts `jaleesbench.__file__` is inside the clone; `paths.py` never relies on it anyway |
+| The editable path dependency does not behave as expected under `uv` (non-editable copy in the environment) | Low | Medium | Phase 2 asserts `jaleesbench.__file__` is inside the clone; `paths.py` never relies on it; the Vertex-file dependence on it is documented |
+| `uv lock` cannot resolve the GPU group on macOS (no vLLM or CUDA torch wheels) | Medium | Medium | Linux-only markers on the group and `[tool.uv] environments`; if resolution still fails, the group is split into its own `requirements-gpu.txt` referenced from the README — declared either way |
 | `judge_all` change breaks the benchmark's own judging | Low | Medium | Default arguments preserve behaviour; tests for the default and the narrowed paths |
 | The merged `pairs.py` or `score.py` silently changes a number | Low | High | Byte-identical rebuilds and the table comparison are the acceptance criteria of phase 4 |
 | A Modal driver diff touches more than configuration | Low | High | Phase 6 acceptance is a reviewed diff confined to settings and options |
