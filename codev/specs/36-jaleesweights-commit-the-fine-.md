@@ -94,15 +94,27 @@ Each item was confirmed by reading the scripts.
 
 ### What already works (measured for this spec, at no cost)
 
-- The six training-set builders, re-run against today's data in a scratch directory,
-  reproduce the frozen training files **byte for byte** (316 and 310 stage-1 examples, 502
-  and 672 stage-2 pairs, the conversation inputs, the trainer-format export).
+- The six builder scripts, re-run against today's data in a scratch directory, reproduce
+  the frozen files **byte for byte**: the training-half conversation inputs, both stage-1
+  training sets (316 and 310 conversations), both stage-2 pair sets (502 and 672 pairs),
+  and the Inkling-Small pairs in the trainer's format. Two further files were checked the
+  same way: the held-out conversation inputs (the inputs builder does not write this file
+  today; it only checks that it would produce the same rows) and the Inkling-Small stage-1
+  set in the trainer's format (made by hand; re-serialising the training set gives the
+  identical file). These eight files are the "rebuilt files" referred to below.
 - Recomputing the paper's main results table from the existing judgment files matches
   **every point estimate to three decimals**, for both models, including the paired
   comparisons.
-- The confidence-interval ends differ from the paper by up to 0.005 between runs. The
-  existing paired-comparison code iterates over a Python set, whose order changes from one
-  run to the next, so its bootstrap is not repeatable.
+- The intervals on single scores are repeatable and match the paper exactly. The intervals
+  on **paired** differences are not: that code iterates over a Python set, whose order
+  changes from one run to the next, so its bootstrap gives interval ends that move by up to
+  0.005 between runs. The paper prints two such intervals to three decimals. No choice of
+  seed can recover the printed ends, because the run that produced them depended on an
+  order that was never recorded.
+- The benchmark package works out where the main run, the `.env` file and the Google
+  service-account file are from **its own installed location**. That is right only when the
+  package is used in place. Installed as a dependency of another project, those locations
+  can point outside the clone.
 - The guide text file used for the "with guide" condition is identical to the text the
   benchmark package produces, and identical to what the main run recorded.
 - No key-shaped strings were found in any scratch file.
@@ -125,6 +137,12 @@ only that file can:
    index saying what each file was for and which paper claim it supports.
 
 Nothing they run depends on the original machine's paths, account names or untracked files.
+
+Two kinds of data are kept apart. The **reference data** is what the download provides: the
+files the original runs produced. It is read, never written. A **new run** writes
+everything it produces — collected answers, judgments, training sets, training records —
+to a separate location the user names, and each later step takes the earlier steps'
+outputs from that location. Free steps can be pointed at either.
 
 ### The recipe of record
 
@@ -310,11 +328,19 @@ settings, per-step metrics, checkpoint index.
       benchmark main run where the code expects them, checks each archive against a
       checksum recorded in git, and stops with a clear message if a checksum does not match
       or the release is not yet public.
-- [ ] From that same clone, every free step of both run-order tables runs, and the six
-      rebuilt training files are byte-identical to the downloaded reference copies.
+- [ ] From that same clone, every free step of both run-order tables runs, and the eight
+      rebuilt files are byte-identical to the downloaded reference copies:
+      `train_inputs_gemma.jsonl`, `eval_inputs_gemma.jsonl`, `sft_train_guided.jsonl`,
+      `pairs_train70_sftbf16.jsonl`, `sft_train_small.jsonl`,
+      `sft_train_small_messages.jsonl`, `pairs_train70_small_sft2.jsonl`,
+      `comparisons_train_small_sft2.jsonl`. The README names the step that produces each.
 - [ ] From that same clone, the scoring step reproduces the paper's main results table:
-      every score and paired difference to three decimals, every interval end within 0.01.
-      The scoring step gives the same output on repeated runs.
+      every score, every paired difference and every single-score interval exactly as
+      printed (three decimals, or two where the paper prints two). The two paired-difference
+      intervals land within 0.01 of the printed ends.
+- [ ] The scoring step gives the same output on every run. The README states its
+      paired-interval values and that they differ slightly from the two printed in the
+      paper, and why.
 - [ ] Every paid step can be started from that same clone and gets as far as it can without
       spending: it finds its inputs, and either reports that the reference data already
       covers all the work (collection and judging steps) or stops before launch naming what
@@ -324,11 +350,15 @@ settings, per-step metrics, checkpoint index.
       key and a Gemini credential set works; nothing demands OpenAI, Friendli, Blackbox,
       Ansari-route or Fanar keys.
 - [ ] No step reads a path outside the clone, and no step depends on which directory it is
-      launched from beyond what the README states.
+      launched from beyond what the README states. Where the main run, the reference data
+      and the key file are is settled by the clone's layout or by an explicit input, never
+      by where a package happens to be installed.
 - [ ] No checkpoint address, storage volume or secret from the original owner's accounts is
       required. Where a later step needs the output of an earlier paid step (a checkpoint, an
       adapter), it takes it as an input.
-- [ ] A new run never overwrites the downloaded reference data.
+- [ ] Reference data is never written to. Every collection, judging, training-set and
+      training step can write to a new-run location the user names, and every later step can
+      read an earlier step's output from there.
 - [ ] The README states: the accounts and keys needed; how to create the Modal volume and
       secret; the run order for both models; the rough cost and billed account of each paid
       step; which steps are free; that trained weights are not included; and how the
@@ -339,10 +369,14 @@ settings, per-step metrics, checkpoint index.
 - [ ] Dependencies are declared: what runs locally in the project's dependency file with a
       committed lock file; what runs only on rented GPUs is declared where those machines
       are defined, and the README says so.
-- [ ] A search of everything staged for git and of every release archive finds no key, no
-      content of any `.env` file, no mention of the other team or its configuration file,
-      and none of the left-out files. The search result is reported to the owner with the
-      request to publish.
+- [ ] A search finds no key, no content of any `.env` file, no mention of the other team or
+      its configuration file, and none of the left-out files in: every file this work adds
+      or changes, **every commit this work adds to the branch**, and every release archive.
+      The two comment lines already in tracked code (open question 3) are outside this
+      check unless the owner asks for them to be reworded.
+- [ ] A report for the owner, kept outside git, lists all 204 scratch files by name with the
+      class each was given and where it ended up, together with the search result. It
+      accompanies the request to publish.
 - [ ] Nothing is publicly downloadable until the owner has approved it. No release, draft or
       public, is created without that approval.
 - [ ] No paid Modal, Tinker or judging step is run during this work without the owner's
@@ -372,8 +406,30 @@ settings, per-step metrics, checkpoint index.
   wrapper or runner scripts; fail fast with a clear error and no fallbacks; `git add` by
   explicit path.
 - The training arithmetic, filters, pairing rules, sampling settings and hyperparameters of
-  the final pipeline must not change. Porting changes only what portability requires.
+  the final pipeline must not change. Porting changes only what portability requires, with
+  one named exception: the paired-comparison bootstrap is made repeatable (see Current
+  State). Point estimates are unaffected.
 - GPU training runs on Modal and Tinker, not on the local machine.
+
+### Security and privacy
+
+The rules that apply to anything leaving the machine, gathered in one place:
+
+- Private wording is removed **before the first commit**. No commit on the branch, at any
+  point in its history, contains the other team's name, its configuration file name, or a
+  left-out file. Checking only the final tree is not enough, because the repository is
+  public and history is published with it.
+- Nothing is sent anywhere — no release, draft or public — before the owner has seen the
+  contents list and the search result and has approved.
+- No keys are committed or archived. Key files stay ignored by git. Steps read keys from
+  the environment or from the clone's own `.env`, and name a missing key without printing
+  any key's value.
+- Identifiers from the original accounts (Tinker checkpoint addresses in the run records,
+  Modal run names) are not credentials and are useless without the owning account's key.
+  They remain in the released run records as part of the record.
+- The release would make public the full text of judgments and the raw provider responses
+  for thirteen benchmark subjects. Whether and on what terms that may be published is the
+  owner's decision (open question 7).
 
 ### Scope item for review at the gate: keys
 
@@ -420,7 +476,12 @@ through `uv`.
   Tinker trainer version the runs used.
 - Against: two lock files that can drift; a change to the benchmark package can break
   JaleesWeights without the benchmark's own tests noticing.
-- Risk: low.
+- Hazard: the benchmark package locates the main run and the key files from its own
+  installed position (see Current State). Depending on how the dependency is installed,
+  that position may be inside the new project's environment rather than the clone.
+  JaleesWeights therefore must not rely on the benchmark's idea of where things are: it is
+  told, or works out from the clone's layout, where the main run and the key file live.
+- Risk: low once that is handled.
 
 #### Approach 1B: a sub-package inside the benchmark package
 
@@ -443,7 +504,9 @@ Two ways to port the 24 final-pipeline scripts:
   near-identical judging scripts (six Opus, one Gemini) differ only in file names and may become one step
   taking the file names as inputs. The as-run originals are committed first and the port is
   made in later commits, so the history shows exactly what changed from what produced the
-  paper's numbers.
+  paper's numbers. "As-run" here means after the private wording has been reworded: three
+  scripts are affected (two archive scripts, and one docstring line in the Gemma stage-1
+  script), the change is to comments only, and it is made before anything is committed.
 - **Rewrite into a designed package.** Cleaner result, but the GPU stages cannot be re-run
   for free, so a rewrite of the training code could not be shown to be equivalent.
 
@@ -543,8 +606,15 @@ support) are listed with their rough cost. The owner chooses whether any are run
 
 - For: costs nothing; covers every step that can be covered for free; says plainly what
   remains unproven.
-- Against: a paid step that only fails after launch (a GPU image that no longer builds, a
-  model no longer served) would not be caught.
+- Against, and stated in the README as not re-tested:
+  - setting up a fresh Modal account — creating the volume and the secret, uploading the
+    inputs, building the GPU images. These are the first things a new team does, and none
+    can be exercised for free or from the owner's account without approval;
+  - anything that fails only after launch: a GPU type no longer offered, a model or judge
+    no longer served;
+  - a genuine new run from start to finish. The free checks show each step starts, finds
+    its inputs and writes to a new-run location; they do not show a checkpoint produced by
+    one paid step being consumed by the next.
 
 #### Approach 5B: re-run the whole recipe once
 
@@ -580,16 +650,26 @@ None. The work can proceed on the defaults below.
    confirms.
 6. **Console logs.** Left out under approach 4A. Confirm, or say to keep them in the archive
    download.
+7. **Terms for the released data.** The repository has no licence file. The release contains
+   model outputs from several providers (Anthropic, OpenAI, Google, Fanar and others), the
+   judges' full text, and training sets built from them, offered so others can re-run a
+   fine-tuning recipe. Whether that may be redistributed, and under what stated terms, is
+   for the owner to decide before publication. This work does not resolve it; the request
+   to publish will ask for it. Default: nothing is published until the owner has answered.
+8. **The paper's two paired intervals.** Once the scoring step is repeatable, its
+   paired-difference intervals will differ from the two printed in the paper by up to
+   0.005 (one run made for this spec gave an end of +0.211 where the paper prints
+   +0.206). Should the paper be
+   corrected to the repeatable values, or left as printed with a note in the README?
+   Default: the paper is not touched by this work; the README carries the note.
 
 ### Nice-to-know
 
-7. The capability script has a raw-completion mode and a chat mode. The paper's figures
+9. The capability script has a raw-completion mode and a chat mode. The paper's figures
    (MMLU 0.828) look like the chat-mode run; the experiment issue's earlier figures
    (MMLU 0.467) are the raw mode. The README will document chat mode as the paper's. Correct
    this if wrong.
-8. The repository has no licence file. Whether the released data needs a stated licence is
-   outside this work but will be asked of anyone downloading it.
-9. Whether `gemini-3.1-pro-preview` is reachable with a plain Gemini key, as opposed to
+10. Whether `gemini-3.1-pro-preview` is reachable with a plain Gemini key, as opposed to
    Vertex, has not been tested. It costs a call to find out.
 
 ## Test Scenarios
@@ -598,8 +678,8 @@ None. The work can proceed on the defaults below.
 
 1. **Fresh clone, free path.** Empty directory, no keys, no access to the original machine's
    files. Install; install data from local archives; run all free steps for both models.
-   Expected: six rebuilt files byte-identical to the reference copies; counts 316, 310, 502,
-   672; scoring output equals the paper's main table within the stated tolerance.
+   Expected: the eight rebuilt files byte-identical to the reference copies; counts 316, 310,
+   502, 672; scoring output equals the paper's main table within the stated tolerance.
 2. **Scoring is repeatable.** Run the scoring step twice. Expected: identical output.
 3. **Checksum failure.** Corrupt one archive. Expected: the download step stops and names
    the archive.
@@ -614,6 +694,13 @@ None. The work can proceed on the defaults below.
    and from inside `jaleesweights/`. Expected: same result.
 8. **Reference data is not overwritten.** Run a builder. Expected: reference files unchanged
    (same checksums); new output is somewhere else.
+8a. **A new run chains.** In an empty new-run location holding only small made-up inputs,
+   run a training-set builder and then the step that consumes its output. Expected: the
+   second step reads the first step's output from the new-run location, not from the
+   reference data.
+8b. **Installed elsewhere.** With the benchmark package installed into the JaleesWeights
+   environment, run a builder and the scoring step. Expected: they read the main run from
+   the clone, not from inside the environment.
 9. **Stage-2 needs a stage-1 checkpoint.** Start Inkling-Small stage-2 training without
    giving a checkpoint. Expected: it stops and asks for one; it does not fall back to the
    original account's address.
@@ -622,9 +709,11 @@ None. The work can proceed on the defaults below.
 
 ### Non-functional
 
-11. **Nothing private.** Search the tracked tree and both archives for: key-shaped strings;
-    the other team's name and configuration file name; the names of the left-out files;
-    architect state content. Expected: no hits.
+11. **Nothing private.** Search every file this work adds or changes, every commit this work
+    adds to the branch, and both archives for: key-shaped strings; the other team's name and
+    configuration file name; the names of the left-out files; architect state content.
+    Expected: no hits. (The two existing comment lines of open question 3 are not part of
+    this work and are excluded unless the owner asks otherwise.)
 12. **Nothing large in git.** No file added to git by this work is larger than 1 MB.
 13. **Archive is labelled.** The archive index exists, covers all 19 scripts and every
     archived data file, and says the archive is not maintained.
@@ -640,7 +729,10 @@ None. The work can proceed on the defaults below.
 
 | Risk | Probability | Impact | Mitigation |
 |------|-------------|--------|------------|
-| Private material or a key is published in a public, non-withdrawable release | Low | High | Search the tracked tree and the built archives before anything is sent; owner sees the contents list and search result; release is created only after approval and as a draft first |
+| Private material or a key is published in a public, non-withdrawable release | Low | High | Search the changed files, the branch's commits and the built archives before anything is sent; owner sees the contents list and search result; release is created only after approval and as a draft first |
+| Private wording reaches git history through an early commit even though the final tree is clean | Medium | High | Reword before the first commit; the search covers every commit on the branch, and runs before the branch is pushed |
+| Released data is published without redistribution terms being settled | Medium | Medium | Raised as open question 7; publication waits for the owner's answer |
+| The repeatable scoring step's paired intervals differ from the paper's printed ones and a reader takes it for an error | High | Low | README states the values and the reason; owner decides whether the paper is corrected (open question 8) |
 | The port changes training behaviour without anyone noticing, since GPU stages are not re-run | Medium | High | Minimal port; as-run originals committed first so the diff is reviewable; builders proven byte-identical; optional paid smoke run offered to the owner |
 | A paid step fails only after launch (GPU image no longer builds, GPU type unavailable, model or judge no longer served) | Medium | Medium | README states the versions and GPU types the runs used and that this was not re-tested; optional paid checks listed with costs |
 | Judge models are retired, so a new team's scores are not comparable with the paper's | Medium | Medium | README states the exact judge models; the released judgments let the paper's table be recomputed regardless |
