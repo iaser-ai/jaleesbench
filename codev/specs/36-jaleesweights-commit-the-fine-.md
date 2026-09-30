@@ -72,6 +72,9 @@ Each item was confirmed by reading the scripts.
 7. **Undeclared dependencies.** `modal` is imported on the local machine but declared
    nowhere. `torch`, `transformers`, `peft`, `vllm` and `lm_eval` are used only inside the
    rented GPU machines; they are named inside the scripts but nowhere a reader would look.
+   The Gemma training, sampling, collection and capability code lives inside Modal function
+   bodies, so today it cannot be run on a GPU the team owns without first taking it out of
+   those wrappers.
 8. **Undocumented manual steps.** Copying input files to the Modal volume, copying results
    back and renaming them, and turning one training set into the trainer's file format were
    done by hand and are written down nowhere.
@@ -126,11 +129,12 @@ only that file can:
 
 1. install everything needed on their own machine with one documented command;
 2. see which accounts and keys are needed, and set them up (including the Modal volume and
-   secret, in their own account);
+   secret, in their own account, if they run Gemma on Modal), or see what GPU machine they
+   need if they run Gemma on their own hardware;
 3. download the data with one documented step, and have it land where the code expects it;
-4. run every step of the recipe of record, for Gemma and for Inkling-Small, in the
-   documented order, with a statement beside each paid step of what it costs roughly and
-   which account it bills;
+4. run every step of the recipe of record, for Gemma — on Modal or on their own GPU
+   machine — and for Inkling-Small, in the documented order, with a statement beside each
+   paid step of what it costs roughly and which account it bills, or what hardware it needs;
 5. recompute the paper's main results table from the downloaded data without spending
    anything;
 6. find the dropped approaches and the dose sweep in a clearly labelled archive, with an
@@ -149,11 +153,16 @@ outputs from that location. Free steps can be pointed at either.
 The paper is the arbiter. The recipe of record is what the paper's Method section
 describes and what its main results table reports:
 
-- **Gemma-4-31B**, the full-precision (bf16) chain on Modal: stage 1 (filtered context
+- **Gemma-4-31B**, the full-precision (bf16) chain: stage 1 (filtered context
   distillation, supervised fine-tuning), stage 2 (preference optimization on the stage-1
   model's own samples, with the stage-1 model as reference), the held-out evaluation of each
   stage against a base-model control served through the same stack, the "with guide"
-  evaluation of stage 1, and the capability panel.
+  evaluation of stage 1, and the capability panel. The runs of record were made on Modal.
+  The owner wants this chain runnable **two ways**: on Modal, exactly as run; and on a GPU
+  machine the team owns, with the same Hugging Face stack (`transformers`, `peft`, vLLM)
+  that the Modal functions already run inside, without Modal images, volumes or secrets.
+  Both ways compute the same thing; the plan decides how the code is arranged so that they
+  cannot drift apart.
 - **Inkling-Small**, through the Tinker API: the same two stages and evaluations, with
   stage 2 at the settings of record (learning rate 1e-5, one epoch).
 - The 70/70 split, the Gemini-selects / Opus-scores separation, and the paired per-cell
@@ -167,7 +176,9 @@ to the archive.
 ### Run order the README must document
 
 Paid steps are marked with the account that is billed. "Free" means it runs on the local
-machine using downloaded data.
+machine using downloaded data. For Gemma, each GPU step shows both ways of running it: on
+Modal (the hardware the run of record used) and on the team's own machine (see the hardware
+section below).
 
 **Gemma-4-31B**
 
@@ -175,18 +186,18 @@ machine using downloaded data.
 |---|---|---|
 | 1 | Build the conversation inputs for the training half and the held-out half | free |
 | 2 | Build the stage-1 training set: Gemma's own guided answers that Gemini rated good before and after pushback, screened for guide references and dangling citations (316 conversations) | free |
-| 3 | Upload inputs and the training set to the Modal volume | free |
-| 4 | Stage-1 training (LoRA rank 32, lr 5e-5, 2 epochs) | Modal, one B200 |
-| 5 | Collect held-out answers: base model with no adapter (the control), stage 1 bare, stage 1 with guide | Modal, one H200 |
+| 3 | Upload inputs and the training set to the Modal volume (Modal way only; on an own machine the files are read in place) | free |
+| 4 | Stage-1 training (LoRA rank 32, lr 5e-5, 2 epochs) | Modal, one B200 · own machine: one GPU, training tier |
+| 5 | Collect held-out answers: base model with no adapter (the control), stage 1 bare, stage 1 with guide | Modal, one H200 · own machine: one GPU, serving tier |
 | 6 | Opus scores those answers | Anthropic |
-| 7 | Sample four answers per training scenario from the stage-1 model at temperature 1.3 | Modal, one H200 |
+| 7 | Sample four answers per training scenario from the stage-1 model at temperature 1.3 | Modal, one H200 · own machine: one GPU, serving tier |
 | 8 | Gemini rates the 1,680 samples | Gemini |
 | 9 | Build stage-2 pairs from the rated samples (502 pairs) | free |
-| 10 | Stage-2 training (β 0.1, lr 1e-5, 1 epoch; stage 1 as reference) | Modal, one B200 |
-| 11 | Collect held-out answers from the stage-2 model, bare | Modal, one H200 |
+| 10 | Stage-2 training (β 0.1, lr 1e-5, 1 epoch; stage 1 as reference) | Modal, one B200 · own machine: one GPU, training tier |
+| 11 | Collect held-out answers from the stage-2 model, bare | Modal, one H200 · own machine: one GPU, serving tier |
 | 12 | Opus scores them | Anthropic |
 | 13 | Scores with intervals, and the paired stage-2-versus-stage-1 comparison | free |
-| 14 | Capability panel (MMLU, GSM8K, IFEval) on base, stage 1, stage 2 | Modal, one H200 |
+| 14 | Capability panel (MMLU, GSM8K, IFEval) on base, stage 1, stage 2 | Modal, one H200 · own machine: one GPU, serving tier |
 
 **Inkling-Small**
 
@@ -205,7 +216,54 @@ machine using downloaded data.
 | 11 | Collect held-out answers from the stage-2 checkpoint, bare; Opus scores them | Tinker, Anthropic |
 | 12 | Scores with intervals, and the paired comparisons (stage 1 versus base, stage 2 versus stage 1) | free |
 
-Steps copying files to and from Modal, which were manual, become documented steps.
+Steps copying files to and from Modal, which were manual, become documented steps of the
+Modal way. On an own machine there is nothing to copy: steps read and write the new-run
+location directly.
+
+### Hardware for running Gemma on the team's own machine
+
+The README must carry this information, and must label each figure as **measured** (taken
+from the run records) or **derived** (worked out from the settings in the scripts). Nothing
+here was measured on a non-Modal machine; this workspace has no NVIDIA GPU (see approach
+5A). The figures below are the source for the README.
+
+**Measured, from the runs of record**
+
+| Step | Hardware used | What the records say |
+|---|---|---|
+| Stage-1 training, bf16 | one B200 (Modal) | 79 optimizer steps; peak GPU memory 66.0 GB (training log); about 15 minutes |
+| Stage-2 training, bf16 | one B200 (Modal) | 63 optimizer steps; peak memory not in the local records (the earlier 4-bit version peaked at 33 GB on an H200 with a 4-bit base, which does not transfer) |
+| Held-out collection and sampling | one H200 (Modal), vLLM | 420 two-turn conversations in about 6 minutes; 1,680 sampled conversations in one pass |
+| Capability panel | one H200 (Modal), vLLM through lm-eval | ran within a five-hour limit per checkpoint |
+
+**Derived, from the scripts' settings**
+
+- The model is 31 billion parameters, loaded in bf16 with no quantization: about 62 GB of
+  weights before anything else. Every GPU step therefore needs more than 62 GB of GPU
+  memory in one place (the training code uses automatic device placement, which would
+  spread the model over several GPUs, but that was never run and is not promised).
+- **Training tier.** LoRA rank 32 on the attention and MLP projections of the language
+  model only; one conversation per forward pass, batch of 8 by gradient accumulation;
+  conversations up to 16,384 tokens (the scripts refuse longer ones); gradient
+  checkpointing on. Memory is dominated by the weights: measured 66 GB peak. The derived
+  minimum is therefore a single GPU of at least 80 GB, with thin headroom; the run of record
+  had 180 GB. Stage 2 holds two LoRA adapters (policy and reference) over one copy of the
+  weights, so its footprint is close to stage 1's, not double.
+- **Serving tier.** vLLM with bf16 weights, LoRA enabled at rank 32, a 32,768-token context
+  window and 92% of GPU memory allocated. On the 141 GB H200 that leaves roughly 70 GB for
+  the key-value cache; on an 80 GB GPU it would leave roughly 12 GB, which works only with a
+  smaller context window or fewer concurrent sequences — a deviation the README must call
+  out, since throughput, not results, is what changes. The capability panel uses a 4,096-
+  or 8,192-token window and fits more easily.
+- **Software.** Linux with an NVIDIA driver supporting CUDA 12.8 (required by the Blackwell
+  B200; Hopper cards work with the same stack), Python 3.12, `torch` 2.7 or later built for
+  CUDA 12.8, `transformers` 4.53+, `peft` 0.15+, `accelerate` 1.3+, vLLM 0.10+ (which needs
+  the full CUDA toolkit present, because it compiles Gemma-4 kernels at start-up),
+  `lm_eval[vllm,ifeval]` 0.4.8+. These are the versions the Modal images pin; the README
+  states them as the tested envelope.
+- **Disk.** About 62 GB for the model weights in the Hugging Face cache, plus adapters (a
+  few hundred MB each) and lm-eval's datasets. No Hugging Face token is needed: the model
+  was ungated when the runs were made (checked August 2026).
 
 ### Classification of every existing file
 
@@ -218,6 +276,10 @@ File names are the scratch-folder names. Where a name would itself reveal privat
 material, the file is described instead of named.
 
 #### Scripts (44)
+
+The five Modal drivers of the recipe of record stay in the final pipeline as the Modal way
+of running Gemma. The own-machine way is new code ported from their function bodies; it is
+not an existing file and so does not appear in this classification.
 
 **Final pipeline (24)**
 
@@ -341,11 +403,20 @@ settings, per-step metrics, checkpoint index.
 - [ ] The scoring step gives the same output on every run. The README states its
       paired-interval values and that they differ slightly from the two printed in the
       paper, and why.
-- [ ] Every paid step can be started from that same clone and gets as far as it can without
-      spending: it finds its inputs, and either reports that the reference data already
+- [ ] Every paid step that runs through Modal, Tinker or a judge API can be started from
+      that same clone and gets as far as it can without spending: it finds its inputs, and either reports that the reference data already
       covers all the work (collection and judging steps) or stops before launch naming what
       it is about to rent (training steps). A missing key or account produces a message that
       names it.
+- [ ] Gemma runs two ways, on Modal and on the team's own GPU machine, and the two ways
+      cannot drift apart: the training arithmetic, filters, hyperparameters and sampling
+      settings are held in one place that both ways execute. The own-machine way needs no
+      Modal image, volume, secret or account.
+- [ ] The own-machine Gemma code, which cannot be executed in this workspace, is shown to
+      be the Modal code taken out of its wrapper: the diff between each Modal function body
+      and what the own-machine way runs is small and reviewed in the pull request; the
+      own-machine scripts compile and print their usage on a machine without a GPU; and the
+      README names the first cheap smoke test a team with a GPU should run.
 - [ ] A JaleesWeights step asks only for the keys it uses. Judging with only an Anthropic
       key and a Gemini credential set works; nothing demands OpenAI, Friendli, Blackbox,
       Ansari-route or Fanar keys.
@@ -363,12 +434,19 @@ settings, per-step metrics, checkpoint index.
       secret; the run order for both models; the rough cost and billed account of each paid
       step; which steps are free; that trained weights are not included; and how the
       capability panel's numbers relate to the paper's.
+- [ ] The README's hardware section for the own-machine Gemma way gives, for each GPU step,
+      the hardware the run of record used and the minimum a team needs, with every figure
+      labelled measured or derived, and says that the own-machine way was not executed
+      before handoff.
 - [ ] The archive has an index naming, for every archived script and data file, the approach
       it belonged to and the paper claim it supports, and states that the archive is not
       maintained and its scripts do not run from their new location.
-- [ ] Dependencies are declared: what runs locally in the project's dependency file with a
-      committed lock file; what runs only on rented GPUs is declared where those machines
-      are defined, and the README says so.
+- [ ] Dependencies are declared: what runs on the local machine in the project's dependency
+      file with a committed lock file; the GPU stack (`torch`, `transformers`, `peft`,
+      `accelerate`, vLLM, lm-eval) as a separately installable set that the own-machine way
+      needs and the default install does not pull in, since it cannot be installed on a
+      machine without an NVIDIA GPU; and the Modal images declare the same versions. The
+      README says which is which.
 - [ ] A search finds no key, no content of any `.env` file, no mention of the other team or
       its configuration file, and none of the left-out files in: every file this work adds
       or changes, **every commit this work adds to the branch**, and every release archive.
@@ -409,7 +487,9 @@ settings, per-step metrics, checkpoint index.
   the final pipeline must not change. Porting changes only what portability requires, with
   one named exception: the paired-comparison bootstrap is made repeatable (see Current
   State). Point estimates are unaffected.
-- GPU training runs on Modal and Tinker, not on the local machine.
+- Gemma's GPU steps run on Modal or on a GPU machine the team owns; Inkling-Small's run
+  through Tinker. None of them runs on the machine this work is done on: it is a Mac with no
+  NVIDIA GPU, so the own-machine Gemma way can be reviewed here but not executed.
 
 ### Security and privacy
 
@@ -454,6 +534,9 @@ must behave as they do today.
 - The benchmark's conversations are already public in another form through the results
   browser in this repository, so releasing the main run does not newly expose them. The
   judgments' full text and the raw provider responses would be newly public.
+- "The team's own GPU machine" means one Linux machine with one NVIDIA GPU of at least
+  80 GB memory and a CUDA 12.8-capable driver. Running over several smaller GPUs is not
+  promised (open question 9).
 - Costs in the README come from the experiment record of August 2026 and are stated as
   rough. Where no figure was recorded, the README says so instead of guessing.
 
@@ -468,8 +551,8 @@ Four questions were left open for the spec. Each is answered separately.
 `jaleesweights/` becomes a third `uv` project beside `jaleesbench/` and `quranquote/`,
 with its own dependency file and lock file. It declares the benchmark package as a
 dependency by local path, so the import works from any directory and the path hack
-disappears. It declares `modal` for the local machine. Steps are launched as modules
-through `uv`.
+disappears. It declares `modal` for the local machine and the GPU stack as a separately
+installable set for the own-machine way. Steps are launched as modules through `uv`.
 
 - For: matches how the repository is already laid out; one install command; the 15 import
   hacks and the working-directory disagreements go away together; the lock file pins the
@@ -622,6 +705,53 @@ support) are listed with their rough cost. The owner chooses whether any are run
 - Against: about $100 for Gemma plus the Inkling-Small cost, and judge variation means the
   numbers would not match exactly anyway. Not proposed; available if the owner wants it.
 
+### 6. Running Gemma on the team's own machine without the two ways drifting apart
+
+The owner requires that the Modal way and the own-machine way compute the same thing and
+cannot drift. Three ways to arrange the code:
+
+#### Approach 6A (recommended): one computation, two thin launchers
+
+The training, sampling, collection and capability code is taken out of the Modal function
+bodies into plain functions that take paths and settings as arguments. The Modal driver
+becomes a thin wrapper that runs those functions inside its image with its volume paths;
+the own-machine driver is a Typer command that runs the same functions with local paths.
+There is one copy of the arithmetic.
+
+- For: drift is impossible by construction; the diff against the as-run Modal code is the
+  extraction itself, small and mechanical; the free checks (compile, usage, the CPU-only
+  tokenisation and loss-mask logic) exercise the shared code.
+- Against: the Modal drivers are edited, so the as-run form survives only in git history
+  and in the first commit. That is already the plan for every final-pipeline script.
+- Risk: low.
+
+#### Approach 6B: two copies and a test that compares them
+
+Leave the Modal drivers as they are and copy their function bodies into own-machine
+scripts; a test fails if the copies diverge.
+
+- For: the Modal drivers stay byte-identical to what ran.
+- Against: duplicated code held together by a test is the kind of apparatus this project
+  avoids; any legitimate fix must be made twice.
+
+#### Approach 6C: one script with a switch
+
+One driver per step that decides at start-up whether it is inside Modal or on a local GPU.
+
+- For: one file per step.
+- Against: mixes Modal's import-time app and image definitions with local execution;
+  harder to read, and `modal` becomes an import on the GPU machine too.
+
+**What can be checked here and what cannot.** This workspace has no NVIDIA GPU. The
+own-machine way is reviewed as a diff, compiled, and its usage printed; the tokenisation
+and loss-mask code, which needs only the tokenizer, can be run on a CPU. Nothing else about
+it is executed before handoff, and the README says so. The first thing a team with a GPU
+should run is stage-1 training limited to four examples (the scripts already support the
+limit): it loads the model, builds the adapter, runs the parity check and writes an adapter
+in a few minutes, and it costs nothing but electricity. After that, held-out collection
+limited to a handful of conversations with that adapter exercises vLLM plus LoRA. Both are
+named in the README as the smoke tests.
+
 ## Open Questions
 
 ### Critical (blocks progress)
@@ -659,17 +789,24 @@ None. The work can proceed on the defaults below.
 8. **The paper's two paired intervals.** Once the scoring step is repeatable, its
    paired-difference intervals will differ from the two printed in the paper by up to
    0.005 (one run made for this spec gave an end of +0.211 where the paper prints
-   +0.206). Should the paper be
-   corrected to the repeatable values, or left as printed with a note in the README?
-   Default: the paper is not touched by this work; the README carries the note.
+   +0.206). Should the paper be corrected to the repeatable values, or left as printed
+   with a note in the README? Default: the paper is not touched by this work; the README
+   carries the note.
+9. **One GPU or several** (new with the own-machine Gemma way). The own-machine way is
+   specified for one GPU of at least 80 GB. Should running over several smaller GPUs be
+   supported and documented? Default: no; the training code's automatic device placement is
+   left as it is but not promised.
+
+Questions 1–8 stand at their defaults by the owner's decision of 2026-09-30; question 9 is
+new.
 
 ### Nice-to-know
 
-9. The capability script has a raw-completion mode and a chat mode. The paper's figures
+10. The capability script has a raw-completion mode and a chat mode. The paper's figures
    (MMLU 0.828) look like the chat-mode run; the experiment issue's earlier figures
    (MMLU 0.467) are the raw mode. The README will document chat mode as the paper's. Correct
    this if wrong.
-10. Whether `gemini-3.1-pro-preview` is reachable with a plain Gemini key, as opposed to
+11. Whether `gemini-3.1-pro-preview` is reachable with a plain Gemini key, as opposed to
    Vertex, has not been tested. It costs a call to find out.
 
 ## Test Scenarios
@@ -719,10 +856,25 @@ None. The work can proceed on the defaults below.
     archived data file, and says the archive is not maintained.
 14. **Offline tests.** The new tests pass with no network, no keys and no downloaded data.
 
+### Own-machine Gemma way (no GPU here)
+
+15. **Compiles and explains itself.** On this Mac, every own-machine Gemma step compiles
+    and prints its usage; a missing GPU dependency is reported by name.
+16. **Same computation.** The diff between each as-run Modal function body and the code the
+    own-machine way runs is reviewed in the pull request and contains no change to
+    arithmetic, filters, hyperparameters or sampling settings.
+17. **Loss mask on a CPU.** With only the tokenizer, the conversation rendering and
+    assistant-token mask code produces a prefix-stable rendering and masks exactly the
+    assistant turns on a made-up conversation. (Needs network access to fetch the tokenizer;
+    skipped offline.)
+18. **First smoke test for a team with a GPU** (documented, not run here): stage-1 training
+    limited to four examples, then held-out collection limited to a handful of
+    conversations with the resulting adapter.
+
 ### Paid, optional, only with the owner's approval
 
-15. A four-example Modal smoke run of Gemma stage-1 training (the script supports it).
-16. One Opus judgment and one Gemini judgment through a plain key, to confirm the judge
+19. A four-example Modal smoke run of Gemma stage-1 training (the script supports it).
+20. One Opus judgment and one Gemini judgment through a plain key, to confirm the judge
     models are still served.
 
 ## Risks and Mitigation
@@ -734,6 +886,8 @@ None. The work can proceed on the defaults below.
 | Released data is published without redistribution terms being settled | Medium | Medium | Raised as open question 7; publication waits for the owner's answer |
 | The repeatable scoring step's paired intervals differ from the paper's printed ones and a reader takes it for an error | High | Low | README states the values and the reason; owner decides whether the paper is corrected (open question 8) |
 | The port changes training behaviour without anyone noticing, since GPU stages are not re-run | Medium | High | Minimal port; as-run originals committed first so the diff is reviewable; builders proven byte-identical; optional paid smoke run offered to the owner |
+| The own-machine Gemma way is handed over never having been executed on a GPU | High | Medium | One computation shared with the Modal way (approach 6A); compile, usage and CPU-only mask checks; README states plainly that it was not run and names the four-example smoke test to run first |
+| An 80 GB GPU turns out too small for a step the records only measured on 141–180 GB cards | Medium | Medium | README labels the 80 GB figure as derived with thin headroom, gives the measured 66 GB peak, and says which serving settings to reduce |
 | A paid step fails only after launch (GPU image no longer builds, GPU type unavailable, model or judge no longer served) | Medium | Medium | README states the versions and GPU types the runs used and that this was not re-tested; optional paid checks listed with costs |
 | Judge models are retired, so a new team's scores are not comparable with the paper's | Medium | Medium | README states the exact judge models; the released judgments let the paper's table be recomputed regardless |
 | The key-loader change alters the benchmark's own behaviour | Low | Medium | Listed as an explicit scope item; benchmark commands must behave as before; existing tests must pass |

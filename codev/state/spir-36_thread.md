@@ -60,3 +60,23 @@ All accepted (one in part). The changes that matter to later phases:
 Eight questions for the owner are in the spec (weights, capability results, two existing
 comment lines, linking issue 21, sibling-project files, console logs, redistribution terms,
 the paper's two paired intervals). Waiting at the gate.
+
+## 2026-09-30 (evening) — scope change at the gate: Gemma gets a second way to run
+
+Owner's decision, relayed by the architect: spec approved as it stood, conditional on one
+change. The recipe of record now has three paths: Gemma on Modal (unchanged), Gemma on the
+team's own GPU machine (new, same Hugging Face stack the Modal functions already run
+inside), Inkling-Small on Tinker (unchanged). The eight owner questions stand at their
+defaults. An earlier version of the brief said "own machine instead of Modal"; it was
+superseded within minutes — Modal stays.
+
+Spec changes: recipe-of-record text; run-order table shows both ways per GPU step; a new
+hardware section (measured: 66.0 GB peak for bf16 stage-1 training on a B200, ~15 min, 420
+conversations in ~6 min on an H200; derived: 62 GB of bf16 weights, one GPU of at least
+80 GB for training with thin headroom, serving on 80 GB needs a smaller context window);
+new approach section 6 recommending one shared computation with two thin launchers so the
+two ways cannot drift; success criteria and tests for what can be checked on this Mac
+(compile, usage, diff, CPU-only loss-mask check) and the named first smoke test for a team
+with a GPU (stage-1 training limited to four examples); new owner question 9 (one GPU or
+several; default one). Classification unchanged — the Modal drivers stay final; the
+own-machine code is new, ported from their function bodies.
