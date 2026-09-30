@@ -80,3 +80,23 @@ two ways cannot drift; success criteria and tests for what can be checked on thi
 with a GPU (stage-1 training limited to four examples); new owner question 9 (one GPU or
 several; default one). Classification unchanged — the Modal drivers stay final; the
 own-machine code is new, ported from their function bodies.
+
+## 2026-09-30 (later) — owner's correction: the local path is a demonstration
+
+Third revision of the brief within the hour: the local Gemma path does NOT have to match the
+Modal path. It is a worked example of training locally — same two-stage recipe, same
+builders, pairing rule, judge protocol and split — but it may use a smaller Gemma-family
+model, and precision and batch settings may differ. Its numbers are not the paper's.
+
+Consequence I worked out: a smaller Gemma model is not a subject of the benchmark main run,
+so the demonstration cannot take its stage-1 teacher answers from the main run the way the
+31B path does. It must collect its own base answers first (training half with guide;
+held-out half bare and with guide), exactly as the Inkling-Small path does. Its run order
+therefore mirrors Inkling-Small's, run on local hardware instead of Tinker.
+
+Spec now: "no drift" requirement removed; approach section 6 rewritten around model choice;
+Gemma-4 family sizes checked on Hugging Face (E2B, E4B, 12B, 26B-A4B, 31B — all ungated);
+new owner question 9 with default **Gemma-4-12B, bf16, one 80 GB GPU (48 GB works with a
+smaller serving window)**, alternatives E4B on 24 GB and 31B on 80 GB, trade-offs stated.
+Modal-path run order restored to Modal-only; separate demonstration run order added.
+Gate re-requested.
