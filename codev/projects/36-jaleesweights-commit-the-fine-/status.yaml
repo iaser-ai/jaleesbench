@@ -1,7 +1,7 @@
 id: '36'
 title: jaleesweights-commit-the-fine-
 protocol: spir
-phase: specify
+phase: plan
 plan_phases: []
 current_plan_phase: null
 gates:
@@ -16,7 +16,7 @@ gates:
   verify-approval:
     status: pending
 iteration: 1
-build_complete: true
+build_complete: false
 history: []
 started_at: '2026-09-30T14:27:49.651Z'
-updated_at: '2026-09-30T22:08:22.689Z'
+updated_at: '2026-09-30T22:08:24.915Z'
