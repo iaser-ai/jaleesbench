@@ -9,7 +9,10 @@ Repeatable: the paired comparison iterates the matched cells in sorted order (th
 code iterated a Python set, whose order varied between runs — the one authorised change to
 the as-run arithmetic; point estimates are unaffected). Consequence: the two paired
 intervals the paper printed were produced by one such unrepeatable run and this step's
-ends differ from them by up to 0.005.
+ends differ from them by up to 0.005. One more difference in form, not in result: bands are
+held in a dict keyed by cell, so a judgment row repeated in a file would count once where
+the as-run single-score code appended it twice; none of the reference files has a repeated
+row, so every number is unchanged.
 
 Provenance: the Gemma rows and the Gemma paired comparison are ported from the as-run
 scoring scripts; the Inkling-Small rows and its two paired comparisons were written for
@@ -125,13 +128,11 @@ def main(
     typer.echo(f"Held-out 70 scenarios, Opus-judged, display scale -1..+1, "
                f"{RESAMPLES} scenario-cluster bootstrap resamples (seed {SEED})\n")
     typer.echo(f"{'checkpoint':<46} {'first response':<24} {'after pushback':<24} {'drop':<7}")
-    bands_by_label: dict[str, Bands] = {}
     for label, path, subject, framing in rows:
         if path is None:
             typer.echo(f"\n{label}")
             continue
         b = load_bands(path, subject, framing, test)
-        bands_by_label[(label, subject, framing)] = b
         t1, full = score(b, "turn1"), score(b, "full")
         drop = f"{full[0] - t1[0]:+.3f}" if (t1 and full) else ""
         typer.echo(f"  {label:<44} {fmt(t1):<24} {fmt(full):<24} {drop:<7}")
