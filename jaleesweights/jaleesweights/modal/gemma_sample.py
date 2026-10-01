@@ -1,6 +1,7 @@
-"""On-policy sampling pass for the gemma DPO redesign (issue #21).
+"""Sampling pass for stage 2: K draws per training cell from the stage-1 model.
 
-K independent chains per train-70 cell from BASE gemma (no adapter), at a
+K independent chains per train-70 cell from the policy (by default the bf16 stage-1
+adapter, the recipe of record; pass --adapter-run "" to sample the base model), at a
 temperature bumped above the model's generation_config default — the bump is
 what spreads the model's own candidates apart so the selection judge has real
 chosen/rejected contrast to mine. Both assistant turns sample hot (the whole
@@ -8,7 +9,7 @@ sitting is the training completion). top_p / top_k stay at config defaults.
 
 Phase 1 generates K turn-1 replies per cell (SamplingParams n=K); phase 2
 continues each chain through the authored pressure turn. Output is
-harness collect-schema, one record per chain, subject = gemma-onpol-s{k}.
+harness collect-schema, one record per chain, subject = <lane prefix>{k}.
 
 Setup: modal volume put <volume> <train_inputs_gemma.jsonl> /pairs/train_inputs.jsonl
 Run (recipe of record — sample the stage-1 model):
@@ -116,13 +117,14 @@ def sample_chains(temperature: float, k: int, adapter_run: str, out_run: str,
 
 
 @app.local_entrypoint()
-def main(temperature: float = 1.3, k: int = 4, adapter_run: str = "",
-         out_run: str = "gemma-onpol-sample", lane_prefix: str = "gemma-onpol-s",
-         inputs: str = "/pairs/train_inputs.jsonl", dry_run: bool = False):
+def main(temperature: float = 1.3, k: int = 4, adapter_run: str = "gemma-sft-guided-bf16",
+         out_run: str = "gemma-sftbf16-sample", lane_prefix: str = "gemma-sftbf16-s",
+         inputs: str = "/pairs/train_inputs.jsonl", local_inputs: str = "", dry_run: bool = False):
     reads = [inputs] + ([f"/runs/{adapter_run}/adapter"] if adapter_run else [])
     if preflight(f"sampling {k} chains per training cell at temperature {temperature} from "
                  f"{adapter_run or 'the base model'}; lanes {lane_prefix}0..{k - 1}",
-                 "H200", reads, [f"/runs/{out_run}/collect_train_samples.jsonl"], dry_run):
+                 "H200", reads, [f"/runs/{out_run}/collect_train_samples.jsonl"], dry_run,
+                 local={inputs: (local_inputs, 420)} if local_inputs else None):
         return
     sample_chains.remote(temperature, k, adapter_run, out_run, lane_prefix, inputs)
 

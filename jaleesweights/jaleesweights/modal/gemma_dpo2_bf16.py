@@ -254,11 +254,12 @@ def train(pairs_path: str, sft_run: str, run_name: str, batch: int, beta: float,
 @app.local_entrypoint()
 def main(pairs: str, run_name: str, sft_run: str = "gemma-sft-guided-bf16",
          batch: int = 8, beta: float = 0.1, lr: float = 1e-5, seed: int = 3446,
-         limit: int = 0, resume_from: str = "", dry_run: bool = False):
+         limit: int = 0, resume_from: str = "", local_pairs: str = "", dry_run: bool = False):
     if preflight(f"stage-2 DPO of {MODEL} from stage-1 run {sft_run}: run {run_name}, batch {batch}, beta {beta}, "
                  f"lr {lr}, 1 epoch, seed {seed}" + (f", limit {limit}" if limit else ""),
                  "B200", [pairs, f"/runs/{sft_run}/adapter"],
-                 [f"/runs/{run_name}/adapter", f"/runs/{run_name}/train_log.jsonl"], dry_run):
+                 [f"/runs/{run_name}/adapter", f"/runs/{run_name}/train_log.jsonl"], dry_run,
+                 local={pairs: (local_pairs, None)} if local_pairs else None):
         return
     if limit:
         train.remote(pairs, sft_run, run_name, batch, beta, lr, seed, limit, resume_from)

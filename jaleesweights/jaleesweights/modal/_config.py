@@ -59,14 +59,38 @@ CAPABILITY_IMAGE = (
 )
 
 
-def preflight(what: str, gpu: str, reads: list[str], writes: list[str], dry_run: bool) -> bool:
+def check_local(volume_path: str, local: str, expected_rows: int | None = None) -> str:
+    """Validate the local file a volume path is uploaded from: it must exist, and when the
+    step has a fixed size (the 420-cell inputs) hold exactly that many rows. Returns a note."""
+    p = os.path.expanduser(local)
+    if not os.path.isfile(p):
+        raise SystemExit(f"preflight failed: local source for {volume_path} does not exist: {local}")
+    if volume_path.endswith((".jsonl", ".txt")):
+        with open(p) as fh:
+            rows = sum(1 for l in fh if l.strip())
+        if expected_rows is not None and rows != expected_rows:
+            raise SystemExit(f"preflight failed: {local} has {rows} rows; {volume_path} must have {expected_rows}")
+        return f"local {local}: {rows} rows ok"
+    return f"local {local}: present"
+
+
+def preflight(what: str, gpu: str, reads: list[str], writes: list[str], dry_run: bool,
+              local: dict[str, tuple[str, int | None]] | None = None) -> bool:
     """Print what a driver is about to rent and touch; return True when it should stop.
-    Only local facts are checked: the volume's contents cannot be seen without an account."""
+    `local` maps a volume path to (local source file, expected row count or None): those
+    files are checked before anything is launched. The volume's own contents cannot be
+    seen without an account."""
     print(f"preflight: {what}")
+    for vp, (src, n) in (local or {}).items():
+        print("  " + check_local(vp, src, n))
     print(f"  Modal volume {VOLUME!r}, secret {HF_SECRET!r}, GPU {gpu}; billed to your Modal account")
     for p in reads:
-        hint = (f"(upload: modal volume put {VOLUME} <local file> {p})" if p.startswith("/pairs/")
-                else "(written to the volume by an earlier driver run)")
+        if p.startswith("/pairs/"):
+            src = (local or {}).get(p, (None,))[0]
+            hint = (f"(upload: modal volume put {VOLUME} {src or '<local file>'} {p})"
+                    + ("" if src else "   [local source not given: not checked]"))
+        else:
+            hint = "(written to the volume by an earlier driver run)"
         print(f"  reads  /vol{p}   {hint}")
     for p in writes:
         print(f"  writes /vol{p}   (download: modal volume get {VOLUME} {p} <local dir>)")

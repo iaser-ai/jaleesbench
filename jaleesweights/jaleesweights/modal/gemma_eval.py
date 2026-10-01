@@ -4,8 +4,9 @@ Two batched phases over the 420 test-70 sittings (unstated framing = no
 context prefix, matching the harness): phase 1 generates every turn-1 reply,
 phase 2 appends the authored pressure turn and generates turn 2. Sampling uses
 the model's own generation_config (the harness runs subjects at
-provider-default sampling). Base is served bf16 with the LoRA applied —
-the adapter was trained against an nf4-quantized base (recorded deviation).
+provider-default sampling). Base is served bf16 with the LoRA applied; the bf16
+recipe of record trains against a bf16 base too, so there is no precision
+mismatch (the earlier 4-bit chain, now archived, had one).
 
 Setup: modal volume put <volume> <eval_inputs_gemma.jsonl> /pairs/eval_inputs.jsonl
        (and, for the guided guard, the guide text: modal volume put <volume> <guided_prefix.txt> /pairs/guided_prefix.txt)
@@ -111,12 +112,18 @@ def collect_eval(run_name: str, subject: str, context_file: str, inputs_path: st
 
 @app.local_entrypoint()
 def main(run_name: str, subject: str = "", context_file: str = "",
-         inputs: str = "/pairs/eval_inputs.jsonl", dry_run: bool = False):
+         inputs: str = "/pairs/eval_inputs.jsonl", local_inputs: str = "", local_context: str = "",
+         dry_run: bool = False):
     out = f"/runs/{run_name}/collect_eval_gemma{'_guided' if context_file else ''}.jsonl"
     reads = [inputs] + ([context_file] if context_file else []) + ([f"/runs/{run_name}/adapter"] if run_name != "base" else [])
+    local = {}
+    if local_inputs:
+        local[inputs] = (local_inputs, 420)  # 70 held-out scenarios x 6 pressures
+    if local_context and context_file:
+        local[context_file] = (local_context, None)
     if preflight(f"held-out collection with vLLM: run {run_name} ({'base model, no adapter' if run_name == 'base' else 'adapter'}), "
                  f"subject {subject or run_name}, {'with guide' if context_file else 'bare'}",
-                 "H200", reads, [out], dry_run):
+                 "H200", reads, [out], dry_run, local=local or None):
         return
     collect_eval.remote(run_name, subject or run_name, context_file, inputs)
 

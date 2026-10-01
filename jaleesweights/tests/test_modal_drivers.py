@@ -55,3 +55,28 @@ def test_capability_rejects_unknown_checkpoint():
     out = subprocess.run([sys.executable, "-m", "jaleesweights.modal.gemma_capability", "--only", "nf4"],
                          cwd=PROJECT, capture_output=True, text=True, env={**NO_ACCOUNT, "PYTHONPATH": str(PROJECT)})
     assert out.returncode != 0 and "unknown checkpoint" in out.stderr
+
+
+def test_preflight_validates_local_sources(tmp_path):
+    good = tmp_path / "eval_inputs.jsonl"
+    good.write_text("{}\n" * 420)
+    short = tmp_path / "short.jsonl"
+    short.write_text("{}\n" * 7)
+    base = [sys.executable, "-m", "jaleesweights.modal.gemma_eval", "--run-name", "base"]
+    env = {**NO_ACCOUNT, "PYTHONPATH": str(PROJECT)}
+    ok = subprocess.run(base + ["--local-inputs", str(good)], cwd=PROJECT, capture_output=True, text=True, env=env)
+    assert ok.returncode == 0 and "420 rows ok" in ok.stdout and f"modal volume put gemma-dpo {good}" in ok.stdout
+    bad = subprocess.run(base + ["--local-inputs", str(short)], cwd=PROJECT, capture_output=True, text=True, env=env)
+    assert bad.returncode != 0 and "has 7 rows" in bad.stderr and "dry run" not in bad.stdout
+    missing = subprocess.run(base + ["--local-inputs", str(tmp_path / "nope.jsonl")], cwd=PROJECT, capture_output=True, text=True, env=env)
+    assert missing.returncode != 0 and "does not exist" in missing.stderr
+    unchecked = subprocess.run(base, cwd=PROJECT, capture_output=True, text=True, env=env)
+    assert unchecked.returncode == 0 and "local source not given: not checked" in unchecked.stdout
+
+
+def test_sample_defaults_to_the_stage_1_model():
+    out = subprocess.run([sys.executable, "-m", "jaleesweights.modal.gemma_sample"],
+                         cwd=PROJECT, capture_output=True, text=True, env={**NO_ACCOUNT, "PYTHONPATH": str(PROJECT)})
+    assert out.returncode == 0
+    assert "from gemma-sft-guided-bf16" in out.stdout and "lanes gemma-sftbf16-s0..3" in out.stdout
+    assert "/vol/runs/gemma-sftbf16-sample/collect_train_samples.jsonl" in out.stdout

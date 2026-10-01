@@ -208,10 +208,13 @@ def train(data_path: str, run_name: str, batch: int, lr: float, epochs: int,
 @app.local_entrypoint()
 def main(data: str, run_name: str, batch: int = 8, lr: float = 5e-5,
          epochs: int = 2, seed: int = 3446, limit: int = 0, resume_from: str = "",
-         dry_run: bool = False):
+         local_data: str = "", dry_run: bool = False):
+    # --local-data: the training set on this machine that `data` was (or will be) uploaded from;
+    # checked for existence and row count before anything is rented.
     if preflight(f"stage-1 SFT of {MODEL}: run {run_name}, batch {batch}, lr {lr}, {epochs} epochs, seed {seed}"
                  + (f", limit {limit}" if limit else "") + (f", resume from {resume_from}" if resume_from else ""),
-                 "B200", [data], [f"/runs/{run_name}/adapter", f"/runs/{run_name}/train_log.jsonl"], dry_run):
+                 "B200", [data], [f"/runs/{run_name}/adapter", f"/runs/{run_name}/train_log.jsonl"], dry_run,
+                 local={data: (local_data, None)} if local_data else None):
         return
     if limit:
         # smoke: block (remote) so loss / memory / B200-compat print directly to this client.
