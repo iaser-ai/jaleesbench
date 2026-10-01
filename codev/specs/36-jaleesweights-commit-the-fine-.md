@@ -392,7 +392,7 @@ scratch location, and the archive's index says so.
 | `collect_small_train_unstated_sft_k4.jsonl`, `judgments_small_sft_k4.jsonl` | Inkling-Small stage-1 samples and their Gemini ratings |
 | `pairs_train70_small_sft2.jsonl`, `comparisons_train_small_sft2.jsonl` | Inkling-Small stage-2 pairs (672), and the same in the trainer's format |
 | `judgments_eval_small.jsonl` | Opus scores for all Inkling-Small held-out answers. One file holding nine subjects: three of record, six from the sweep. Kept whole |
-| `sft_small_run/`, `dpo_small_sft2_run/` — settings, per-step metrics, checkpoint index only | records of the two Inkling-Small training runs of record |
+| `sft_small_run/`, `dpo_small_sft2_run/` — settings and per-step metrics only | records of the two Inkling-Small training runs of record. Owner's decision at the plan gate (2026-10-01): the settings file's three path fields are rewritten to release-relative names; the checkpoint index is left out (addresses in the owner's Tinker account) |
 | the benchmark main run: conversations, judgments, citation flags | read by the builders and by scoring; distributed as its own download |
 
 **Archive**
@@ -406,8 +406,8 @@ scratch location, and the archive's index says so.
 | `collect_eval_sft.jsonl`, `collect_eval_sftG.jsonl`, `collect_sft2_samples.jsonl`, `judgments_sft2_samples.jsonl`, `pairs_train70_sft2.jsonl`, `collect_eval_sftdpo.jsonl`, `train_log_sft.jsonl`, `train_log_sftdpo.jsonl` | the earlier 4-bit Gemma chain |
 | six `collect_small_test_unstated_sftdpo_lr*.jsonl`, six `dpo_small_sft2_sweep_*/` folders | the dose sweep |
 
-From every archived run folder, the same three files are kept as from the runs of record:
-settings, per-step metrics, checkpoint index.
+From every archived run folder, the same two files are kept as from the runs of record:
+settings (path fields rewritten) and per-step metrics. The checkpoint index is left out.
 
 **Left out**
 
@@ -417,6 +417,7 @@ settings, per-step metrics, checkpoint index.
 | a methodology note written for a sibling project | repeats the paper and the experiment issue; quotes the 4-bit numbers the paper has replaced; contains original-machine paths; architect said to draft with it left out, owner confirms at the gate |
 | the Tinker cleanup record | lists other parties' runs on a shared account; no experimental content |
 | ten `code.diff` files | contain diffs of an architect state file and the other team's name; no experimental content |
+| ten `checkpoints.jsonl` | checkpoint addresses in the owner's Tinker account; useless to anyone else (owner, 2026-10-01) |
 | ten `logs.log`, ten `timing_spans.jsonl`, 27 `.log` / `.out` console captures | console output only. They carry original-machine paths and session identifiers; nothing in the paper is computed from them; the per-step metrics that the paper does cite are kept separately |
 | Python bytecode cache | generated |
 

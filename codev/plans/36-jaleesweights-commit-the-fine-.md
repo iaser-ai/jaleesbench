@@ -236,17 +236,19 @@ Nothing is uploaded in this phase.
 
 - Staging (gitignored, under `jaleesweights/data/staging/`): `jaleesweights-data.tar.gz`
   — all 58 top-level `.jsonl` files (every one is final or archive) plus
-  `tinker-runs/<10 folders>/{config.json,metrics.jsonl,checkpoints.jsonl}` = 88 members —
+  `tinker-runs/<10 folders>/{config.json,metrics.jsonl}` = 78 members —
   and `jaleesbench-main-run.tar.gz` (`collect.jsonl`, `judgments.jsonl`,
   `citations_llm.jsonl`). Built by a documented one-off command sequence recorded in the
   thread, not by a committed script (the source is the read-only scratch folder on this
   machine and will not exist for anyone else). The release tag is fixed now:
   `jaleesweights-data-v1`; `checksums.sha256`, the fetch module and the README all use it.
-- Decision recorded here, not discovered later: the ten kept `config.json` files contain
-  the original machine's paths in their `log_path` and `train_path` fields. They are kept
-  unaltered — they are identifiers of where a run wrote, not dependencies, and the records
-  are the as-run record — and the owner's report says so, so the owner can ask for them to
-  be rewritten before publication if preferred.
+- Run records, per the owner's decision at the plan gate (2026-10-01): from each of the
+  ten Tinker run folders keep `metrics.jsonl` as-is and `config.json` with its `log_path`,
+  `train_path` and `file_path` fields rewritten to the release-relative file name (for
+  example `tinker-runs/dpo_small_sft2_run` and `comparisons_train_small_sft2.jsonl`; no
+  original-machine prefix); drop `checkpoints.jsonl` (addresses in the owner's Tinker
+  account, useless to anyone else). The rewrite is the only edit to any released file and
+  `CONTENTS.md` says so.
 - `jaleesweights/release/checksums.sha256` — committed; also `release/CONTENTS.md` listing
   every file in each archive with its size (no left-out names appear, by construction).
 - `jaleesweights/jaleesweights/fetch_data.py` — Typer command: `--from-dir PATH` installs
@@ -268,11 +270,15 @@ Nothing is uploaded in this phase.
 #### Acceptance Criteria
 
 - [ ] Every file in `CONTENTS.md` is one the spec classes final or archive; none is left
-      out; the experiment archive has exactly 88 members (58 + 30) and the main-run archive
-      3. `guided_prefix.txt` and `split_70_70.json` are in git instead.
+      out; the experiment archive has exactly 78 members (58 + 20) and the main-run archive
+      3; no `checkpoints.jsonl` is present. `guided_prefix.txt` and `split_70_70.json` are
+      in git instead.
+- [ ] No released `config.json` contains an absolute path; its three path fields name
+      release-relative files that exist in the archive.
 - [ ] Exhaustive, not spot-checked: a `sha256` list of every member of both archives, made
       from the scratch originals, equals the list made from the files `fetch_data
-      --from-dir` installs (91 lines, all matching). Recorded in the thread.
+      --from-dir` installs (81 lines, all matching; the ten `config.json` entries are
+      compared after the same path rewrite). Recorded in the thread.
 - [ ] Both destinations refuse to overwrite existing files without `--force`.
 - [ ] Checksum mismatch → named failure; missing release → the "not published" message
       (tested with a stub HTTP response); `--from-dir` path → extraction succeeds.
@@ -282,8 +288,8 @@ Nothing is uploaded in this phase.
 
 Unit: checksum verify on temp files; the not-published and mismatch paths with a stubbed
 downloader; extraction layout and overwrite refusal on a tiny fake archive. Manual: build
-the archives, run `fetch_data --from-dir data/staging`, run the exhaustive 91-file checksum
-comparison against the scratch originals.
+the archives, run `fetch_data --from-dir data/staging`, run the exhaustive 81-file checksum
+comparison against the scratch originals (config files compared after the rewrite).
 
 ### Phase 4: Free steps ported: builders, exports and repeatable scoring
 
