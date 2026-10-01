@@ -99,7 +99,8 @@ seven-arm dose sweep".
   `gemma-sft-guided` has 839 of 840 rows, and three sweep arms (`inkling-small-sftdpo-lr3e-5`,
   `-lr3e-4`, `-lr3e-5-ep3`) have 839 each. The scoring handles the gaps.
 - Each Tinker run folder holds `config.json` (the three path fields rewritten to
-  release-relative names; everything else as written) and `metrics.jsonl`. The checkpoint
-  index was left out: it held addresses in the original Tinker account.
+  release-relative names, and the stage-2 configs' `load_checkpoint_path` replaced by a
+  placeholder; everything else as written) and `metrics.jsonl`. The checkpoint index was
+  left out: it held addresses in the original Tinker account.
 - The Modal training logs of this archive's arms (`train_log_*.jsonl`) are per-step records
   copied from the volume at the time.

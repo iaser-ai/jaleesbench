@@ -361,8 +361,8 @@ Not verified here, because it cannot be:
   adapter on your Modal volume at `/runs/<run-name>/adapter`, or, for the demonstration, in
   `data/runs/<run>/gemma-sft/adapter` and `.../gemma-sft-dpo/adapter`; an Inkling-Small run
   leaves `tinker://` checkpoint addresses in your Tinker account, recorded in the trainer's
-  `checkpoints.jsonl`. The released run records' `load_checkpoint_path` fields hold the
-  original account's addresses, which are useless to anyone else and kept only as a record.
+  `checkpoints.jsonl`. The released run records carry no account addresses: the stage-2
+  configs' `load_checkpoint_path` was replaced by a placeholder.
 - **Judges**: selection by `gemini-3.1-pro-preview`, held-out scoring by `claude-opus-4-8`.
   **Base models**: `google/gemma-4-31B-it`, `thinkingmachines/Inkling-Small`. These ids are
   what the runs used; whether they are still served was not re-tested. A retired judge would

@@ -1,10 +1,10 @@
 # Data release contents (tag `jaleesweights-data-v1`)
 
-Two archives. Every member is listed with its size in bytes and its SHA-256. Members are the files as the original runs produced them (the main run also carries the benchmark's `judgments_v2.jsonl` overlay of re-judged cells, which the benchmark's own scoring applies and JaleesWeights does not), with one exception: in each `tinker-runs/*/config.json` the `log_path`, `train_path` and `file_path` fields were rewritten from the original machine's absolute paths to release-relative names (nothing else in those files changed). `NOTICE` states the licence (CC BY 4.0) and that provider model outputs remain subject to their providers' terms.
+Two archives. Every member is listed with its size in bytes and its SHA-256. Members are the files as the original runs produced them (the main run also carries the benchmark's `judgments_v2.jsonl` overlay of re-judged cells, which the benchmark's own scoring applies and JaleesWeights does not), with one exception: in each `tinker-runs/*/config.json` the `log_path`, `train_path` and `file_path` fields were rewritten from the original machine's absolute paths to release-relative names, and the seven stage-2 configs' `load_checkpoint_path` (a tinker:// address in the original account) was replaced by a placeholder (nothing else in those files changed). `NOTICE` states the licence (CC BY 4.0) and that provider model outputs remain subject to their providers' terms.
 
 ## jaleesweights-data.tar.gz — reference data of the recipe of record and the archived arms (extracted to `jaleesweights/data/reference/`)
 
-79 members, 73,501,598 bytes compressed.
+79 members, 73,501,698 bytes compressed.
 
 | member | bytes | sha256 |
 |---|---:|---|
@@ -61,19 +61,19 @@ Two archives. Every member is listed with its size in bytes and its SHA-256. Mem
 | `sft_train_guided.jsonl` | 2,338,030 | `9fe9920f04ab2f9c033f14d7abc38896f4e9b2b1a4ed965e2162bc25746cf53b` |
 | `sft_train_small.jsonl` | 3,154,509 | `50a38095cc08a78462fc589bbc7b9e68ede1d5a4570736756d03edd9a7141d8d` |
 | `sft_train_small_messages.jsonl` | 3,131,170 | `a02ccc02a0c792d716d55e8b42423e54e236740e7aee7d648f2dcb08ef706f8d` |
-| `tinker-runs/dpo_small_sft2_run/config.json` | 1,234 | `8e4393d74f049d9023138aa38302993cb73dae49773b1ff479affa776bf85d0f` |
+| `tinker-runs/dpo_small_sft2_run/config.json` | 1,231 | `0b2a06bb200460138eed0432435ef85421f370219e77bd60f8ec57d7d5157faa` |
 | `tinker-runs/dpo_small_sft2_run/metrics.jsonl` | 64,568 | `26efd6f2e466e6e19af2974e4e1f7a11b418a9d17108f1660b8bc671b315644d` |
-| `tinker-runs/dpo_small_sft2_sweep_lr0.0001/config.json` | 1,255 | `ac1429ca383963bc0b223320cb37e54678890783eba11164c5240e8eded13967` |
+| `tinker-runs/dpo_small_sft2_sweep_lr0.0001/config.json` | 1,252 | `2cbf57ee52cca45843e87437caa7e221d07e4590a603ee67bfa83f0901c63680` |
 | `tinker-runs/dpo_small_sft2_sweep_lr0.0001/metrics.jsonl` | 64,516 | `3f12c2609b7a91316e17f3f1cda9f403e42b8eafb3c34a212073663eebe98eff` |
-| `tinker-runs/dpo_small_sft2_sweep_lr0.0001_ep3/config.json` | 1,263 | `3b8814d6c41df9246de1ab29aa5b2afe659dea9357dbfea513e206b309c7f048` |
+| `tinker-runs/dpo_small_sft2_sweep_lr0.0001_ep3/config.json` | 1,260 | `b736928d8a67b76e36a0f0b88b2e89102365aab2d2af9f939fbc81072498d555` |
 | `tinker-runs/dpo_small_sft2_sweep_lr0.0001_ep3/metrics.jsonl` | 194,267 | `5ee18a025058287f3da28b4c06f233a879f154f7d94d247817992b1034cf4928` |
-| `tinker-runs/dpo_small_sft2_sweep_lr0.0003/config.json` | 1,255 | `ae3d4d4e04af097a9ce2ffbc62a8fcbd369446e26846f697e39fb87b7d3777b8` |
+| `tinker-runs/dpo_small_sft2_sweep_lr0.0003/config.json` | 1,252 | `99dfb90aad2a399d29cdfdc972079fe809e8e1b10c7226f68a18c06f579c02b7` |
 | `tinker-runs/dpo_small_sft2_sweep_lr0.0003/metrics.jsonl` | 64,528 | `a8da96aefa8fdc0bb9255f037abeb8d96a06ffddd41a2c977e38579451533623` |
-| `tinker-runs/dpo_small_sft2_sweep_lr1e-05_ep3/config.json` | 1,260 | `5575cc4a77728f74c73d2730fef31a5e8c24c536b58d533f82ae99ef226e6b3a` |
+| `tinker-runs/dpo_small_sft2_sweep_lr1e-05_ep3/config.json` | 1,257 | `9a4d09245f78fbd59b36f09a4afaa493bb28df6aedeea8b8078e7c5d9ddc20f6` |
 | `tinker-runs/dpo_small_sft2_sweep_lr1e-05_ep3/metrics.jsonl` | 193,834 | `acdaf88a0cb689f34ab42648039477e06977f4eab7d2d8f27420ca7edec94438` |
-| `tinker-runs/dpo_small_sft2_sweep_lr3e-05/config.json` | 1,252 | `9b424687a3759ab6cb3478dce38cb0e1601e9b2928ccf6debb61804860214aea` |
+| `tinker-runs/dpo_small_sft2_sweep_lr3e-05/config.json` | 1,249 | `fe9400ce95dab09791f07a350b889b476f4924015259f3255db389befca2d1cf` |
 | `tinker-runs/dpo_small_sft2_sweep_lr3e-05/metrics.jsonl` | 64,485 | `c845aebebaf8480da6110addfb02173f30dece631c44dc435594a36e32b64b30` |
-| `tinker-runs/dpo_small_sft2_sweep_lr3e-05_ep3/config.json` | 1,260 | `dd7d60c7321b586b8b04c6e96e37155f6c91ce147a65bed93c5f15429897502e` |
+| `tinker-runs/dpo_small_sft2_sweep_lr3e-05_ep3/config.json` | 1,257 | `901d31dc0eeec40c8c267dcc93676a04ebded70177097ee124a1230e1d26daf1` |
 | `tinker-runs/dpo_small_sft2_sweep_lr3e-05_ep3/metrics.jsonl` | 194,067 | `fb6de6d6526c44710c1a273aa195fa508a899b0fe4da7dd57a45bafadb83d7fa` |
 | `tinker-runs/run1/config.json` | 1,127 | `dfbbfccc37386bc34af054e451fce2ae8bfb6b755bf6c778aeb3abd32c78c4c3` |
 | `tinker-runs/run1/metrics.jsonl` | 48,108 | `2767d40b902cd7b4901000f187185dffa5f9e5cdb570870f743b5b55519ce09a` |
@@ -99,3 +99,4 @@ Two archives. Every member is listed with its size in bytes and its SHA-256. Mem
 | `collect.jsonl` | 280,896,403 | `5dcd0b952e9a80270bf5d27369ef80f7c4f9dc1b7e457e90751b0723ac9a055f` |
 | `judgments.jsonl` | 236,085,273 | `a6fcada7bc472fa964cc229c2e42c8626def8628f7fef274d7a8eb3dc59b7946` |
 | `judgments_v2.jsonl` | 158,406 | `e3dd76b23184548d1dd3faa931e7e56f674cc10c65413cc102d616accf8977ef` |
+
