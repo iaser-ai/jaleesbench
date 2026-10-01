@@ -1,7 +1,7 @@
 id: '36'
 title: jaleesweights-commit-the-fine-
 protocol: spir
-phase: implement
+phase: review
 plan_phases:
   - id: phase_1
     title: As-run scripts in their final places, private wording removed
@@ -26,8 +26,8 @@ plan_phases:
     status: complete
   - id: phase_8
     title: README, archive index, fresh-clone walk-through and owner report
-    status: in_progress
-current_plan_phase: phase_8
+    status: complete
+current_plan_phase: null
 gates:
   spec-approval:
     status: approved
@@ -41,8 +41,8 @@ gates:
     status: pending
   verify-approval:
     status: pending
-iteration: 2
-build_complete: true
+iteration: 1
+build_complete: false
 history:
   - iteration: 1
     plan_phase: phase_2
@@ -157,7 +157,7 @@ history:
         file: >-
           /Users/mwk/Development/fftn/taqwabench/.builders/spir-36/codev/projects/36-jaleesweights-commit-the-fine-/36-phase_8-iter1-claude.txt
 started_at: '2026-09-30T14:27:49.651Z'
-updated_at: '2026-10-01T07:11:59.473Z'
+updated_at: '2026-10-01T07:21:23.352Z'
 pr_history:
   - phase: implement
     pr_number: 37
