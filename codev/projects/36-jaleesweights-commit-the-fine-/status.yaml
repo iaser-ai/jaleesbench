@@ -8,10 +8,10 @@ plan_phases:
     status: complete
   - id: phase_2
     title: Installable project, clone-relative paths, keys scoped to what a step uses
-    status: in_progress
+    status: complete
   - id: phase_3
     title: Data archives, checksums and the download step
-    status: pending
+    status: in_progress
   - id: phase_4
     title: 'Free steps ported: builders, exports and repeatable scoring'
     status: pending
@@ -27,7 +27,7 @@ plan_phases:
   - id: phase_8
     title: README, archive index, fresh-clone walk-through and owner report
     status: pending
-current_plan_phase: phase_2
+current_plan_phase: phase_3
 gates:
   spec-approval:
     status: approved
@@ -41,8 +41,8 @@ gates:
     status: pending
   verify-approval:
     status: pending
-iteration: 2
-build_complete: true
+iteration: 1
+build_complete: false
 history:
   - iteration: 1
     plan_phase: phase_2
@@ -61,4 +61,4 @@ history:
         file: >-
           /Users/mwk/Development/fftn/taqwabench/.builders/spir-36/codev/projects/36-jaleesweights-commit-the-fine-/36-phase_2-iter1-claude.txt
 started_at: '2026-09-30T14:27:49.651Z'
-updated_at: '2026-10-01T05:17:59.835Z'
+updated_at: '2026-10-01T05:21:21.896Z'
