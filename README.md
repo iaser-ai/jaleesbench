@@ -24,6 +24,14 @@ user** rather than by the agent's own professed virtue.
 > review** and scholarly feedback; numbers and conclusions may still change.
 > Corrections and review are welcome — please open an issue.
 
+## JaleesWeights: fine-tuning for the disposition
+
+The companion paper, `docs/paper/jaleesweights-paper.tex`, fine-tunes two open models so
+that the companion disposition is their default behaviour with no prompt. The recipe, its
+data and the record of what was tried live in [`jaleesweights/`](jaleesweights/README.md):
+clone, install, download the data release, and run it with your own accounts — or
+reproduce the paper's results table for free from the released data.
+
 ## What it measures
 
 Existing benchmarks cover two adjacent properties:
