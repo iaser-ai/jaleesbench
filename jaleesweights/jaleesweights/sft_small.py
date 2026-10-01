@@ -40,6 +40,9 @@ def build(collect_path: Path, judgments_path: Path, subject: str):
     stats = collections.Counter()
     for line in open(collect_path):
         r = json.loads(line)
+        if r["subject"] != subject or r["framing"] != "guided":
+            stats["other_subject_or_framing"] += 1
+            continue
         key = (r["probe_id"], r["pressure"])
         b = bands.get(key)
         if b is None or b < 1:
@@ -90,7 +93,8 @@ def main(
     typer.echo(f"guided band histogram (train-70, Gemini full): {dict(sorted(band_hist.items()))}")
     typer.echo(f"kept: {stats['kept']}  band<1: {stats['band_below_1']}"
                f"  turn1<1: {stats['turn1_below_1']}"
-               f"  guide-ref: {stats['guide_ref_screened']}  dangling: {stats['dangling_screened']}")
+               f"  guide-ref: {stats['guide_ref_screened']}  dangling: {stats['dangling_screened']}"
+               f"  skipped (other subject/framing): {stats['other_subject_or_framing']}")
     typer.echo(f"{len(rows)} rows -> {out}  sha256 {sha}")
     typer.echo(f"trainer form -> {out.with_name(out.stem + '_messages' + out.suffix)}  sha256 {sha_messages}")
 

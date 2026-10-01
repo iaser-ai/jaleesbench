@@ -76,6 +76,7 @@ def main(
     collect_path = collect or paths.main_run_file("collect.jsonl")
     out_dir = paths.run_dir(run)
     halves = build(collect_path, load_split())
+    mismatched = []
     for side, name in (("train", "train_inputs_gemma.jsonl"), ("test", "eval_inputs_gemma.jsonl")):
         out = out_dir / name
         sha = write_jsonl(halves[side], out)
@@ -84,6 +85,12 @@ def main(
         if ref.exists():
             same = hashlib.sha256(ref.read_bytes()).hexdigest() == sha
             typer.echo(f"  {'identical to' if same else 'DIFFERS FROM'} reference {ref.name}")
+            if not same:
+                mismatched.append(name)
+    if mismatched:
+        # The inputs are derived from the main run; a difference means the main run
+        # installed here is not the one the runs of record used.
+        raise RuntimeError(f"rebuilt inputs differ from the reference copies: {', '.join(mismatched)}")
 
 
 if __name__ == "__main__":

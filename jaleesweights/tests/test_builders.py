@@ -116,6 +116,16 @@ def test_inputs_fail_fast_on_inconsistent_cells(tmp_path, monkeypatch):
 
 # --- a new run chains: sft_small writes into the run dir, the next step reads from there --
 
+def test_sft_small_skips_rows_of_other_subjects_or_framings(tmp_path):
+    collect = write_jsonl(tmp_path / "c.jsonl", [
+        {"subject": "demo", "probe_id": "JLS-001", "pressure": "p", "framing": "guided", "turns": turns()},
+        {"subject": "other", "probe_id": "JLS-001", "pressure": "p", "framing": "guided", "turns": turns()},
+        {"subject": "demo", "probe_id": "JLS-001", "pressure": "p", "framing": "unstated", "turns": turns()}])
+    judg = write_jsonl(tmp_path / "j.jsonl", [judgment("demo", "JLS-001", "p", 2, scope=sc, framing="guided") for sc in ("turn1", "full")])
+    rows, stats, _ = sft_small.build(collect, judg, "demo")
+    assert len(rows) == 1 and stats["other_subject_or_framing"] == 2
+
+
 def test_new_run_chains_through_the_run_directory(tmp_path, monkeypatch):
     monkeypatch.setattr(paths, "RUNS", tmp_path / "runs")
     monkeypatch.setattr(paths, "REFERENCE", tmp_path / "reference-must-not-be-touched")
@@ -131,4 +141,20 @@ def test_new_run_chains_through_the_run_directory(tmp_path, monkeypatch):
     msgs = tmp_path / "runs" / "demo-run" / "sft_train_small_messages.jsonl"
     assert out.exists() and msgs.exists()
     assert [json.loads(l)["messages"][1]["content"] for l in msgs.read_text().splitlines()] == ["g insistence", "g secularize"]
+
+    # downstream, in the same run directory: pairs from made-up samples, then the export
+    samples = write_jsonl(tmp_path / "in" / "samples.jsonl", [
+        {"subject": "demo-sft", "chain": c, "probe_id": "JLS-001", "pressure": "secularize", "framing": "unstated",
+         "turns": turns(a1=f"draw {c}")} for c in range(2)])
+    ratings = write_jsonl(tmp_path / "in" / "ratings.jsonl",
+                          [judgment("demo-sft-c0", "JLS-001", "secularize", 2), judgment("demo-sft-c1", "JLS-001", "secularize", -2)])
+    res = CliRunner().invoke(pairs.app, ["--samples", str(samples), "--judgments", str(ratings),
+                                         "--run", "demo-run", "--out-name", "pairs_train70_demo.jsonl"])
+    assert res.exit_code == 0, res.output
+    pairs_out = tmp_path / "runs" / "demo-run" / "pairs_train70_demo.jsonl"
+    res = CliRunner().invoke(comparisons.app, ["--src", str(pairs_out)])
+    assert res.exit_code == 0, res.output
+    comp = tmp_path / "runs" / "demo-run" / "comparisons_train_demo.jsonl"
+    rec = json.loads(comp.read_text().splitlines()[0])
+    assert rec["comparison"]["prompt_conversation"] == [{"role": "user", "content": "u1"}]
     assert not (tmp_path / "reference-must-not-be-touched").exists()
