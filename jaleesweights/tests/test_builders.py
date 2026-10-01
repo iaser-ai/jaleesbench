@@ -5,7 +5,7 @@ import json
 import pytest
 from typer.testing import CliRunner
 
-from jaleesweights import comparisons, inputs, pairs, paths, sft_small
+from jaleesweights import comparisons, inputs, pairs, paths, sft_guided, sft_small
 from jaleesweights.common import GEMINI
 
 PROBES = ["JLS-001", "JLS-002"]
@@ -183,3 +183,45 @@ def test_builders_cannot_write_into_the_reference_directory(tmp_path, monkeypatc
         pairs.write([], ref / "pairs.jsonl")
     with pytest.raises(RuntimeError, match="read-only"):
         inputs.write_jsonl([], ref / "train_inputs_gemma.jsonl")
+
+
+# --- sft_guided on a made-up main run: selection on both scopes, both screens wired --------
+
+def test_sft_guided_filters_and_screens_on_fixture(tmp_path):
+    cells = {  # pressure -> (full band, turn1 band, assistant text) for subject gemma-4-31b, guided, training half
+        "keep": (2, 1, "sound counsel"),
+        "full_low": (0, 2, "sound counsel"),
+        "turn1_low": (2, 0, "sound counsel"),
+        "guide_ref": (2, 2, "As instructed, here is my answer"),
+        "dangling": (2, 2, "see the hadith [2]"),
+        "no_rating": (None, None, "sound counsel"),
+    }
+    collect, judg = [], []
+    for pr, (full, t1, text) in cells.items():
+        collect.append({"subject": "gemma-4-31b", "probe_id": "JLS-001", "pressure": pr, "framing": "guided",
+                        "turns": turns(a1=text, a2=text)})
+        collect.append({"subject": "gemma-4-31b", "probe_id": "JLS-001", "pressure": pr, "framing": "unstated", "turns": turns()})
+        collect.append({"subject": "other", "probe_id": "JLS-001", "pressure": pr, "framing": "guided", "turns": turns()})
+        if full is not None:
+            judg.append(judgment("gemma-4-31b", "JLS-001", pr, full, scope="full", framing="guided"))
+            judg.append(judgment("gemma-4-31b", "JLS-001", pr, t1, scope="turn1", framing="guided"))
+    # a held-out scenario rated and present: must be ignored
+    collect.append({"subject": "gemma-4-31b", "probe_id": "JLS-002", "pressure": "keep", "framing": "guided", "turns": turns()})
+    judg += [judgment("gemma-4-31b", "JLS-002", "keep", 2, scope=sc, framing="guided") for sc in ("full", "turn1")]
+    rows, stats, t1_hist = sft_guided.build(write_jsonl(tmp_path / "c.jsonl", collect),
+                                            write_jsonl(tmp_path / "j.jsonl", judg), SPLIT)
+    assert [(r["probe_id"], r["pressure"], r["band"], r["turn1_band"]) for r in rows] == [("JLS-001", "keep", 2, 1)]
+    assert stats["band_below_1"] == 2          # full_low + no_rating
+    assert stats["turn1_below_1"] == 1 and stats["guide_ref_screened"] == 1 and stats["dangling_screened"] == 1
+    assert t1_hist == {1: 1}
+
+
+def test_sft_small_screens_are_wired(tmp_path):
+    collect = write_jsonl(tmp_path / "c.jsonl", [
+        {"subject": "demo", "probe_id": "JLS-001", "pressure": pr, "framing": "guided", "turns": turns(a2=text)}
+        for pr, text in (("ok", "fine"), ("ref", "per the instructions"), ("dang", "[7] says"))])
+    judg = write_jsonl(tmp_path / "j.jsonl", [judgment("demo", "JLS-001", pr, 2, scope=sc, framing="guided")
+                                             for pr in ("ok", "ref", "dang") for sc in ("turn1", "full")])
+    rows, stats, _ = sft_small.build(collect, judg, "demo", SPLIT)
+    assert [r["pressure"] for r in rows] == ["ok"]
+    assert stats["guide_ref_screened"] == 1 and stats["dangling_screened"] == 1
