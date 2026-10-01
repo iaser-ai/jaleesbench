@@ -1,205 +1,124 @@
-# ===== as-run: build_sftbf16_pairs.py =====
-"""Stage-2 pairs for the bf16 RECIPE-OF-RECORD chain: max-gap both-direction
-anchored pairs from the bf16 SFT policy's OWN sampled chains (mirrors
-build_sft2_pairs.py; sources swapped to the bf16 sample/judgment files).
+"""Stage-2 preference pairs: max-gap, both-direction anchored pairs from the stage-1
+policy's OWN sampled answers (K draws per training cell), rated by the selection judge.
 
-Pool per train-70 cell = the 4 chains sampled from gemma-sft-guided at T=1.3,
-Gemini-banded (judgments_sftbf16_samples.jsonl). The base-model main-run lane is
-deliberately excluded — it is off-policy for the SFT policy, and stage 2's
-premise is on-policy contrast with the SFT model as reference. Pairing rule
-matches build_maxgap_pairs.py: every chain anchors up to two pairs (most-
-differently-banded chain above / below it), gap >= 2 native, deduped;
-dangling-[n]-citation screen on chosen sides.
+Pool per training cell = the K sampled conversations, Gemini-rated after pushback. Every
+draw anchors up to two pairs: (the most-differently-rated draw ABOVE it, anchor) and
+(anchor, the most-differently-rated draw BELOW it), gap >= MIN_GAP on the native -2..+2
+scale, deduplicated; dangling-citation screen on chosen sides. The base model's answers
+are deliberately absent: stage 2 is on-policy contrast with the stage-1 model as reference.
 
-Run: python3 tmp/dpo-experiment/build_sft2_pairs.py
+One builder for both models. Sampled records that carry a `chain` field (the Inkling-Small
+driver's K draws under one subject name) are keyed `<subject>-c<chain>`, matching the
+ratings file; records without it (the Gemma driver's `<lane>-s<k>` subjects) are keyed by
+subject.
+
+    uv run python -m jaleesweights.pairs --run my-run \\
+        --samples data/reference/collect_sftbf16_samples.jsonl \\
+        --judgments data/reference/judgments_sftbf16_samples.jsonl --out-name pairs_train70_sftbf16.jsonl
 """
 
 import collections
 import hashlib
 import json
-import pathlib
-import re
+from pathlib import Path
 
-MARKER = re.compile(r"\[\d+\]")
-RESOLVES = re.compile(r"(?im)^(\*{0,2}(references|sources|citations)\b|\[\d+\]\s*[A-Z؀-ۿ])")
+import typer
 
+from . import paths
+from .common import GEMINI, MIN_GAP, dangling_markers, load_split
 
-def dangling_markers(turns) -> bool:
-    text = turns[1]["content"] + "\n" + turns[3]["content"]
-    return bool(MARKER.search(text)) and not RESOLVES.search(text)
+app = typer.Typer(add_completion=False, help=__doc__)
 
 
-ROOT = pathlib.Path(__file__).resolve().parent
-GEMINI = "gemini-3.1-pro-preview"
-MIN_GAP = 2
-
-split = json.loads((ROOT / "split_70_70.json").read_text())
-TRAIN = set(split["train"])
-
-bands: dict = collections.defaultdict(dict)
-for line in open(ROOT / "judgments_sftbf16_samples.jsonl"):
-    j = json.loads(line)
-    if (j["judge"] == GEMINI and j["framing"] == "unstated"
-            and j["scope"] == "full" and j["probe_id"] in TRAIN):
-        bands[(j["probe_id"], j["pressure"])][j["subject"]] = j["band"]
-
-sittings: dict = {}
-for line in open(ROOT / "collect_sftbf16_samples.jsonl"):
-    r = json.loads(line)
-    sittings[(r["probe_id"], r["pressure"], r["subject"])] = r["turns"]
-
-pairs = []
-stats = collections.Counter()
-band_hist = collections.Counter()
-seen = set()
-
-for (probe, pressure), lanes in sorted(bands.items()):
-    havers = {s: b for s, b in lanes.items() if (probe, pressure, s) in sittings}
-    for b in havers.values():
-        band_hist[b] += 1
-    emitted = False
-    for anchor in sorted(havers):
-        ab = havers[anchor]
-        above = [s for s, b in havers.items() if b - ab >= MIN_GAP]
-        below = [s for s, b in havers.items() if ab - b >= MIN_GAP]
-        cands = []
-        if above:
-            top = max(havers[s] for s in above)
-            cands.append((sorted(s for s in above if havers[s] == top)[0], anchor))
-        if below:
-            bot = min(havers[s] for s in below)
-            cands.append((anchor, sorted(s for s in below if havers[s] == bot)[0]))
-        for ch, rj in cands:
-            key = (probe, pressure, ch, rj)
-            if key in seen:
-                continue
-            seen.add(key)
-            if dangling_markers(sittings[(probe, pressure, ch)]):
-                stats["chosen_screened_dangling"] += 1
-                continue
-            pairs.append({
-                "probe_id": probe, "pressure": pressure,
-                "chosen_subject": ch, "rejected_subject": rj,
-                "chosen_band": havers[ch], "rejected_band": havers[rj],
-                "chosen_cites": None, "rejected_is_inkling": False,
-                "chosen_turns": sittings[(probe, pressure, ch)],
-                "rejected_turns": sittings[(probe, pressure, rj)],
-            })
-            stats["pair"] += 1
-            stats[f"chosen_band={havers[ch]}"] += 1
-            emitted = True
-    stats["cells_covered" if emitted else "cells_no_spread"] += 1
-
-out = ROOT / "pairs_train70_sftbf16.jsonl"
-with open(out, "w") as fh:
-    for p in pairs:
-        fh.write(json.dumps(p, sort_keys=True) + "\n")
-
-print(f"pairs: {stats['pair']}  cells covered: {stats['cells_covered']}/{len(bands)}"
-      f"  no-spread: {stats['cells_no_spread']}"
-      f"  dangling-screened: {stats['chosen_screened_dangling']}")
-print("band histogram (all SFT chains):", dict(sorted(band_hist.items())))
-print("chosen-band mix:", {k.split("=")[1]: v for k, v in sorted(stats.items())
-                           if k.startswith("chosen_band=")})
-print("sha256:", hashlib.sha256(out.read_bytes()).hexdigest())
-
-# ===== as-run: build_small_sft2_pairs.py =====
-"""Inkling-Small stage-2 pairs: max-gap both-direction anchored pairs from the
-SFT policy's OWN K=4 sampled chains (issue #21 replication, Waleed's go 08-05).
-
-Mirrors build_sft2_pairs.py exactly; sources are the Small census files
-(judgments_small_sft_k4.jsonl / collect_small_train_unstated_sft_k4.jsonl,
-chains keyed inkling-small-sft-c0..3).
-
-Run: python3 tmp/dpo-experiment/build_small_sft2_pairs.py
-"""
-
-import collections
-import hashlib
-import json
-import pathlib
-import re
-
-MARKER = re.compile(r"\[\d+\]")
-RESOLVES = re.compile(r"(?im)^(\*{0,2}(references|sources|citations)\b|\[\d+\]\s*[A-Z؀-ۿ])")
+def lane(record: dict) -> str:
+    return f"{record['subject']}-c{record['chain']}" if "chain" in record else record["subject"]
 
 
-def dangling_markers(turns) -> bool:
-    text = turns[1]["content"] + "\n" + turns[3]["content"]
-    return bool(MARKER.search(text)) and not RESOLVES.search(text)
+def build(samples_path: Path, judgments_path: Path, split: dict):
+    train = set(split["train"])
+    bands: dict = collections.defaultdict(dict)
+    for line in open(judgments_path):
+        j = json.loads(line)
+        if (j["judge"] == GEMINI and j["framing"] == "unstated"
+                and j["scope"] == "full" and j["probe_id"] in train):
+            bands[(j["probe_id"], j["pressure"])][j["subject"]] = j["band"]
+
+    sittings: dict = {}
+    for line in open(samples_path):
+        r = json.loads(line)
+        sittings[(r["probe_id"], r["pressure"], lane(r))] = r["turns"]
+
+    pairs = []
+    stats = collections.Counter()
+    band_hist = collections.Counter()
+    seen = set()
+
+    for (probe, pressure), lanes in sorted(bands.items()):
+        havers = {s: b for s, b in lanes.items() if (probe, pressure, s) in sittings}
+        for b in havers.values():
+            band_hist[b] += 1
+        emitted = False
+        for anchor in sorted(havers):
+            ab = havers[anchor]
+            above = [s for s, b in havers.items() if b - ab >= MIN_GAP]
+            below = [s for s, b in havers.items() if ab - b >= MIN_GAP]
+            cands = []
+            if above:
+                top = max(havers[s] for s in above)
+                cands.append((sorted(s for s in above if havers[s] == top)[0], anchor))
+            if below:
+                bot = min(havers[s] for s in below)
+                cands.append((anchor, sorted(s for s in below if havers[s] == bot)[0]))
+            for ch, rj in cands:
+                key = (probe, pressure, ch, rj)
+                if key in seen:
+                    continue
+                seen.add(key)
+                if dangling_markers(sittings[(probe, pressure, ch)]):
+                    stats["chosen_screened_dangling"] += 1
+                    continue
+                pairs.append({
+                    "probe_id": probe, "pressure": pressure,
+                    "chosen_subject": ch, "rejected_subject": rj,
+                    "chosen_band": havers[ch], "rejected_band": havers[rj],
+                    "chosen_cites": None, "rejected_is_inkling": False,
+                    "chosen_turns": sittings[(probe, pressure, ch)],
+                    "rejected_turns": sittings[(probe, pressure, rj)],
+                })
+                stats["pair"] += 1
+                stats[f"chosen_band={havers[ch]}"] += 1
+                emitted = True
+        stats["cells_covered" if emitted else "cells_no_spread"] += 1
+    return pairs, stats, band_hist, len(bands)
 
 
-ROOT = pathlib.Path(__file__).resolve().parent
-GEMINI = "gemini-3.1-pro-preview"
-MIN_GAP = 2
+def write(pairs, out: Path) -> str:
+    out.parent.mkdir(parents=True, exist_ok=True)
+    with open(out, "w") as fh:
+        for p in pairs:
+            fh.write(json.dumps(p, sort_keys=True) + "\n")
+    return hashlib.sha256(out.read_bytes()).hexdigest()
 
-split = json.loads((ROOT / "split_70_70.json").read_text())
-TRAIN = set(split["train"])
 
-bands: dict = collections.defaultdict(dict)
-for line in open(ROOT / "judgments_small_sft_k4.jsonl"):
-    j = json.loads(line)
-    if (j["judge"] == GEMINI and j["framing"] == "unstated"
-            and j["scope"] == "full" and j["probe_id"] in TRAIN):
-        bands[(j["probe_id"], j["pressure"])][j["subject"]] = j["band"]
+@app.command()
+def main(
+    samples: Path = typer.Option(..., help="The stage-1 model's K sampled conversations per training cell."),
+    judgments: Path = typer.Option(..., help="Gemini ratings of those samples (after-pushback scope)."),
+    run: str = typer.Option("new-run", help="Run directory name under data/runs/ for the output."),
+    out_name: str = typer.Option("pairs.jsonl", help="Output file name inside the run directory."),
+    out: Path | None = typer.Option(None, help="Explicit output path (overrides --run/--out-name)."),
+) -> None:
+    pairs, stats, band_hist, n_cells = build(samples, judgments, load_split())
+    out = out or paths.run_dir(run) / out_name
+    sha = write(pairs, out)
+    typer.echo(f"pairs: {stats['pair']}  cells covered: {stats['cells_covered']}/{n_cells}"
+               f"  no-spread: {stats['cells_no_spread']}"
+               f"  dangling-screened: {stats['chosen_screened_dangling']}")
+    typer.echo(f"band histogram (all sampled draws): {dict(sorted(band_hist.items()))}")
+    typer.echo("chosen-band mix: " + str({k.split('=')[1]: v for k, v in sorted(stats.items())
+                                          if k.startswith('chosen_band=')}))
+    typer.echo(f"{len(pairs)} pairs -> {out}  sha256 {sha}")
 
-sittings: dict = {}
-for line in open(ROOT / "collect_small_train_unstated_sft_k4.jsonl"):
-    r = json.loads(line)
-    subj = f"{r['subject']}-c{r['chain']}"
-    sittings[(r["probe_id"], r["pressure"], subj)] = r["turns"]
 
-pairs = []
-stats = collections.Counter()
-band_hist = collections.Counter()
-seen = set()
-
-for (probe, pressure), lanes in sorted(bands.items()):
-    havers = {s: b for s, b in lanes.items() if (probe, pressure, s) in sittings}
-    for b in havers.values():
-        band_hist[b] += 1
-    emitted = False
-    for anchor in sorted(havers):
-        ab = havers[anchor]
-        above = [s for s, b in havers.items() if b - ab >= MIN_GAP]
-        below = [s for s, b in havers.items() if ab - b >= MIN_GAP]
-        cands = []
-        if above:
-            top = max(havers[s] for s in above)
-            cands.append((sorted(s for s in above if havers[s] == top)[0], anchor))
-        if below:
-            bot = min(havers[s] for s in below)
-            cands.append((anchor, sorted(s for s in below if havers[s] == bot)[0]))
-        for ch, rj in cands:
-            key = (probe, pressure, ch, rj)
-            if key in seen:
-                continue
-            seen.add(key)
-            if dangling_markers(sittings[(probe, pressure, ch)]):
-                stats["chosen_screened_dangling"] += 1
-                continue
-            pairs.append({
-                "probe_id": probe, "pressure": pressure,
-                "chosen_subject": ch, "rejected_subject": rj,
-                "chosen_band": havers[ch], "rejected_band": havers[rj],
-                "chosen_cites": None, "rejected_is_inkling": False,
-                "chosen_turns": sittings[(probe, pressure, ch)],
-                "rejected_turns": sittings[(probe, pressure, rj)],
-            })
-            stats["pair"] += 1
-            stats[f"chosen_band={havers[ch]}"] += 1
-            emitted = True
-    stats["cells_covered" if emitted else "cells_no_spread"] += 1
-
-out = ROOT / "pairs_train70_small_sft2.jsonl"
-with open(out, "w") as fh:
-    for p in pairs:
-        fh.write(json.dumps(p, sort_keys=True) + "\n")
-
-print(f"pairs: {stats['pair']}  cells covered: {stats['cells_covered']}/{len(bands)}"
-      f"  no-spread: {stats['cells_no_spread']}"
-      f"  dangling-screened: {stats['chosen_screened_dangling']}")
-print("band histogram (all SFT chains):", dict(sorted(band_hist.items())))
-print("chosen-band mix:", {k.split("=")[1]: v for k, v in sorted(stats.items())
-                           if k.startswith("chosen_band=")})
-print("sha256:", hashlib.sha256(out.read_bytes()).hexdigest())
+if __name__ == "__main__":
+    app()

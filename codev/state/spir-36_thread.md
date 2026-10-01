@@ -263,3 +263,22 @@ with open(OUT / "members.sha256", "w") as fh:
     for a, n, h in mr_list: fh.write(f"{h}  main-run/{a}\n")
 print(exp_out, exp_out.stat().st_size, len(exp_list)); print(mr_out, mr_out.stat().st_size, len(mr_list))
 ```
+
+## 2026-10-01 — phase 4: free steps ported and proven
+
+Six commands (`inputs`, `sft_guided`, `sft_small`, `pairs`, `comparisons`, `score`), each
+reading reference data by default and writing to `data/runs/<name>/`. Run against the
+installed reference data: all eight rebuilt files byte-identical to the reference copies
+(`train_inputs_gemma`, `eval_inputs_gemma`, `sft_train_guided` 316, `pairs_train70_sftbf16`
+502, `sft_train_small` 310, `sft_train_small_messages`, `pairs_train70_small_sft2` 672,
+`comparisons_train_small_sft2`). Reference directory checksums unchanged afterwards.
+
+Scoring: every score, drop and single-score interval equals the paper's main table as
+printed; paired Gemma stage 2 vs 1 +0.223 [+0.144,+0.306] (paper +0.144,+0.304), Inkling-Small
+stage 1 vs base +0.298 [+0.210,+0.389] (paper +0.206,+0.392), stage 2 vs 1 +0.019 spanning
+zero; cell counts 120/34 and 154/37 as in the paper. Two consecutive runs identical.
+
+Two details learned while porting: the frozen held-out inputs file is ordered by the split's
+scenario list × the bank's pressure order (the training file is sorted) — reproduced; and
+`pairs` keys sampled records by `<subject>-c<chain>` when they carry a `chain` field, which
+is how the Inkling-Small ratings are named.

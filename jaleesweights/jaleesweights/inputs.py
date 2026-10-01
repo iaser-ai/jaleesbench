@@ -1,61 +1,90 @@
-"""Build train-70 sampling inputs for the on-policy gemma arm (issue #21).
+"""Conversation inputs for both halves of the split, from the benchmark main run.
 
-Same schema as eval_inputs_gemma.jsonl (probe_id, pressure, turn1,
-pressure_text), but for TRAIN scenarios. Rows come from the main-run
-collect.jsonl (unstated framing); the opening user turn and the authored
-pressure turn must be identical across subjects within a cell — assert,
-fail fast. Self-check: the same extraction over TEST must reproduce the
-existing eval_inputs_gemma.jsonl row set exactly.
+Each row is one (scenario, pressure) cell: the opening user turn and the authored
+pressure turn, which are identical across subjects within a cell (asserted; the step fails
+if they are not). The training half drives sampling and the Inkling-Small guided
+collection; the held-out half drives every evaluation collection. The file names carry
+"gemma" for continuity with the runs of record, but the rows are model-independent.
 
-Run: uv run --directory jaleesbench python ../tmp/dpo-experiment/build_train_inputs.py
+Ordering reproduces the frozen files exactly: the training half sorted by (scenario,
+pressure), the held-out half in the split's scenario order × the bank's pressure order.
+
+    uv run python -m jaleesweights.inputs --run my-run
 """
 
 import hashlib
 import json
-import pathlib
+from pathlib import Path
 
-ROOT = pathlib.Path(__file__).resolve().parent
-RESULTS = pathlib.Path("results")
+import typer
+from jaleesbench.collect import load_probes
 
-split = json.loads((ROOT / "split_70_70.json").read_text())
-TRAIN, TEST = set(split["train"]), set(split["test"])
+from . import paths
+from .common import load_split
 
-buckets = {"train": {}, "test": {}}
-with open(RESULTS / "collect.jsonl") as fh:
-    for line in fh:
-        r = json.loads(line)
-        if r["framing"] != "unstated":
-            continue
-        side = "train" if r["probe_id"] in TRAIN else "test" if r["probe_id"] in TEST else None
-        if side is None:
-            continue
-        row = {
-            "probe_id": r["probe_id"],
-            "pressure": r["pressure"],
-            "turn1": r["turns"][0]["content"],
-            "pressure_text": r["turns"][2]["content"],
-        }
-        key = (r["probe_id"], r["pressure"])
-        prev = buckets[side].get(key)
-        if prev is None:
-            buckets[side][key] = row
-        elif prev != row:
-            raise RuntimeError(f"cell {key} differs across subjects ({r['subject']})")
+app = typer.Typer(add_completion=False, help=__doc__)
 
-for side, cells in buckets.items():
-    if len(cells) != 420:
-        raise RuntimeError(f"{side}: expected 420 cells, got {len(cells)}")
+CELLS_PER_HALF = 420  # 70 scenarios x 6 pressures
 
-# Regeneration check: extraction over TEST == the file the r1/r2 evals used.
-existing = [json.loads(l) for l in open(ROOT / "eval_inputs_gemma.jsonl")]
-mine = {(r["probe_id"], r["pressure"]): r for r in existing}
-if mine != buckets["test"]:
-    raise RuntimeError("TEST extraction does not reproduce eval_inputs_gemma.jsonl")
-print("self-check ok: TEST extraction reproduces eval_inputs_gemma.jsonl")
 
-out = ROOT / "train_inputs_gemma.jsonl"
-with open(out, "w") as fh:
-    for key in sorted(buckets["train"]):
-        fh.write(json.dumps(buckets["train"][key]) + "\n")
-print(f"{len(buckets['train'])} rows -> {out}")
-print("sha256:", hashlib.sha256(out.read_bytes()).hexdigest())
+def build(collect_path: Path, split: dict) -> dict[str, list[dict]]:
+    train, test = set(split["train"]), set(split["test"])
+    buckets: dict[str, dict] = {"train": {}, "test": {}}
+    with open(collect_path) as fh:
+        for line in fh:
+            r = json.loads(line)
+            if r["framing"] != "unstated":
+                continue
+            side = "train" if r["probe_id"] in train else "test" if r["probe_id"] in test else None
+            if side is None:
+                continue
+            row = {
+                "probe_id": r["probe_id"],
+                "pressure": r["pressure"],
+                "turn1": r["turns"][0]["content"],
+                "pressure_text": r["turns"][2]["content"],
+            }
+            key = (r["probe_id"], r["pressure"])
+            prev = buckets[side].get(key)
+            if prev is None:
+                buckets[side][key] = row
+            elif prev != row:
+                raise RuntimeError(f"cell {key} differs across subjects ({r['subject']})")
+    for side, cells in buckets.items():
+        if len(cells) != CELLS_PER_HALF:
+            raise RuntimeError(f"{side}: expected {CELLS_PER_HALF} cells, got {len(cells)}")
+    pressures = [p["id"] if isinstance(p, dict) else p for p in load_probes()["pressures"]]
+    return {
+        "train": [buckets["train"][k] for k in sorted(buckets["train"])],
+        "test": [buckets["test"][(pid, pr)] for pid in split["test"] for pr in pressures],
+    }
+
+
+def write_jsonl(rows: list[dict], out: Path) -> str:
+    out.parent.mkdir(parents=True, exist_ok=True)
+    with open(out, "w") as fh:
+        for r in rows:
+            fh.write(json.dumps(r) + "\n")
+    return hashlib.sha256(out.read_bytes()).hexdigest()
+
+
+@app.command()
+def main(
+    run: str = typer.Option("new-run", help="Run directory name under data/runs/ for the outputs."),
+    collect: Path | None = typer.Option(None, help="Main-run collect.jsonl (default: the installed main run)."),
+) -> None:
+    collect_path = collect or paths.main_run_file("collect.jsonl")
+    out_dir = paths.run_dir(run)
+    halves = build(collect_path, load_split())
+    for side, name in (("train", "train_inputs_gemma.jsonl"), ("test", "eval_inputs_gemma.jsonl")):
+        out = out_dir / name
+        sha = write_jsonl(halves[side], out)
+        typer.echo(f"{len(halves[side])} rows -> {out}  sha256 {sha}")
+        ref = paths.REFERENCE / name
+        if ref.exists():
+            same = hashlib.sha256(ref.read_bytes()).hexdigest() == sha
+            typer.echo(f"  {'identical to' if same else 'DIFFERS FROM'} reference {ref.name}")
+
+
+if __name__ == "__main__":
+    app()
