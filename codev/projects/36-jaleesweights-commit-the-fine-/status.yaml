@@ -5,10 +5,10 @@ phase: implement
 plan_phases:
   - id: phase_1
     title: As-run scripts in their final places, private wording removed
-    status: in_progress
+    status: complete
   - id: phase_2
     title: Installable project, clone-relative paths, keys scoped to what a step uses
-    status: pending
+    status: in_progress
   - id: phase_3
     title: Data archives, checksums and the download step
     status: pending
@@ -27,7 +27,7 @@ plan_phases:
   - id: phase_8
     title: README, archive index, fresh-clone walk-through and owner report
     status: pending
-current_plan_phase: phase_1
+current_plan_phase: phase_2
 gates:
   spec-approval:
     status: approved
@@ -42,7 +42,7 @@ gates:
   verify-approval:
     status: pending
 iteration: 1
-build_complete: true
+build_complete: false
 history: []
 started_at: '2026-09-30T14:27:49.651Z'
-updated_at: '2026-10-01T05:04:23.369Z'
+updated_at: '2026-10-01T05:08:24.389Z'
