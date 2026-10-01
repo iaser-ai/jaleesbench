@@ -85,6 +85,11 @@ def test_collect_preflight_names_pass_and_output(isolated, monkeypatch):
     assert "using the first 5; unstated; k=4; temperature 1.3" in res.output and "_in_unstated_k4.jsonl" in res.output
     res = runner.invoke(gemma_collect.app, ["--inputs", str(inputs), "--run", "d", "--dtype", "int4", "--dry-run"])
     assert res.exit_code != 0 and "unknown dtype" in res.output
+    res = runner.invoke(gemma_collect.app, ["--inputs", str(inputs), "--run", "d", "--k", "4", "--dry-run"])
+    assert res.exit_code != 0 and "explicit --temperature" in res.output
+    bad = write_jsonl(isolated / "bad.jsonl", [{"probe_id": "p", "turns": []}])
+    res = runner.invoke(gemma_collect.app, ["--inputs", str(bad), "--run", "d", "--dry-run"])
+    assert res.exit_code != 0 and "not a conversation-inputs file" in res.output
 
 
 def test_outputs_cannot_land_in_reference(isolated):

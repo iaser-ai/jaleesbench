@@ -142,6 +142,8 @@ def main(
     framing = "guided" if guide else "unstated"
     if guide and k > 1:
         raise typer.BadParameter("stage-2 sampling is bare: drop --guide when --k > 1 (pairs ignore guided records)")
+    if k > 1 and temperature is None:
+        raise typer.BadParameter("stage-2 sampling needs an explicit --temperature above the model's default (the recipe used 1.3)")
     dtype = VLLM_DTYPES.get(dtype)
     if dtype is None:
         raise typer.BadParameter(f"unknown dtype; use one of {sorted(VLLM_DTYPES)}")
@@ -154,6 +156,9 @@ def main(
     rows = read_jsonl(inputs)
     if limit:
         rows = rows[:limit]
+    missing = [kk for kk in ("probe_id", "pressure", "turn1", "pressure_text") if kk not in rows[0]]
+    if missing:
+        raise typer.BadParameter(f"{inputs} is not a conversation-inputs file (first row lacks {', '.join(missing)})")
     if preflight(f"local collection with vLLM from {model}" + (f" + adapter {adapter}" if adapter else " (base)"),
                  [f"inputs {inputs}: {n} cells" + (f", using the first {limit}" if limit else "") + f"; {framing}; k={k}"
                   + (f"; temperature {temperature}" if temperature is not None else "; model-default sampling"),
