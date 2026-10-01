@@ -334,7 +334,7 @@ Every command prints a preflight ending in the GPU it sees ("GPU: none" here) an
   `local/_common.py` (same code). LoRA config, loss, parity check, policy==ref check,
   checkpointing and the loops are the Modal code.
 - Collection (`gemma_collect`): one command for both the evaluation pass (k=1, model-default
-  sampling) and the stage-2 sampling pass (k>1, temperature bump checked as in Modal);
+  sampling) and the stage-2 sampling pass (k>1, which requires an explicit temperature; the bump check is Modal's);
   records carry a `chain` field under one subject (the Inkling-Small convention) instead of
   the Modal sampler's `<prefix>{k}` lane subjects — `judge rate-samples` and `pairs` handle
   both; `--limit` for the smoke test.
