@@ -75,11 +75,16 @@ def test_collect_preflight_names_pass_and_output(isolated, monkeypatch):
     inputs = write_jsonl(isolated / "in.jsonl", [{"probe_id": "p", "pressure": f"q{i}", "turn1": "t", "pressure_text": "x"} for i in range(6)])
     res = runner.invoke(gemma_collect.app, ["--inputs", str(inputs), "--run", "d", "--subject", "gemma-demo", "--dry-run"])
     assert res.exit_code == 0, res.output
-    assert "6 cells; unstated; k=1; model-default sampling" in res.output and "collect_gemma-demo_unstated.jsonl" in res.output
+    assert "6 cells; unstated; k=1; model-default sampling" in res.output and "collect_gemma-demo_in_unstated.jsonl" in res.output
     res = runner.invoke(gemma_collect.app, ["--inputs", str(inputs), "--run", "d", "--guide", "--k", "4",
                                             "--temperature", "1.3", "--limit", "5", "--dry-run"])
+    assert res.exit_code != 0 and "stage-2 sampling is bare" in res.output
+    res = runner.invoke(gemma_collect.app, ["--inputs", str(inputs), "--run", "d", "--k", "4",
+                                            "--temperature", "1.3", "--limit", "5", "--dry-run"])
     assert res.exit_code == 0, res.output
-    assert "using the first 5; guided; k=4; temperature 1.3" in res.output and "_guided_k4.jsonl" in res.output
+    assert "using the first 5; unstated; k=4; temperature 1.3" in res.output and "_in_unstated_k4.jsonl" in res.output
+    res = runner.invoke(gemma_collect.app, ["--inputs", str(inputs), "--run", "d", "--dtype", "int4", "--dry-run"])
+    assert res.exit_code != 0 and "unknown dtype" in res.output
 
 
 def test_outputs_cannot_land_in_reference(isolated):

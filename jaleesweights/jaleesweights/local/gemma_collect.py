@@ -31,6 +31,9 @@ from ._common import DEFAULT_MODEL, count_rows, preflight, read_jsonl, require
 
 app = typer.Typer(add_completion=False, help=__doc__)
 
+VLLM_DTYPES = {"bf16": "bfloat16", "bfloat16": "bfloat16", "fp16": "float16", "float16": "float16",
+               "fp32": "float32", "float32": "float32"}
+
 
 def collect(rows: list[dict], out_path: Path, model_name: str, dtype: str, adapter: Path | None,
             ctx: str | None, k: int, temperature: float | None, max_model_len: int,
@@ -123,7 +126,7 @@ def main(
     run: str = typer.Option("new-run", help="Run directory name under data/runs/ for the output."),
     out: Path | None = typer.Option(None, help="Output file (default: <run dir>/collect_<subject>_<guided|unstated>[_k<K>].jsonl)."),
     model: str = typer.Option(DEFAULT_MODEL, help="Gemma-family model id."),
-    dtype: str = typer.Option("bfloat16", help="vLLM dtype."),
+    dtype: str = typer.Option("bf16", help="Weights precision: bf16 (recipe of record), fp16 or fp32."),
     adapter: Path | None = typer.Option(None, help="A LoRA adapter directory to apply (a stage-1 or stage-2 output)."),
     guide: bool = typer.Option(False, "--guide/--no-guide", help="Fold the companionship guide into every user turn."),
     k: int = typer.Option(1, help="Independent chains per cell (4 for stage-2 sampling)."),
@@ -137,7 +140,13 @@ def main(
     if adapter is not None and not (adapter / "adapter_config.json").exists():
         raise typer.BadParameter(f"{adapter} is not a PEFT adapter directory (no adapter_config.json)")
     framing = "guided" if guide else "unstated"
-    out = paths.output_path(out or paths.run_dir(run) / f"collect_{subject}_{framing}{f'_k{k}' if k > 1 else ''}.jsonl")
+    if guide and k > 1:
+        raise typer.BadParameter("stage-2 sampling is bare: drop --guide when --k > 1 (pairs ignore guided records)")
+    dtype = VLLM_DTYPES.get(dtype)
+    if dtype is None:
+        raise typer.BadParameter(f"unknown dtype; use one of {sorted(VLLM_DTYPES)}")
+    half = inputs.stem.removesuffix("_gemma").removesuffix("_inputs")  # train / eval / <custom>
+    out = paths.output_path(out or paths.run_dir(run) / f"collect_{subject}_{half}_{framing}{f'_k{k}' if k > 1 else ''}.jsonl")
     if out.exists():
         raise typer.BadParameter(f"{out} already exists; choose another --out or --run (a run never overwrites)")
     out.parent.mkdir(parents=True, exist_ok=True)  # before the model loads, so a bad path cannot discard a finished run

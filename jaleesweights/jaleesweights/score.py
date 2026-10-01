@@ -102,6 +102,9 @@ def main(
     gemma: Path | None = typer.Option(None, help="Opus judgments of the Gemma held-out collections (default: reference judgments_eval_gemma.jsonl)."),
     small: Path | None = typer.Option(None, help="Opus judgments of the Inkling-Small held-out collections (default: reference judgments_eval_small.jsonl)."),
     main_run: Path | None = typer.Option(None, help="Benchmark main-run judgments.jsonl (default: the installed main run)."),
+    extra_judgments: Path | None = typer.Option(None, help="Opus judgments of your own arms (a new run or the local demonstration) to score below the paper's table."),
+    extra_subject: list[str] = typer.Option([], "--extra-subject", help="Subject in --extra-judgments to score (repeatable); both framings present are shown."),
+    extra_paired: list[str] = typer.Option([], "--extra-paired", help="Paired comparison A:B of two subjects in --extra-judgments, bare (repeatable)."),
 ) -> None:
     gemma = gemma or paths.reference_file("judgments_eval_gemma.jsonl")
     small = small or paths.reference_file("judgments_eval_small.jsonl")
@@ -156,6 +159,33 @@ def main(
                 continue
             m, lo, hi, n, up, down = res
             typer.echo(f"    {scope:<6} {m:+.3f} [{lo:+.3f},{hi:+.3f}]  (n={n}; {up} cells up, {down} down)")
+
+    if extra_subject or extra_paired:
+        if extra_judgments is None:
+            raise typer.BadParameter("--extra-subject / --extra-paired need --extra-judgments")
+        typer.echo(f"\nYour arms ({extra_judgments}) — not the paper's numbers")
+        for subject in extra_subject:
+            for framing in ("unstated", "guided"):
+                b = load_bands(extra_judgments, subject, framing, test)
+                if not b:
+                    continue
+                t1, full = score(b, "turn1"), score(b, "full")
+                drop = f"{full[0] - t1[0]:+.3f}" if (t1 and full) else ""
+                typer.echo(f"  {subject + (' (with guide)' if framing == 'guided' else ''):<48} {fmt(t1):<24} {fmt(full):<24} {drop:<7}")
+        for spec_ in extra_paired:
+            a, _, b = spec_.partition(":")
+            if not a or not b:
+                raise typer.BadParameter(f"--extra-paired wants A:B, got {spec_!r}")
+            A = load_bands(extra_judgments, a, "unstated", test)
+            B = load_bands(extra_judgments, b, "unstated", test)
+            typer.echo(f"\n  {a} vs {b}")
+            for scope in ("turn1", "full"):
+                res = paired(A, B, scope)
+                if res is None:
+                    typer.echo(f"    {scope:<6} (no matched cells)")
+                    continue
+                m, lo, hi, n, up, down = res
+                typer.echo(f"    {scope:<6} {m:+.3f} [{lo:+.3f},{hi:+.3f}]  (n={n}; {up} cells up, {down} down)")
 
 
 if __name__ == "__main__":

@@ -99,3 +99,23 @@ def test_score_reproduces_the_papers_main_table():
     assert s1[0] == "+0.298" and abs(float(s1[1]) - 0.206) <= 0.01 and abs(float(s1[2]) - 0.392) <= 0.01 and s1[3:] == ("154", "37")
     s2 = paired_line("Inkling-Small stage 2 vs stage 1")
     assert s2[0] == "+0.019" and float(s2[1]) < 0 < float(s2[2])
+
+
+def test_extra_arms_are_scored_from_their_own_file(tmp_path):
+    rows = []
+    for subj, band in (("demo-base", 0), ("demo-sft", 2)):
+        for probe in ("JLS-002", "JLS-004"):
+            for pr in ("p1", "p2"):
+                for scope in ("turn1", "full"):
+                    rows.append(judgment(subj, probe, pr, scope, band))
+    extra = write(tmp_path / "extra.jsonl", rows)
+    # the paper rows need the reference data; point them at the same small file so the command runs anywhere
+    res = CliRunner().invoke(score.app, ["--gemma", str(extra), "--small", str(extra), "--main-run", str(extra),
+                                         "--extra-judgments", str(extra), "--extra-subject", "demo-sft",
+                                         "--extra-subject", "demo-base", "--extra-paired", "demo-sft:demo-base"])
+    assert res.exit_code == 0, res.output
+    assert "Your arms" in res.output and "demo-sft vs demo-base" in res.output
+    assert "+1.000 [+1.000,+1.000]  (n=4; 4 cells up, 0 down)" in res.output
+    res = CliRunner().invoke(score.app, ["--gemma", str(extra), "--small", str(extra), "--main-run", str(extra),
+                                         "--extra-subject", "demo-sft"])
+    assert res.exit_code != 0 and "need --extra-judgments" in res.output
