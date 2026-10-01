@@ -14,10 +14,10 @@ plan_phases:
     status: complete
   - id: phase_4
     title: 'Free steps ported: builders, exports and repeatable scoring'
-    status: in_progress
+    status: complete
   - id: phase_5
     title: Judging and Inkling-Small Tinker steps ported
-    status: pending
+    status: in_progress
   - id: phase_6
     title: 'Gemma on Modal: drivers with configurable account names'
     status: pending
@@ -27,7 +27,7 @@ plan_phases:
   - id: phase_8
     title: README, archive index, fresh-clone walk-through and owner report
     status: pending
-current_plan_phase: phase_4
+current_plan_phase: phase_5
 gates:
   spec-approval:
     status: approved
@@ -41,8 +41,8 @@ gates:
     status: pending
   verify-approval:
     status: pending
-iteration: 3
-build_complete: true
+iteration: 1
+build_complete: false
 history:
   - iteration: 1
     plan_phase: phase_2
@@ -93,4 +93,4 @@ history:
         file: >-
           /Users/mwk/Development/fftn/taqwabench/.builders/spir-36/codev/projects/36-jaleesweights-commit-the-fine-/36-phase_4-iter2-claude.txt
 started_at: '2026-09-30T14:27:49.651Z'
-updated_at: '2026-10-01T05:52:28.611Z'
+updated_at: '2026-10-01T05:57:07.601Z'
