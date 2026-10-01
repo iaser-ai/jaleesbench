@@ -122,8 +122,17 @@ def test_sft_small_skips_rows_of_other_subjects_or_framings(tmp_path):
         {"subject": "other", "probe_id": "JLS-001", "pressure": "p", "framing": "guided", "turns": turns()},
         {"subject": "demo", "probe_id": "JLS-001", "pressure": "p", "framing": "unstated", "turns": turns()}])
     judg = write_jsonl(tmp_path / "j.jsonl", [judgment("demo", "JLS-001", "p", 2, scope=sc, framing="guided") for sc in ("turn1", "full")])
-    rows, stats, _ = sft_small.build(collect, judg, "demo")
+    rows, stats, _ = sft_small.build(collect, judg, "demo", SPLIT)
     assert len(rows) == 1 and stats["other_subject_or_framing"] == 2
+
+
+def test_sft_small_never_takes_held_out_scenarios(tmp_path):
+    collect = write_jsonl(tmp_path / "c.jsonl", [
+        {"subject": "demo", "probe_id": p, "pressure": "p", "framing": "guided", "turns": turns()} for p in PROBES])
+    judg = write_jsonl(tmp_path / "j.jsonl", [judgment("demo", p, "p", 2, scope=sc, framing="guided")
+                                             for p in PROBES for sc in ("turn1", "full")])
+    rows, stats, _ = sft_small.build(collect, judg, "demo", SPLIT)
+    assert [r["probe_id"] for r in rows] == ["JLS-001"] and stats["not_training_half"] == 1
 
 
 def test_new_run_chains_through_the_run_directory(tmp_path, monkeypatch):

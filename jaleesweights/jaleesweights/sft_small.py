@@ -18,12 +18,13 @@ from pathlib import Path
 import typer
 
 from . import paths
-from .common import GEMINI, GUIDE_REF, dangling_markers
+from .common import GEMINI, GUIDE_REF, dangling_markers, load_split
 
 app = typer.Typer(add_completion=False, help=__doc__)
 
 
-def build(collect_path: Path, judgments_path: Path, subject: str):
+def build(collect_path: Path, judgments_path: Path, subject: str, split: dict | None = None):
+    train = set((split or load_split())["train"])
     bands: dict = {}
     turn1_bands: dict = {}
     for line in open(judgments_path):
@@ -42,6 +43,10 @@ def build(collect_path: Path, judgments_path: Path, subject: str):
         r = json.loads(line)
         if r["subject"] != subject or r["framing"] != "guided":
             stats["other_subject_or_framing"] += 1
+            continue
+        if r["probe_id"] not in train:
+            # Training data never comes from held-out scenarios, whatever the collection holds.
+            stats["not_training_half"] += 1
             continue
         key = (r["probe_id"], r["pressure"])
         b = bands.get(key)
@@ -95,7 +100,8 @@ def main(
     typer.echo(f"kept: {stats['kept']}  band<1: {stats['band_below_1']}"
                f"  turn1<1: {stats['turn1_below_1']}"
                f"  guide-ref: {stats['guide_ref_screened']}  dangling: {stats['dangling_screened']}"
-               f"  skipped (other subject/framing): {stats['other_subject_or_framing']}")
+               f"  skipped (other subject/framing): {stats['other_subject_or_framing']}"
+               f"  skipped (held-out scenario): {stats['not_training_half']}")
     typer.echo(f"{len(rows)} rows -> {out}  sha256 {sha}")
     typer.echo(f"trainer form -> {out.with_name(out.stem + '_messages' + out.suffix)}  sha256 {sha_messages}")
 
