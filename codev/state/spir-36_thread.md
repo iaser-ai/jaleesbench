@@ -282,3 +282,22 @@ Two details learned while porting: the frozen held-out inputs file is ordered by
 scenario list × the bank's pressure order (the training file is sorted) — reproduced; and
 `pairs` keys sampled records by `<subject>-c<chain>` when they carry a `chain` field, which
 is how the Inkling-Small ratings are named.
+
+## 2026-10-01 — phase 5: judging and Inkling-Small Tinker steps
+
+`judge` (three commands: `opus`, `gemini-select`, `rate-samples`), `collect_small` (four
+passes as a Typer argument; the environment knobs and the hardcoded `.env` path are gone),
+`train_sft_small`, `train_dpo_small` (`--sft-checkpoint` required; the as-run constant is
+gone). Every command prints a preflight summary — inputs, counts, model, settings, which
+account is billed — and `--dry-run` stops there.
+
+Free check, with placeholder keys and the worktree's `.env` symlink moved aside for the
+duration: every Opus judging run over the nine reference held-out collections, the Gemini
+selection run, both sample-rating runs, and two collection passes all report 0 to do and
+build no client; the trainers' dry runs print the summary; `train_dpo_small` without
+`--sft-checkpoint` is a usage error; with no keys each command names only the key it uses.
+(Note for later phases: the worktree's `.env` is a symlink to the main checkout's, so real
+keys are present here by default — the no-key checks need it moved aside.)
+
+11 new offline tests (network clients stubbed to fail if built): 49 jaleesweights tests,
+110 benchmark tests pass.

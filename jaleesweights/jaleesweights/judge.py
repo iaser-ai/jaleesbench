@@ -1,272 +1,194 @@
-# ===== as-run: judge_train_samples.py =====
-"""Selection-judge the on-policy sampled sittings (issue #21 gemma redesign).
+"""Judging — the two judges never meet.
 
-Gemini only (the selection judge — Opus stays held out for eval), and ONLY
-the post-pressure (full) scope: selection uses post-pressure bands alone, and
-judge_all's hardcoded two-scope loop would double the spend for bands we
-never read. Mirrors judge_all's job loop otherwise, resume-safe via the same
-judgment key set.
+  opus           Score held-out collections with Claude Opus (the held-out judge), both scopes:
+                 first response and after pushback. Needs ANTHROPIC_API_KEY only.
+  gemini-select  Rate a guided training-half collection with Gemini (the selection judge),
+                 both scopes — the stage-1 filter needs the first-turn band too. Needs a
+                 Gemini credential only.
+  rate-samples   Rate the stage-1 model's K sampled answers with Gemini, after-pushback scope
+                 only (selection uses that band alone; judging both scopes would double the
+                 spend). Chain-aware: records carrying a `chain` field are rated under
+                 `<subject>-c<chain>`. Needs a Gemini credential only.
 
-Usage: uv run --directory jaleesbench python ../tmp/dpo-experiment/judge_train_samples.py
+All three are resume-safe: judgments already in the output file are not redone, so pointed
+at a complete reference output they report nothing to do and make no call. Every command
+prints what it is about to do — how many judgments, which judge, which account is billed —
+and `--dry-run` stops there.
+
+    uv run python -m jaleesweights.judge opus --collect data/runs/my-run/collect_eval_gemma.jsonl --run my-run
 """
 
 import asyncio
 import json
-import pathlib
-import sys
 from datetime import datetime, timezone
+from pathlib import Path
 
-sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent.parent / "jaleesbench"))
+import typer
+from jaleesbench.collect import load_probes
+from jaleesbench.judge import call_judge, judge_all, judgment_key
+from jaleesbench.prompts import judge_blocks, render_conversation
+from jaleesbench.providers import make_clients
 
-from jaleesbench.collect import load_env, load_probes  # noqa: E402
-from jaleesbench.judge import call_judge, judgment_key  # noqa: E402
-from jaleesbench.prompts import judge_blocks, render_conversation  # noqa: E402
-from jaleesbench.providers import make_clients  # noqa: E402
+from . import paths
+from .common import GEMINI, OPUS
+from .env import load_keys
 
-ROOT = pathlib.Path(__file__).resolve().parent
-GEMINI = "gemini-3.1-pro-preview"
-CONCURRENCY = 16
+app = typer.Typer(add_completion=False, help=__doc__)
 
-import os  # noqa: E402
-
-COLLECT = ROOT / os.environ.get("COLLECT", "collect_train_samples.jsonl")
-OUT = ROOT / os.environ.get("OUT", "judgments_train_samples.jsonl")
+ANTHROPIC_KEYS = ["ANTHROPIC_API_KEY"]
 
 
-async def main() -> None:
-    load_env()
+def _sittings(path: Path) -> list[dict]:
+    return [json.loads(l) for l in path.read_text().splitlines()]
+
+
+def _done(out: Path) -> set[str]:
+    if not out.exists():
+        return set()
+    return {judgment_key(json.loads(l)) for l in out.read_text().splitlines()}
+
+
+def pending_two_scope(collect: Path, out: Path, judge: str) -> int:
+    """How many judgments judge_all would make: two scopes per sitting, minus those done."""
+    done = _done(out)
+    n = 0
+    for s in _sittings(collect):
+        skey = f"{s['subject']}|{s['probe_id']}|{s['pressure']}|{s['framing']}"
+        n += sum(1 for scope in ("turn1", "full") if f"{skey}|{judge}|{scope}" not in done)
+    return n
+
+
+def _preflight(collects: list[Path], out: Path, judge: str, account: str, scopes: str, counter) -> int:
+    total = 0
+    for c in collects:
+        if not c.exists():
+            raise typer.BadParameter(f"{c} does not exist")
+        n = counter(c, out, judge)
+        typer.echo(f"  {c.name}: {len(_sittings(c))} sittings, {n} judgments to make")
+        total += n
+    typer.echo(f"preflight: judge {judge}, {scopes}; {total} judgments to make -> {out}; "
+               f"billed to your {account} account")
+    return total
+
+
+def _run_two_scope(collects: list[Path], out: Path, judge: str, required: list[str],
+                   concurrency: int | None) -> None:
+    for c in collects:
+        asyncio.run(judge_all(collect_path=c, out_path=out, judges={judge},
+                              required_keys=required, concurrency=concurrency))
+
+
+@app.command()
+def opus(
+    collect: list[Path] = typer.Option(..., "--collect", help="Held-out collection(s) to score (harness record schema)."),
+    run: str = typer.Option("new-run", help="Run directory name under data/runs/ for the output."),
+    out: Path | None = typer.Option(None, help="Judgments file to append to (default: <run dir>/judgments_eval.jsonl)."),
+    concurrency: int | None = typer.Option(None, help="Concurrent judge calls (default: the benchmark's)."),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Print the preflight summary and stop."),
+) -> None:
+    out = paths.output_path(out or paths.run_dir(run) / "judgments_eval.jsonl")
+    load_keys(ANTHROPIC_KEYS)
+    total = _preflight(collect, out, OPUS, "Anthropic", "both scopes", pending_two_scope)
+    if dry_run or total == 0:
+        return
+    _run_two_scope(collect, out, OPUS, ANTHROPIC_KEYS, concurrency)
+
+
+@app.command("gemini-select")
+def gemini_select(
+    collect: list[Path] = typer.Option(..., "--collect", help="Guided training-half collection(s) to rate."),
+    run: str = typer.Option("new-run", help="Run directory name under data/runs/ for the output."),
+    out: Path | None = typer.Option(None, help="Ratings file to append to (default: <run dir>/judgments_selection.jsonl)."),
+    concurrency: int | None = typer.Option(None, help="Concurrent judge calls (default: the benchmark's)."),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Print the preflight summary and stop."),
+) -> None:
+    out = paths.output_path(out or paths.run_dir(run) / "judgments_selection.jsonl")
+    load_keys([], gemini=True)
+    total = _preflight(collect, out, GEMINI, "Gemini (Vertex or API key)", "both scopes", pending_two_scope)
+    if dry_run or total == 0:
+        return
+    _run_two_scope(collect, out, GEMINI, [], concurrency)
+
+
+# --- rate-samples: Gemini, after-pushback scope only, chain-aware ----------------------------
+
+def sample_lane(s: dict) -> str:
+    return f"{s['subject']}-c{s['chain']}" if "chain" in s else s["subject"]
+
+
+def pending_samples(collect: Path, out: Path, judge: str = GEMINI) -> int:
+    done = _done(out)
+    n = 0
+    for s in _sittings(collect):
+        skey = f"{sample_lane(s)}|{s['probe_id']}|{s['pressure']}|{s['framing']}"
+        if f"{skey}|{judge}|full" not in done:
+            n += 1
+    return n
+
+
+async def rate_samples_async(collect: Path, out: Path, concurrency: int) -> None:
     probes = {p["id"]: p for p in load_probes()["probes"]}
-    sittings = [json.loads(l) for l in COLLECT.read_text().splitlines()]
-
-    done: set[str] = set()
-    if OUT.exists():
-        for line in OUT.read_text().splitlines():
-            done.add(judgment_key(json.loads(line)))
-
+    sittings = _sittings(collect)
+    done = _done(out)
     jobs = []
     for s in sittings:
-        # Chain-aware: K-chain census files carry a 'chain' field on a single
-        # subject; fold it into the subject (gemma's files pre-suffixed theirs).
-        subj = f"{s['subject']}-c{s['chain']}" if "chain" in s else s["subject"]
+        subj = sample_lane(s)
         skey = f"{subj}|{s['probe_id']}|{s['pressure']}|{s['framing']}"
         if f"{skey}|{GEMINI}|full" not in done:
             jobs.append((s, subj, skey))
-    print(f"sittings={len(sittings)} done={len(done)} todo={len(jobs)}")
+    typer.echo(f"sittings={len(sittings)} done={len(done)} todo={len(jobs)}")
     if not jobs:
         return
 
     clients = make_clients({"gemini"})
-    sem = asyncio.Semaphore(CONCURRENCY)
+    sem = asyncio.Semaphore(concurrency)
     lock = asyncio.Lock()
     completed = failed = 0
 
     async def one(job):
         nonlocal completed, failed
         s, subj, skey = job
-        parts = judge_blocks(probes[s["probe_id"]]["proof_texts"],
-                             render_conversation(s["turns"]))
+        parts = judge_blocks(probes[s["probe_id"]]["proof_texts"], render_conversation(s["turns"]))
         try:
             async with sem:
                 verdict = await call_judge(GEMINI, parts, clients)
         except Exception as e:  # noqa: BLE001 — skip, report; a re-run retries it
             async with lock:
                 failed += 1
-                print(f"  FAILED {skey}: {e}")
+                typer.echo(f"  FAILED {skey}: {e}")
             return
         rec = {"sitting_key": skey, "subject": subj, "probe_id": s["probe_id"],
                "pressure": s["pressure"], "framing": s["framing"],
                "judge": GEMINI, "scope": "full",
                "ts": datetime.now(timezone.utc).isoformat(), **verdict}
         async with lock:
-            with open(OUT, "a") as fh:
+            with open(out, "a") as fh:
                 fh.write(json.dumps(rec) + "\n")
             completed += 1
             if completed % 50 == 0:
-                print(f"  {completed}/{len(jobs)}")
+                typer.echo(f"  {completed}/{len(jobs)}")
 
     await asyncio.gather(*[one(j) for j in jobs])
-    print(f"judged {completed} -> {OUT}" + (f"  ({failed} failed, re-run to retry)" if failed else ""))
+    typer.echo(f"judged {completed} -> {out}" + (f"  ({failed} failed, re-run to retry)" if failed else ""))
     if failed:
-        raise SystemExit(1)
+        raise typer.Exit(1)
 
 
-asyncio.run(main())
+@app.command("rate-samples")
+def rate_samples(
+    collect: Path = typer.Option(..., help="The stage-1 model's sampled answers (K per training cell)."),
+    run: str = typer.Option("new-run", help="Run directory name under data/runs/ for the output."),
+    out: Path | None = typer.Option(None, help="Ratings file to append to (default: <run dir>/judgments_samples.jsonl)."),
+    concurrency: int = typer.Option(16, help="Concurrent judge calls."),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Print the preflight summary and stop."),
+) -> None:
+    out = paths.output_path(out or paths.run_dir(run) / "judgments_samples.jsonl")
+    load_keys([], gemini=True)
+    total = _preflight([collect], out, GEMINI, "Gemini (Vertex or API key)", "after-pushback scope only", pending_samples)
+    if dry_run or total == 0:
+        return
+    asyncio.run(rate_samples_async(collect, out, concurrency))
 
-# ===== as-run: judge_eval_basevllm.py =====
-"""Opus-judge the base-gemma vLLM control sittings (no adapter).
 
-The control isolates tuning effects from vLLM-vs-Friendli serving drift and
-single-sample bistability in every arm-vs-base comparison. Appends to
-judgments_eval_gemma.jsonl (resume-safe, new subject).
-
-Usage: uv run --directory jaleesbench python ../tmp/dpo-experiment/judge_eval_basevllm.py
-"""
-
-import asyncio
-import pathlib
-import sys
-
-sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent.parent / "jaleesbench"))
-
-from jaleesbench.judge import judge_all  # noqa: E402
-
-ROOT = pathlib.Path(__file__).resolve().parent
-
-asyncio.run(
-    judge_all(
-        collect_path=ROOT / "collect_eval_basevllm.jsonl",
-        out_path=ROOT / "judgments_eval_gemma.jsonl",
-        judges={"claude-opus-4-8"},
-    )
-)
-
-# ===== as-run: judge_eval_bf16.py =====
-"""Opus-judge the bf16 recipe-of-record stage-1 evals (bare + guided guard).
-
-Usage: uv run --directory jaleesbench python ../tmp/dpo-experiment/judge_eval_bf16.py
-"""
-
-import asyncio
-import pathlib
-import sys
-
-sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent.parent / "jaleesbench"))
-
-from jaleesbench.judge import judge_all  # noqa: E402
-
-ROOT = pathlib.Path(__file__).resolve().parent
-
-for name in ("collect_eval_bf16.jsonl", "collect_eval_bf16_guided.jsonl"):
-    asyncio.run(
-        judge_all(
-            collect_path=ROOT / name,
-            out_path=ROOT / "judgments_eval_gemma.jsonl",
-            judges={"claude-opus-4-8"},
-        )
-    )
-
-# ===== as-run: judge_eval_sftdpo_bf16.py =====
-"""Opus-judge the bf16 recipe-of-record stage-2 eval (bare only).
-
-Usage: uv run --directory jaleesbench python ../tmp/dpo-experiment/judge_eval_sftdpo_bf16.py
-"""
-
-import asyncio
-import pathlib
-import sys
-
-sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent.parent / "jaleesbench"))
-
-from jaleesbench.judge import judge_all  # noqa: E402
-
-ROOT = pathlib.Path(__file__).resolve().parent
-
-asyncio.run(
-    judge_all(
-        collect_path=ROOT / "collect_eval_sftdpo_bf16.jsonl",
-        out_path=ROOT / "judgments_eval_gemma.jsonl",
-        judges={"claude-opus-4-8"},
-    )
-)
-
-# ===== as-run: judge_small_selection.py =====
-"""Gemini-judge Inkling-Small's train-70 guided sittings (selection judge,
-both scopes — the SFT filter needs full AND turn1 bands).
-
-Usage: uv run --directory jaleesbench python ../tmp/dpo-experiment/judge_small_selection.py
-"""
-
-import asyncio
-import pathlib
-import sys
-
-sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent.parent / "jaleesbench"))
-
-from jaleesbench.judge import judge_all  # noqa: E402
-
-ROOT = pathlib.Path(__file__).resolve().parent
-
-asyncio.run(
-    judge_all(
-        collect_path=ROOT / "collect_small_train_guided.jsonl",
-        out_path=ROOT / "judgments_small_selection.jsonl",
-        judges={"gemini-3.1-pro-preview"},
-    )
-)
-
-# ===== as-run: judge_small_baselines.py =====
-"""Opus-judge Inkling-Small's two test-70 baselines (unstated + guided),
-sequentially into one held-out judgments file.
-
-Usage: uv run --directory jaleesbench python ../tmp/dpo-experiment/judge_small_baselines.py
-"""
-
-import asyncio
-import pathlib
-import sys
-
-sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent.parent / "jaleesbench"))
-
-from jaleesbench.judge import judge_all  # noqa: E402
-
-ROOT = pathlib.Path(__file__).resolve().parent
-
-for which in ("test_unstated", "test_guided"):
-    asyncio.run(
-        judge_all(
-            collect_path=ROOT / f"collect_small_{which}.jsonl",
-            out_path=ROOT / "judgments_eval_small.jsonl",
-            judges={"claude-opus-4-8"},
-        )
-    )
-
-# ===== as-run: judge_small_sft.py =====
-"""Opus-judge Inkling-Small's stage-1 SFT test-70 evals (unstated + guided),
-sequentially into the shared held-out judgments file.
-
-Usage: uv run --directory jaleesbench python ../tmp/dpo-experiment/judge_small_sft.py
-"""
-
-import asyncio
-import pathlib
-import sys
-
-sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent.parent / "jaleesbench"))
-
-from jaleesbench.judge import judge_all  # noqa: E402
-
-ROOT = pathlib.Path(__file__).resolve().parent
-
-for which in ("test_unstated", "test_guided"):
-    asyncio.run(
-        judge_all(
-            collect_path=ROOT / f"collect_small_{which}_sft.jsonl",
-            out_path=ROOT / "judgments_eval_small.jsonl",
-            judges={"claude-opus-4-8"},
-        )
-    )
-
-# ===== as-run: judge_small_sftdpo.py =====
-"""Opus-judge Inkling-Small's stage-2 (sft-dpo) test-70 unstated eval into the
-shared held-out judgments file.
-
-Usage: uv run --directory jaleesbench python ../tmp/dpo-experiment/judge_small_sftdpo.py
-"""
-
-import asyncio
-import pathlib
-import sys
-
-sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent.parent / "jaleesbench"))
-
-from jaleesbench.judge import judge_all  # noqa: E402
-
-ROOT = pathlib.Path(__file__).resolve().parent
-
-asyncio.run(
-    judge_all(
-        collect_path=ROOT / "collect_small_test_unstated_sftdpo.jsonl",
-        out_path=ROOT / "judgments_eval_small.jsonl",
-        judges={"claude-opus-4-8"},
-    )
-)
+if __name__ == "__main__":
+    app()
