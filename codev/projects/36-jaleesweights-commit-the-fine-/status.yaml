@@ -1,9 +1,33 @@
 id: '36'
 title: jaleesweights-commit-the-fine-
 protocol: spir
-phase: plan
-plan_phases: []
-current_plan_phase: null
+phase: implement
+plan_phases:
+  - id: phase_1
+    title: As-run scripts in their final places, private wording removed
+    status: in_progress
+  - id: phase_2
+    title: Installable project, clone-relative paths, keys scoped to what a step uses
+    status: pending
+  - id: phase_3
+    title: Data archives, checksums and the download step
+    status: pending
+  - id: phase_4
+    title: 'Free steps ported: builders, exports and repeatable scoring'
+    status: pending
+  - id: phase_5
+    title: Judging and Inkling-Small Tinker steps ported
+    status: pending
+  - id: phase_6
+    title: 'Gemma on Modal: drivers with configurable account names'
+    status: pending
+  - id: phase_7
+    title: Local demonstration on the team's own GPU
+    status: pending
+  - id: phase_8
+    title: README, archive index, fresh-clone walk-through and owner report
+    status: pending
+current_plan_phase: phase_1
 gates:
   spec-approval:
     status: approved
@@ -18,7 +42,7 @@ gates:
   verify-approval:
     status: pending
 iteration: 1
-build_complete: true
+build_complete: false
 history: []
 started_at: '2026-09-30T14:27:49.651Z'
-updated_at: '2026-10-01T05:02:40.965Z'
+updated_at: '2026-10-01T05:02:43.000Z'
