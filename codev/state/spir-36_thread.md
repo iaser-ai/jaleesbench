@@ -181,9 +181,9 @@ original machine. Deterministic (sorted members, fixed metadata, gzip mtime 0) s
 gives the same checksums. Not committed: the sources exist only on this machine."""
 import gzip, hashlib, io, json, os, pathlib, sys, tarfile
 
-SCRATCH = pathlib.Path("/Users/mwk/Development/fftn/taqwabench/tmp/dpo-experiment")
-MAIN = pathlib.Path("/Users/mwk/Development/fftn/taqwabench/jaleesbench/results")
-WT = pathlib.Path("/Users/mwk/Development/fftn/taqwabench/.builders/spir-36/jaleesweights")
+SCRATCH = pathlib.Path("<main checkout>/tmp/dpo-experiment")
+MAIN = pathlib.Path("<main checkout>/jaleesbench/results")
+WT = pathlib.Path("<worktree>/jaleesweights")
 OUT = WT / "data" / "staging"; OUT.mkdir(parents=True, exist_ok=True)
 NOTICE = (WT / "release" / "NOTICE").read_bytes()
 RUNS = ["run1", "run2", "sft_small_run", "dpo_small_sft2_run",

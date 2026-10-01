@@ -114,3 +114,25 @@ def test_cli_stops_on_checksum_mismatch_before_extracting(tmp_path, monkeypatch)
     res = CliRunner().invoke(fetch_data.app, ["--from-dir", str(src)])
     assert res.exit_code != 0 and "checksum mismatch" in str(res.exception)
     assert not (tmp_path / "reference").exists()
+
+
+def test_only_is_validated_and_destination_rejects_unknown_kind(tmp_path):
+    res = CliRunner().invoke(fetch_data.app, ["--from-dir", str(tmp_path), "--only", "nope"])
+    assert res.exit_code != 0 and "--only must be one of" in res.output
+    with pytest.raises(ValueError):
+        fetch_data.destination("nope")
+
+
+def test_second_archive_mismatch_extracts_nothing(tmp_path, monkeypatch):
+    src = tmp_path / "staging"
+    src.mkdir()
+    good = make_archive(src / "jaleesweights-data.tar.gz", {"ref.jsonl": b"r\n"})
+    make_archive(src / "jaleesbench-main-run.tar.gz", {"collect.jsonl": b"c\n"})
+    checks = tmp_path / "checksums.sha256"
+    checks.write_text(f"{good}  jaleesweights-data.tar.gz\n{'1' * 64}  jaleesbench-main-run.tar.gz\n")
+    monkeypatch.setattr(paths, "CHECKSUMS", checks)
+    monkeypatch.setattr(paths, "REFERENCE", tmp_path / "reference")
+    monkeypatch.setattr(paths, "BENCH_RESULTS", tmp_path / "results")
+    res = CliRunner().invoke(fetch_data.app, ["--from-dir", str(src)])
+    assert res.exit_code != 0 and "checksum mismatch" in str(res.exception)
+    assert not (tmp_path / "reference").exists() and not (tmp_path / "results").exists()

@@ -81,7 +81,12 @@ def verify(archive: Path, expected: str) -> None:
             f"The archive is corrupt or is not the released one; nothing was extracted.")
 
 
+KINDS = {kind for kind, _ in ARCHIVES.values()}
+
+
 def destination(kind: str) -> Path:
+    if kind not in KINDS:
+        raise ValueError(f"unknown archive kind {kind!r}; expected one of {sorted(KINDS)}")
     return paths.REFERENCE if kind == "reference" else paths.BENCH_RESULTS
 
 
@@ -108,10 +113,14 @@ def main(
     force: bool = typer.Option(False, "--force", help="Overwrite files already present at the destinations."),
     only: str | None = typer.Option(None, help="Install just one: 'reference' or 'main-run'."),
 ) -> None:
+    if only is not None and only not in KINDS:
+        raise typer.BadParameter(f"--only must be one of {sorted(KINDS)}")
     sums = expected_checksums()
-    for asset, (kind, what) in ARCHIVES.items():
-        if only and kind != only:
-            continue
+    selected = [(a, k, w) for a, (k, w) in ARCHIVES.items() if only is None or k == only]
+    # Locate and verify every selected archive first, so a bad second archive
+    # never leaves a half-installed state behind the first.
+    ready = []
+    for asset, kind, what in selected:
         if from_dir is not None:
             archive = from_dir / asset
             if not archive.exists():
@@ -119,7 +128,8 @@ def main(
         else:
             archive = download(asset, paths.PROJECT / "data" / "downloads" / asset, tag)
         verify(archive, sums[asset])
-        dest = destination(kind)
+        ready.append((asset, archive, destination(kind), what))
+    for asset, archive, dest, what in ready:
         names = extract(archive, dest, force=force)
         typer.echo(f"{asset}: checksum ok; {len(names)} files -> {dest}  ({what})")
 
