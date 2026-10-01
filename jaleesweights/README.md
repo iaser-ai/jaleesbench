@@ -67,7 +67,7 @@ NVIDIA GPU:
 uv sync --group gpu          # on the GPU machine
 ```
 
-The Modal container images pin the same versions (`jaleesweights/modal/_config.py`).
+The Modal container images pin the same versions (`jaleesweights/jaleesweights/modal/_config.py`).
 
 ## Get the data
 
@@ -239,8 +239,9 @@ concurrent conversations; a tuned checkpoint's lane far fewer (the runs used 3).
 
 A worked example of the same recipe on hardware a team plausibly owns, with the Hugging Face
 stack the Modal functions run inside (`transformers`, `peft`, vLLM) and no Modal account.
-Default model `google/gemma-4-12B-it` in bf16; `--model`, `--dtype`, `--batch`,
-`--max-model-len` and `--gpu-memory-utilization` are options on every command. **Its numbers
+Default model `google/gemma-4-12B-it` in bf16; `--model` and `--dtype` are options on every
+command, `--batch` on the two trainers, `--max-model-len` and `--gpu-memory-utilization` on
+collection. **Its numbers
 are not the paper's and are not expected to match them.**
 
 Because a smaller Gemma model is not a subject of the benchmark main run, the demonstration
