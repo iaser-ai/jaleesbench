@@ -123,3 +123,17 @@ Useful facts for implementation: `modal run <driver> --help` works with no Modal
 (tested with a fake HOME). `judge_all` builds both Anthropic and Gemini clients whenever
 work remains — that is the second small change needed in the benchmark, beside
 `load_env` narrowing.
+
+## 2026-10-01 — plan approved; implement phase 1 done
+
+Owner's one change at the plan gate: run records keep `metrics.jsonl` and `config.json`
+(path fields rewritten to release-relative names), drop `checkpoints.jsonl`. Plan and spec
+updated (78-member data archive), `porch approve` run.
+
+Phase 1 (commit 3cac2db): 19 archive scripts + 24 final scripts copied to their final
+paths (15 modules; `pairs.py`, `score.py`, `judge.py` hold several as-run scripts
+concatenated under `# ===== as-run: <name> =====` separators), plus `split_70_70.json` and
+`guided_prefix.txt`. Verified: every copy identical to its scratch original except the
+three reworded comment blocks (`train_dpo_run.py` 9 lines, `train_dpo_run2.py` 7 lines,
+`modal/gemma_sft_bf16.py` 3 lines, all comments); `git show` of the commit has no hit for
+the private names; benchmark tests 107 passed, 1 skipped.
