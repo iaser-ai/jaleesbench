@@ -104,6 +104,13 @@ per-scenario **proof texts**, the **chapter map**, the **judging rubric**, and t
 they are part of the JaleesWeights data release (see [`jaleesweights/README.md`](jaleesweights/README.md#get-the-data)),
 once published.
 
+## Licence
+
+Code and original materials: Apache License 2.0 ([`LICENSE`](LICENSE)). The English
+proof texts in `jaleesbench/jaleesbench/data/proof_texts.json` are quoted from the
+[sunnah.com](https://sunnah.com/riyadussalihin) English translation of *Riyāḍ al-Ṣāliḥīn*
+for research use and are **not** covered by the Apache-2.0 licence — see [`NOTICE`](NOTICE).
+
 ## Authors
 
 Waleed Kadous, Ben Olsen, Tim Hwang.
