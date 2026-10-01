@@ -317,3 +317,31 @@ as a plain Python module (`python -m jaleesweights.modal.<driver> ...`) that pri
 preflight — volume, secret, GPU, volume paths read and written, upload/download commands —
 and launches nothing; verified for all five with no Modal account (fake HOME). Nothing was
 run against the owner's Modal account. 12 new tests; 62 jaleesweights tests pass.
+
+## 2026-10-01 — phase 7: the local demonstration (cannot run here; no NVIDIA GPU)
+
+Three commands under `jaleesweights/local/`: `gemma_collect` (vLLM; the Modal collection and
+sampling bodies merged), `gemma_sft`, `gemma_dpo` (the Modal training bodies with local
+paths). Default model `google/gemma-4-12B-it` (owner question 9's default), bf16; model,
+dtype, batch, context window, memory fraction, k, temperature, limit all options. GPU
+imports are lazy with a plain "missing GPU dependency: <name>; uv sync --group gpu" message.
+Every command prints a preflight ending in the GPU it sees ("GPU: none" here) and stops on
+`--dry-run`.
+
+**Differences from the Modal function bodies, beyond paths and options** (for the PR):
+- Training (`gemma_sft`, `gemma_dpo`): `vol.commit()` calls removed (no volume); the
+  model id and dtype are parameters (Modal: constant 31B, bf16); the renderer lives in
+  `local/_common.py` (same code). LoRA config, loss, parity check, policy==ref check,
+  checkpointing and the loops are the Modal code.
+- Collection (`gemma_collect`): one command for both the evaluation pass (k=1, model-default
+  sampling) and the stage-2 sampling pass (k>1, temperature bump checked as in Modal);
+  records carry a `chain` field under one subject (the Inkling-Small convention) instead of
+  the Modal sampler's `<prefix>{k}` lane subjects — `judge rate-samples` and `pairs` handle
+  both; `--limit` for the smoke test.
+
+Free checks done here: compile; `--help`; dry-run preflights; a real run without the GPU
+group stops naming `peft` / `vllm`; and the tokenizer-only loss-mask check with the real
+Gemma-4-12B tokenizer (fetched from the Hub, ungated): rendering is prefix-stable and the
+mask covers exactly the assistant turns. Not done, not possible here: loading a model,
+training, serving. The README names the first smoke test: `gemma_sft --limit 4`, then
+`gemma_collect --limit 5 --adapter <that adapter>`. 9 new tests; 79 pass.
