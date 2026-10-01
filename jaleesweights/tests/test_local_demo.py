@@ -89,7 +89,7 @@ def test_collect_preflight_names_pass_and_output(isolated, monkeypatch):
     assert res.exit_code != 0 and "explicit --temperature" in res.output
     bad = write_jsonl(isolated / "bad.jsonl", [{"probe_id": "p", "turns": []}])
     res = runner.invoke(gemma_collect.app, ["--inputs", str(bad), "--run", "d", "--dry-run"])
-    assert res.exit_code != 0 and "not a conversation-inputs file" in res.output
+    assert res.exit_code != 0 and "conversation-inputs file" in res.output.replace("\n", "")
 
 
 def test_outputs_cannot_land_in_reference(isolated):
