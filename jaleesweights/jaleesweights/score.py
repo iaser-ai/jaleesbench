@@ -126,8 +126,10 @@ def main(
         ("Inkling, best open base model bare (main run)", main_run, "inkling", "unstated"),
     ]
     typer.echo(f"Held-out 70 scenarios, Opus-judged, display scale -1..+1, "
-               f"{RESAMPLES} scenario-cluster bootstrap resamples (seed {SEED})\n")
-    typer.echo(f"{'checkpoint':<46} {'first response':<24} {'after pushback':<24} {'drop':<7}")
+               f"{RESAMPLES} scenario-cluster bootstrap resamples (seed {SEED}).")
+    typer.echo("Every cell is computed from the same judgments; the paper's table leaves some "
+               "first-response and drop cells blank (printed as ---) and reports the rest.\n")
+    typer.echo(f"{'checkpoint':<50} {'first response':<24} {'after pushback':<24} {'drop':<7}")
     for label, path, subject, framing in rows:
         if path is None:
             typer.echo(f"\n{label}")
@@ -135,7 +137,7 @@ def main(
         b = load_bands(path, subject, framing, test)
         t1, full = score(b, "turn1"), score(b, "full")
         drop = f"{full[0] - t1[0]:+.3f}" if (t1 and full) else ""
-        typer.echo(f"  {label:<44} {fmt(t1):<24} {fmt(full):<24} {drop:<7}")
+        typer.echo(f"  {label:<48} {fmt(t1):<24} {fmt(full):<24} {drop:<7}")
 
     typer.echo("\nPaired per-cell comparisons (matched cells, same judge)")
     comparisons = [

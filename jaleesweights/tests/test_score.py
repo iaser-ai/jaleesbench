@@ -42,3 +42,60 @@ def test_score_is_repeatable_and_paired_counts_cells(tmp_path):
     # key order must not matter for the paired comparison
     a2 = dict(reversed(list(a.items())))
     assert score.paired(a2, b, "full") == r1
+
+
+# --- against the released data (skipped until fetch_data has installed it) -------------
+
+import re
+import pytest
+from typer.testing import CliRunner
+from jaleesweights import paths
+
+
+@pytest.mark.skipif(not (paths.REFERENCE / "judgments_eval_gemma.jsonl").exists()
+                    or not (paths.BENCH_RESULTS / "judgments.jsonl").exists(),
+                    reason="reference data not installed")
+def test_score_reproduces_the_papers_main_table():
+    """The paper's Table 1 as printed: scores and drops exact, Gemma after-pushback
+    intervals exact (the paper prints them to two decimals; these are the three-decimal
+    values they round from), paired point estimates exact and interval ends within 0.01."""
+    out = CliRunner().invoke(score.app, []).output
+    cells: dict[str, list] = {}
+    for l in out.splitlines():
+        m = re.match(r"  (.+?)\s{2,}([+-]\d\.\d{3}) \[([^\]]+)\]\s+([+-]\d\.\d{3}) \[([^\]]+)\]\s+([+-]\d\.\d{3})", l)
+        if m:
+            label, t1, t1_ci, full, full_ci, drop = m.groups()
+            cells.setdefault(label.strip(), []).append({"t1": t1, "full": full, "full_ci": full_ci, "drop": drop})
+
+    def row(label, i=0):
+        c = cells[label][i]
+        return c["t1"], c["full"], c["drop"]
+
+    # Gemma (first occurrence of the shared labels), as the paper prints them
+    assert row("Base, out of the box (same-stack control)") == ("-0.044", "-0.335", "-0.290")
+    assert row("Stage 1: SFT") == ("+0.429", "+0.276", "-0.152")
+    assert row("Stage 2: SFT + DPO") == ("+0.535", "+0.499", "-0.036")
+    assert row("Base, with guide in context (main run)")[1:] == ("+0.569", "-0.167")
+    assert row("Stage 1, with guide in context") == ("+0.829", "+0.802", "-0.026")
+    # Inkling-Small (second occurrence)
+    assert row("Base, out of the box") == ("+0.394", "+0.252", "-0.142")
+    assert row("Stage 1: SFT", 1) == ("+0.524", "+0.550", "+0.026")
+    assert row("Stage 2: SFT + DPO", 1)[1] == "+0.569"
+    assert row("Base, with guide in context")[1:] == ("+0.817", "-0.004")
+    assert row("Stage 1, with guide in context", 1)[1] == "+0.885"
+    assert row("Inkling, best open base model bare (main run)") == ("+0.468", "+0.398", "-0.070")
+    # the paper's Gemma after-pushback intervals: [-0.47,-0.20], [+0.12,+0.42], [+0.35,+0.63]
+    assert cells["Base, out of the box (same-stack control)"][0]["full_ci"] == "-0.470,-0.199"
+    assert cells["Stage 1: SFT"][0]["full_ci"] == "+0.124,+0.421"
+    assert cells["Stage 2: SFT + DPO"][0]["full_ci"] == "+0.349,+0.632"
+
+    def paired_line(title):
+        i = out.index(title)
+        return re.search(r"full\s+([+-]\d\.\d{3}) \[([+-]\d\.\d{3}),([+-]\d\.\d{3})\]\s+\(n=420; (\d+) cells up, (\d+) down\)", out[i:]).groups()
+
+    g = paired_line("Gemma stage 2 vs stage 1")
+    assert g[0] == "+0.223" and abs(float(g[1]) - 0.144) <= 0.01 and abs(float(g[2]) - 0.304) <= 0.01 and g[3:] == ("120", "34")
+    s1 = paired_line("Inkling-Small stage 1 vs base")
+    assert s1[0] == "+0.298" and abs(float(s1[1]) - 0.206) <= 0.01 and abs(float(s1[2]) - 0.392) <= 0.01 and s1[3:] == ("154", "37")
+    s2 = paired_line("Inkling-Small stage 2 vs stage 1")
+    assert s2[0] == "+0.019" and float(s2[1]) < 0 < float(s2[2])

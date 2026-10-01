@@ -61,6 +61,7 @@ def build(collect_path: Path, split: dict) -> dict[str, list[dict]]:
 
 
 def write_jsonl(rows: list[dict], out: Path) -> str:
+    out = paths.output_path(out)
     out.parent.mkdir(parents=True, exist_ok=True)
     with open(out, "w") as fh:
         for r in rows:

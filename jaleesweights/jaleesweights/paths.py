@@ -70,6 +70,20 @@ def reference_file(name: str) -> Path:
 def run_dir(name: str) -> Path:
     """The directory a new run writes to (created on first use). Reference data
     is never written; everything a run produces lands here."""
+    if not name or "/" in name or "\\" in name or name in (".", ".."):
+        raise ValueError(f"run name must be a plain directory name, got {name!r}")
     d = RUNS / name
     d.mkdir(parents=True, exist_ok=True)
     return d
+
+
+def output_path(p: Path) -> Path:
+    """Guard every write: the reference data and the installed main run are read-only
+    for this package. Returns the resolved path or raises."""
+    rp = Path(p).expanduser().resolve()
+    for protected in (REFERENCE, BENCH_RESULTS):
+        if rp == protected.resolve() or rp.is_relative_to(protected.resolve()):
+            raise RuntimeError(
+                f"refusing to write {rp}: {protected} holds reference data and is read-only. "
+                f"Write into a run directory (--run NAME) or give --out outside it.")
+    return rp

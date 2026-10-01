@@ -158,3 +158,19 @@ def test_new_run_chains_through_the_run_directory(tmp_path, monkeypatch):
     rec = json.loads(comp.read_text().splitlines()[0])
     assert rec["comparison"]["prompt_conversation"] == [{"role": "user", "content": "u1"}]
     assert not (tmp_path / "reference-must-not-be-touched").exists()
+
+
+def test_builders_cannot_write_into_the_reference_directory(tmp_path, monkeypatch):
+    ref = tmp_path / "reference"
+    ref.mkdir()
+    monkeypatch.setattr(paths, "REFERENCE", ref)
+    src = write_jsonl(ref / "pairs_train70_x.jsonl", [{"probe_id": "p", "pressure": "q",
+                                                        "chosen_turns": turns(), "rejected_turns": turns()}])
+    # default output would land beside the source, inside the reference data
+    res = CliRunner().invoke(comparisons.app, ["--src", str(src)])
+    assert res.exit_code != 0 and "read-only" in str(res.exception)
+    assert not (ref / "comparisons_train_x.jsonl").exists()
+    with pytest.raises(RuntimeError, match="read-only"):
+        pairs.write([], ref / "pairs.jsonl")
+    with pytest.raises(RuntimeError, match="read-only"):
+        inputs.write_jsonl([], ref / "train_inputs_gemma.jsonl")

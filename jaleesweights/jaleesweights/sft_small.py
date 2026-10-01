@@ -67,6 +67,7 @@ def build(collect_path: Path, judgments_path: Path, subject: str):
 
 def write(rows, out: Path) -> tuple[str, str]:
     """Write the training set and its `_messages` form; return both sha256s."""
+    out = paths.output_path(out)
     out.parent.mkdir(parents=True, exist_ok=True)
     with open(out, "w") as fh:
         for row in rows:

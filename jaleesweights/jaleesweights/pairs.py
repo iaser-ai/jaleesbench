@@ -93,6 +93,7 @@ def build(samples_path: Path, judgments_path: Path, split: dict):
 
 
 def write(pairs, out: Path) -> str:
+    out = paths.output_path(out)
     out.parent.mkdir(parents=True, exist_ok=True)
     with open(out, "w") as fh:
         for p in pairs:

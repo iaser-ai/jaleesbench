@@ -115,3 +115,21 @@ def test_common_filters():
     assert common.judgment_key(rec).startswith("s|JLS-001|flattery|unstated|j|full")
     split = common.load_split()
     assert len(split["train"]) == 70 and len(split["test"]) == 70 and split["seed"] == 3446
+
+
+def test_output_path_refuses_reference_and_main_run(monkeypatch, tmp_path):
+    monkeypatch.setattr(paths, "REFERENCE", tmp_path / "reference")
+    monkeypatch.setattr(paths, "BENCH_RESULTS", tmp_path / "results")
+    (tmp_path / "reference").mkdir()
+    for bad in (tmp_path / "reference" / "x.jsonl", tmp_path / "reference", tmp_path / "results" / "collect.jsonl",
+                tmp_path / "runs" / ".." / "reference" / "y.jsonl"):
+        with pytest.raises(RuntimeError, match="read-only"):
+            paths.output_path(bad)
+    assert paths.output_path(tmp_path / "runs" / "r" / "x.jsonl") == (tmp_path / "runs" / "r" / "x.jsonl").resolve()
+
+
+def test_run_dir_rejects_paths_that_escape_runs(monkeypatch, tmp_path):
+    monkeypatch.setattr(paths, "RUNS", tmp_path)
+    for bad in ("../reference", "a/b", "..", ""):
+        with pytest.raises(ValueError):
+            paths.run_dir(bad)

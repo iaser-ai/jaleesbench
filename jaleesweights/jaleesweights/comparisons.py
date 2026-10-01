@@ -14,6 +14,8 @@ from pathlib import Path
 
 import typer
 
+from . import paths
+
 app = typer.Typer(add_completion=False, help=__doc__)
 
 SEED = 3446
@@ -41,6 +43,7 @@ def build(src: Path, seed: int = SEED) -> tuple[list[dict], int]:
 
 
 def write(rows, out: Path) -> str:
+    out = paths.output_path(out)
     out.parent.mkdir(parents=True, exist_ok=True)
     with open(out, "w") as fh:
         for r in rows:
@@ -51,7 +54,8 @@ def write(rows, out: Path) -> str:
 @app.command()
 def main(
     src: Path = typer.Option(..., help="Pairs file (output of `pairs`)."),
-    out: Path | None = typer.Option(None, help="Output path (default: beside src, 'pairs_train70' -> 'comparisons_train')."),
+    out: Path | None = typer.Option(None, help="Output path (default: beside src, 'pairs_train70' -> 'comparisons_train'; "
+                                                 "a src inside the reference data needs an explicit --out)."),
 ) -> None:
     rows, n_a = build(src)
     out = out or src.with_name(src.name.replace("pairs_train70", "comparisons_train"))
