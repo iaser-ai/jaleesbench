@@ -345,3 +345,32 @@ Gemma-4-12B tokenizer (fetched from the Hub, ungated): rendering is prefix-stabl
 mask covers exactly the assistant turns. Not done, not possible here: loading a model,
 training, serving. The README names the first smoke test: `gemma_sft --limit 4`, then
 `gemma_collect --limit 5 --adapter <that adapter>`. 9 new tests; 79 pass.
+
+## 2026-10-01 — phase 8: README, archive index, licence, fresh-clone walk-through, owner report
+
+Written: `jaleesweights/README.md` (accounts and keys, install, data, the free reproduction
+with the eight-file table, three run orders with commands, costs from the experiment record,
+hardware for the demonstration measured vs derived, what was and was not verified, weights /
+judges / versions, archive, licence), `jaleesweights/archive/README.md` (every archived
+script and data file → approach → paper claim; not maintained; the missing-judgment note),
+`LICENSE` (Apache-2.0, repo root), a pointer paragraph in the top-level README.
+
+**Fresh-clone walk-through** (clone of the branch into an empty directory, no `.env`, keys
+unset): `uv sync`; `pytest` 81 passed + 1 skipped before data; `fetch_data --from-dir
+<staging>` installed 79 + 5 files with checksums ok; all free steps ran; all eight rebuilt
+files byte-identical to the reference copies; `score` repeatable and matching the paper;
+`pytest` 82 passed with data (the paper-table test now runs); benchmark suite 110 passed on
+the installed main run; a judging command with no keys names only ANTHROPIC_API_KEY.
+
+**Private-material search**: branch history (full patches, base ef08b21..HEAD), changed
+files, both archives' names and contents — 0 hits for the team name, its config file, the
+left-out file names, key-shaped strings, original-machine paths in the archives. The only
+tracked file with the team's name is the benchmark's collection module (two pre-existing
+comment lines, untouched; owner question 3). No file added by this work exceeds 1 MB except
+`jaleesweights/uv.lock`.
+
+**Owner report** written outside git: `/private/tmp/agent-mail/spir-36-release-report.md` —
+all 204 scratch files with class and destination (56 final, 67 archive, 81 left out), the
+archives and checksums, the search result, the open items (hadith-translation copyright;
+tinker:// `load_checkpoint_path` fields kept; v2 overlay added), and what publishing
+involves. Nothing published; no draft release created.
