@@ -110,12 +110,32 @@ def preflight(what: str, gpu: str, reads: list[str], writes: list[str], dry_run:
     return dry_run
 
 
+def check_resume(resume_dir, required: tuple[str, ...]) -> bool:
+    """Inside the container, before any model loads: with --resume-from given, every
+    checkpoint artifact must be present or the run stops — never a silent fresh run.
+    Returns False when no resume was asked for. Plain-path logic so it is testable here."""
+    import os
+    if not resume_dir:
+        return False
+    missing = [os.path.join(str(resume_dir), r) for r in required
+               if not os.path.exists(os.path.join(str(resume_dir), r))]
+    if missing:
+        raise RuntimeError(f"--resume-from {resume_dir} is not a complete checkpoint; missing: "
+                           + ", ".join(missing) + ". Refusing to start a fresh run in its place.")
+    return True
+
+
 def preflight_cli(entrypoint) -> None:
     """Run a driver's local entrypoint in preflight-only mode, as a plain Python command that
     needs no Modal account:  uv run python -m jaleesweights.modal.<driver> [options]
 
     `modal run` itself needs a token before it will call the entrypoint, so the free check
-    goes through here; `modal run ... --dry-run` does the same thing once an account exists."""
+    goes through here; `modal run ... --dry-run` does the same thing once an account exists.
+
+    Fragile by nature: `entrypoint.info.raw_f` is Modal's private attribute for the wrapped
+    function (modal 1.6 at the time of writing; `modal>=1.1` is what pyproject allows).
+    tests/test_modal_drivers.py exercises this path for all five drivers and is the canary
+    if a Modal upgrade renames it."""
     raw = entrypoint.info.raw_f
     sig = inspect.signature(raw)
 

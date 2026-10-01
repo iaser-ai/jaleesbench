@@ -119,3 +119,18 @@ def test_trainers_report_local_source_row_counts(tmp_path, driver, args, opt):
                          cwd=PROJECT, capture_output=True, text=True, env={**NO_ACCOUNT, "PYTHONPATH": str(PROJECT)})
     assert out.returncode == 0, out.stderr
     assert f"local {f}: 12 rows ok" in out.stdout and f"modal volume put gemma-dpo {f}" in out.stdout
+
+
+def test_check_resume_refuses_partial_checkpoints(tmp_path):
+    from jaleesweights.modal._config import check_resume
+    assert check_resume(None, ("adapter", "train_state.pt")) is False
+    assert check_resume("", ("adapter", "train_state.pt")) is False
+    with pytest.raises(RuntimeError, match="not a complete checkpoint"):
+        check_resume(tmp_path / "nowhere", ("adapter", "train_state.pt"))
+    (tmp_path / "adapter").mkdir()
+    with pytest.raises(RuntimeError, match="train_state.pt"):
+        check_resume(tmp_path, ("adapter", "train_state.pt"))
+    (tmp_path / "train_state.pt").write_bytes(b"")
+    assert check_resume(tmp_path, ("adapter", "train_state.pt")) is True
+    with pytest.raises(RuntimeError, match="ckpt_adapter/policy"):
+        check_resume(tmp_path, ("ckpt_adapter/policy", "train_state.pt"))

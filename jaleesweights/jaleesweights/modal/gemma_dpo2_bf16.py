@@ -25,7 +25,7 @@ launch checks it first. Preflight only, no account needed:
 
 import modal
 
-from jaleesweights.modal._config import preflight_cli, MODEL, TRAIN_IMAGE, hf_secret, preflight, volume
+from jaleesweights.modal._config import check_resume, preflight_cli, MODEL, TRAIN_IMAGE, hf_secret, preflight, volume
 
 CKPT_EVERY = 25  # optimizer steps between full-state checkpoints (~84-step runs)
 app = modal.App("jaleesbench-gemma-dpo2-bf16")
@@ -57,8 +57,7 @@ def train(pairs_path: str, sft_run: str, run_name: str, batch: int, beta: float,
     state_file = out / "train_state.pt"
 
     resume_dir = pathlib.Path(f"/vol/runs/{resume_from}") if resume_from else None
-    resuming = bool(resume_from) and (resume_dir / "ckpt_adapter" / "policy").exists() \
-        and (resume_dir / "train_state.pt").exists()
+    resuming = check_resume(resume_dir, ("ckpt_adapter/policy", "train_state.pt"))  # complete, or refuse before any model loads
 
     tok = AutoTokenizer.from_pretrained(MODEL)
 

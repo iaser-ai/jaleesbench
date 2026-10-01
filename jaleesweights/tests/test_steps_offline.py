@@ -37,9 +37,9 @@ def isolated(tmp_path, monkeypatch):
     monkeypatch.setattr(paths, "RUNS", tmp_path / "runs")
     monkeypatch.setattr(paths, "REFERENCE", tmp_path / "reference")
     monkeypatch.setattr(paths, "BENCH_RESULTS", tmp_path / "results")
-    from jaleesweights import env
-    monkeypatch.setattr(env, "ENV_PATH", tmp_path / "no.env")
-    monkeypatch.setattr(env, "VERTEX_SA", tmp_path / "no-sa.json")
+    from jaleesbench import collect
+    monkeypatch.setattr(collect, "ENV_PATH", tmp_path / "no.env")
+    monkeypatch.setattr(collect, "VERTEX_SA", tmp_path / "no-sa.json")
     for k in ("ANTHROPIC_API_KEY", "GEMINI_API_KEY", "TINKER_API_KEY"):
         monkeypatch.delenv(k, raising=False)
     return tmp_path

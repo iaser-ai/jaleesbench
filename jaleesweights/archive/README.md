@@ -89,7 +89,7 @@ seven-arm dose sweep".
 |---|---|
 | `train_dpo_small_sft2_sweep.py` | the stage-2 trainer with `--lr` and `--epochs` (Typer) |
 | `paired_small_sweep.py` | scores and paired comparisons of all seven arms against stage 1, plus training fit from each run's `metrics.jsonl` |
-| data | six `collect_small_test_unstated_sftdpo_lr*.jsonl`, six `tinker-runs/dpo_small_sft2_sweep_*/`, and the `inkling-small-sftdpo-lr*` rows of `judgments_eval_small.jsonl` |
+| data | `collect_small_test_unstated_sftdpo_lr3e-5.jsonl`, `collect_small_test_unstated_sftdpo_lr1e-4.jsonl`, `collect_small_test_unstated_sftdpo_lr3e-4.jsonl`, `collect_small_test_unstated_sftdpo_lr1e-5-ep3.jsonl`, `collect_small_test_unstated_sftdpo_lr3e-5-ep3.jsonl`, `collect_small_test_unstated_sftdpo_lr1e-4-ep3.jsonl`; run records `tinker-runs/dpo_small_sft2_sweep_lr3e-05/`, `tinker-runs/dpo_small_sft2_sweep_lr0.0001/`, `tinker-runs/dpo_small_sft2_sweep_lr0.0003/`, `tinker-runs/dpo_small_sft2_sweep_lr1e-05_ep3/`, `tinker-runs/dpo_small_sft2_sweep_lr3e-05_ep3/`, `tinker-runs/dpo_small_sft2_sweep_lr0.0001_ep3/`; and the `inkling-small-sftdpo-lr3e-5`, `-lr1e-4`, `-lr3e-4`, `-lr1e-5-ep3`, `-lr3e-5-ep3`, `-lr1e-4-ep3` rows of `judgments_eval_small.jsonl` |
 
 ## Notes on the data
 

@@ -35,8 +35,9 @@ Contents: [What you need](#what-you-need) · [Install](#install) · [Get the dat
 | **A Linux machine with one NVIDIA GPU** | the local demonstration only (see its hardware section) | — |
 
 Each command asks only for the keys it uses and names a missing one; no key is ever printed.
-Put keys in a `.env` at the repository root (`KEY=value`, one per line; JaleesWeights strips
-surrounding quotes, the benchmark's own commands do not) or export them.
+Put keys in a `.env` at the repository root (`KEY=value`, one per line, no quotes — values
+are taken literally by the one parser the benchmark and JaleesWeights share) or export
+them.
 
 The runs of record used the Gemini judge through Vertex. The Vertex file is found because the
 benchmark package is installed editable from this clone (see below); with a plain
@@ -123,7 +124,7 @@ The eight files these commands write are byte-identical to the released copies:
 | `comparisons_train_small_sft2.jsonl` | `comparisons` | the same pairs in the Tinker trainer's format |
 
 `score` prints the paper's main results table — every score, drop and interval as printed —
-and the paired per-cell comparisons. Two notes:
+and the paired per-cell comparisons. Three notes:
 
 - The two **paired** intervals the paper prints (Gemma stage 2 vs stage 1, `[+0.144, +0.304]`;
   Inkling-Small stage 1 vs base, `[+0.206, +0.392]`) came from code whose bootstrap order was
@@ -379,9 +380,13 @@ supports. Their data is in the reference archive alongside the data of record.
 Code: Apache License 2.0 (`LICENSE` at the repository root). Data release: Creative Commons
 Attribution 4.0, with this notice, which is also inside both archives:
 
-> The data contains model outputs produced by third-party providers' models — the
-> JaleesBench main run's answers from every subject model, the judgments written by Claude
-> Opus and Gemini, and the training sets and sampled answers built from them. Those model
-> outputs remain subject to the terms of the providers that produced them. The CC BY 4.0
-> licence applies to what the authors contributed and grants nothing beyond the providers'
-> terms.
+> The data contains model outputs produced by third-party providers' models:
+>
+>   - the JaleesBench main run's answers from every subject model (Anthropic, OpenAI, Google,
+>     Thinking Machines, Zhipu, Alibaba, NVIDIA, QCRI/Fanar, Ansari and others);
+>   - the judgments written by Claude Opus and Gemini;
+>   - the Gemma and Inkling-Small training sets and sampled answers built from those outputs.
+>
+> Those model outputs remain subject to the terms of the providers that produced them. The
+> CC BY 4.0 licence applies to what the authors contributed and grants nothing beyond the
+> providers' terms.

@@ -45,6 +45,9 @@ environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
 [tool.uv.sources]
 jaleesbench = { path = "../jaleesbench", editable = true }
 
+# Build backend so `uv sync` can install this project editable. The package is clone-only:
+# paths.py refuses to import outside the repository clone, so a built wheel is not meant to
+# be distributed or installed elsewhere.
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

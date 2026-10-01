@@ -5,6 +5,8 @@ from pathlib import Path
 
 import pytest
 
+from jaleesbench import collect
+
 from jaleesweights import common, env, paths
 
 REPO = Path(__file__).resolve().parents[2]
@@ -70,8 +72,8 @@ def _clear(monkeypatch, *keys):
 
 
 def test_load_keys_names_only_the_missing_required_keys(monkeypatch, tmp_path):
-    monkeypatch.setattr(env, "ENV_PATH", tmp_path / ".env")
-    monkeypatch.setattr(env, "VERTEX_SA", tmp_path / "sa.json")
+    monkeypatch.setattr(collect, "ENV_PATH", tmp_path / ".env")
+    monkeypatch.setattr(collect, "VERTEX_SA", tmp_path / "sa.json")
     _clear(monkeypatch, "ANTHROPIC_API_KEY", "TINKER_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY")
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sekrit-value")
     env.load_keys(["ANTHROPIC_API_KEY"])  # no raise
@@ -82,8 +84,8 @@ def test_load_keys_names_only_the_missing_required_keys(monkeypatch, tmp_path):
 
 
 def test_load_keys_gemini_credential_check(monkeypatch, tmp_path):
-    monkeypatch.setattr(env, "ENV_PATH", tmp_path / ".env")
-    monkeypatch.setattr(env, "VERTEX_SA", tmp_path / "sa.json")
+    monkeypatch.setattr(collect, "ENV_PATH", tmp_path / ".env")
+    monkeypatch.setattr(collect, "VERTEX_SA", tmp_path / "sa.json")
     _clear(monkeypatch, "GEMINI_API_KEY")
     env.load_keys([], gemini=False)
     with pytest.raises(RuntimeError, match="Gemini"):
@@ -92,15 +94,19 @@ def test_load_keys_gemini_credential_check(monkeypatch, tmp_path):
     env.load_keys([], gemini=True)
 
 
-def test_load_keys_reads_env_file_but_environment_wins(monkeypatch, tmp_path):
+def test_load_keys_is_the_benchmarks_parser(monkeypatch, tmp_path):
+    """One .env parser for the whole repo: the benchmark's. Values are literal (no quote
+    stripping), already-set environment variables win."""
     f = tmp_path / ".env"
-    f.write_text("# c\nTINKER_API_KEY='fromfile'\nANTHROPIC_API_KEY=fromfile\n")
-    monkeypatch.setattr(env, "ENV_PATH", f)
+    f.write_text("# c\nTINKER_API_KEY=fromfile\nANTHROPIC_API_KEY=fromfile\n")
+    monkeypatch.setattr(collect, "ENV_PATH", f)
+    monkeypatch.setattr(collect, "VERTEX_SA", tmp_path / "sa.json")
     _clear(monkeypatch, "TINKER_API_KEY", "ANTHROPIC_API_KEY")
     monkeypatch.setenv("ANTHROPIC_API_KEY", "preset")
     env.load_keys(["TINKER_API_KEY", "ANTHROPIC_API_KEY"])
-    assert os.environ["TINKER_API_KEY"] == "fromfile"   # quotes stripped
+    assert os.environ["TINKER_API_KEY"] == "fromfile"
     assert os.environ["ANTHROPIC_API_KEY"] == "preset"
+    assert env.load_keys.__module__ == "jaleesweights.env" and collect.load_env is env.collect.load_env
 
 
 def test_common_filters():
