@@ -10,8 +10,11 @@ STARTER: a few universal lessons are seeded; add your project's as you learn the
 - Check for existing work (PRs, git history) before building from scratch.
 - "It compiled" / "tests pass" is not "it works" — verify the real user path before calling it done.
 - When stuck (2 failed hypotheses or ~30 min), get an outside perspective instead of guessing.
-- <Add your project's hard-won, cross-cutting lessons; keep <=10, one line each.>
+- This repository is public: private wording must be gone before the first commit, and the check is over `git log -p`, not the tree.
+- Port research code by committing the as-run text first and proving the free steps byte-identical before touching anything paid.
+- Do not edit the tree while a 3-way review round is running; the lanes read it live.
 
 ## Map of lessons-learned.md (consult when…)
-- <Top-level section> — consult when <situation>.
-- <List your lessons-learned.md's top-level sections here; keep <=12, top-level only.>
+- Publishing from a public repository — consult before committing or releasing anything that came from scratch files or another team.
+- Porting as-run research code — consult when turning scripts into a package without re-running them.
+- Tooling — consult when `uv`, `modal` or `consult` behave unexpectedly.

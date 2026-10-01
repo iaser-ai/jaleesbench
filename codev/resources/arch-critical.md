@@ -7,11 +7,13 @@ and keeps the map in sync with arch.md's top-level sections.
 STARTER: replace the examples below with YOUR project's facts and arch.md sections. -->
 
 ## Critical facts (consult before deciding)
-- <A system-shape fact that should change implementation choices — e.g. "all persistent state lives in X; never write it directly.">
-- <An invariant a contributor must not violate — e.g. "service A only talks to service B through the queue.">
-- <Keep to <=10, one line each; demote weaker facts into arch.md.>
+- Three independent `uv` projects (`jaleesbench/`, `jaleesweights/`, `quranquote/`), no root project; `jaleesweights` depends on `jaleesbench` **editable** — the benchmark resolves its data and credential paths from its own installed location.
+- The main run (`jaleesbench/results/`) and JaleesWeights reference data (`jaleesweights/data/reference/`) are gitignored, installed by `jaleesweights.fetch_data`, and read-only: new outputs go to `jaleesweights/data/runs/<name>/`.
+- One `.env` parser: `jaleesbench.collect.load_env(required=..., gemini=...)`; values are literal. JaleesWeights commands ask only for the keys they use.
+- Every paid step prints a preflight and stops on `--dry-run`; collection and judging are resume-safe by key.
 
 ## Map of arch.md (consult when…)
-- <Top-level arch.md section> — consult when <situation>.
-- <Top-level arch.md section> — consult when <situation>.
-- <List your arch.md's top-level sections here; keep <=12, top-level only.>
+- Repository shape — consult when adding a project, a dependency between projects, or a top-level folder.
+- Where data lives — consult when a step reads or writes benchmark results or reference data.
+- Paths and credentials — consult when a path or key lookup behaves differently installed vs in the clone.
+- Paid steps — consult when adding a command that spends money or rents hardware.

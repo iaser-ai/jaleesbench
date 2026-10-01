@@ -374,3 +374,18 @@ all 204 scratch files with class and destination (56 final, 67 archive, 81 left 
 archives and checksums, the search result, the open items (hadith-translation copyright;
 tinker:// `load_checkpoint_path` fields kept; v2 overlay added), and what publishing
 involves. Nothing published; no draft release created.
+
+## 2026-10-01 — integration review and the review phase
+
+Architect's integration review on PR #37 (must-fix 1–3, should-fix 4–5): all done in
+976c98f — Modal trainers refuse an incomplete `--resume-from` inside the container; one
+`.env` parser (`env.load_keys` delegates to the benchmark's `load_env`; values literal);
+fragility comment on `preflight_cli`; clone-only note at the build-system block; the
+demonstration diff summary is in the PR body. Replied on the PR. Both suites green (83 / 110).
+
+Review phase: `codev/reviews/36-...md` written (spec compliance item by item, deviations,
+consultation feedback per phase and round, lessons, routing). Governance docs, previously
+starters: `arch.md` (repository shape, where data lives, paths and credentials, paid steps),
+`arch-critical.md` (four facts + map), `lessons-learned.md` (publishing from a public repo,
+porting as-run code, tooling), `lessons-critical.md` (three lessons + map). Nothing merged;
+nothing published; the `pr` gate is the owner's.
