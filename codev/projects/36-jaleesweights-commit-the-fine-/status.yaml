@@ -141,4 +141,9 @@ history:
         file: >-
           /Users/mwk/Development/fftn/taqwabench/.builders/spir-36/codev/projects/36-jaleesweights-commit-the-fine-/36-phase_7-iter1-claude.txt
 started_at: '2026-09-30T14:27:49.651Z'
-updated_at: '2026-10-01T06:50:33.622Z'
+updated_at: '2026-10-01T06:59:03.386Z'
+pr_history:
+  - phase: implement
+    pr_number: 37
+    branch: builder/spir-36
+    created_at: '2026-10-01T06:59:03.385Z'
