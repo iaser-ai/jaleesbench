@@ -105,6 +105,27 @@ def test_rate_samples_is_chain_aware_and_single_scope(isolated, monkeypatch):
     assert res.exit_code == 0 and "0 judgments to make" in res.output
 
 
+def test_opus_and_gemini_select_call_judge_all_with_narrowed_keys(isolated, monkeypatch):
+    """The only money-spending wiring: which judge, which keys, which output file."""
+    calls = []
+
+    async def fake_judge_all(**kw):
+        calls.append(kw)
+    monkeypatch.setattr(judge, "judge_all", fake_judge_all)
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "placeholder")
+    monkeypatch.setenv("GEMINI_API_KEY", "placeholder")
+    c = write_jsonl(isolated / "c.jsonl", [sitting("m", "JLS-002", "p1")] + [{}][:0])
+    (isolated / "c.jsonl").write_text((isolated / "c.jsonl").read_text() + "\n")  # trailing blank line tolerated
+    out = isolated / "runs" / "r" / "j.jsonl"
+    assert runner.invoke(judge.app, ["opus", "--collect", str(c), "--out", str(out), "--concurrency", "2"]).exit_code == 0
+    assert calls[-1] == {"collect_path": c, "out_path": out, "judges": {OPUS},
+                         "required_keys": ["ANTHROPIC_API_KEY"], "concurrency": 2}
+    out2 = isolated / "runs" / "r" / "sel.jsonl"
+    assert runner.invoke(judge.app, ["gemini-select", "--collect", str(c), "--out", str(out2)]).exit_code == 0
+    assert calls[-1] == {"collect_path": c, "out_path": out2, "judges": {GEMINI},
+                         "required_keys": [], "concurrency": None}
+
+
 def test_judge_refuses_to_write_into_reference(isolated, monkeypatch):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "placeholder")
     (isolated / "reference").mkdir()

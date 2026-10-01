@@ -39,13 +39,13 @@ ANTHROPIC_KEYS = ["ANTHROPIC_API_KEY"]
 
 
 def _sittings(path: Path) -> list[dict]:
-    return [json.loads(l) for l in path.read_text().splitlines()]
+    return [json.loads(l) for l in path.read_text().splitlines() if l.strip()]
 
 
 def _done(out: Path) -> set[str]:
     if not out.exists():
         return set()
-    return {judgment_key(json.loads(l)) for l in out.read_text().splitlines()}
+    return {judgment_key(json.loads(l)) for l in out.read_text().splitlines() if l.strip()}
 
 
 def pending_two_scope(collect: Path, out: Path, judge: str) -> int:
