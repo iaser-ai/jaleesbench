@@ -89,3 +89,16 @@ def make_render(tok):
 
 def read_jsonl(path: Path) -> list[dict]:
     return [json.loads(l) for l in path.read_text().splitlines() if l.strip()]
+
+
+def check_resume_dir(resume_from: Path | None, adapter_subdir: str) -> None:
+    """A --resume-from directory must hold a complete checkpoint: the adapter and the
+    training state. Anything less stops here — never a silent fresh (paid) run."""
+    if resume_from is None:
+        return
+    missing = [p for p in (resume_from / adapter_subdir, resume_from / "train_state.pt") if not p.exists()]
+    if missing:
+        raise typer.BadParameter(
+            f"--resume-from {resume_from} is not a complete checkpoint; missing: "
+            + ", ".join(str(m) for m in missing)
+            + ". A finished run deletes train_state.pt on completion; a run that never checkpointed has nothing to resume.")

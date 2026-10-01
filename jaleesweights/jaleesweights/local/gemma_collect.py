@@ -138,6 +138,9 @@ def main(
         raise typer.BadParameter(f"{adapter} is not a PEFT adapter directory (no adapter_config.json)")
     framing = "guided" if guide else "unstated"
     out = paths.output_path(out or paths.run_dir(run) / f"collect_{subject}_{framing}{f'_k{k}' if k > 1 else ''}.jsonl")
+    if out.exists():
+        raise typer.BadParameter(f"{out} already exists; choose another --out or --run (a run never overwrites)")
+    out.parent.mkdir(parents=True, exist_ok=True)  # before the model loads, so a bad path cannot discard a finished run
     ctx = paths.GUIDED_PREFIX.read_text().strip() if guide else None
     rows = read_jsonl(inputs)
     if limit:

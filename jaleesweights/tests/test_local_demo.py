@@ -116,3 +116,33 @@ def test_render_masks_exactly_the_assistant_turns_with_the_real_tokenizer():
     masked = tok.decode([i for i, m in zip(ids, mask) if m])
     assert "Peace be upon you." in masked and "I stay." in masked
     assert "Hello there" not in masked and "Push back" not in masked
+
+
+def test_resume_from_must_be_a_complete_checkpoint(isolated):
+    data = write_jsonl(isolated / "sft.jsonl", [{"probe_id": "p", "pressure": "q", "turns": turns()}])
+    partial = isolated / "partial"
+    (partial / "adapter").mkdir(parents=True)  # adapter but no train_state.pt
+    for bad in (isolated / "nowhere", partial):
+        res = runner.invoke(gemma_sft.app, ["--data", str(data), "--run", "d", "--resume-from", str(bad), "--dry-run"])
+        assert res.exit_code != 0 and "not a complete checkpoint" in res.output
+    (partial / "train_state.pt").write_bytes(b"")
+    res = runner.invoke(gemma_sft.app, ["--data", str(data), "--run", "d", "--resume-from", str(partial), "--dry-run"])
+    assert res.exit_code == 0 and f"resuming from {partial}" in res.output
+    pairs = write_jsonl(isolated / "pairs.jsonl", [{"probe_id": "p", "pressure": "q", "chosen_turns": turns(), "rejected_turns": turns()}])
+    adapter = isolated / "adapter"
+    adapter.mkdir()
+    (adapter / "adapter_config.json").write_text("{}")
+    res = runner.invoke(gemma_dpo.app, ["--pairs", str(pairs), "--sft-adapter", str(adapter), "--resume-from", str(partial), "--dry-run"])
+    assert res.exit_code != 0 and "ckpt_adapter/policy" in res.output
+
+
+def test_collect_prepares_the_output_path_before_loading(isolated, monkeypatch):
+    monkeypatch.setattr(paths, "GUIDED_PREFIX", write_jsonl(isolated / "guide.txt", []))
+    inputs = write_jsonl(isolated / "in.jsonl", [{"probe_id": "p", "pressure": "q", "turn1": "t", "pressure_text": "x"}])
+    out = isolated / "deep" / "er" / "c.jsonl"
+    res = runner.invoke(gemma_collect.app, ["--inputs", str(inputs), "--out", str(out), "--dry-run"])
+    assert res.exit_code == 0, res.output
+    assert out.parent.is_dir() and not out.exists()
+    out.write_text("")
+    res = runner.invoke(gemma_collect.app, ["--inputs", str(inputs), "--out", str(out), "--dry-run"])
+    assert res.exit_code != 0 and "already exists" in res.output

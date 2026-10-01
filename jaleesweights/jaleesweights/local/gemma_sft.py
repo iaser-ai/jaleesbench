@@ -21,8 +21,8 @@ from pathlib import Path
 import typer
 
 from .. import paths
-from ._common import (DEFAULT_MODEL, MAX_TOKENS_PER_CONVERSATION, count_rows, make_render,
-                      preflight, read_jsonl, require, torch_dtype)
+from ._common import (DEFAULT_MODEL, MAX_TOKENS_PER_CONVERSATION, check_resume_dir, count_rows,
+                      make_render, preflight, read_jsonl, require, torch_dtype)
 
 app = typer.Typer(add_completion=False, help=__doc__)
 
@@ -47,7 +47,7 @@ def train(data_path: Path, out: Path, model_name: str, dtype_name: str, batch: i
     state_file = out / "train_state.pt"
 
     resume_dir = resume_from
-    resuming = bool(resume_from) and (resume_dir / "adapter").exists() and (resume_dir / "train_state.pt").exists()
+    resuming = resume_from is not None  # validated before preflight: complete or refused
 
     tok = AutoTokenizer.from_pretrained(model_name)
     render = make_render(tok)
@@ -207,6 +207,7 @@ def main(
     dry_run: bool = typer.Option(False, "--dry-run", help="Print the preflight summary and stop before anything loads."),
 ) -> None:
     n = count_rows(data)
+    check_resume_dir(resume_from, "adapter")
     out = paths.output_path(out or paths.run_dir(run) / "gemma-sft")
     n_used = min(n, limit) if limit else n
     steps = -(-n_used * epochs // batch)

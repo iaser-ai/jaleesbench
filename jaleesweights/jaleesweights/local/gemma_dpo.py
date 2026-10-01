@@ -16,8 +16,8 @@ from pathlib import Path
 import typer
 
 from .. import paths
-from ._common import (DEFAULT_MODEL, MAX_TOKENS_PER_CONVERSATION, count_rows, make_render,
-                      preflight, read_jsonl, require, torch_dtype)
+from ._common import (DEFAULT_MODEL, MAX_TOKENS_PER_CONVERSATION, check_resume_dir, count_rows,
+                      make_render, preflight, read_jsonl, require, torch_dtype)
 
 app = typer.Typer(add_completion=False, help=__doc__)
 
@@ -44,8 +44,7 @@ def train(pairs_path: Path, sft_adapter: Path, out: Path, model_name: str, dtype
     state_file = out / "train_state.pt"
 
     resume_dir = resume_from
-    resuming = bool(resume_from) and (resume_dir / "ckpt_adapter" / "policy").exists() \
-        and (resume_dir / "train_state.pt").exists()
+    resuming = resume_from is not None  # validated before preflight: complete or refused
 
     tok = AutoTokenizer.from_pretrained(model_name)
     render = make_render(tok)
@@ -246,6 +245,7 @@ def main(
     n = count_rows(pairs)
     if not (sft_adapter / "adapter_config.json").exists():
         raise typer.BadParameter(f"{sft_adapter} is not a PEFT adapter directory (no adapter_config.json)")
+    check_resume_dir(resume_from, "ckpt_adapter/policy")
     out = paths.output_path(out or paths.run_dir(run) / "gemma-sft-dpo")
     n_used = min(n, limit) if limit else n
     steps = -(-n_used // batch)
