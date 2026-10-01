@@ -238,7 +238,11 @@ Nothing is uploaded in this phase.
   — all 58 top-level `.jsonl` files (every one is final or archive) plus
   `tinker-runs/<10 folders>/{config.json,metrics.jsonl}` = 78 members —
   and `jaleesbench-main-run.tar.gz` (`collect.jsonl`, `judgments.jsonl`,
-  `citations_llm.jsonl`). Built by a documented one-off command sequence recorded in the
+  `citations_llm.jsonl`, and — found during this phase — `judgments_v2.jsonl`, the
+  benchmark's 282-row overlay of re-judged cells that its own scoring applies; without it
+  the benchmark's paper-stats test fails on the installed main run. JaleesWeights reads the
+  base file, as the runs did; the overlay touches none of the cells the stage-1 selection
+  used). Both archives also carry `NOTICE`. Built by a documented one-off script recorded in the
   thread, not by a committed script (the source is the read-only scratch folder on this
   machine and will not exist for anyone else). The release tag is fixed now:
   `jaleesweights-data-v1`; `checksums.sha256`, the fetch module and the README all use it.
@@ -270,14 +274,14 @@ Nothing is uploaded in this phase.
 #### Acceptance Criteria
 
 - [ ] Every file in `CONTENTS.md` is one the spec classes final or archive; none is left
-      out; the experiment archive has exactly 78 members (58 + 20) and the main-run archive
-      3; no `checkpoints.jsonl` is present. `guided_prefix.txt` and `split_70_70.json` are
+      out; the experiment archive has exactly 78 members (58 + 20) plus `NOTICE` and the
+      main-run archive 4 plus `NOTICE`; no `checkpoints.jsonl` is present. `guided_prefix.txt` and `split_70_70.json` are
       in git instead.
 - [ ] No released `config.json` contains an absolute path; its three path fields name
       release-relative files that exist in the archive.
 - [ ] Exhaustive, not spot-checked: a `sha256` list of every member of both archives, made
       from the scratch originals, equals the list made from the files `fetch_data
-      --from-dir` installs (81 lines, all matching; the ten `config.json` entries are
+      --from-dir` installs (84 lines, all matching; the ten `config.json` entries are
       compared after the same path rewrite). Recorded in the thread.
 - [ ] Both destinations refuse to overwrite existing files without `--force`.
 - [ ] Checksum mismatch → named failure; missing release → the "not published" message
@@ -288,7 +292,7 @@ Nothing is uploaded in this phase.
 
 Unit: checksum verify on temp files; the not-published and mismatch paths with a stubbed
 downloader; extraction layout and overwrite refusal on a tiny fake archive. Manual: build
-the archives, run `fetch_data --from-dir data/staging`, run the exhaustive 81-file checksum
+the archives, run `fetch_data --from-dir data/staging`, run the exhaustive 84-file checksum
 comparison against the scratch originals (config files compared after the rewrite).
 
 ### Phase 4: Free steps ported: builders, exports and repeatable scoring

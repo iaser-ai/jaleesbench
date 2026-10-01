@@ -1,0 +1,20 @@
+JaleesWeights data release — NOTICE
+
+This data release (the JaleesWeights reference data and the JaleesBench main run) is
+licensed under the Creative Commons Attribution 4.0 International licence (CC BY 4.0),
+https://creativecommons.org/licenses/by/4.0/. Attribution: M. Waleed Kadous, iaser.ai and
+Faith Family Technology Network; the JaleesBench and JaleesWeights papers.
+
+The data contains model outputs produced by third-party providers' models:
+
+  - the JaleesBench main run's answers from every subject model (Anthropic, OpenAI, Google,
+    Thinking Machines, Zhipu, Alibaba, NVIDIA, QCRI/Fanar, Ansari and others);
+  - the judgments written by Claude Opus and Gemini;
+  - the Gemma and Inkling-Small training sets and sampled answers built from those outputs.
+
+Those model outputs remain subject to the terms of the providers that produced them. The
+CC BY 4.0 licence applies to what the authors contributed and grants nothing beyond the
+providers' terms.
+
+The code that produced and consumes this data is in https://github.com/iaser-ai/jaleesbench
+under the Apache License 2.0.

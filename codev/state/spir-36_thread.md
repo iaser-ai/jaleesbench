@@ -154,3 +154,112 @@ at the repo root for the code; data release CC BY 4.0 with a NOTICE (in the arch
 the README) that provider model outputs remain subject to their providers' terms. The
 hadith-translation copyright of the proof texts stays open and goes in the owner report.
 Recorded in the spec and in plan phase 8.
+
+## 2026-10-01 — phase 3: data archives, checksums, download step
+
+Built both archives deterministically (sorted members, zeroed metadata, gzip mtime 0 — a
+rebuild gives the same checksum, confirmed). `jaleesweights-data.tar.gz`: 58 data files +
+10 × {config.json with path fields rewritten, metrics.jsonl} + NOTICE = 79 members, 73.5 MB.
+`jaleesbench-main-run.tar.gz`: collect, judgments, judgments_v2, citations_llm + NOTICE =
+5 members, 110.9 MB. Installed with `fetch_data --from-dir`; all 84 installed files match
+the member checksums; all data files byte-identical to the scratch originals; no config.json
+contains an absolute path (`load_checkpoint_path` tinker:// addresses are left as they are —
+identifiers, per the spec's security note; flagged for the owner report).
+
+**Finding:** the benchmark's own scoring overlays `judgments_v2.jsonl` (282 re-judged cells)
+on `judgments.jsonl`. With only the three files the builders read, the benchmark's
+paper-stats test fails on the installed main run (3 subjects off by ~0.002). Added the
+overlay to the main-run archive (158 KB); JaleesWeights keeps reading the base file as the
+runs did — the overlay touches none of the stage-1 selection cells. Benchmark tests now 110
+passed (the real-data test runs and passes against the installed copy).
+
+The one-off build script (not committed; sources exist only on this machine):
+
+```python
+"""One-off: build the two JaleesWeights data archives from the read-only sources on the
+original machine. Deterministic (sorted members, fixed metadata, gzip mtime 0) so a rebuild
+gives the same checksums. Not committed: the sources exist only on this machine."""
+import gzip, hashlib, io, json, os, pathlib, sys, tarfile
+
+SCRATCH = pathlib.Path("/Users/mwk/Development/fftn/taqwabench/tmp/dpo-experiment")
+MAIN = pathlib.Path("/Users/mwk/Development/fftn/taqwabench/jaleesbench/results")
+WT = pathlib.Path("/Users/mwk/Development/fftn/taqwabench/.builders/spir-36/jaleesweights")
+OUT = WT / "data" / "staging"; OUT.mkdir(parents=True, exist_ok=True)
+NOTICE = (WT / "release" / "NOTICE").read_bytes()
+RUNS = ["run1", "run2", "sft_small_run", "dpo_small_sft2_run",
+        "dpo_small_sft2_sweep_lr0.0001", "dpo_small_sft2_sweep_lr0.0001_ep3",
+        "dpo_small_sft2_sweep_lr0.0003", "dpo_small_sft2_sweep_lr1e-05_ep3",
+        "dpo_small_sft2_sweep_lr3e-05", "dpo_small_sft2_sweep_lr3e-05_ep3"]
+PATH_FIELDS = ("log_path", "train_path", "file_path")
+
+def rewrite_config(run: str, raw: bytes) -> bytes:
+    cfg = json.loads(raw)
+    def fix(node):
+        if isinstance(node, dict):
+            for k, v in node.items():
+                if k in PATH_FIELDS and isinstance(v, str) and v.startswith(str(SCRATCH)):
+                    rel = pathlib.Path(v).relative_to(SCRATCH)
+                    node[k] = ("tinker-runs/" + rel.name) if k == "log_path" else rel.name
+                else:
+                    fix(v)
+        elif isinstance(node, list):
+            for v in node: fix(v)
+    fix(cfg)
+    text = json.dumps(cfg, indent=2) + "\n"
+    assert str(SCRATCH) not in text and "/Users/" not in text, run
+    return text.encode()
+
+def build(name: str, members: list[tuple[str, bytes]]):
+    buf = io.BytesIO()
+    with tarfile.open(fileobj=buf, mode="w") as tar:
+        for arcname, data in sorted(members):
+            info = tarfile.TarInfo(arcname); info.size = len(data)
+            info.mtime = 0; info.uid = info.gid = 0; info.uname = info.gname = ""; info.mode = 0o644
+            tar.addfile(info, io.BytesIO(data))
+    out = OUT / name
+    with open(out, "wb") as fh:
+        with gzip.GzipFile(filename="", mode="wb", fileobj=fh, mtime=0, compresslevel=6) as gz:
+            gz.write(buf.getvalue())
+    return out, [(a, len(d), hashlib.sha256(d).hexdigest()) for a, d in sorted(members)]
+
+# --- experiment archive: 58 top-level jsonl + 10 x {config.json (rewritten), metrics.jsonl} + NOTICE
+members = [(p.name, p.read_bytes()) for p in sorted(SCRATCH.glob("*.jsonl"))]
+assert len(members) == 58, len(members)
+for run in RUNS:
+    members.append((f"tinker-runs/{run}/config.json", rewrite_config(run, (SCRATCH / run / "config.json").read_bytes())))
+    members.append((f"tinker-runs/{run}/metrics.jsonl", (SCRATCH / run / "metrics.jsonl").read_bytes()))
+members.append(("NOTICE", NOTICE))
+exp_out, exp_list = build("jaleesweights-data.tar.gz", members)
+# --- main run archive
+# judgments_v2.jsonl: the benchmark's re-judged disagreement cells, overlaid by its own
+# scoring (score.load_judgments) — included so the benchmark's tools and tests work on the
+# installed main run. JaleesWeights itself reads the base judgments.jsonl, as the runs did.
+mr = [(n, (MAIN / n).read_bytes()) for n in ("collect.jsonl", "judgments.jsonl", "judgments_v2.jsonl", "citations_llm.jsonl")]
+mr.append(("NOTICE", NOTICE))
+mr_out, mr_list = build("jaleesbench-main-run.tar.gz", mr)
+
+rel = WT / "release"
+with open(rel / "checksums.sha256", "w") as fh:
+    for p in (exp_out, mr_out):
+        fh.write(f"{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.name}\n")
+with open(rel / "CONTENTS.md", "w") as fh:
+    fh.write("# Data release contents (tag `jaleesweights-data-v1`)\n\n")
+    fh.write("Two archives. Every member is listed with its size in bytes and its SHA-256. "
+             "Members are the files as the original runs produced them (the main run also carries the benchmark's "
+             "`judgments_v2.jsonl` overlay of re-judged cells, which the benchmark's own scoring applies and "
+             "JaleesWeights does not), with one exception: in each "
+             "`tinker-runs/*/config.json` the `log_path`, `train_path` and `file_path` fields were rewritten "
+             "from the original machine's absolute paths to release-relative names (nothing else in those "
+             "files changed). `NOTICE` states the licence (CC BY 4.0) and that provider model outputs remain "
+             "subject to their providers' terms.\n\n")
+    for title, p, lst in (("jaleesweights-data.tar.gz — reference data of the recipe of record and the archived arms (extracted to `jaleesweights/data/reference/`)", exp_out, exp_list),
+                          ("jaleesbench-main-run.tar.gz — the benchmark main run the builders read (extracted to `jaleesbench/results/`)", mr_out, mr_list)):
+        fh.write(f"## {title}\n\n{len(lst)} members, {p.stat().st_size:,} bytes compressed.\n\n| member | bytes | sha256 |\n|---|---:|---|\n")
+        for a, n, h in lst: fh.write(f"| `{a}` | {n:,} | `{h}` |\n")
+        fh.write("\n")
+# member checksum list for the exhaustive comparison (not committed)
+with open(OUT / "members.sha256", "w") as fh:
+    for a, n, h in exp_list: fh.write(f"{h}  reference/{a}\n")
+    for a, n, h in mr_list: fh.write(f"{h}  main-run/{a}\n")
+print(exp_out, exp_out.stat().st_size, len(exp_list)); print(mr_out, mr_out.stat().st_size, len(mr_list))
+```

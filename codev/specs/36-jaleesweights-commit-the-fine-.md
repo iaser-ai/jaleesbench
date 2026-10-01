@@ -393,7 +393,7 @@ scratch location, and the archive's index says so.
 | `pairs_train70_small_sft2.jsonl`, `comparisons_train_small_sft2.jsonl` | Inkling-Small stage-2 pairs (672), and the same in the trainer's format |
 | `judgments_eval_small.jsonl` | Opus scores for all Inkling-Small held-out answers. One file holding nine subjects: three of record, six from the sweep. Kept whole |
 | `sft_small_run/`, `dpo_small_sft2_run/` — settings and per-step metrics only | records of the two Inkling-Small training runs of record. Owner's decision at the plan gate (2026-10-01): the settings file's three path fields are rewritten to release-relative names; the checkpoint index is left out (addresses in the owner's Tinker account) |
-| the benchmark main run: conversations, judgments, citation flags | read by the builders and by scoring; distributed as its own download |
+| the benchmark main run: conversations, judgments, citation flags, and the benchmark's small overlay of re-judged cells (`judgments_v2.jsonl`, applied by the benchmark's own scoring, not by JaleesWeights) | read by the builders and by scoring; distributed as its own download |
 
 **Archive**
 
