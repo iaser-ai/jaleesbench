@@ -110,6 +110,14 @@ def preflight(what: str, gpu: str, reads: list[str], writes: list[str], dry_run:
     return dry_run
 
 
+def check_name(value: str, label: str) -> str:
+    """Run, adapter and resume identifiers become `/vol/runs/<name>` paths on the volume:
+    plain directory names only, so nothing can escape the runs namespace."""
+    if value and (any(c in value for c in "/\\") or value in (".", "..") or value != value.strip()):
+        raise SystemExit(f"{label} must be a plain directory name, got {value!r}")
+    return value
+
+
 def check_resume(resume_dir, required: tuple[str, ...]) -> bool:
     """Inside the container, before any model loads: with --resume-from given, every
     checkpoint artifact must be present or the run stops — never a silent fresh run.

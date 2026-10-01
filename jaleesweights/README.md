@@ -141,11 +141,14 @@ installed (it is skipped before).
 ## Run orders
 
 Conventions for every paid step: it prints a **preflight** — inputs and their row counts, the
-model, the settings, which account is billed — and stops there with `--dry-run`; it is
-**resume-safe** (judging and collection skip work already in the output file, so a complete
-output means nothing is spent); it writes to the run directory and never into the reference
-data; and where a later step needs an earlier step's output (a checkpoint, an adapter), it
-takes it as an option — nothing points at the original accounts.
+model, the settings, which account is billed — and stops there with `--dry-run`; it writes
+to the run directory and never into the reference data; and where a later step needs an
+earlier step's output (a checkpoint, an adapter), it takes it as an option — nothing points
+at the original accounts. Judging and the Tinker collections are **resume-safe**: they skip
+work already in the output file, so a complete output means nothing is spent. The Modal
+collection and sampling drivers and the local `gemma_collect` are one batched job each: the
+Modal ones overwrite the output for their run name on the volume (use a new `--run-name` to
+keep an earlier result); the local one refuses an existing output file.
 
 ### Gemma-4-31B on Modal
 

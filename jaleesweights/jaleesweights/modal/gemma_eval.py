@@ -22,7 +22,7 @@ Preflight only, no account needed: uv run python -m jaleesweights.modal.gemma_ev
 
 import modal
 
-from jaleesweights.modal._config import preflight_cli, MODEL, SERVE_IMAGE, hf_secret, preflight, volume
+from jaleesweights.modal._config import check_name, preflight_cli, MODEL, SERVE_IMAGE, hf_secret, preflight, volume
 
 app = modal.App("jaleesbench-gemma-eval")
 vol = volume()
@@ -117,6 +117,7 @@ def collect_eval(run_name: str, subject: str, context_file: str, inputs_path: st
 def main(run_name: str, subject: str = "", context_file: str = "",
          inputs: str = "/pairs/eval_inputs.jsonl", local_inputs: str = "", local_context: str = "",
          dry_run: bool = False):
+    check_name(run_name, "--run-name")
     out = f"/runs/{run_name}/collect_eval_gemma{'_guided' if context_file else ''}.jsonl"
     reads = [inputs] + ([context_file] if context_file else []) + ([f"/runs/{run_name}/adapter"] if run_name != "base" else [])
     local = {}

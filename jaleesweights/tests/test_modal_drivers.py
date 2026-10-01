@@ -134,3 +134,15 @@ def test_check_resume_refuses_partial_checkpoints(tmp_path):
     assert check_resume(tmp_path, ("adapter", "train_state.pt")) is True
     with pytest.raises(RuntimeError, match="ckpt_adapter/policy"):
         check_resume(tmp_path, ("ckpt_adapter/policy", "train_state.pt"))
+
+
+@pytest.mark.parametrize("driver,args", [
+    ("gemma_sft_bf16", ["--data", "/pairs/x.jsonl", "--run-name", "../escape"]),
+    ("gemma_dpo2_bf16", ["--pairs", "/pairs/x.jsonl", "--run-name", "r", "--sft-run", "a/b"]),
+    ("gemma_eval", ["--run-name", "../../etc"]),
+    ("gemma_sample", ["--out-run", "..", "--local-inputs", "/dev/null"]),
+])
+def test_identifiers_must_be_plain_directory_names(driver, args):
+    out = subprocess.run([sys.executable, "-m", f"jaleesweights.modal.{driver}", *args],
+                         cwd=PROJECT, capture_output=True, text=True, env={**NO_ACCOUNT, "PYTHONPATH": str(PROJECT)})
+    assert out.returncode != 0 and "must be a plain directory name" in out.stderr

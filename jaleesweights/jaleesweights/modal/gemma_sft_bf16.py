@@ -18,7 +18,7 @@ launch checks it first. Preflight only, no account needed:
 
 import modal
 
-from jaleesweights.modal._config import check_resume, preflight_cli, MODEL, TRAIN_IMAGE, hf_secret, preflight, volume
+from jaleesweights.modal._config import check_name, check_resume, preflight_cli, MODEL, TRAIN_IMAGE, hf_secret, preflight, volume
 
 CKPT_EVERY = 100  # optimizer steps between full-state checkpoints (deviation #1)
 app = modal.App("jaleesbench-gemma-sft-bf16")
@@ -213,6 +213,7 @@ def train(data_path: str, run_name: str, batch: int, lr: float, epochs: int,
 def main(data: str, run_name: str, batch: int = 8, lr: float = 5e-5,
          epochs: int = 2, seed: int = 3446, limit: int = 0, resume_from: str = "",
          local_data: str = "", dry_run: bool = False):
+    check_name(run_name, "--run-name"); check_name(resume_from, "--resume-from")
     # --local-data: the training set on this machine that `data` was (or will be) uploaded from;
     # checked for existence and row count before anything is rented.
     if preflight(f"stage-1 SFT of {MODEL}: run {run_name}, batch {batch}, lr {lr}, {epochs} epochs, seed {seed}"

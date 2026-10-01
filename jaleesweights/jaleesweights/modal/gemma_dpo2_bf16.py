@@ -25,7 +25,7 @@ launch checks it first. Preflight only, no account needed:
 
 import modal
 
-from jaleesweights.modal._config import check_resume, preflight_cli, MODEL, TRAIN_IMAGE, hf_secret, preflight, volume
+from jaleesweights.modal._config import check_name, check_resume, preflight_cli, MODEL, TRAIN_IMAGE, hf_secret, preflight, volume
 
 CKPT_EVERY = 25  # optimizer steps between full-state checkpoints (~84-step runs)
 app = modal.App("jaleesbench-gemma-dpo2-bf16")
@@ -258,6 +258,7 @@ def train(pairs_path: str, sft_run: str, run_name: str, batch: int, beta: float,
 def main(pairs: str, run_name: str, sft_run: str = "gemma-sft-guided-bf16",
          batch: int = 8, beta: float = 0.1, lr: float = 1e-5, seed: int = 3446,
          limit: int = 0, resume_from: str = "", local_pairs: str = "", dry_run: bool = False):
+    check_name(run_name, "--run-name"); check_name(sft_run, "--sft-run"); check_name(resume_from, "--resume-from")
     if preflight(f"stage-2 DPO of {MODEL} from stage-1 run {sft_run}: run {run_name}, batch {batch}, beta {beta}, "
                  f"lr {lr}, 1 epoch, seed {seed}" + (f", limit {limit}" if limit else ""),
                  "B200", [pairs, f"/runs/{sft_run}/adapter"],

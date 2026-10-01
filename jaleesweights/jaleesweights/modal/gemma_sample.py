@@ -24,7 +24,7 @@ rows); a real launch checks it first. Preflight only, no account needed:
 
 import modal
 
-from jaleesweights.modal._config import preflight_cli, MODEL, SERVE_IMAGE, hf_secret, preflight, volume
+from jaleesweights.modal._config import check_name, preflight_cli, MODEL, SERVE_IMAGE, hf_secret, preflight, volume
 
 app = modal.App("jaleesbench-gemma-sample")
 vol = volume()
@@ -123,6 +123,7 @@ def sample_chains(temperature: float, k: int, adapter_run: str, out_run: str,
 def main(temperature: float = 1.3, k: int = 4, adapter_run: str = "gemma-sft-guided-bf16",
          out_run: str = "gemma-sftbf16-sample", lane_prefix: str = "gemma-sftbf16-s",
          inputs: str = "/pairs/train_inputs.jsonl", local_inputs: str = "", dry_run: bool = False):
+    check_name(adapter_run, "--adapter-run"); check_name(out_run, "--out-run")
     reads = [inputs] + ([f"/runs/{adapter_run}/adapter"] if adapter_run else [])
     if preflight(f"sampling {k} chains per training cell at temperature {temperature} from "
                  f"{adapter_run or 'the base model'}; lanes {lane_prefix}0..{k - 1}",
