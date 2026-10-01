@@ -1,0 +1,168 @@
+id: '36'
+title: jaleesweights-commit-the-fine-
+protocol: spir
+phase: review
+plan_phases:
+  - id: phase_1
+    title: As-run scripts in their final places, private wording removed
+    status: complete
+  - id: phase_2
+    title: Installable project, clone-relative paths, keys scoped to what a step uses
+    status: complete
+  - id: phase_3
+    title: Data archives, checksums and the download step
+    status: complete
+  - id: phase_4
+    title: 'Free steps ported: builders, exports and repeatable scoring'
+    status: complete
+  - id: phase_5
+    title: Judging and Inkling-Small Tinker steps ported
+    status: complete
+  - id: phase_6
+    title: 'Gemma on Modal: drivers with configurable account names'
+    status: complete
+  - id: phase_7
+    title: Local demonstration on the team's own GPU
+    status: complete
+  - id: phase_8
+    title: README, archive index, fresh-clone walk-through and owner report
+    status: complete
+current_plan_phase: null
+gates:
+  spec-approval:
+    status: approved
+    requested_at: '2026-09-30T14:50:44.080Z'
+    approved_at: '2026-09-30T22:08:22.688Z'
+  plan-approval:
+    status: approved
+    requested_at: '2026-09-30T22:23:31.692Z'
+    approved_at: '2026-10-01T05:02:40.965Z'
+  pr:
+    status: approved
+    requested_at: '2026-10-01T07:35:50.751Z'
+    approved_at: '2026-10-01T21:32:37.575Z'
+  verify-approval:
+    status: pending
+iteration: 1
+build_complete: true
+history:
+  - iteration: 1
+    plan_phase: phase_2
+    build_output: ''
+    reviews:
+      - model: gemini
+        verdict: APPROVE
+        file: >-
+          /Users/mwk/Development/fftn/taqwabench/.builders/spir-36/codev/projects/36-jaleesweights-commit-the-fine-/36-phase_2-iter1-gemini.txt
+      - model: codex
+        verdict: REQUEST_CHANGES
+        file: >-
+          /Users/mwk/Development/fftn/taqwabench/.builders/spir-36/codev/projects/36-jaleesweights-commit-the-fine-/36-phase_2-iter1-codex.txt
+      - model: claude
+        verdict: APPROVE
+        file: >-
+          /Users/mwk/Development/fftn/taqwabench/.builders/spir-36/codev/projects/36-jaleesweights-commit-the-fine-/36-phase_2-iter1-claude.txt
+  - iteration: 1
+    plan_phase: phase_4
+    build_output: ''
+    reviews:
+      - model: gemini
+        verdict: REQUEST_CHANGES
+        file: >-
+          /Users/mwk/Development/fftn/taqwabench/.builders/spir-36/codev/projects/36-jaleesweights-commit-the-fine-/36-phase_4-iter1-gemini.txt
+      - model: codex
+        verdict: COMMENT
+        file: >-
+          /Users/mwk/Development/fftn/taqwabench/.builders/spir-36/codev/projects/36-jaleesweights-commit-the-fine-/36-phase_4-iter1-codex.txt
+      - model: claude
+        verdict: REQUEST_CHANGES
+        file: >-
+          /Users/mwk/Development/fftn/taqwabench/.builders/spir-36/codev/projects/36-jaleesweights-commit-the-fine-/36-phase_4-iter1-claude.txt
+  - iteration: 2
+    plan_phase: phase_4
+    build_output: ''
+    reviews:
+      - model: gemini
+        verdict: APPROVE
+        file: >-
+          /Users/mwk/Development/fftn/taqwabench/.builders/spir-36/codev/projects/36-jaleesweights-commit-the-fine-/36-phase_4-iter2-gemini.txt
+      - model: codex
+        verdict: REQUEST_CHANGES
+        file: >-
+          /Users/mwk/Development/fftn/taqwabench/.builders/spir-36/codev/projects/36-jaleesweights-commit-the-fine-/36-phase_4-iter2-codex.txt
+      - model: claude
+        verdict: APPROVE
+        file: >-
+          /Users/mwk/Development/fftn/taqwabench/.builders/spir-36/codev/projects/36-jaleesweights-commit-the-fine-/36-phase_4-iter2-claude.txt
+  - iteration: 1
+    plan_phase: phase_6
+    build_output: ''
+    reviews:
+      - model: gemini
+        verdict: REQUEST_CHANGES
+        file: >-
+          /Users/mwk/Development/fftn/taqwabench/.builders/spir-36/codev/projects/36-jaleesweights-commit-the-fine-/36-phase_6-iter1-gemini.txt
+      - model: codex
+        verdict: REQUEST_CHANGES
+        file: >-
+          /Users/mwk/Development/fftn/taqwabench/.builders/spir-36/codev/projects/36-jaleesweights-commit-the-fine-/36-phase_6-iter1-codex.txt
+      - model: claude
+        verdict: APPROVE
+        file: >-
+          /Users/mwk/Development/fftn/taqwabench/.builders/spir-36/codev/projects/36-jaleesweights-commit-the-fine-/36-phase_6-iter1-claude.txt
+  - iteration: 2
+    plan_phase: phase_6
+    build_output: ''
+    reviews:
+      - model: gemini
+        verdict: REQUEST_CHANGES
+        file: >-
+          /Users/mwk/Development/fftn/taqwabench/.builders/spir-36/codev/projects/36-jaleesweights-commit-the-fine-/36-phase_6-iter2-gemini.txt
+      - model: codex
+        verdict: REQUEST_CHANGES
+        file: >-
+          /Users/mwk/Development/fftn/taqwabench/.builders/spir-36/codev/projects/36-jaleesweights-commit-the-fine-/36-phase_6-iter2-codex.txt
+      - model: claude
+        verdict: APPROVE
+        file: >-
+          /Users/mwk/Development/fftn/taqwabench/.builders/spir-36/codev/projects/36-jaleesweights-commit-the-fine-/36-phase_6-iter2-claude.txt
+  - iteration: 1
+    plan_phase: phase_7
+    build_output: ''
+    reviews:
+      - model: gemini
+        verdict: APPROVE
+        file: >-
+          /Users/mwk/Development/fftn/taqwabench/.builders/spir-36/codev/projects/36-jaleesweights-commit-the-fine-/36-phase_7-iter1-gemini.txt
+      - model: codex
+        verdict: REQUEST_CHANGES
+        file: >-
+          /Users/mwk/Development/fftn/taqwabench/.builders/spir-36/codev/projects/36-jaleesweights-commit-the-fine-/36-phase_7-iter1-codex.txt
+      - model: claude
+        verdict: COMMENT
+        file: >-
+          /Users/mwk/Development/fftn/taqwabench/.builders/spir-36/codev/projects/36-jaleesweights-commit-the-fine-/36-phase_7-iter1-claude.txt
+  - iteration: 1
+    plan_phase: phase_8
+    build_output: ''
+    reviews:
+      - model: gemini
+        verdict: APPROVE
+        file: >-
+          /Users/mwk/Development/fftn/taqwabench/.builders/spir-36/codev/projects/36-jaleesweights-commit-the-fine-/36-phase_8-iter1-gemini.txt
+      - model: codex
+        verdict: REQUEST_CHANGES
+        file: >-
+          /Users/mwk/Development/fftn/taqwabench/.builders/spir-36/codev/projects/36-jaleesweights-commit-the-fine-/36-phase_8-iter1-codex.txt
+      - model: claude
+        verdict: REQUEST_CHANGES
+        file: >-
+          /Users/mwk/Development/fftn/taqwabench/.builders/spir-36/codev/projects/36-jaleesweights-commit-the-fine-/36-phase_8-iter1-claude.txt
+started_at: '2026-09-30T14:27:49.651Z'
+updated_at: '2026-10-01T21:32:37.575Z'
+pr_history:
+  - phase: implement
+    pr_number: 37
+    branch: builder/spir-36
+    created_at: '2026-10-01T06:59:03.385Z'
+pr_ready_for_human: false

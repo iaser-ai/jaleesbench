@@ -24,6 +24,14 @@ user** rather than by the agent's own professed virtue.
 > review** and scholarly feedback; numbers and conclusions may still change.
 > Corrections and review are welcome — please open an issue.
 
+## JaleesWeights: fine-tuning for the disposition
+
+The companion paper, `docs/paper/jaleesweights-paper.tex`, fine-tunes two open models so
+that the companion disposition is their default behaviour with no prompt. The recipe, its
+data and the record of what was tried live in [`jaleesweights/`](jaleesweights/README.md):
+clone, install, download the data release, and run it with your own accounts — or
+reproduce the paper's results table for free from the released data.
+
 ## What it measures
 
 Existing benchmarks cover two adjacent properties:
@@ -84,6 +92,7 @@ are assumed, not adjudicated.
 | Path | Contents |
 |---|---|
 | [`jaleesbench/`](jaleesbench/) | The evaluation harness (Python) and the released **probe bank**, **proof texts**, and **chapter map**. See [`jaleesbench/README.md`](jaleesbench/README.md) to run it. |
+| [`jaleesweights/`](jaleesweights/) | The JaleesWeights fine-tuning recipe (Gemma on Modal, Inkling-Small on Tinker, a local demonstration), its archive of dropped approaches, and the download step for its data release. See [`jaleesweights/README.md`](jaleesweights/README.md). |
 | [`apps/`](apps/) | `apps/jaleesbrowser` — the results browser and leaderboard (static viewer, deployed via Pages). |
 | [`docs/paper/`](docs/paper/) | The paper (`jaleesbench-paper.tex`, built with `latexmk -xelatex`). |
 | [`docs/`](docs/) | Design document, authoring standards, chapter map, and the HTML results report. |
@@ -91,7 +100,9 @@ are assumed, not adjudicated.
 
 What is released here: the **probe bank** (`probes.json`, `probes_ar.json`), the
 per-scenario **proof texts**, the **chapter map**, the **judging rubric**, and the
-**harness**. Raw collected responses and judgments are not included.
+**harness**. The raw collected responses and judgments of the main run are not in git;
+they are part of the JaleesWeights data release (see [`jaleesweights/README.md`](jaleesweights/README.md#get-the-data)),
+once published.
 
 ## Authors
 

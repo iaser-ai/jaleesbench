@@ -132,21 +132,28 @@ REQUIRED_KEYS = ["ANTHROPIC_API_KEY", "OPENAI_API_KEY",
                  "TINKER_API_KEY", "FANAR_API_KEY"]
 
 
-def load_env() -> None:
+def load_env(required: list[str] | None = None, gemini: bool = True) -> None:
     """Load keys from the repo-root .env (already-set env vars win). Fail fast
-    naming any key still missing."""
+    naming any key still missing.
+
+    `required` defaults to REQUIRED_KEYS (the full benchmark run). A caller that
+    uses only some providers — JaleesWeights' judging steps, for instance —
+    passes the subset it needs; `gemini=False` skips the Gemini credential check
+    for steps that never call Gemini."""
+    if required is None:
+        required = REQUIRED_KEYS
     if ENV_PATH.exists():
         for line in ENV_PATH.read_text().splitlines():
             line = line.strip()
             if line and not line.startswith("#") and "=" in line:
                 k, _, v = line.partition("=")
                 os.environ.setdefault(k.strip(), v.strip())
-    missing = [k for k in REQUIRED_KEYS if not os.environ.get(k)]
+    missing = [k for k in required if not os.environ.get(k)]
     if missing:
         raise RuntimeError(f"missing keys (set them in the environment or "
                            f"{ENV_PATH}): {', '.join(missing)}")
     # Gemini auth: a Vertex service account (preferred) OR a Gemini API key.
-    if not VERTEX_SA.exists() and not os.environ.get("GEMINI_API_KEY"):
+    if gemini and not VERTEX_SA.exists() and not os.environ.get("GEMINI_API_KEY"):
         raise RuntimeError(
             f"No Gemini credential: provide {VERTEX_SA} or set GEMINI_API_KEY.")
 

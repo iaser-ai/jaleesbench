@@ -1,0 +1,60 @@
+[project]
+name = "jaleesweights"
+version = "0.1.0"
+description = "JaleesWeights — the two-stage fine-tuning recipe (filtered context distillation, then DPO) behind docs/paper/jaleesweights-paper.tex, runnable from a fresh clone"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    # The benchmark harness: judge, prompts, scenario loader, provider clients.
+    # Installed editable from ../jaleesbench (see [tool.uv.sources]) so the
+    # harness resolves its own data and credential paths inside this clone.
+    "jaleesbench",
+    "typer>=0.12",
+    "openai>=1.50",
+    # The Inkling-Small steps train and sample through the Tinker API. Pinned to
+    # the versions the runs of record used (the benchmark's lock at the time).
+    "tinker==0.24.0",
+    "tinker-cookbook[inkling]==0.5.3",
+    # The Gemma steps of record run on Modal; only the client runs locally.
+    "modal>=1.1",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.24",
+]
+# The local demonstration's GPU stack (Linux + NVIDIA only), the versions the
+# Modal images pin. Install on the GPU machine with `uv sync --group gpu`.
+# Honest accounting: torch and transformers are already in the default install
+# on every platform, because tinker-cookbook (the Inkling-Small trainer) depends
+# on them — the same is true of the benchmark. On Linux the PyPI torch wheel is
+# a CUDA build. What this group genuinely adds is peft, accelerate and vLLM,
+# which have no use and (vLLM) no wheels on a machine without an NVIDIA GPU.
+gpu = [
+    "torch>=2.7.0; sys_platform == 'linux'",
+    "transformers>=4.53; sys_platform == 'linux'",
+    "peft>=0.15; sys_platform == 'linux'",
+    "accelerate>=1.3; sys_platform == 'linux'",
+    "vllm>=0.10; sys_platform == 'linux'",
+]
+
+[tool.uv]
+environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
+
+[tool.uv.sources]
+jaleesbench = { path = "../jaleesbench", editable = true }
+
+# Build backend so `uv sync` can install this project editable. The package is clone-only:
+# paths.py refuses to import outside the repository clone, so a built wheel is not meant to
+# be distributed or installed elsewhere.
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["jaleesweights"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

@@ -53,6 +53,57 @@ def test_load_env_reads_env_file_but_environment_wins(tmp_path, monkeypatch):
     assert os.environ["TINKER_API_KEY"] == "preset"     # already-set wins
 
 
+def test_load_env_narrowed_to_callers_keys(tmp_path, monkeypatch):
+    """A caller that names the keys it uses is not asked for the others, and
+    `gemini=False` skips the Gemini credential check (JaleesWeights' Opus-only
+    judging). The default call is unchanged (covered above)."""
+    monkeypatch.setattr(collect, "ENV_PATH", tmp_path / ".env")
+    monkeypatch.setattr(collect, "VERTEX_SA", tmp_path / "sa.json")
+    for k in collect.REQUIRED_KEYS + ["GEMINI_API_KEY"]:
+        monkeypatch.delenv(k, raising=False)
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "x")
+    collect.load_env(required=["ANTHROPIC_API_KEY"], gemini=False)  # no raise
+    with pytest.raises(RuntimeError) as e:
+        collect.load_env(required=["ANTHROPIC_API_KEY"], gemini=True)
+    assert "Gemini" in str(e.value)
+    with pytest.raises(RuntimeError) as e:
+        collect.load_env(required=["TINKER_API_KEY"], gemini=False)
+    assert str(e.value).endswith("TINKER_API_KEY")
+
+
+def test_judge_all_builds_clients_only_for_the_judges_used(tmp_path, monkeypatch):
+    """An Opus-only run narrows the key check to what the caller passes, skips
+    the Gemini credential check, and never builds a Gemini client."""
+    import asyncio
+    import json
+    from jaleesbench import judge
+
+    bank = collect.load_probes()
+    probe = bank["probes"][0]
+    sitting = {"subject": "s", "probe_id": probe["id"], "pressure": "flattery",
+               "framing": "unstated",
+               "turns": [{"role": "user", "content": "u1"}, {"role": "assistant", "content": "a1"},
+                         {"role": "user", "content": "u2"}, {"role": "assistant", "content": "a2"}]}
+    collect_path = tmp_path / "c.jsonl"
+    collect_path.write_text(json.dumps(sitting) + "\n")
+    out = tmp_path / "j.jsonl"
+
+    seen = {}
+    monkeypatch.setattr(judge, "load_env",
+                        lambda required=None, gemini=True: seen.update(required=required, gemini=gemini))
+    monkeypatch.setattr(judge, "make_clients",
+                        lambda which=None: seen.update(clients=set(which)) or {"anthropic": object()})
+
+    async def fake_call(j, parts, clients):
+        return {"band": 1, "direction": "up", "rationale": "r", "techniques_used": [], "raw": "", "usage": {}}
+    monkeypatch.setattr(judge, "call_judge", fake_call)
+
+    asyncio.run(judge.judge_all(collect_path=collect_path, out_path=out,
+                                judges={"claude-opus-4-8"}, required_keys=["ANTHROPIC_API_KEY"]))
+    assert seen == {"required": ["ANTHROPIC_API_KEY"], "gemini": False, "clients": {"anthropic"}}
+    assert len(out.read_text().splitlines()) == 2  # turn1 + full
+
+
 def test_probe_bank_v3_retags():
     """Bank v3: the four turn1-marker probes are leaky; texts carry no version
     besides the tag change (split 54/44/42)."""
