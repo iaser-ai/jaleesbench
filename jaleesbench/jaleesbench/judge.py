@@ -96,10 +96,15 @@ async def judge_all(limit: int | None = None,
                     out_path: Path | None = None,
                     concurrency: int | None = None,
                     lang: str = "en",
-                    judges: set | None = None) -> None:
-    load_env()
-    jb = judge_blocks_ar if lang == "ar" else judge_blocks
+                    judges: set | None = None,
+                    required_keys: list[str] | None = None) -> None:
+    """`required_keys` narrows the key check to what the caller needs (default:
+    the full benchmark set); clients are built only for the providers of the
+    judges actually used, so an Opus-only run never needs a Gemini credential."""
     use_judges = judges or JUDGES
+    providers = {JUDGES[j] for j in use_judges}
+    load_env(required=required_keys, gemini="gemini" in providers)
+    jb = judge_blocks_ar if lang == "ar" else judge_blocks
     sittings_path = collect_path if collect_path is not None else RESULTS / "collect.jsonl"
     if out_path is None:
         out_path = RESULTS / "judgments.jsonl"
@@ -130,7 +135,7 @@ async def judge_all(limit: int | None = None,
     if not jobs:
         return
 
-    clients = make_clients({"anthropic", "gemini"})
+    clients = make_clients(providers)
     sem = asyncio.Semaphore(concurrency or CONCURRENCY)
     lock = asyncio.Lock()
     completed = 0

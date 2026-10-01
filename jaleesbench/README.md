@@ -15,7 +15,10 @@ uv sync          # Python >= 3.11
 
 Subjects and judges span several providers. `load_env()` (in `jaleesbench/collect.py`)
 reads keys from a single `.env` at the repo root (already-set environment
-variables take precedence) and **fails fast**, naming any key still missing.
+variables take precedence) and **fails fast**, naming any key still missing. Callers
+that use only some providers can pass `load_env(required=[...], gemini=False)` to be
+asked only for those (the JaleesWeights steps in `../jaleesweights/` do this); the
+benchmark's own commands keep requiring the full set.
 
 | Variable | Used for |
 |---|---|

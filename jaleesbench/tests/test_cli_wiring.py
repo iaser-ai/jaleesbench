@@ -98,7 +98,7 @@ async def test_judge_all_exits_nonzero_when_judgments_fail(tmp_path, monkeypatch
     collect_path = tmp_path / "collect.jsonl"
     collect_path.write_text(json.dumps(sitting) + "\n")
 
-    monkeypatch.setattr(judge_mod, "load_env", lambda: None)
+    monkeypatch.setattr(judge_mod, "load_env", lambda *_a, **_k: None)
     monkeypatch.setattr(judge_mod, "load_probes",
                         lambda: {"probes": [{"id": "JLS-001", "proof_texts": "P"}]})
     monkeypatch.setattr(judge_mod, "make_clients", lambda *_a, **_k: {})
