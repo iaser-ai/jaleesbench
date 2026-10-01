@@ -14,6 +14,12 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 PROJECT = REPO_ROOT / "jaleesweights"
+if not (REPO_ROOT / "jaleesbench" / "pyproject.toml").exists():
+    # Only true when this package runs from the clone (the editable install).
+    # A copy installed elsewhere would otherwise point every path at nothing.
+    raise RuntimeError(
+        f"jaleesweights must run from its clone; {REPO_ROOT} is not the repository root "
+        "(run `uv sync` inside jaleesweights/ and launch with `uv run` from there).")
 
 
 def _dir(env: str, default: Path) -> Path:
@@ -43,6 +49,12 @@ def main_run_file(name: str) -> Path:
             f"benchmark main run not installed: {p} is missing. "
             f"Run `uv run python -m jaleesweights.fetch_data` (see README).")
     return p
+
+
+def main_run_files() -> dict[str, Path]:
+    """All three main-run files, checked at once — the preflight every step that
+    reads the main run runs first."""
+    return {name: main_run_file(name) for name in MAIN_RUN_FILES}
 
 
 def reference_file(name: str) -> Path:

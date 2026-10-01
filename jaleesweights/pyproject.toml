@@ -24,10 +24,13 @@ dev = [
     "pytest>=8",
     "pytest-asyncio>=0.24",
 ]
-# The local demonstration's GPU stack (Linux + NVIDIA only). Not part of the
-# default install — it cannot be installed on a machine without CUDA. These are
-# the versions the Modal images pin; install on the GPU machine with
-#   uv sync --group gpu
+# The local demonstration's GPU stack (Linux + NVIDIA only), the versions the
+# Modal images pin. Install on the GPU machine with `uv sync --group gpu`.
+# Honest accounting: torch and transformers are already in the default install
+# on every platform, because tinker-cookbook (the Inkling-Small trainer) depends
+# on them — the same is true of the benchmark. On Linux the PyPI torch wheel is
+# a CUDA build. What this group genuinely adds is peft, accelerate and vLLM,
+# which have no use and (vLLM) no wheels on a machine without an NVIDIA GPU.
 gpu = [
     "torch>=2.7.0; sys_platform == 'linux'",
     "transformers>=4.53; sys_platform == 'linux'",
@@ -41,12 +44,6 @@ environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
 
 [tool.uv.sources]
 jaleesbench = { path = "../jaleesbench", editable = true }
-torch = [{ index = "pytorch-cu128", marker = "sys_platform == 'linux'" }]
-
-[[tool.uv.index]]
-name = "pytorch-cu128"
-url = "https://download.pytorch.org/whl/cu128"
-explicit = true
 
 [build-system]
 requires = ["hatchling"]

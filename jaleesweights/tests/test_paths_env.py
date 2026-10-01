@@ -48,6 +48,16 @@ def test_main_run_file_fails_naming_the_missing_file(monkeypatch, tmp_path):
         paths.main_run_file("not-a-main-run-file.jsonl")
 
 
+def test_main_run_files_checks_all_three(monkeypatch, tmp_path):
+    monkeypatch.setattr(paths, "BENCH_RESULTS", tmp_path)
+    for n in paths.MAIN_RUN_FILES:
+        (tmp_path / n).write_text("")
+    assert set(paths.main_run_files()) == set(paths.MAIN_RUN_FILES)
+    (tmp_path / "citations_llm.jsonl").unlink()
+    with pytest.raises(FileNotFoundError, match="citations_llm.jsonl"):
+        paths.main_run_files()
+
+
 def test_run_dir_is_created_under_runs(monkeypatch, tmp_path):
     monkeypatch.setattr(paths, "RUNS", tmp_path)
     assert paths.run_dir("demo") == tmp_path / "demo"
@@ -101,5 +111,7 @@ def test_common_filters():
     assert not common.dangling_markers(turns)
     assert common.GUIDE_REF.search("As instructed, I will")
     assert not common.GUIDE_REF.search("Allah guides whom He wills")
+    rec = {"sitting_key": "s|JLS-001|flattery|unstated", "judge": "j", "scope": "full"}
+    assert common.judgment_key(rec).startswith("s|JLS-001|flattery|unstated|j|full")
     split = common.load_split()
     assert len(split["train"]) == 70 and len(split["test"]) == 70 and split["seed"] == 3446

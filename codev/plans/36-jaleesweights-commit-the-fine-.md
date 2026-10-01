@@ -555,6 +555,15 @@ Open the pull request.
   approach it belonged to, the paper claim it supports, "not maintained, does not run from
   here", the one-line note on the four missing judgments.
 - `README.md` (top level) — one paragraph and link.
+- `LICENSE` (repo root) — Apache-2.0, covering the code (owner's decision on spec open
+  question 7, 2026-10-01).
+- `jaleesweights/release/NOTICE` — included in both archives and quoted in the README: the
+  data release is CC BY 4.0; the model outputs in it (the main run's answers from every
+  provider, the Opus and Gemini judgments, the Gemma and Inkling training sets) remain
+  subject to their providers' terms and the licence grants nothing beyond them. The
+  archives are rebuilt in this phase to include it, and the checksums updated.
+- The owner report notes the hadith-translation copyright of the benchmark's proof texts
+  as still open (not resolved by this work).
 - `codev/reviews/36-jaleesweights-commit-the-fine-.md` — started here, finished in the
   review phase.
 - Outside git: `/private/tmp/agent-mail/spir-36-release-report.md` — all 204 scratch

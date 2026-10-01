@@ -137,3 +137,20 @@ concatenated under `# ===== as-run: <name> =====` separators), plus `split_70_70
 three reworded comment blocks (`train_dpo_run.py` 9 lines, `train_dpo_run2.py` 7 lines,
 `modal/gemma_sft_bf16.py` 3 lines, all comments); `git show` of the commit has no hit for
 the private names; benchmark tests 107 passed, 1 skipped.
+
+## 2026-10-01 — phase 2 done; owner decided the data terms
+
+Phase 2 (commit a1a013b + review fixes): `jaleesweights/` is a uv project (benchmark
+editable from `../jaleesbench`, Tinker pinned to the versions the runs used, `modal`,
+Linux-only `gpu` group), `paths.py` / `env.py` / `common.py`, benchmark `load_env` and
+`judge_all` narrowing with tests. Dependency honesty, found in review: torch and
+transformers are already in the default install on every platform because
+tinker-cookbook depends on them (true of the benchmark too); the `gpu` group genuinely
+adds peft, accelerate and vLLM. A custom CUDA torch index was tried and dropped — on Linux
+the PyPI torch wheel is a CUDA build anyway and the index leaked into the default graph.
+
+Owner's decision on open question 7 (terms), relayed by the architect: Apache-2.0 LICENSE
+at the repo root for the code; data release CC BY 4.0 with a NOTICE (in the archives and
+the README) that provider model outputs remain subject to their providers' terms. The
+hadith-translation copyright of the proof texts stays open and goes in the owner report.
+Recorded in the spec and in plan phase 8.

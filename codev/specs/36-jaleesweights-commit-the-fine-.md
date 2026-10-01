@@ -842,6 +842,13 @@ None. The work can proceed on the defaults below.
    fine-tuning recipe. Whether that may be redistributed, and under what stated terms, is
    for the owner to decide before publication. This work does not resolve it; the request
    to publish will ask for it. Default: nothing is published until the owner has answered.
+   **Decided by the owner, 2026-10-01:** (a) an Apache-2.0 `LICENSE` at the repository
+   root covers the code; (b) the data release is CC BY 4.0, with a `NOTICE` in the archive
+   and in the README stating that the model outputs in the data — the main run's answers
+   from every provider, the Opus and Gemini judgments, the Gemma and Inkling training sets
+   — remain subject to their providers' terms and that the licence grants nothing beyond
+   them. Still open, for the owner's report: the copyright of the hadith translations in
+   the benchmark's proof texts, which this work does not resolve.
 8. **The paper's two paired intervals.** Once the scoring step is repeatable, its
    paired-difference intervals will differ from the two printed in the paper by up to
    0.005 (one run made for this spec gave an end of +0.211 where the paper prints

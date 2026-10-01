@@ -4,6 +4,8 @@ as-run scripts each carried inline."""
 import json
 import re
 
+from jaleesbench.judge import judgment_key  # noqa: F401 — the resume key for judgment files
+
 from .paths import SPLIT
 
 # Judge holdout: Gemini selects training data, Opus scores held-out results.
