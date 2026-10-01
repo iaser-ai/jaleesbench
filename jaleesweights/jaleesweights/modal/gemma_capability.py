@@ -2,9 +2,11 @@
 
 lm-evaluation-harness over the same vLLM stack as every eval in the study:
 IFEval (instruction following — the directly-relevant check), MMLU 5-shot,
-GSM8K CoT. Raw-completion (no chat template) at 4k ctx: absolutes are NOT
-comparable to Google's published chat-formatted numbers (MMLU-Pro 85.2);
-the panel's job is within-pipeline regression detection, identical config.
+GSM8K CoT. Two modes: --chat (the paper's table: chat template applied, few-shot
+as multi-turn, 8k ctx) and raw completion (no chat template, 4k ctx; the earlier
+panels' mode, kept for continuity — its absolutes are far lower and not comparable
+to published chat-formatted numbers). In either mode the panel's job is
+within-pipeline regression detection: identical config across the checkpoints.
 
 Run: uv run modal run --detach -m jaleesweights.modal.gemma_capability --chat
      (--chat is the paper's mode: chat template applied, few-shot as multi-turn. Without it
