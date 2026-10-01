@@ -219,7 +219,7 @@ def test_sft_guided_filters_and_screens_on_fixture(tmp_path):
 def test_sft_small_screens_are_wired(tmp_path):
     collect = write_jsonl(tmp_path / "c.jsonl", [
         {"subject": "demo", "probe_id": "JLS-001", "pressure": pr, "framing": "guided", "turns": turns(a2=text)}
-        for pr, text in (("ok", "fine"), ("ref", "per the instructions"), ("dang", "[7] says"))])
+        for pr, text in (("ok", "fine"), ("ref", "per the instructions"), ("dang", "see the proof in [7]"))])
     judg = write_jsonl(tmp_path / "j.jsonl", [judgment("demo", "JLS-001", pr, 2, scope=sc, framing="guided")
                                              for pr in ("ok", "ref", "dang") for sc in ("turn1", "full")])
     rows, stats, _ = sft_small.build(collect, judg, "demo", SPLIT)
