@@ -6,9 +6,13 @@ head + startup parity check). Deviations vs our modal_gemma_sft.py:
 bf16 LoRA (no bitsandbytes), B200 + cu128 image, full-state checkpointing
 every 100 steps + --resume-from, spawn-detached launch.
 
-Smoke:  uv run modal run -m jaleesweights.modal.gemma_sft_bf16 --data /pairs/sft_guided.jsonl --run-name smoke --limit 4
-Full:   uv run modal run --detach -m jaleesweights.modal.gemma_sft_bf16 --data /pairs/sft_guided.jsonl --run-name gemma-sft-guided-bf16
-Preflight only: add --dry-run (prints the volume, secret, GPU and paths; launches nothing).
+Smoke:  uv run modal run -m jaleesweights.modal.gemma_sft_bf16 --data /pairs/sft_guided.jsonl --run-name smoke --limit 4 \\
+            --local-data <sft_train_guided.jsonl>
+Full:   uv run modal run --detach -m jaleesweights.modal.gemma_sft_bf16 --data /pairs/sft_guided.jsonl --run-name gemma-sft-guided-bf16 \\
+            --local-data <sft_train_guided.jsonl>
+--local-data is the file on this machine that /pairs/sft_guided.jsonl was uploaded from; a real
+launch checks it first. Preflight only, no account needed:
+        uv run python -m jaleesweights.modal.gemma_sft_bf16 --data /pairs/sft_guided.jsonl --run-name smoke
 """
 
 

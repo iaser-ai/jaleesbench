@@ -14,9 +14,13 @@ NOTE: the SFT reference must itself be a bf16-recipe checkpoint (pass
 --sft-run gemma-sft-guided-bf16) — mixing an nf4-trained adapter as ref would
 reintroduce the confound this recipe exists to remove.
 
-Smoke:  uv run modal run -m jaleesweights.modal.gemma_dpo2_bf16 --pairs /pairs/pairs_sftbf16.jsonl --sft-run gemma-sft-guided-bf16 --run-name smoke --limit 4
-Full:   uv run modal run --detach -m jaleesweights.modal.gemma_dpo2_bf16 --pairs /pairs/pairs_sftbf16.jsonl --sft-run gemma-sft-guided-bf16 --run-name gemma-sft-dpo-bf16
-Preflight only: add --dry-run.
+Smoke:  uv run modal run -m jaleesweights.modal.gemma_dpo2_bf16 --pairs /pairs/pairs_sftbf16.jsonl --sft-run gemma-sft-guided-bf16 \\
+            --run-name smoke --limit 4 --local-pairs <pairs_train70_sftbf16.jsonl>
+Full:   uv run modal run --detach -m jaleesweights.modal.gemma_dpo2_bf16 --pairs /pairs/pairs_sftbf16.jsonl --sft-run gemma-sft-guided-bf16 \\
+            --run-name gemma-sft-dpo-bf16 --local-pairs <pairs_train70_sftbf16.jsonl>
+--local-pairs is the file on this machine that /pairs/pairs_sftbf16.jsonl was uploaded from; a real
+launch checks it first. Preflight only, no account needed:
+        uv run python -m jaleesweights.modal.gemma_dpo2_bf16 --pairs /pairs/pairs_sftbf16.jsonl --run-name smoke
 """
 
 import modal

@@ -12,11 +12,14 @@ continues each chain through the authored pressure turn. Output is
 harness collect-schema, one record per chain, subject = <lane prefix>{k}.
 
 Setup: modal volume put <volume> <train_inputs_gemma.jsonl> /pairs/train_inputs.jsonl
-Run (recipe of record — sample the stage-1 model):
+Run (recipe of record — sample the stage-1 model; these are the defaults):
        uv run modal run --detach -m jaleesweights.modal.gemma_sample --temperature 1.3 --k 4 \\
-           --adapter-run gemma-sft-guided-bf16 --out-run gemma-sftbf16-sample --lane-prefix gemma-sftbf16-s
+           --adapter-run gemma-sft-guided-bf16 --out-run gemma-sftbf16-sample --lane-prefix gemma-sftbf16-s \\
+           --local-inputs <train_inputs_gemma.jsonl>
 Out:   /vol/runs/<out-run>/collect_train_samples.jsonl
-Preflight only: add --dry-run.
+--local-inputs is the file on this machine that /pairs/train_inputs.jsonl was uploaded from (420
+rows); a real launch checks it first. Preflight only, no account needed:
+       uv run python -m jaleesweights.modal.gemma_sample
 """
 
 import modal

@@ -12,7 +12,7 @@ Run: uv run modal run --detach -m jaleesweights.modal.gemma_capability --chat
      (--chat is the paper's mode: chat template applied, few-shot as multi-turn. Without it
      the panel runs raw completions, the earlier panels' mode; absolutes differ a lot.)
 Out: /vol/runs/capability/<checkpoint>[-chat]/ (lm-eval result JSONs) + stdout table
-Preflight only: add --dry-run.
+Preflight only, no account needed: uv run python -m jaleesweights.modal.gemma_capability --chat
 """
 
 import modal

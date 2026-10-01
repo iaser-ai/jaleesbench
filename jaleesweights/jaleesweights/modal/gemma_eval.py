@@ -17,7 +17,7 @@ Run:   uv run modal run --detach -m jaleesweights.modal.gemma_eval --run-name ge
        Every real launch also takes --local-inputs <eval_inputs_gemma.jsonl> (and --local-context <guided_prefix.txt>
        for the guided guard): the local files the volume copies came from, checked before launch.
 Out:   /vol/runs/<run-name>/collect_eval_gemma[_guided].jsonl (harness record schema)
-Preflight only: add --dry-run.
+Preflight only, no account needed: uv run python -m jaleesweights.modal.gemma_eval --run-name base
 """
 
 import modal
