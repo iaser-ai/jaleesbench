@@ -1,0 +1,32 @@
+JaleesBench
+Copyright 2026 Waleed Kadous, Ben Olsen, Tim Hwang
+
+The code and original materials in this repository are licensed under the
+Apache License, Version 2.0 (see LICENSE), with the exception below.
+
+Third-party material not covered by the Apache-2.0 licence
+----------------------------------------------------------
+
+jaleesbench/jaleesbench/data/proof_texts.json
+
+  The "english" field of every entry in this file is quoted from the English
+  rendering of Riyad as-Salihin (Imam Yahya ibn Sharaf an-Nawawi) as hosted on
+  sunnah.com (https://sunnah.com/riyadussalihin). The same English text also
+  appears wherever the proof texts are carried into other files, such as the
+  "proof_texts" field of the probe bank.
+
+  sunnah.com does not name the translator or publisher of this rendering: its
+  About page (https://sunnah.com/about, as read on 2026-10-01) says only "For
+  the English we use various translators, a full list of which will appear
+  here shortly". The wording corresponds to the English translation of
+  Riyad-us-Saliheen published by Darussalam (Dar-us-Salam Publications,
+  Riyadh).
+
+  This English text is the copyrighted work of its translators and publisher.
+  It is reproduced here for research use only, as the judging criterion of the
+  benchmark. It is NOT licensed under the Apache License, Version 2.0, and the
+  LICENSE file in this repository grants no rights to it. Anyone who wants to
+  reuse the English text must obtain it, and any permission needed, from
+  sunnah.com and the publisher.
+
+  The "arabic" field is the classical Arabic text of Riyad as-Salihin.
