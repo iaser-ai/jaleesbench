@@ -13,6 +13,9 @@ Setup: modal volume put <volume> <eval_inputs_gemma.jsonl> /pairs/eval_inputs.js
 Run:   uv run modal run --detach -m jaleesweights.modal.gemma_eval --run-name gemma-sft-guided-bf16
        uv run modal run --detach -m jaleesweights.modal.gemma_eval --run-name base --subject gemma-base-vllm   (the same-stack control)
        uv run modal run --detach -m jaleesweights.modal.gemma_eval --run-name gemma-sft-guided-bf16 --subject gemma-sft-guided-bf16-G --context-file /pairs/guided_prefix.txt
+       uv run modal run --detach -m jaleesweights.modal.gemma_eval --run-name gemma-sft-dpo-bf16   (stage 2, bare)
+       Every real launch also takes --local-inputs <eval_inputs_gemma.jsonl> (and --local-context <guided_prefix.txt>
+       for the guided guard): the local files the volume copies came from, checked before launch.
 Out:   /vol/runs/<run-name>/collect_eval_gemma[_guided].jsonl (harness record schema)
 Preflight only: add --dry-run.
 """

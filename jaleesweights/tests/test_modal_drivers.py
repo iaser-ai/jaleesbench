@@ -106,3 +106,16 @@ def test_real_launch_needs_a_checked_local_source(tmp_path, driver, args, opt):
     empty.write_text("")
     with pytest.raises(SystemExit, match="is empty"):
         raw(**kwargs, **{opt.lstrip("-").replace("-", "_"): str(empty)}, dry_run=False)
+
+
+@pytest.mark.parametrize("driver,args,opt", [
+    ("gemma_sft_bf16", ["--data", "/pairs/sft_guided.jsonl", "--run-name", "r"], "--local-data"),
+    ("gemma_dpo2_bf16", ["--pairs", "/pairs/p.jsonl", "--run-name", "r"], "--local-pairs"),
+])
+def test_trainers_report_local_source_row_counts(tmp_path, driver, args, opt):
+    f = tmp_path / "set.jsonl"
+    f.write_text("{}\n" * 12)
+    out = subprocess.run([sys.executable, "-m", f"jaleesweights.modal.{driver}", *args, opt, str(f)],
+                         cwd=PROJECT, capture_output=True, text=True, env={**NO_ACCOUNT, "PYTHONPATH": str(PROJECT)})
+    assert out.returncode == 0, out.stderr
+    assert f"local {f}: 12 rows ok" in out.stdout and f"modal volume put gemma-dpo {f}" in out.stdout
