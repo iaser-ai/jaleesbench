@@ -14,29 +14,23 @@ NOTE: the SFT reference must itself be a bf16-recipe checkpoint (pass
 --sft-run gemma-sft-guided-bf16) — mixing an nf4-trained adapter as ref would
 reintroduce the confound this recipe exists to remove.
 
-Smoke:  modal run tmp/dpo-experiment/modal_gemma_dpo2_bf16.py --pairs /pairs/pairs_sft2.jsonl --sft-run gemma-sft-guided-bf16 --run-name smoke --limit 4
-Full:   modal run --detach tmp/dpo-experiment/modal_gemma_dpo2_bf16.py --pairs /pairs/pairs_sft2.jsonl --sft-run gemma-sft-guided-bf16 --run-name gemma-sft-dpo-bf16
+Smoke:  uv run modal run -m jaleesweights.modal.gemma_dpo2_bf16 --pairs /pairs/pairs_sftbf16.jsonl --sft-run gemma-sft-guided-bf16 --run-name smoke --limit 4
+Full:   uv run modal run --detach -m jaleesweights.modal.gemma_dpo2_bf16 --pairs /pairs/pairs_sftbf16.jsonl --sft-run gemma-sft-guided-bf16 --run-name gemma-sft-dpo-bf16
+Preflight only: add --dry-run.
 """
 
 import modal
 
-MODEL = "google/gemma-4-31B-it"
+from jaleesweights.modal._config import preflight_cli, MODEL, TRAIN_IMAGE, hf_secret, preflight, volume
+
 CKPT_EVERY = 25  # optimizer steps between full-state checkpoints (~84-step runs)
 app = modal.App("jaleesbench-gemma-dpo2-bf16")
-vol = modal.Volume.from_name("gemma-dpo")
-
-image = (
-    modal.Image.from_registry("nvidia/cuda:12.8.1-devel-ubuntu24.04", add_python="3.12")
-    .pip_install("torch>=2.7.0", index_url="https://download.pytorch.org/whl/cu128")
-    .pip_install("transformers>=4.53", "peft>=0.15", "accelerate>=1.3", "hf_transfer")
-    .env({"HF_HUB_ENABLE_HF_TRANSFER": "1", "HF_HOME": "/vol/hf-cache",
-          "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True"})
-)
+vol = volume()
 
 
 @app.function(
-    image=image, gpu="B200", timeout=8 * 60 * 60, volumes={"/vol": vol},
-    secrets=[modal.Secret.from_name("huggingface")],
+    image=TRAIN_IMAGE, gpu="B200", timeout=8 * 60 * 60, volumes={"/vol": vol},
+    secrets=[hf_secret()],
 )
 def train(pairs_path: str, sft_run: str, run_name: str, batch: int, beta: float,
           lr: float, seed: int, limit: int, resume_from: str):
@@ -260,10 +254,19 @@ def train(pairs_path: str, sft_run: str, run_name: str, batch: int, beta: float,
 @app.local_entrypoint()
 def main(pairs: str, run_name: str, sft_run: str = "gemma-sft-guided-bf16",
          batch: int = 8, beta: float = 0.1, lr: float = 1e-5, seed: int = 3446,
-         limit: int = 0, resume_from: str = ""):
+         limit: int = 0, resume_from: str = "", dry_run: bool = False):
+    if preflight(f"stage-2 DPO of {MODEL} from stage-1 run {sft_run}: run {run_name}, batch {batch}, beta {beta}, "
+                 f"lr {lr}, 1 epoch, seed {seed}" + (f", limit {limit}" if limit else ""),
+                 "B200", [pairs, f"/runs/{sft_run}/adapter"],
+                 [f"/runs/{run_name}/adapter", f"/runs/{run_name}/train_log.jsonl"], dry_run):
+        return
     if limit:
         train.remote(pairs, sft_run, run_name, batch, beta, lr, seed, limit, resume_from)
     else:
         call = train.spawn(pairs, sft_run, run_name, batch, beta, lr, seed, limit, resume_from)
         print(f"spawned DPO: call_id={call.object_id}  run_name={run_name} "
               f"resume_from={resume_from or '(fresh)'}")
+
+
+if __name__ == "__main__":
+    preflight_cli(main)

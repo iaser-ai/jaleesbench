@@ -6,32 +6,24 @@ head + startup parity check). Deviations vs our modal_gemma_sft.py:
 bf16 LoRA (no bitsandbytes), B200 + cu128 image, full-state checkpointing
 every 100 steps + --resume-from, spawn-detached launch.
 
-Smoke:  modal run tmp/dpo-experiment/modal_gemma_sft_bf16.py --data /pairs/sft_guided.jsonl --run-name smoke --limit 4
-Full:   modal run --detach tmp/dpo-experiment/modal_gemma_sft_bf16.py --data /pairs/sft_guided.jsonl --run-name gemma-sft-guided-bf16
+Smoke:  uv run modal run -m jaleesweights.modal.gemma_sft_bf16 --data /pairs/sft_guided.jsonl --run-name smoke --limit 4
+Full:   uv run modal run --detach -m jaleesweights.modal.gemma_sft_bf16 --data /pairs/sft_guided.jsonl --run-name gemma-sft-guided-bf16
+Preflight only: add --dry-run (prints the volume, secret, GPU and paths; launches nothing).
 """
 
 
 import modal
 
-MODEL = "google/gemma-4-31B-it"
+from jaleesweights.modal._config import preflight_cli, MODEL, TRAIN_IMAGE, hf_secret, preflight, volume
+
 CKPT_EVERY = 100  # optimizer steps between full-state checkpoints (deviation #1)
 app = modal.App("jaleesbench-gemma-sft-bf16")
-vol = modal.Volume.from_name("gemma-dpo")
-
-# Blackwell (B200/sm_100) needs CUDA 12.8+ and a recent torch: CUDA 12.8 devel base + torch cu128.
-# No bitsandbytes (bf16 LoRA). vLLM eval/serve images already use this same CUDA 12.8 base.
-image = (
-    modal.Image.from_registry("nvidia/cuda:12.8.1-devel-ubuntu24.04", add_python="3.12")
-    .pip_install("torch>=2.7.0", index_url="https://download.pytorch.org/whl/cu128")
-    .pip_install("transformers>=4.53", "peft>=0.15", "accelerate>=1.3", "hf_transfer")
-    .env({"HF_HUB_ENABLE_HF_TRANSFER": "1", "HF_HOME": "/vol/hf-cache",
-          "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True"})
-)
+vol = volume()
 
 
 @app.function(
-    image=image, gpu="B200", timeout=8 * 60 * 60, volumes={"/vol": vol},
-    secrets=[modal.Secret.from_name("huggingface")],
+    image=TRAIN_IMAGE, gpu="B200", timeout=8 * 60 * 60, volumes={"/vol": vol},
+    secrets=[hf_secret()],
 )
 def train(data_path: str, run_name: str, batch: int, lr: float, epochs: int,
           seed: int, limit: int, resume_from: str):
@@ -215,7 +207,12 @@ def train(data_path: str, run_name: str, batch: int, lr: float, epochs: int,
 
 @app.local_entrypoint()
 def main(data: str, run_name: str, batch: int = 8, lr: float = 5e-5,
-         epochs: int = 2, seed: int = 3446, limit: int = 0, resume_from: str = ""):
+         epochs: int = 2, seed: int = 3446, limit: int = 0, resume_from: str = "",
+         dry_run: bool = False):
+    if preflight(f"stage-1 SFT of {MODEL}: run {run_name}, batch {batch}, lr {lr}, {epochs} epochs, seed {seed}"
+                 + (f", limit {limit}" if limit else "") + (f", resume from {resume_from}" if resume_from else ""),
+                 "B200", [data], [f"/runs/{run_name}/adapter", f"/runs/{run_name}/train_log.jsonl"], dry_run):
+        return
     if limit:
         # smoke: block (remote) so loss / memory / B200-compat print directly to this client.
         train.remote(data, run_name, batch, lr, epochs, seed, limit, resume_from)
@@ -223,3 +220,7 @@ def main(data: str, run_name: str, batch: int = 8, lr: float = 5e-5,
         # full run: --detach + spawn so it survives client/network drops (nf4 run-1 flap cancel).
         call = train.spawn(data, run_name, batch, lr, epochs, seed, limit, resume_from)
         print(f"spawned SFT: call_id={call.object_id}  run_name={run_name} resume_from={resume_from or '(fresh)'}")
+
+
+if __name__ == "__main__":
+    preflight_cli(main)

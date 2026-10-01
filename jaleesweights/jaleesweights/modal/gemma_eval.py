@@ -7,32 +7,28 @@ the model's own generation_config (the harness runs subjects at
 provider-default sampling). Base is served bf16 with the LoRA applied —
 the adapter was trained against an nf4-quantized base (recorded deviation).
 
-Setup: modal volume put gemma-dpo tmp/dpo-experiment/eval_inputs_gemma.jsonl /pairs/eval_inputs.jsonl
-Run:   modal run --detach tmp/dpo-experiment/modal_gemma_eval.py --run-name gemma-dpo-r1
-Out:   /vol/runs/<run-name>/collect_eval_gemma.jsonl (harness record schema)
+Setup: modal volume put <volume> <eval_inputs_gemma.jsonl> /pairs/eval_inputs.jsonl
+       (and, for the guided guard, the guide text: modal volume put <volume> <guided_prefix.txt> /pairs/guided_prefix.txt)
+Run:   uv run modal run --detach -m jaleesweights.modal.gemma_eval --run-name gemma-sft-guided-bf16
+       uv run modal run --detach -m jaleesweights.modal.gemma_eval --run-name base --subject gemma-base-vllm   (the same-stack control)
+       uv run modal run --detach -m jaleesweights.modal.gemma_eval --run-name gemma-sft-guided-bf16 --subject gemma-sft-guided-bf16-G --context-file /pairs/guided_prefix.txt
+Out:   /vol/runs/<run-name>/collect_eval_gemma[_guided].jsonl (harness record schema)
+Preflight only: add --dry-run.
 """
 
 import modal
 
-MODEL = "google/gemma-4-31B-it"
-app = modal.App("jaleesbench-gemma-eval")
-vol = modal.Volume.from_name("gemma-dpo")
+from jaleesweights.modal._config import preflight_cli, MODEL, SERVE_IMAGE, hf_secret, preflight, volume
 
-# vLLM compiles gemma-4 router-GEMM kernels at startup — needs nvcc, so the
-# image must carry the full CUDA toolkit (debian_slim lacks it).
-image = (
-    modal.Image.from_registry("nvidia/cuda:12.8.1-devel-ubuntu24.04", add_python="3.12")
-    .pip_install("vllm>=0.10", "hf_transfer")
-    .env({"HF_HUB_ENABLE_HF_TRANSFER": "1", "HF_HOME": "/vol/hf-cache",
-          "VLLM_WORKER_MULTIPROC_METHOD": "spawn"})
-)
+app = modal.App("jaleesbench-gemma-eval")
+vol = volume()
 
 
 @app.function(
-    image=image, gpu="H200", timeout=4 * 60 * 60, volumes={"/vol": vol},
-    secrets=[modal.Secret.from_name("huggingface")],
+    image=SERVE_IMAGE, gpu="H200", timeout=4 * 60 * 60, volumes={"/vol": vol},
+    secrets=[hf_secret()],
 )
-def collect_eval(run_name: str, subject: str, context_file: str):
+def collect_eval(run_name: str, subject: str, context_file: str, inputs_path: str):
     import json
     import pathlib
     from datetime import datetime, timezone
@@ -41,7 +37,7 @@ def collect_eval(run_name: str, subject: str, context_file: str):
     from vllm import LLM, SamplingParams
     from vllm.lora.request import LoRARequest
 
-    rows = [json.loads(l) for l in open("/vol/pairs/eval_inputs.jsonl")]
+    rows = [json.loads(l) for l in open(f"/vol{inputs_path}")]
     out_path = pathlib.Path(
         f"/vol/runs/{run_name}/collect_eval_gemma{'_guided' if context_file else ''}.jsonl")
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -114,5 +110,16 @@ def collect_eval(run_name: str, subject: str, context_file: str):
 
 
 @app.local_entrypoint()
-def main(run_name: str, subject: str = "", context_file: str = ""):
-    collect_eval.remote(run_name, subject or run_name, context_file)
+def main(run_name: str, subject: str = "", context_file: str = "",
+         inputs: str = "/pairs/eval_inputs.jsonl", dry_run: bool = False):
+    out = f"/runs/{run_name}/collect_eval_gemma{'_guided' if context_file else ''}.jsonl"
+    reads = [inputs] + ([context_file] if context_file else []) + ([f"/runs/{run_name}/adapter"] if run_name != "base" else [])
+    if preflight(f"held-out collection with vLLM: run {run_name} ({'base model, no adapter' if run_name == 'base' else 'adapter'}), "
+                 f"subject {subject or run_name}, {'with guide' if context_file else 'bare'}",
+                 "H200", reads, [out], dry_run):
+        return
+    collect_eval.remote(run_name, subject or run_name, context_file, inputs)
+
+
+if __name__ == "__main__":
+    preflight_cli(main)

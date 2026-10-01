@@ -301,3 +301,19 @@ keys are present here by default — the no-key checks need it moved aside.)
 
 11 new offline tests (network clients stubbed to fail if built): 49 jaleesweights tests,
 110 benchmark tests pass.
+
+## 2026-10-01 — phase 6: Gemma on Modal
+
+`modal/_config.py` holds the account names (`JW_MODAL_VOLUME`, `JW_MODAL_HF_SECRET`, defaults
+as run), the model id, the three images exactly as the drivers had them, and the preflight.
+The five drivers import from it. Inside the function bodies exactly two lines changed: the
+hardcoded `/vol/pairs/eval_inputs.jsonl` and `/vol/pairs/train_inputs.jsonl` became an
+`inputs_path` parameter (default unchanged). The capability checkpoint table is the bf16
+chain only; `--chat` documented as the paper's mode.
+
+Finding: `modal run` demands a token before it calls the local entrypoint, so `--dry-run`
+through `modal run` cannot be exercised without an account. Each driver therefore also runs
+as a plain Python module (`python -m jaleesweights.modal.<driver> ...`) that prints the
+preflight — volume, secret, GPU, volume paths read and written, upload/download commands —
+and launches nothing; verified for all five with no Modal account (fake HOME). Nothing was
+run against the owner's Modal account. 12 new tests; 62 jaleesweights tests pass.

@@ -10,33 +10,28 @@ Phase 1 generates K turn-1 replies per cell (SamplingParams n=K); phase 2
 continues each chain through the authored pressure turn. Output is
 harness collect-schema, one record per chain, subject = gemma-onpol-s{k}.
 
-Setup: modal volume put gemma-dpo tmp/dpo-experiment/train_inputs_gemma.jsonl /pairs/train_inputs.jsonl
-Run:   modal run --detach tmp/dpo-experiment/modal_gemma_sample.py --temperature 1.3 --k 4
-Out:   /vol/runs/gemma-onpol-sample/collect_train_samples.jsonl
+Setup: modal volume put <volume> <train_inputs_gemma.jsonl> /pairs/train_inputs.jsonl
+Run (recipe of record — sample the stage-1 model):
+       uv run modal run --detach -m jaleesweights.modal.gemma_sample --temperature 1.3 --k 4 \\
+           --adapter-run gemma-sft-guided-bf16 --out-run gemma-sftbf16-sample --lane-prefix gemma-sftbf16-s
+Out:   /vol/runs/<out-run>/collect_train_samples.jsonl
+Preflight only: add --dry-run.
 """
 
 import modal
 
-MODEL = "google/gemma-4-31B-it"
-app = modal.App("jaleesbench-gemma-sample")
-vol = modal.Volume.from_name("gemma-dpo")
+from jaleesweights.modal._config import preflight_cli, MODEL, SERVE_IMAGE, hf_secret, preflight, volume
 
-# Same image as the eval job: vLLM compiles gemma-4 router-GEMM kernels at
-# startup and needs nvcc, so the full CUDA toolkit is required.
-image = (
-    modal.Image.from_registry("nvidia/cuda:12.8.1-devel-ubuntu24.04", add_python="3.12")
-    .pip_install("vllm>=0.10", "hf_transfer")
-    .env({"HF_HUB_ENABLE_HF_TRANSFER": "1", "HF_HOME": "/vol/hf-cache",
-          "VLLM_WORKER_MULTIPROC_METHOD": "spawn"})
-)
+app = modal.App("jaleesbench-gemma-sample")
+vol = volume()
 
 
 @app.function(
-    image=image, gpu="H200", timeout=4 * 60 * 60, volumes={"/vol": vol},
-    secrets=[modal.Secret.from_name("huggingface")],
+    image=SERVE_IMAGE, gpu="H200", timeout=4 * 60 * 60, volumes={"/vol": vol},
+    secrets=[hf_secret()],
 )
 def sample_chains(temperature: float, k: int, adapter_run: str, out_run: str,
-                  lane_prefix: str):
+                  lane_prefix: str, inputs_path: str):
     import json
     import pathlib
     from datetime import datetime, timezone
@@ -45,7 +40,7 @@ def sample_chains(temperature: float, k: int, adapter_run: str, out_run: str,
     from vllm import LLM, SamplingParams
     from vllm.lora.request import LoRARequest
 
-    rows = [json.loads(l) for l in open("/vol/pairs/train_inputs.jsonl")]
+    rows = [json.loads(l) for l in open(f"/vol{inputs_path}")]
     out_path = pathlib.Path(f"/vol/runs/{out_run}/collect_train_samples.jsonl")
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -122,5 +117,15 @@ def sample_chains(temperature: float, k: int, adapter_run: str, out_run: str,
 
 @app.local_entrypoint()
 def main(temperature: float = 1.3, k: int = 4, adapter_run: str = "",
-         out_run: str = "gemma-onpol-sample", lane_prefix: str = "gemma-onpol-s"):
-    sample_chains.remote(temperature, k, adapter_run, out_run, lane_prefix)
+         out_run: str = "gemma-onpol-sample", lane_prefix: str = "gemma-onpol-s",
+         inputs: str = "/pairs/train_inputs.jsonl", dry_run: bool = False):
+    reads = [inputs] + ([f"/runs/{adapter_run}/adapter"] if adapter_run else [])
+    if preflight(f"sampling {k} chains per training cell at temperature {temperature} from "
+                 f"{adapter_run or 'the base model'}; lanes {lane_prefix}0..{k - 1}",
+                 "H200", reads, [f"/runs/{out_run}/collect_train_samples.jsonl"], dry_run):
+        return
+    sample_chains.remote(temperature, k, adapter_run, out_run, lane_prefix, inputs)
+
+
+if __name__ == "__main__":
+    preflight_cli(main)
