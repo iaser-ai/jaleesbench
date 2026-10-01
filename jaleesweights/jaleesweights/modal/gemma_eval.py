@@ -123,7 +123,8 @@ def main(run_name: str, subject: str = "", context_file: str = "",
         local[context_file] = (local_context, None)
     if preflight(f"held-out collection with vLLM: run {run_name} ({'base model, no adapter' if run_name == 'base' else 'adapter'}), "
                  f"subject {subject or run_name}, {'with guide' if context_file else 'bare'}",
-                 "H200", reads, [out], dry_run, local=local or None):
+                 "H200", reads, [out], dry_run, local=local or None,
+                 required_local=[inputs] + ([context_file] if context_file else [])):
         return
     collect_eval.remote(run_name, subject or run_name, context_file, inputs)
 

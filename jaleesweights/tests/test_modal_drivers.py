@@ -80,3 +80,29 @@ def test_sample_defaults_to_the_stage_1_model():
     assert out.returncode == 0
     assert "from gemma-sft-guided-bf16" in out.stdout and "lanes gemma-sftbf16-s0..3" in out.stdout
     assert "/vol/runs/gemma-sftbf16-sample/collect_train_samples.jsonl" in out.stdout
+
+
+@pytest.mark.parametrize("driver,args,opt", [
+    ("gemma_sft_bf16", ["--data", "/pairs/sft_guided.jsonl", "--run-name", "r"], "--local-data"),
+    ("gemma_dpo2_bf16", ["--pairs", "/pairs/p.jsonl", "--run-name", "r"], "--local-pairs"),
+    ("gemma_sample", [], "--local-inputs"),
+    ("gemma_eval", ["--run-name", "base"], "--local-inputs"),
+])
+def test_real_launch_needs_a_checked_local_source(tmp_path, driver, args, opt):
+    """Without --dry-run (the plain-module entry always sets it), the entrypoint refuses to
+    launch when the input's local source was not given; empty files are refused too."""
+    from jaleesweights.modal import _config
+    import importlib
+    mod = importlib.import_module(f"jaleesweights.modal.{driver}")
+    raw = mod.main.info.raw_f
+    import inspect
+    kwargs = {}
+    it = iter(args)
+    for a in it:
+        kwargs[a.lstrip("-").replace("-", "_")] = next(it)
+    with pytest.raises(SystemExit, match="give the local source"):
+        raw(**kwargs, dry_run=False)
+    empty = tmp_path / "empty.jsonl"
+    empty.write_text("")
+    with pytest.raises(SystemExit, match="is empty"):
+        raw(**kwargs, **{opt.lstrip("-").replace("-", "_"): str(empty)}, dry_run=False)

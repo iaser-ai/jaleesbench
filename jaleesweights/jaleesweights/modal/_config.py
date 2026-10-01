@@ -68,6 +68,8 @@ def check_local(volume_path: str, local: str, expected_rows: int | None = None) 
     if volume_path.endswith((".jsonl", ".txt")):
         with open(p) as fh:
             rows = sum(1 for l in fh if l.strip())
+        if rows == 0:
+            raise SystemExit(f"preflight failed: {local} is empty")
         if expected_rows is not None and rows != expected_rows:
             raise SystemExit(f"preflight failed: {local} has {rows} rows; {volume_path} must have {expected_rows}")
         return f"local {local}: {rows} rows ok"
@@ -75,14 +77,22 @@ def check_local(volume_path: str, local: str, expected_rows: int | None = None) 
 
 
 def preflight(what: str, gpu: str, reads: list[str], writes: list[str], dry_run: bool,
-              local: dict[str, tuple[str, int | None]] | None = None) -> bool:
+              local: dict[str, tuple[str, int | None]] | None = None,
+              required_local: list[str] | None = None) -> bool:
     """Print what a driver is about to rent and touch; return True when it should stop.
     `local` maps a volume path to (local source file, expected row count or None): those
-    files are checked before anything is launched. The volume's own contents cannot be
-    seen without an account."""
+    files are checked before anything is launched. A real launch (not --dry-run) refuses to
+    proceed unless every path in `required_local` has a checked local source — the inputs a
+    driver reads from the volume are the files the team uploaded, and the preflight must have
+    seen them. The volume's own contents cannot be seen without an account."""
     print(f"preflight: {what}")
     for vp, (src, n) in (local or {}).items():
         print("  " + check_local(vp, src, n))
+    unchecked = [vp for vp in (required_local or []) if vp not in (local or {})]
+    if unchecked and not dry_run:
+        raise SystemExit("preflight failed: give the local source of "
+                         + ", ".join(unchecked)
+                         + " (the --local-... option) so it can be checked before launch, or use --dry-run")
     print(f"  Modal volume {VOLUME!r}, secret {HF_SECRET!r}, GPU {gpu}; billed to your Modal account")
     for p in reads:
         if p.startswith("/pairs/"):

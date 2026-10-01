@@ -259,7 +259,7 @@ def main(pairs: str, run_name: str, sft_run: str = "gemma-sft-guided-bf16",
                  f"lr {lr}, 1 epoch, seed {seed}" + (f", limit {limit}" if limit else ""),
                  "B200", [pairs, f"/runs/{sft_run}/adapter"],
                  [f"/runs/{run_name}/adapter", f"/runs/{run_name}/train_log.jsonl"], dry_run,
-                 local={pairs: (local_pairs, None)} if local_pairs else None):
+                 local={pairs: (local_pairs, None)} if local_pairs else None, required_local=[pairs]):
         return
     if limit:
         train.remote(pairs, sft_run, run_name, batch, beta, lr, seed, limit, resume_from)

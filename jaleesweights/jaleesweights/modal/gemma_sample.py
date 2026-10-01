@@ -124,7 +124,7 @@ def main(temperature: float = 1.3, k: int = 4, adapter_run: str = "gemma-sft-gui
     if preflight(f"sampling {k} chains per training cell at temperature {temperature} from "
                  f"{adapter_run or 'the base model'}; lanes {lane_prefix}0..{k - 1}",
                  "H200", reads, [f"/runs/{out_run}/collect_train_samples.jsonl"], dry_run,
-                 local={inputs: (local_inputs, 420)} if local_inputs else None):
+                 local={inputs: (local_inputs, 420)} if local_inputs else None, required_local=[inputs]):
         return
     sample_chains.remote(temperature, k, adapter_run, out_run, lane_prefix, inputs)
 

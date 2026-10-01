@@ -214,7 +214,7 @@ def main(data: str, run_name: str, batch: int = 8, lr: float = 5e-5,
     if preflight(f"stage-1 SFT of {MODEL}: run {run_name}, batch {batch}, lr {lr}, {epochs} epochs, seed {seed}"
                  + (f", limit {limit}" if limit else "") + (f", resume from {resume_from}" if resume_from else ""),
                  "B200", [data], [f"/runs/{run_name}/adapter", f"/runs/{run_name}/train_log.jsonl"], dry_run,
-                 local={data: (local_data, None)} if local_data else None):
+                 local={data: (local_data, None)} if local_data else None, required_local=[data]):
         return
     if limit:
         # smoke: block (remote) so loss / memory / B200-compat print directly to this client.
