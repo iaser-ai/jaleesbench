@@ -45,6 +45,12 @@ gpu = [
     "vllm-bnb-plugin; python_full_version >= '3.14' and sys_platform == 'linux'",
 ]
 
+# The Apple Silicon path (jaleesweights.mlx, TUTORIAL.md): Apple's MLX stack, macOS only.
+# Install on the Mac with `uv sync --group mlx`.
+mlx = [
+    "mlx-lm>=0.31; sys_platform == 'darwin'",
+]
+
 [tool.uv]
 environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
 
