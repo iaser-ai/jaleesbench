@@ -2,6 +2,7 @@
 sampling and DPO commands, the loss on a toy example, the assistant-token mask, the evenly
 spaced subset and the memory ceiling."""
 
+import hashlib
 import json
 import math
 import py_compile
@@ -43,6 +44,7 @@ def isolated(tmp_path, monkeypatch):
     adapter = tmp_path / "adapter"
     adapter.mkdir()
     (adapter / "adapters.safetensors").write_bytes(b"")
+    (adapter / "adapter_config.json").write_text("{}")
     return tmp_path
 
 
@@ -115,9 +117,22 @@ def test_sample_preflight_resume_and_guards(isolated):
     assert "5 cells x 4 chains = 20 sittings of two turns; temperature 1.3, top-p 0.95, top-k 64" in res.output
     assert "estimated time: about 6 minutes" in res.output and "memory ceiling 24 GB" in res.output
     assert "collect_mlx-sft_train_unstated_k4.jsonl" in res.output and "dry run" in res.output
-    write_jsonl(isolated / "runs" / "d" / "collect_mlx-sft_train_unstated_k4.jsonl", cells(20)[:4])  # JLS-000 is one of the 5
+    out = isolated / "runs" / "d" / "collect_mlx-sft_train_unstated_k4.jsonl"
+    write_jsonl(out, cells(20)[:1])
+    res = runner.invoke(sample.app, args + ["--dry-run"])  # rows, but nothing says what made them
+    assert res.exit_code != 0 and "has samples but no" in plain(res)
+    settings = {"model": _common.DEFAULT_MODEL, "adapter": str(isolated / "adapter"), "inputs": str(inputs),
+                "subject": "mlx-sft", "k": 4, "adapter_sha256": hashlib.sha256(b"").hexdigest(),
+                "temperature": 1.3, "top_p": 0.95, "top_k": 64, "max_tokens": 2048, "seed": 3446}
+    sample.state_path(out).write_text(json.dumps({"settings": settings, "done": [["JLS-000", "flattery"]]}))
     res = runner.invoke(sample.app, args + ["--dry-run"])
     assert "1 already sampled" in res.output and "4 cells x 4 chains = 16 sittings" in res.output
+    res = runner.invoke(sample.app, args + ["--temperature", "1.0", "--dry-run"])  # another policy into the same file
+    assert res.exit_code != 0 and "different settings (temperature)" in plain(res)
+    (isolated / "adapter" / "adapters.safetensors").write_bytes(b"retrained")
+    res = runner.invoke(sample.app, args + ["--dry-run"])
+    assert res.exit_code != 0 and "different settings (adapter_sha256)" in plain(res)
+    (isolated / "adapter" / "adapters.safetensors").write_bytes(b"")
     res = runner.invoke(sample.app, args + ["--k", "1", "--dry-run"])
     assert res.exit_code != 0 and "at least two chains" in plain(res)
     res = runner.invoke(sample.app, ["--adapter", str(isolated), "--inputs", str(inputs), "--dry-run"])
@@ -132,11 +147,15 @@ def test_dpo_preflight_and_guards(isolated):
     args = ["--pairs", str(pairs), "--sft-adapter", str(isolated / "adapter"), "--run", "d"]
     res = runner.invoke(dpo.app, args + ["--dry-run"])
     assert res.exit_code == 0, res.output
-    assert "beta 0.1, lr 1e-05, 1 pass, batch 8 (~3 steps), seq cap 8192, seed 3446" in res.output
+    assert "beta 0.1, lr 1e-05, 1 pass, batch 8 (~3 steps), seq cap 4096, seed 3446" in res.output
     assert "the same adapter, frozen, is the reference" in res.output and "memory ceiling 24 GB" in res.output
     assert not (isolated / "runs" / "d" / "mlx-sft-dpo").exists()  # the dry run writes nothing
     res = runner.invoke(dpo.app, ["--pairs", str(pairs), "--sft-adapter", str(isolated), "--dry-run"])
     assert res.exit_code != 0 and "not an mlx_lm adapter directory" in plain(res)
+    (isolated / "adapter" / "adapter_config.json").unlink()  # weights without the config mlx_lm.load reads
+    res = runner.invoke(dpo.app, args + ["--dry-run"])
+    assert res.exit_code != 0 and "no adapter_config.json" in plain(res)
+    (isolated / "adapter" / "adapter_config.json").write_text("{}")
     res = runner.invoke(dpo.app, ["--pairs", str(isolated / "none.jsonl"), "--sft-adapter", str(isolated / "adapter"), "--dry-run"])
     assert res.exit_code != 0 and "does not exist" in res.output
     (isolated / "runs" / "d" / "mlx-sft-dpo" / "adapter").mkdir(parents=True)

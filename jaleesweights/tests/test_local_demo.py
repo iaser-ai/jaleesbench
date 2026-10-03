@@ -4,6 +4,7 @@ missing-dependency message, and the tokenizer-only loss-mask check."""
 import importlib.util
 import json
 import py_compile
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -70,8 +71,6 @@ def test_dpo_preflight_requires_an_adapter_directory(isolated):
     assert "GPU: none" in res.output
 
 
-@pytest.mark.skip(reason="flaky: the last assertion looks for a phrase in Typer's wrapped error box, and where the "
-                         "box wraps depends on the length of pytest's temporary path (seen failing in air-47)")
 def test_collect_preflight_names_pass_and_output(isolated, monkeypatch):
     monkeypatch.setattr(paths, "GUIDED_PREFIX", write_jsonl(isolated / "guide.txt", []))
     inputs = write_jsonl(isolated / "in.jsonl", [{"probe_id": "p", "pressure": f"q{i}", "turn1": "t", "pressure_text": "x"} for i in range(6)])
@@ -91,7 +90,7 @@ def test_collect_preflight_names_pass_and_output(isolated, monkeypatch):
     assert res.exit_code != 0 and "explicit --temperature" in res.output
     bad = write_jsonl(isolated / "bad.jsonl", [{"probe_id": "p", "turns": []}])
     res = runner.invoke(gemma_collect.app, ["--inputs", str(bad), "--run", "d", "--dry-run"])
-    assert res.exit_code != 0 and "conversation-inputs file" in res.output.replace("\n", "")
+    assert res.exit_code != 0 and "conversation-inputs file" in " ".join(re.sub(r"[│╭╮╰╯─]", " ", res.output).split())
 
 
 @pytest.mark.parametrize("name", list(COMMANDS))

@@ -62,7 +62,9 @@ def cap_memory(mx, gb: float):
     buffers may by default grow as large as that limit, which on its own can push a Mac into
     swap when every sitting has a different length. So: set the limit, cap the cache at an
     eighth of it, and return a check to call after each evaluation, which stops the job if
-    the peak has passed the ceiling and otherwise empties the cache."""
+    the peak has passed the ceiling and otherwise empties the cache. The check runs after a
+    pass, so one pass can overshoot before it is caught; on a shared machine, also run long
+    jobs under something that watches swap."""
     limit = int(gb * 2**30)
     mx.set_memory_limit(limit)
     mx.set_cache_limit(limit // 8)
@@ -70,13 +72,20 @@ def cap_memory(mx, gb: float):
     def check() -> None:
         peak = mx.get_peak_memory()
         if peak > limit:
-            raise RuntimeError(f"peak memory {peak / 2**30:.1f} GB passed the {gb:g} GB ceiling (--memory-limit-gb); stopping before the machine swaps")
+            raise RuntimeError(f"peak memory {peak / 2**30:.1f} GB passed the {gb:g} GB ceiling (--memory-limit-gb); stopping")
         mx.clear_cache()
     return check
 
 
 def ceiling_line(gb: float) -> str:
-    return f"memory ceiling {gb:g} GB: MLX's limit is set and the job stops if its peak passes it"
+    return f"memory ceiling {gb:g} GB: MLX's limit is set, and the peak is checked after every pass (one pass can overshoot)"
+
+
+def require_adapter(adapter: Path) -> None:
+    """An `mlx_lm` adapter directory holds the weights and the config `mlx_lm.load` reads."""
+    missing = [n for n in ("adapters.safetensors", "adapter_config.json") if not (adapter / n).exists()]
+    if missing:
+        raise typer.BadParameter(f"{adapter} is not an mlx_lm adapter directory (no {' or '.join(missing)})")
 
 
 def preflight(what: str, lines: list[str], dry_run: bool) -> bool:

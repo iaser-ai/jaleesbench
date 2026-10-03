@@ -88,8 +88,9 @@ assumes it, because that is what the training data teaches.
 Stage 2 of the recipe is preference optimization (DPO) on the tuned model's own answers:
 sample several answers per training conversation, have Gemini rate them, pair a better answer
 with a worse one, and train the model to prefer the better. The rating is a paid step. Skip
-this section if you have no Gemini key; nothing above depends on it. It also needs a Mac with
-32 GB of memory. Put `GEMINI_API_KEY=...` in the repository's `.env` first.
+this section if you have no Gemini key; nothing above depends on it. Training peaked at 19 GB
+here, on a 64 GB Mac; it was not tried on a smaller one. Put `GEMINI_API_KEY=...` in the
+repository's `.env` first.
 
 ```bash
 uv run python -m jaleesweights.mlx.sample --adapter data/runs/demo/mlx-sft/adapter --run demo --limit 40
@@ -102,11 +103,13 @@ uv run python -m jaleesweights.mlx.ask "$Q" --first 230 --adapter data/runs/demo
 
 What each step did here:
 
-- **Sample**: 4 answers for each of 40 of the 420 training conversations: 50 minutes, 6 GB.
+- **Sample**: 4 answers for each of 40 of the 420 training cells (a cell is one scenario
+  with one kind of pushback; the 310 conversations of section 2 come from the same 420):
+  50 minutes, 6 GB.
   145 of the 160 were kept; 15 ran to the 2,048-token cap without stopping and were dropped.
 - **Rate**: 145 Gemini ratings in 3 minutes: 541,000 tokens in, 265,000 out, a few US dollars.
   119 of the 145 answers got the lowest rating.
-- **Pair**: 36 pairs, from 13 of the 40 conversations; the other 27 had no two answers rated
+- **Pair**: 36 pairs, from 13 of the 40 cells; the other 27 had no two answers rated
   far enough apart. The paper's full run sampled 1,680 answers and trained on 502 to 672 pairs.
 - **Train**: 5 steps over the 36 pairs: 8 minutes, 19 GB at the peak. The training log's loss
   went 0.69, 0.48, 0.11, 0.11, 0.57, and the share of pairs where the model already preferred

@@ -9,8 +9,10 @@ starts as the stage-1 adapter and the reference is that same adapter, frozen —
 reference terms are computed once, before the first update, and only one model is ever in
 memory. Settings of record: beta 0.1, lr 1e-5, one pass, batch 8 by gradient accumulation,
 seed 3446. The policy == reference check runs at the start. The adapter and the training
-log are written after every optimizer step, so Ctrl-C leaves the latest step's adapter.
-The job holds itself under --memory-limit-gb and stops if a sitting takes it past that.
+log are written after every optimizer step (the adapter by write-then-rename), so Ctrl-C
+leaves the latest completed step's adapter. Memory grows with the sitting's length — measured
+on gemma-4-E4B 4-bit: about 4 GB plus 4.8 GB per 1,000 tokens — so the default
+--max-seq-length (4,096) is what the default --memory-limit-gb (24) can hold.
 
     uv run python -m jaleesweights.mlx.dpo --pairs data/runs/tutorial/pairs.jsonl \\
         --sft-adapter data/runs/tutorial/mlx-sft/adapter --run tutorial
@@ -18,6 +20,7 @@ The job holds itself under --memory-limit-gb and stops if a sitting takes it pas
 
 import json
 import math
+import os
 import random
 import shutil
 import time
@@ -26,7 +29,7 @@ from pathlib import Path
 import typer
 
 from .. import paths
-from ._common import DEFAULT_MODEL, cap_memory, ceiling_line, precision_line, preflight, read_jsonl, require_mlx
+from ._common import DEFAULT_MODEL, cap_memory, ceiling_line, precision_line, preflight, read_jsonl, require_adapter, require_mlx
 
 app = typer.Typer(add_completion=False, help=__doc__)
 
@@ -147,7 +150,8 @@ def train(pairs_path: Path, sft_adapter: Path, out: Path, model_name: str, batch
             print(rec, flush=True)
             with open(log_path, "a") as fh:
                 fh.write(json.dumps(rec) + "\n")
-            mx.save_safetensors(str(adapter_dir / "adapters.safetensors"), dict(tree_flatten(model.trainable_parameters())))
+            mx.save_safetensors(str(adapter_dir / "saving.safetensors"), dict(tree_flatten(model.trainable_parameters())))
+            os.replace(adapter_dir / "saving.safetensors", adapter_dir / "adapters.safetensors")
             acc, loss_sum, margin_sum, correct, n_acc = None, 0.0, 0.0, 0, 0
     print(f"done: {step} steps over {len(data)} pairs; adapter at {adapter_dir}")
 
@@ -162,15 +166,14 @@ def main(
     batch: int = typer.Option(8, help="Pairs per optimizer step, by gradient accumulation."),
     beta: float = typer.Option(0.1, help="DPO beta (setting of record 0.1)."),
     lr: float = typer.Option(1e-5, help="Learning rate (setting of record 1e-5; AdamW)."),
-    max_seq_length: int = typer.Option(8192, help="Longest sitting in tokens; a longer one is an error, never truncated."),
+    max_seq_length: int = typer.Option(4096, help="Longest sitting in tokens; a longer one is an error, never truncated. Raise it together with --memory-limit-gb."),
     seed: int = typer.Option(3446, help="Shuffle seed."),
     limit: int = typer.Option(0, help="Train on the first N pairs only (smoke test)."),
-    memory_limit_gb: float = typer.Option(24.0, help="Memory ceiling in GB: the job stops if its peak passes it, before the machine swaps."),
+    memory_limit_gb: float = typer.Option(24.0, help="Memory ceiling in GB, checked after every pass: the job stops once its peak has passed it."),
     dry_run: bool = typer.Option(False, "--dry-run", help="Print the preflight summary and stop before anything loads."),
 ) -> None:
     n = len(read_jsonl(pairs))
-    if not (sft_adapter / "adapters.safetensors").exists():
-        raise typer.BadParameter(f"{sft_adapter} is not an mlx_lm adapter directory (no adapters.safetensors)")
+    require_adapter(sft_adapter)
     out = paths.output_path(out or paths.run_dir(run) / "mlx-sft-dpo")
     if (out / "adapter").exists():
         raise typer.BadParameter(f"{out} already holds an adapter; choose another --run or --out (a run never overwrites)")
