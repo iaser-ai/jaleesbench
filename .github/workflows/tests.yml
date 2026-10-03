@@ -33,5 +33,7 @@ jobs:
       - run: uv run --directory ${{ matrix.project }} pytest -q
         env:
           # Typer colours its help and error text whenever GITHUB_ACTIONS is set,
-          # which splits the option names and messages the tests look for.
+          # and wraps error boxes at 80 columns; both split the option names and
+          # messages the tests look for.
           _TYPER_FORCE_DISABLE_TERMINAL: "1"
+          TERMINAL_WIDTH: "1000"
