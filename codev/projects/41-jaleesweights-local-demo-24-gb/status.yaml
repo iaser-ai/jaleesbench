@@ -1,7 +1,7 @@
 id: '41'
 title: jaleesweights-local-demo-24-gb
 protocol: air
-phase: pr
+phase: verified
 plan_phases: []
 current_plan_phase: null
 gates:
@@ -13,7 +13,7 @@ iteration: 1
 build_complete: false
 history: []
 started_at: '2026-10-03T00:44:58.578Z'
-updated_at: '2026-10-03T01:10:33.231Z'
+updated_at: '2026-10-03T01:10:35.098Z'
 pr_history:
   - phase: pr
     pr_number: 42
