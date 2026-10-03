@@ -11,6 +11,12 @@ Inkling-Small driver does, so `judge rate-samples` and `pairs` consume them unch
 Sampling: the model's own generation_config unless --temperature is given (sampling for
 stage 2 used 1.3, which must exceed the config default).
 
+--load-in-4bit (the 24 GB profile) has vLLM quantize the weights to 4-bit (nf4) in flight with
+bitsandbytes, the adapter applied on top. This changes the sampled text, not just the
+throughput: the demonstration's base, stage-1 and stage-2 arms are then all served quantized,
+so comparisons within one profile stay like for like. Reducing --max-model-len or
+--gpu-memory-utilization, by contrast, changes throughput only.
+
 The four passes of the demonstration's run order:
     --inputs <train inputs> --guide           (stage-1 teacher pool)      subject e.g. gemma-demo
     --inputs <eval inputs>                     (baseline, bare)
@@ -21,13 +27,14 @@ The four passes of the demonstration's run order:
         --subject gemma-demo --run demo --limit 5
 """
 
+import importlib.util
 from datetime import datetime, timezone
 from pathlib import Path
 
 import typer
 
 from .. import paths
-from ._common import DEFAULT_MODEL, count_rows, preflight, read_jsonl, require
+from ._common import GPU_GROUP_HINT, DEFAULT_MODEL, count_rows, precision_line, preflight, read_jsonl, require
 
 app = typer.Typer(add_completion=False, help=__doc__)
 
@@ -35,13 +42,27 @@ VLLM_DTYPES = {"bf16": "bfloat16", "bfloat16": "bfloat16", "fp16": "float16", "f
                "fp32": "float32", "float32": "float32"}
 
 
-def collect(rows: list[dict], out_path: Path, model_name: str, dtype: str, adapter: Path | None,
-            ctx: str | None, k: int, temperature: float | None, max_model_len: int,
-            gpu_memory_utilization: float, subject: str) -> None:
+def require_vllm_bitsandbytes(find_spec=importlib.util.find_spec) -> None:
+    """vLLM up to 0.27 quantizes in flight in tree (nf4 hard-coded in its loader, the matmul
+    in bf16); 0.28 moved that support to the vllm-bnb-plugin package. Stop by name when
+    neither is present — never a silent unquantized load."""
+    if (find_spec("vllm.model_executor.layers.quantization.bitsandbytes") is None
+            and find_spec("vllm_bnb_plugin") is None):
+        raise SystemExit("missing GPU dependency: vllm-bnb-plugin (this vLLM has no in-tree bitsandbytes "
+                         f"support); {GPU_GROUP_HINT}")
+
+
+def collect(rows: list[dict], out_path: Path, model_name: str, dtype: str, load_in_4bit: bool,
+            adapter: Path | None, ctx: str | None, k: int, temperature: float | None,
+            max_model_len: int, gpu_memory_utilization: float, subject: str) -> None:
     import json
 
+    if load_in_4bit:
+        require("bitsandbytes")  # first: vLLM's in-flight quantization needs it; no fallback to bf16
     transformers = require("transformers")
     vllm = require("vllm")
+    if load_in_4bit:
+        require_vllm_bitsandbytes()
     lora_request = require("vllm.lora.request")
     AutoTokenizer, GenerationConfig = transformers.AutoTokenizer, transformers.GenerationConfig
     LLM, SamplingParams, LoRARequest = vllm.LLM, vllm.SamplingParams, lora_request.LoRARequest
@@ -67,6 +88,7 @@ def collect(rows: list[dict], out_path: Path, model_name: str, dtype: str, adapt
     tok = AutoTokenizer.from_pretrained(model_name)
     llm = LLM(model=model_name, dtype=dtype, max_model_len=max_model_len,
               gpu_memory_utilization=gpu_memory_utilization,
+              quantization="bitsandbytes" if load_in_4bit else None,
               enable_lora=bool(adapter), max_lora_rank=32)
     lora = LoRARequest("policy", 1, str(adapter)) if adapter else None
     print("policy:", adapter or "base")
@@ -94,7 +116,8 @@ def collect(rows: list[dict], out_path: Path, model_name: str, dtype: str, adapt
     ]) for i, _, a, _ in chains]
     o2 = llm.generate(p2, sp2, lora_request=lora)
 
-    model_tag = model_name + (f"+lora:{adapter}" if adapter else "@vllm-base") + (f"@T{temp}" if k > 1 else "")
+    model_tag = (model_name + ("@nf4" if load_in_4bit else "") + (f"+lora:{adapter}" if adapter else "@vllm-base")
+                 + (f"@T{temp}" if k > 1 else ""))
     with open(out_path, "w") as fh:
         for (i, ki, a1, u1), x2 in zip(chains, o2):
             r = rows[i]
@@ -126,7 +149,8 @@ def main(
     run: str = typer.Option("new-run", help="Run directory name under data/runs/ for the output."),
     out: Path | None = typer.Option(None, help="Output file (default: <run dir>/collect_<subject>_<guided|unstated>[_k<K>].jsonl)."),
     model: str = typer.Option(DEFAULT_MODEL, help="Gemma-family model id."),
-    dtype: str = typer.Option("bf16", help="Weights precision: bf16 (recipe of record), fp16 or fp32."),
+    dtype: str = typer.Option("bf16", help="Weights precision: bf16 (recipe of record), fp16 or fp32; the compute precision under --load-in-4bit."),
+    load_in_4bit: bool = typer.Option(False, "--load-in-4bit", help="Serve 4-bit (nf4) weights, quantized in flight by vLLM with bitsandbytes: the 24 GB profile. Changes the sampled text, not only throughput."),
     adapter: Path | None = typer.Option(None, help="A LoRA adapter directory to apply (a stage-1 or stage-2 output)."),
     guide: bool = typer.Option(False, "--guide/--no-guide", help="Fold the companionship guide into every user turn."),
     k: int = typer.Option(1, help="Independent chains per cell (4 for stage-2 sampling)."),
@@ -163,10 +187,12 @@ def main(
                  [f"inputs {inputs}: {n} cells" + (f", using the first {limit}" if limit else "") + f"; {framing}; k={k}"
                   + (f"; temperature {temperature}" if temperature is not None else "; model-default sampling"),
                   f"{dtype}, context window {max_model_len}, GPU memory utilization {gpu_memory_utilization}",
+                  precision_line(model, dtype, load_in_4bit, training=False),
                   f"subject {subject} -> {out}"],
                  dry_run):
         return
-    collect(rows, out, model, dtype, adapter, ctx, k, temperature, max_model_len, gpu_memory_utilization, subject)
+    collect(rows, out, model, dtype, load_in_4bit, adapter, ctx, k, temperature, max_model_len,
+            gpu_memory_utilization, subject)
 
 
 if __name__ == "__main__":

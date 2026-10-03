@@ -32,7 +32,7 @@ Contents: [What you need](#what-you-need) · [Install](#install) · [Get the dat
 | **Tinker** (`TINKER_API_KEY`) | Inkling-Small training, sampling and collection | same |
 | **Modal** (`modal token new`) | the Gemma path of record: one B200 for training, one H200 for serving | Modal's own config |
 | **Hugging Face** | nothing: the Gemma weights are ungated. The Modal drivers reference a secret named `huggingface` that must exist; its token may be empty | Modal secret |
-| **A Linux machine with one NVIDIA GPU** | the local demonstration only (see its hardware section) | — |
+| **A Linux machine with one NVIDIA GPU** | the local demonstration only: 24 GB with the 4-bit profile, 48 GB+ in bf16 (see its hardware section) | — |
 
 Each command asks only for the keys it uses and names a missing one; no key is ever printed.
 Put keys in a `.env` at the repository root (`KEY=value`, one per line, no quotes — values
@@ -60,8 +60,8 @@ Dependencies: the local machine's are in `pyproject.toml` and locked in `uv.lock
 `typer`, the Tinker SDK and cookbook pinned to the versions the runs used, and the benchmark
 package). `torch` and `transformers` are already in that default install because the Tinker
 cookbook depends on them. The GPU stack for the local demonstration — `peft`, `accelerate`,
-vLLM, plus the same two — is the `gpu` dependency group, installable only on Linux with an
-NVIDIA GPU:
+vLLM, `bitsandbytes` (the 24 GB profile's 4-bit quantization), plus the same two — is the
+`gpu` dependency group, installable only on Linux with an NVIDIA GPU:
 
 ```bash
 uv sync --group gpu          # on the GPU machine
@@ -242,10 +242,34 @@ concurrent conversations; a tuned checkpoint's lane far fewer (the runs used 3).
 
 A worked example of the same recipe on hardware a team plausibly owns, with the Hugging Face
 stack the Modal functions run inside (`transformers`, `peft`, vLLM) and no Modal account.
-Default model `google/gemma-4-12B-it` in bf16; `--model` and `--dtype` are options on every
-command, `--batch` on the two trainers, `--max-model-len` and `--gpu-memory-utilization` on
-collection. **Its numbers
-are not the paper's and are not expected to match them.**
+Default model `google/gemma-4-12B-it`, in two hardware profiles; `--model` and `--dtype` are
+options on every command, `--batch` on the two trainers, `--max-model-len` and
+`--gpu-memory-utilization` on collection. **Its numbers are not the paper's and are not
+expected to match them.**
+
+**Profiles.** The GPU steps of the table below (1, 4, 5, 7, 10, 11) take the same commands
+under either profile; the profile is one flag.
+
+- **24 GB (the documented default; a 4090-class card).** Add `--load-in-4bit` to every GPU
+  command. The base is quantized to nf4 with the archived 4-bit chain's settings
+  (`archive/modal_gemma_sft.py`, `modal_gemma_dpo2.py`) and the LoRA trains on top (QLoRA);
+  stage 2 holds the policy and reference adapters over one quantized base, as that chain
+  did; vLLM quantizes the weights in flight for serving. Training arithmetic, filters,
+  pairing rules and hyperparameters are unchanged; only the base precision is. A missing
+  `bitsandbytes` stops the run by name; nothing falls back to bf16. *Precision caveat:* the
+  4-bit base costs quality. At 31B the bf16 chain of record scored higher than the archived
+  4-bit chain on the held-out set, paired: +0.088 [+0.008, +0.176] after stage 1 and +0.090
+  [+0.017, +0.164] after stage 2, with the two-stage effect present in both. The figures come
+  from the data release, not the paper: `uv run python -m jaleesweights.score --extra-judgments
+  data/reference/judgments_eval_gemma.jsonl --extra-paired gemma-sft-guided-bf16:gemma-sft-guided
+  --extra-paired gemma-sft-dpo-bf16:gemma-sft-dpo`. 4-bit serving also changes the sampled
+  text, so keep one profile for all arms of a run: base, stage 1 and stage 2 are then compared
+  like for like.
+- **48 GB+ (bf16, the recipe of record's precision).** The commands as written. On a 48 GB
+  card reduce collection's `--max-model-len`; that changes throughput only.
+
+Do not mix profiles within a run: a stage-1 adapter trained over a 4-bit base is the
+reference for a stage-2 run over the same 4-bit base.
 
 Because a smaller Gemma model is not a subject of the benchmark main run, the demonstration
 collects its own teacher answers first and then follows the Inkling-Small order. Use a
@@ -269,14 +293,18 @@ different `--subject` for each pass (the Opus judgments of all passes share one 
 **Run this first** on the GPU machine, before anything above:
 
 ```bash
-uv run python -m jaleesweights.local.gemma_sft --data data/reference/sft_train_small.jsonl --run smoke --limit 4
+# 24 GB profile
+uv run python -m jaleesweights.local.gemma_sft --data data/reference/sft_train_small.jsonl --run smoke --limit 4 --load-in-4bit
 uv run python -m jaleesweights.local.gemma_collect --inputs data/reference/eval_inputs_gemma.jsonl \
-    --adapter data/runs/smoke/gemma-sft/adapter --subject smoke --run smoke --limit 5
+    --adapter data/runs/smoke/gemma-sft/adapter --subject smoke --run smoke --limit 5 --load-in-4bit
+# 48 GB+ profile: the same two commands without --load-in-4bit
 ```
 
 The first loads the model, builds the adapter, runs the start-up parity check and writes an
 adapter from four examples; the second serves the model with that adapter through vLLM on
 five conversations. Together they exercise everything the demonstration needs, in minutes.
+Every command prints a preflight naming the precision and a *derived* memory estimate and
+exits before anything loads under `--dry-run`, so the flags can be checked on any machine.
 
 **Hardware.** Figures marked *measured* come from the paper's 31B runs on Modal; figures
 marked *derived* follow from the model's size and the scripts' settings. Nothing below was
@@ -286,6 +314,8 @@ measured on a non-Modal machine.
   memory**, about 15 minutes. Stage-2 training on one B200: 63 steps (peak not in the local
   records). Held-out collection on one H200 with vLLM: 420 two-turn conversations in about
   6 minutes; sampling: 1,680 conversations in one pass.
+- *Measured, 31B, the archived 4-bit chain.* Stage-1 and stage-2 training on one H200 with
+  the nf4 base: **33 GB peak**, about 40 minutes and about 2 hours.
 - *Derived.* bf16 needs two bytes per parameter for the weights alone. Training adds little
   on top (66 GB measured against 62 GB of 31B weights): LoRA rank 32, one conversation per
   forward pass with a batch of 8 by gradient accumulation, conversations capped at 16,384
@@ -293,18 +323,32 @@ measured on a non-Modal machine.
   Serving as the scripts set it (bf16, LoRA, a 32,768-token window, 92% of memory) needs the
   weights plus room for the key-value cache; on a smaller card reduce `--max-model-len` or
   `--gpu-memory-utilization` — results do not change, throughput does.
+- *Derived, the 24 GB profile.* nf4 needs half a byte per parameter for the quantized
+  weights: ~6 GB for 12B. The training peak scales from the 31B 4-bit run's measured 33 GB
+  over ~16 GB of nf4 weights (the embeddings stay unquantized and `prepare_model_for_kbit_training`
+  casts the small non-quantized parameters to fp32), giving **~13 GB for 12B**, which fits a
+  24 GB card with room. Serving holds ~6 GB of quantized weights plus the embeddings; at 92%
+  of 24 GB that leaves roughly 14 GB for the key-value cache, so the default 32,768-token
+  window is kept. If vLLM reports too little cache for one full-length sequence, lower
+  `--max-model-len` (throughput only). Unlike the window, the 4-bit base changes results: see
+  the precision caveat above. The preflight prints these figures for the model you name.
 
-| Model | bf16 weights | Training fits on | Serving as set fits on | Notes |
+| Model | Weights, bf16 / nf4 | Training fits on | Serving as set fits on | Notes |
 |---|---|---|---|---|
-| gemma-4-12B-it (default) | ~24 GB | one 48 GB or 80 GB GPU with room; a 32 GB card is marginal | 80 GB comfortably; 48 GB with a smaller window | same dense layout as the paper's 31B: the code and LoRA targets carry over with only the model name changed |
-| gemma-4-E4B-it | ~8 GB | one 24 GB consumer GPU | 24 GB | weakest starting point; different internal layout — check LoRA targets and vLLM support before relying on it |
-| gemma-4-31B-it (the paper's) | ~62 GB | one 80 GB GPU, thin headroom (66 GB measured) | 141 GB+; on 80 GB only with a reduced window | the paper's model; the main-run teacher data could be reused via `sft_guided` |
+| gemma-4-12B-it (default) | ~24 GB / ~6 GB | **24 GB with `--load-in-4bit`** (~13 GB derived); bf16: one 48 GB or 80 GB GPU with room, a 32 GB card marginal | **24 GB with `--load-in-4bit`** (derived); bf16: 80 GB comfortably, 48 GB with a smaller window | same dense layout as the paper's 31B: the code and LoRA targets carry over with only the model name changed |
+| gemma-4-E4B-it | ~8 GB / ~2 GB | one 24 GB consumer GPU in bf16 | 24 GB | weakest starting point; different internal layout — check LoRA targets and vLLM support before relying on it |
+| gemma-4-31B-it (the paper's) | ~62 GB / ~16 GB | bf16: one 80 GB GPU, thin headroom (66 GB measured); `--load-in-4bit`: 48 GB (33 GB measured on an H200) | 141 GB+; on 80 GB only with a reduced window; `--load-in-4bit` untested in vLLM at this size | the paper's model; the main-run teacher data could be reused via `sft_guided` |
 
 Software the Modal runs used, untested locally: Linux, an NVIDIA driver supporting CUDA
 12.8 (the B200 needs it; Hopper and Ampere cards work with the same stack), Python 3.12,
 `torch` 2.7+, `transformers` 4.53+, `peft` 0.15+, `accelerate` 1.3+, vLLM 0.10+ (which
-compiles Gemma-4 kernels at start-up and needs the CUDA toolkit present). Disk: the weights
-in the Hugging Face cache (two bytes per parameter) plus adapters of a few hundred MB.
+compiles Gemma-4 kernels at start-up and needs the CUDA toolkit present), and for the 24 GB
+profile `bitsandbytes` 0.45+ (what the archived 4-bit chain pinned; vLLM uses the same
+package to quantize in flight, and from vLLM 0.28 needs the `vllm-bnb-plugin` package too —
+the lock carries it for Python 3.14, and collection stops by name when a vLLM lacks both).
+Disk: the weights in the Hugging Face cache (two bytes per
+parameter — the bf16 checkpoint is downloaded under both profiles) plus adapters of a few
+hundred MB.
 
 ## Costs
 
@@ -351,8 +395,9 @@ Not verified here, because it cannot be:
 - Any Modal launch, including creating the volume and secret in a fresh account and
   building the images. The first thing to run is the stage-1 smoke test (`--limit 4`).
 - Any Tinker training or collection against a live account.
-- The local demonstration on a GPU: loading a model, training, serving. Run its smoke tests
-  first (above).
+- The local demonstration on a GPU: loading a model, training, serving, under either
+  profile. Run its smoke tests first (above); on a 24 GB card the first thing to run is the
+  stage-1 smoke test with `--load-in-4bit`.
 - That the judge and base models are still served under the same ids (see below).
 
 ## Weights, judges, versions

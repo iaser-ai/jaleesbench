@@ -5,7 +5,9 @@ Two LoRA adapters over one copy of the base weights: "policy" (initialised from 
 adapter, trainable) and "ref" (the frozen stage-1 adapter). Settings of record: beta 0.1,
 lr 1e-5, 1 epoch, batch 8 by gradient accumulation, seed 3446; the selective-head parity
 check and the policy == reference-at-init check at start-up; full-state checkpoints every
-25 optimizer steps and --resume-from.
+25 optimizer steps and --resume-from. --load-in-4bit (the 24 GB profile) holds both adapters
+over one nf4-quantized base, as the archived chain did (archive/modal_gemma_dpo2.py); the
+stage-1 adapter must then come from a --load-in-4bit stage-1 run.
 
     uv run python -m jaleesweights.local.gemma_dpo --pairs data/runs/demo/pairs.jsonl \\
         --sft-adapter data/runs/demo/gemma-sft/adapter --run demo
@@ -16,8 +18,8 @@ from pathlib import Path
 import typer
 
 from .. import paths
-from ._common import (DEFAULT_MODEL, MAX_TOKENS_PER_CONVERSATION, check_resume_dir, count_rows,
-                      make_render, preflight, read_jsonl, require, torch_dtype)
+from ._common import (DEFAULT_MODEL, MAX_TOKENS_PER_CONVERSATION, bnb_4bit_config, check_resume_dir,
+                      count_rows, make_render, precision_line, preflight, read_jsonl, require, torch_dtype)
 
 app = typer.Typer(add_completion=False, help=__doc__)
 
@@ -25,11 +27,13 @@ CKPT_EVERY = 25  # optimizer steps between full-state checkpoints
 
 
 def train(pairs_path: Path, sft_adapter: Path, out: Path, model_name: str, dtype_name: str,
-          batch: int, beta: float, lr: float, seed: int, limit: int, resume_from: Path | None) -> None:
+          load_in_4bit: bool, batch: int, beta: float, lr: float, seed: int, limit: int,
+          resume_from: Path | None) -> None:
     import json
     import random
     import shutil
 
+    quant = bnb_4bit_config(dtype_name) if load_in_4bit else None  # first: names bitsandbytes if absent
     torch = require("torch")
     F = require("torch.nn.functional")
     peft = require("peft")
@@ -67,10 +71,16 @@ def train(pairs_path: Path, sft_adapter: Path, out: Path, model_name: str, dtype
     loader = AutoModelForImageTextToText if multimodal else AutoModelForCausalLM
     base_model = loader.from_pretrained(
         model_name, torch_dtype=dtype, device_map="auto", attn_implementation="sdpa",
-    )  # no quantization
+        quantization_config=quant,  # None: no quantization
+    )
     base_model.config.use_cache = False
-    base_model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
-    base_model.enable_input_require_grads()
+    if quant is not None:  # the archived chain's set-up: checkpointing + input grads + fp32 casts
+        base_model = peft.prepare_model_for_kbit_training(
+            base_model, use_gradient_checkpointing=True,
+            gradient_checkpointing_kwargs={"use_reentrant": False})
+    else:
+        base_model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
+        base_model.enable_input_require_grads()
     policy_src = str(resume_dir / "ckpt_adapter" / "policy") if resuming else str(sft_adapter)
     model = PeftModel.from_pretrained(base_model, policy_src,
                                       adapter_name="policy", is_trainable=True)
@@ -216,7 +226,7 @@ def train(pairs_path: Path, sft_adapter: Path, out: Path, model_name: str, dtype
         "model": model_name, "pairs": str(pairs_path), "n_pairs": len(data), "batch": batch,
         "beta": beta, "lr": lr, "epochs": 1, "lora_r": 32, "seed": seed,
         "reference": f"sft:{sft_adapter}", "init": f"sft:{sft_adapter}",
-        "quant": f"{dtype_name} (no quantization)",
+        "quant": f"nf4-4bit {dtype_name}-compute" if quant is not None else f"{dtype_name} (no quantization)",
         "masking": "assistant-tokens-only (tml_v0 parity)",
         "checkpoint_every_steps": CKPT_EVERY, "resumable": True,
     }, indent=2))
@@ -233,7 +243,8 @@ def main(
     run: str = typer.Option("new-run", help="Run directory name under data/runs/ for the outputs."),
     out: Path | None = typer.Option(None, help="Output directory (default: <run dir>/gemma-sft-dpo)."),
     model: str = typer.Option(DEFAULT_MODEL, help="Gemma-family model id (the adapter must belong to it)."),
-    dtype: str = typer.Option("bf16", help="Weights precision: bf16 (recipe of record), fp16 or fp32."),
+    dtype: str = typer.Option("bf16", help="Weights precision: bf16 (recipe of record), fp16 or fp32; the compute precision under --load-in-4bit."),
+    load_in_4bit: bool = typer.Option(False, "--load-in-4bit", help="Quantize the base to nf4 (QLoRA, the archived chain's settings): the 24 GB profile. Needs bitsandbytes."),
     batch: int = typer.Option(8, help="Pairs per optimizer step, by gradient accumulation."),
     beta: float = typer.Option(0.1, help="DPO beta (setting of record 0.1)."),
     lr: float = typer.Option(1e-5, help="Learning rate (setting of record 1e-5)."),
@@ -252,10 +263,11 @@ def main(
     if preflight(f"local stage-2 DPO of {model} from {sft_adapter}",
                  [f"pairs {pairs}: {n}" + (f", using the first {limit}" if limit else ""),
                   f"{dtype}, beta {beta:g}, lr {lr:g}, 1 epoch, batch {batch} (~{steps} steps), seed {seed}",
+                  precision_line(model, dtype, load_in_4bit, training=True),
                   f"outputs -> {out}" + (f"; resuming from {resume_from}" if resume_from else "")],
                  dry_run):
         return
-    train(pairs, sft_adapter, out, model, dtype, batch, beta, lr, seed, limit, resume_from)
+    train(pairs, sft_adapter, out, model, dtype, load_in_4bit, batch, beta, lr, seed, limit, resume_from)
 
 
 if __name__ == "__main__":
