@@ -1,7 +1,7 @@
 id: '38'
 title: ci-run-the-jaleesbench-and-jal
 protocol: air
-phase: implement
+phase: pr
 plan_phases: []
 current_plan_phase: null
 gates:
@@ -11,4 +11,4 @@ iteration: 1
 build_complete: false
 history: []
 started_at: '2026-10-03T22:45:18.315Z'
-updated_at: '2026-10-03T22:45:18.316Z'
+updated_at: '2026-10-03T22:46:52.644Z'
