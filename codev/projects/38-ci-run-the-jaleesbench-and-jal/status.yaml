@@ -1,0 +1,14 @@
+id: '38'
+title: ci-run-the-jaleesbench-and-jal
+protocol: air
+phase: implement
+plan_phases: []
+current_plan_phase: null
+gates:
+  pr:
+    status: pending
+iteration: 1
+build_complete: false
+history: []
+started_at: '2026-10-03T22:45:18.315Z'
+updated_at: '2026-10-03T22:45:18.316Z'
