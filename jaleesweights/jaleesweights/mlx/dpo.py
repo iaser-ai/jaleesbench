@@ -88,7 +88,8 @@ def train(pairs_path: Path, sft_adapter: Path, out: Path, model_name: str, batch
 
     # The vocabulary is 262k wide: a float32 copy of a whole sitting's logits, kept for the
     # backward pass, is most of the memory. Checkpointing recomputes it a chunk at a time.
-    head_nll = mx.checkpoint(lambda logits, targets: nn.losses.cross_entropy(logits.astype(mx.float32), targets, reduction="sum"))
+    def head_nll(logits, targets):
+        return mx.checkpoint(lambda lg: nn.losses.cross_entropy(lg.astype(mx.float32), targets, reduction="sum"))(logits)
 
     def logp(ids, mask):
         """Sum of the log-probabilities of the sitting's assistant tokens, in float32 (the
