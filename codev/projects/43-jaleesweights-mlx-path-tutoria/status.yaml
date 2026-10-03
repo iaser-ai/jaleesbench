@@ -1,0 +1,21 @@
+id: '43'
+title: jaleesweights-mlx-path-tutoria
+protocol: air
+phase: pr
+plan_phases: []
+current_plan_phase: null
+gates:
+  pr:
+    status: pending
+    requested_at: '2026-10-03T03:01:48.740Z'
+iteration: 1
+build_complete: false
+history: []
+started_at: '2026-10-03T01:18:55.192Z'
+updated_at: '2026-10-03T03:01:48.742Z'
+pr_history:
+  - phase: implement
+    pr_number: 44
+    branch: builder/air-43
+    created_at: '2026-10-03T03:00:32.803Z'
+pr_ready_for_human: true

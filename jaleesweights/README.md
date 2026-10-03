@@ -10,6 +10,10 @@ Three paths:
 2. **Inkling-Small through the Tinker API** — the paper's second model, exactly as run.
 3. **A local demonstration** — the same recipe on a smaller Gemma-family model on one GPU
    you own. Its numbers are not the paper's and are not expected to match them.
+4. **An Apple Silicon tutorial** — stage 1 on a Mac with MLX, before and after on one
+   conversation, with the actual outputs: [`TUTORIAL.md`](TUTORIAL.md). It runs Gemma-4 E4B
+   in minutes; the 12B MLX conversions are a model type (`gemma4_unified`) no released
+   `mlx-lm` loads yet, and the tutorial says what to retry when one does.
 
 Everything that costs nothing — the training-set builders, the pair builder, the scoring
 step — runs on a laptop against the released data and reproduces the paper's main results
@@ -33,6 +37,7 @@ Contents: [What you need](#what-you-need) · [Install](#install) · [Get the dat
 | **Modal** (`modal token new`) | the Gemma path of record: one B200 for training, one H200 for serving | Modal's own config |
 | **Hugging Face** | nothing: the Gemma weights are ungated. The Modal drivers reference a secret named `huggingface` that must exist; its token may be empty | Modal secret |
 | **A Linux machine with one NVIDIA GPU** | the local demonstration only: 24 GB with the 4-bit profile, 48 GB+ in bf16 (see its hardware section) | — |
+| **An Apple Silicon Mac** | the MLX tutorial only (`TUTORIAL.md`): 16 GB for its model, measured on 64 GB | — |
 
 Each command asks only for the keys it uses and names a missing one; no key is ever printed.
 Put keys in a `.env` at the repository root (`KEY=value`, one per line, no quotes — values
@@ -65,6 +70,7 @@ vLLM, `bitsandbytes` (the 24 GB profile's 4-bit quantization), plus the same two
 
 ```bash
 uv sync --group gpu          # on the GPU machine
+uv sync --group mlx          # on an Apple Silicon Mac, for TUTORIAL.md (mlx-lm; macOS only)
 ```
 
 The Modal container images pin the same versions (`jaleesweights/jaleesweights/modal/_config.py`).
