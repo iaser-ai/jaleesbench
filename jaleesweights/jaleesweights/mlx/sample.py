@@ -161,6 +161,9 @@ def main(
                   precision_line(model), ceiling_line(memory_limit_gb), f"subject {subject} -> {out}"],
                  dry_run):
         return
+    if not n_todo:
+        typer.echo("nothing to do: every cell is already sampled")
+        return
     sample(rows, done, out, settings, memory_limit_gb)
 
 

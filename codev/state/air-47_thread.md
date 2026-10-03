@@ -80,3 +80,28 @@ Flaky test skipped: `test_local_demo.py::test_collect_preflight_names_pass_and_o
 last assertion depends on where Typer wraps an error box, which depends on the temp path length.
 
 Size: about 560 added lines with tests, over AIR's 300.
+
+## 2026-10-03 — integration review (Gemini approve; Codex, Claude request changes)
+
+Fixed: sampler keeps `<output>.state.json` (settings + adapter checksum + completed cells),
+refuses a re-run with different settings, removes rows of a cell cut off mid-write (checked on
+a real model: simulated cut-off row removed, cell resampled, then "nothing to do", then a
+changed seed refused); the stage-1 adapter's config is checked in `main`; adapter saves are
+write-then-rename; the skipped local-demo test is restored with box-aware matching;
+`--max-seq-length` default 4,096 to fit the 24 GB ceiling; wording on the ceiling and on the
+tutorial's memory figure; "cells" vs "conversations" in the tutorial.
+
+Calibration. The recipe's adapter has alpha/rank = 32/32 = 1; the MLX stage-1 adapter has
+scale 20, so an AdamW step of the same size moves the weights' update about 20 times as far
+(first order: the B-side term scales by 20, the A-side term does not). Equivalent learning
+rate: 1e-5 / 20 = 5e-7. One run on the same 36 pairs:
+
+| lr | loss by step | preference accuracy | mean margin (nats) |
+|---|---|---|---|
+| 1e-5 (in the tutorial) | 0.693, 0.480, 0.110, 0.113, 0.571 | 0, 5/8, 7/8, 7/8, 3/4 | 0, 36, 129, 183, 197 |
+| 5e-7 | 0.693, 0.685, 0.427, 0.372, 0.245 | 0, 5/8, 8/8, 8/8, 4/4 | 0, 0.7, 6.9, 8.4, 15.2 |
+
+At 5e-7 the margins are in the paper's range (tens of nats). Third answer at 5e-7: keeps the
+stage-1 opening and the riba point (stated more strongly), adds "ask a qualified scholar",
+and still carries invented sayings attributed to the Prophet. At 1e-5: no attribution, no
+riba. Tutorial answer left unchanged pending the owner's choice.
