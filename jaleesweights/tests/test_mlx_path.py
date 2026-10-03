@@ -1,5 +1,5 @@
 """The MLX path on a machine without mlx: usage, preflight, the named missing-dependency
-message, the two-prefixes-per-conversation data preparation and the length guard."""
+message, the free-text question, the two-prefixes-per-conversation data preparation and the length guard."""
 
 import builtins
 import json
@@ -7,6 +7,7 @@ import py_compile
 import re
 import subprocess
 import sys
+import types
 from pathlib import Path
 
 import pytest
@@ -14,7 +15,7 @@ import typer
 from typer.testing import CliRunner
 
 from jaleesweights import paths
-from jaleesweights.mlx import _common, scenario, sft
+from jaleesweights.mlx import _common, ask, scenario, sft
 
 runner = CliRunner()
 PROJECT = Path(__file__).resolve().parents[1]
@@ -47,7 +48,7 @@ def isolated(tmp_path, monkeypatch):
     return tmp_path
 
 
-@pytest.mark.parametrize("name", ["sft", "scenario"])
+@pytest.mark.parametrize("name", ["sft", "scenario", "ask"])
 def test_compiles_and_prints_usage(name):
     py_compile.compile(str(PROJECT / "jaleesweights" / "mlx" / f"{name}.py"), doraise=True)
     out = subprocess.run([sys.executable, "-m", f"jaleesweights.mlx.{name}", "--help"],
@@ -115,16 +116,72 @@ def test_scenario_preflight_dry_run_and_guards(isolated):
     assert res.exit_code != 0 and "already exists" in plain(res)
 
 
-def test_missing_mlx_is_named(monkeypatch):
+def test_ask_preflight_dry_run_and_guards(tmp_path):
+    res = runner.invoke(ask.app, ["Should I take the job?", "--dry-run"])
+    assert res.exit_code == 0, res.output
+    assert "one question with MLX from mlx-community/gemma-4-E4B-it-4bit (base)" in res.output
+    assert "question: Should I take the job?" in res.output
+    assert "thinking off, greedy decoding, up to 2048 tokens" in res.output and "dry run" in res.output
+    res = runner.invoke(ask.app, ["Should I take the job?", "--adapter", str(tmp_path), "--dry-run"])
+    assert res.exit_code != 0 and "not an mlx_lm adapter directory" in plain(res)
+    (tmp_path / "adapters.safetensors").write_bytes(b"")
+    res = runner.invoke(ask.app, ["Should I take the job?", "--adapter", str(tmp_path), "--dry-run"])
+    assert res.exit_code == 0 and f"+ adapter {tmp_path}" in plain(res)
+    res = runner.invoke(ask.app, ["  ", "--dry-run"])
+    assert res.exit_code != 0 and "the question is empty" in plain(res)
+    assert runner.invoke(ask.app, ["--dry-run"]).exit_code != 0  # the question is required
+    res = runner.invoke(ask.app, ["Should I take the job?", "--first", "230", "--dry-run"])
+    assert res.exit_code == 0 and "the first 230 tokens only" in res.output
+    res = runner.invoke(ask.app, ["Should I take the job?", "--first", "-1", "--dry-run"])
+    assert res.exit_code != 0 and "--first must be 0 or a positive number" in plain(res)
+
+
+def test_ask_prints_a_reply_that_hits_the_cap_then_fails(monkeypatch, capsys):
+    class Tok:
+        def apply_chat_template(self, turns, add_generation_prompt, enable_thinking):
+            assert enable_thinking is False and [t["role"] for t in turns] == ["user"]
+            return [0]
+
+        def encode(self, text, add_special_tokens):
+            return text.split()
+    fake = types.SimpleNamespace(load=lambda name, adapter_path: (None, Tok()),
+                                 generate=lambda model, tok, prompt, max_tokens: "he said " * (max_tokens // 2))
+    core = types.SimpleNamespace(get_active_memory=lambda: 0, get_peak_memory=lambda: 0)
+    monkeypatch.setattr(ask, "require_mlx", lambda: fake)
+    monkeypatch.setitem(sys.modules, "mlx", types.SimpleNamespace(core=core))
+    monkeypatch.setitem(sys.modules, "mlx.core", core)
+    with pytest.raises(SystemExit, match="reply hit --max-tokens 8 and is cut off above"):
+        ask.ask("m", None, "q", 8)
+    assert "he said he said" in capsys.readouterr().out  # shown, not hidden
+    ask.ask("m", None, "q", 9)  # a reply under the cap ends normally
+    capsys.readouterr()
+    ask.ask("m", None, "q", 2048, first=4)  # a deliberate cut is not an error
+    assert "he said he said …\n" in capsys.readouterr().out
+    ask.ask("m", None, "q", 2048, first=5)  # an answer shorter than --first is printed whole
+    assert "…" not in capsys.readouterr().out
+
+
+def no_mlx(monkeypatch):
     real_import = builtins.__import__
 
-    def no_mlx(name, *a, **k):
+    def refuse(name, *a, **k):
         if name.startswith("mlx"):
             raise ImportError("No module named 'mlx_lm'")
         return real_import(name, *a, **k)
-    monkeypatch.setattr(builtins, "__import__", no_mlx)
+    monkeypatch.setattr(builtins, "__import__", refuse)
+
+
+def test_missing_mlx_is_named(monkeypatch):
+    no_mlx(monkeypatch)
     with pytest.raises(SystemExit, match="missing MLX dependency: mlx_lm .*uv sync --group mlx"):
         _common.require_mlx()
+
+
+def test_ask_without_mlx_stops_with_the_named_message(monkeypatch):
+    no_mlx(monkeypatch)
+    monkeypatch.delitem(sys.modules, "mlx_lm", raising=False)
+    res = runner.invoke(ask.app, ["Should I take the job?"])
+    assert res.exit_code != 0 and "missing MLX dependency: mlx_lm" in str(res.exception)
 
 
 def test_precision_line_reads_the_id_and_sizes_local_weights(tmp_path):

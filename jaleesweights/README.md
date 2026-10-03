@@ -10,10 +10,9 @@ Three paths:
 2. **Inkling-Small through the Tinker API** — the paper's second model, exactly as run.
 3. **A local demonstration** — the same recipe on a smaller Gemma-family model on one GPU
    you own. Its numbers are not the paper's and are not expected to match them.
-4. **An Apple Silicon tutorial** — stage 1 on a Mac with MLX, before and after on one
-   conversation, with the actual outputs: [`TUTORIAL.md`](TUTORIAL.md). It runs Gemma-4 E4B
-   in minutes; the 12B MLX conversions are a model type (`gemma4_unified`) no released
-   `mlx-lm` loads yet, and the tutorial says what to retry when one does.
+4. **An Apple Silicon tutorial** — stage 1 on a Mac with MLX, one question asked before and
+   after, with the actual outputs: [`TUTORIAL.md`](TUTORIAL.md). It runs Gemma-4 E4B and
+   shows the workflow only; its model is not one to consult.
 
 Everything that costs nothing — the training-set builders, the pair builder, the scoring
 step — runs on a laptop against the released data and reproduces the paper's main results
