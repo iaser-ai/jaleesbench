@@ -7,10 +7,13 @@ tokens only, lr 5e-5, 2 epochs, batch 8 by gradient accumulation, seed 3446, bf1
 no quantization, gradient checkpointing, the selective-head parity check at start-up,
 full-state checkpoints every 100 optimizer steps and --resume-from.
 
-Default model: google/gemma-4-12B-it (the owner's default for the demonstration). The 31B
-model of the paper fits an 80 GB GPU with thin headroom (measured 66 GB peak).
+--load-in-4bit (the 24 GB profile) quantizes the base to nf4 with the archived 4-bit chain's
+settings (archive/modal_gemma_sft.py) and trains the same LoRA on top (QLoRA); everything
+else is unchanged. Default model: google/gemma-4-12B-it (the owner's default for the
+demonstration). The 31B model of the paper fits an 80 GB GPU with thin headroom (measured
+66 GB peak) in bf16.
 
-Smoke test (first thing to run on a GPU machine):
+Smoke test (first thing to run on a GPU machine; add --load-in-4bit on a 24 GB card):
     uv run python -m jaleesweights.local.gemma_sft --data data/runs/demo/sft_train_small.jsonl --run demo --limit 4
 Full:
     uv run python -m jaleesweights.local.gemma_sft --data data/runs/demo/sft_train_small.jsonl --run demo
@@ -21,19 +24,20 @@ from pathlib import Path
 import typer
 
 from .. import paths
-from ._common import (DEFAULT_MODEL, MAX_TOKENS_PER_CONVERSATION, check_resume_dir, count_rows,
-                      make_render, preflight, read_jsonl, require, torch_dtype)
+from ._common import (DEFAULT_MODEL, MAX_TOKENS_PER_CONVERSATION, bnb_4bit_config, check_resume_dir,
+                      count_rows, make_render, precision_line, preflight, read_jsonl, require, torch_dtype)
 
 app = typer.Typer(add_completion=False, help=__doc__)
 
 CKPT_EVERY = 100  # optimizer steps between full-state checkpoints
 
 
-def train(data_path: Path, out: Path, model_name: str, dtype_name: str, batch: int, lr: float,
-          epochs: int, seed: int, limit: int, resume_from: Path | None) -> None:
+def train(data_path: Path, out: Path, model_name: str, dtype_name: str, load_in_4bit: bool,
+          batch: int, lr: float, epochs: int, seed: int, limit: int, resume_from: Path | None) -> None:
     import json
     import random
 
+    quant = bnb_4bit_config(dtype_name) if load_in_4bit else None  # first: names bitsandbytes if absent
     torch = require("torch")
     peft = require("peft")
     transformers = require("transformers")
@@ -68,10 +72,16 @@ def train(data_path: Path, out: Path, model_name: str, dtype_name: str, batch: i
     loader = AutoModelForImageTextToText if multimodal else AutoModelForCausalLM
     base_model = loader.from_pretrained(
         model_name, torch_dtype=dtype, device_map="auto", attn_implementation="sdpa",
-    )  # no quantization
+        quantization_config=quant,  # None: no quantization
+    )
     base_model.config.use_cache = False
-    base_model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
-    base_model.enable_input_require_grads()  # so grads flow to LoRA through the frozen base under GC
+    if quant is not None:  # the archived chain's set-up: checkpointing + input grads + fp32 casts
+        base_model = peft.prepare_model_for_kbit_training(
+            base_model, use_gradient_checkpointing=True,
+            gradient_checkpointing_kwargs={"use_reentrant": False})
+    else:
+        base_model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
+        base_model.enable_input_require_grads()  # so grads flow to LoRA through the frozen base under GC
     proj = "(q_proj|k_proj|v_proj|o_proj|gate_proj|up_proj|down_proj)"
     if resuming:
         model = PeftModel.from_pretrained(base_model, str(resume_dir / "adapter"), is_trainable=True)
@@ -183,7 +193,7 @@ def train(data_path: Path, out: Path, model_name: str, dtype_name: str, batch: i
         "model": model_name, "data": str(data_path), "n_examples": len(data),
         "batch": batch, "lr": lr, "epochs": epochs, "lora_r": 32, "seed": seed,
         "objective": "masked token-mean NLL (SL-CAI context distillation)",
-        "quant": f"{dtype_name} (no quantization)", "masking": "assistant-tokens-only (tml_v0 parity)",
+        "quant": f"nf4-4bit {dtype_name}-compute" if quant is not None else f"{dtype_name} (no quantization)", "masking": "assistant-tokens-only (tml_v0 parity)",
         "checkpoint_every_steps": CKPT_EVERY, "resumable": True,
     }, indent=2))
     if state_file.exists():
@@ -197,7 +207,8 @@ def main(
     run: str = typer.Option("new-run", help="Run directory name under data/runs/ for the outputs."),
     out: Path | None = typer.Option(None, help="Output directory (default: <run dir>/gemma-sft)."),
     model: str = typer.Option(DEFAULT_MODEL, help="Gemma-family model id."),
-    dtype: str = typer.Option("bf16", help="Weights precision: bf16 (recipe of record), fp16 or fp32."),
+    dtype: str = typer.Option("bf16", help="Weights precision: bf16 (recipe of record), fp16 or fp32; the compute precision under --load-in-4bit."),
+    load_in_4bit: bool = typer.Option(False, "--load-in-4bit", help="Quantize the base to nf4 (QLoRA, the archived chain's settings): the 24 GB profile. Needs bitsandbytes."),
     batch: int = typer.Option(8, help="Conversations per optimizer step, by gradient accumulation."),
     lr: float = typer.Option(5e-5, help="Learning rate (setting of record 5e-5)."),
     epochs: int = typer.Option(2, help="Epochs (setting of record 2)."),
@@ -214,10 +225,11 @@ def main(
     if preflight(f"local stage-1 SFT of {model}",
                  [f"data {data}: {n} conversations" + (f", using the first {limit}" if limit else ""),
                   f"{dtype}, LoRA rank 32, lr {lr:g}, {epochs} epoch(s), batch {batch} (~{steps} steps), seed {seed}",
+                  precision_line(model, dtype, load_in_4bit, training=True),
                   f"outputs -> {out}" + (f"; resuming from {resume_from}" if resume_from else "")],
                  dry_run):
         return
-    train(data, out, model, dtype, batch, lr, epochs, seed, limit, resume_from)
+    train(data, out, model, dtype, load_in_4bit, batch, lr, epochs, seed, limit, resume_from)
 
 
 if __name__ == "__main__":

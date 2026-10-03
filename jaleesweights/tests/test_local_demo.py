@@ -92,6 +92,62 @@ def test_collect_preflight_names_pass_and_output(isolated, monkeypatch):
     assert res.exit_code != 0 and "conversation-inputs file" in res.output.replace("\n", "")
 
 
+@pytest.mark.parametrize("name", list(COMMANDS))
+def test_usage_offers_the_24_gb_profile(name):
+    out = subprocess.run([sys.executable, "-m", f"jaleesweights.local.{name}", "--help"],
+                         cwd=PROJECT, capture_output=True, text=True)
+    assert out.returncode == 0 and "--load-in-4bit" in out.stdout
+
+
+def test_preflight_prints_precision_and_the_derived_estimate(isolated, monkeypatch):
+    data = write_jsonl(isolated / "sft.jsonl", [{"probe_id": "p", "pressure": "q", "turns": turns()}])
+    res = runner.invoke(gemma_sft.app, ["--data", str(data), "--run", "d", "--dry-run"])
+    assert res.exit_code == 0, res.output
+    assert "precision: bf16, no quantization; derived: weights ~24 GB, training peak ~26 GB" in res.output
+    res = runner.invoke(gemma_sft.app, ["--data", str(data), "--run", "d", "--load-in-4bit", "--dry-run"])
+    assert res.exit_code == 0, res.output
+    assert "precision: nf4 4-bit base (QLoRA), bf16 compute; derived: weights ~6 GB, training peak ~13 GB" in res.output
+    assert "dry run: stopping before anything loads" in res.output
+    pairs = write_jsonl(isolated / "pairs.jsonl", [{"probe_id": "p", "pressure": "q", "chosen_turns": turns(), "rejected_turns": turns()}])
+    adapter = isolated / "adapter"
+    adapter.mkdir()
+    (adapter / "adapter_config.json").write_text("{}")
+    res = runner.invoke(gemma_dpo.app, ["--pairs", str(pairs), "--sft-adapter", str(adapter), "--run", "d",
+                                        "--load-in-4bit", "--dtype", "bfloat16", "--dry-run"])
+    assert res.exit_code == 0, res.output
+    assert "precision: nf4 4-bit base (QLoRA), bf16 compute; derived: weights ~6 GB, training peak ~13 GB" in res.output
+    monkeypatch.setattr(paths, "GUIDED_PREFIX", write_jsonl(isolated / "guide.txt", []))
+    inputs = write_jsonl(isolated / "in.jsonl", [{"probe_id": "p", "pressure": "q", "turn1": "t", "pressure_text": "x"}])
+    res = runner.invoke(gemma_collect.app, ["--inputs", str(inputs), "--run", "d", "--load-in-4bit", "--dry-run"])
+    assert res.exit_code == 0, res.output
+    assert "precision: nf4 4-bit base (vLLM bitsandbytes, in flight), bf16 compute; derived: weights ~6 GB plus the key-value cache" in res.output
+    res = runner.invoke(gemma_collect.app, ["--inputs", str(inputs), "--run", "d", "--model", "org/other", "--dry-run"])
+    assert res.exit_code == 0, res.output
+    assert "derived: no estimate (unknown parameter count for org/other)" in res.output
+
+
+def test_derived_estimate_follows_the_measured_31b_peaks():
+    assert _common.precision_line("google/gemma-4-31B-it", "bf16", False, training=True).endswith(
+        "weights ~62 GB, training peak ~66 GB (scaled from the 31B bf16 run)")
+    assert _common.precision_line("google/gemma-4-31B-it", "bf16", True, training=True).endswith(
+        "weights ~16 GB, training peak ~33 GB (scaled from the 31B nf4 run)")
+    assert "weights ~48 GB" in _common.precision_line("google/gemma-4-12B-it", "fp32", False, training=True)
+    with pytest.raises(Exception, match="unknown dtype"):
+        _common.precision_line("google/gemma-4-12B-it", "int4", False, training=True)
+
+
+@pytest.mark.skipif(importlib.util.find_spec("bitsandbytes") is not None,
+                    reason="bitsandbytes installed; the real 4-bit run would start loading the model")
+def test_4bit_run_without_bitsandbytes_stops_naming_it(isolated, monkeypatch):
+    data = write_jsonl(isolated / "sft.jsonl", [{"probe_id": "p", "pressure": "q", "turns": turns()}])
+    res = runner.invoke(gemma_sft.app, ["--data", str(data), "--run", "d", "--limit", "1", "--load-in-4bit"])
+    assert res.exit_code != 0 and str(res.exception).startswith("missing GPU dependency: bitsandbytes")
+    monkeypatch.setattr(paths, "GUIDED_PREFIX", write_jsonl(isolated / "guide.txt", []))
+    inputs = write_jsonl(isolated / "in.jsonl", [{"probe_id": "p", "pressure": "q", "turn1": "t", "pressure_text": "x"}])
+    res = runner.invoke(gemma_collect.app, ["--inputs", str(inputs), "--run", "d", "--load-in-4bit"])
+    assert res.exit_code != 0 and str(res.exception).startswith("missing GPU dependency: bitsandbytes")
+
+
 def test_outputs_cannot_land_in_reference(isolated):
     (isolated / "reference").mkdir()
     data = write_jsonl(isolated / "sft.jsonl", [{"probe_id": "p", "pressure": "q", "turns": turns()}])
