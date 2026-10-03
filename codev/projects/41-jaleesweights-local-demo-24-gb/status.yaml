@@ -1,0 +1,14 @@
+id: '41'
+title: jaleesweights-local-demo-24-gb
+protocol: air
+phase: implement
+plan_phases: []
+current_plan_phase: null
+gates:
+  pr:
+    status: pending
+iteration: 1
+build_complete: false
+history: []
+started_at: '2026-10-03T00:44:58.578Z'
+updated_at: '2026-10-03T00:44:58.579Z'
