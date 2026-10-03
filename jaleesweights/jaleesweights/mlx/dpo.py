@@ -30,6 +30,8 @@ from ._common import DEFAULT_MODEL, cap_memory, ceiling_line, precision_line, pr
 
 app = typer.Typer(add_completion=False, help=__doc__)
 
+HEAD_CHUNK = 256  # assistant positions per float32 slice of the vocabulary logits
+
 
 def dpo_terms(pol_c: float, pol_r: float, ref_c: float, ref_r: float, beta: float) -> tuple[float, float, float]:
     """One pair's loss, its unscaled margin, and the gradient weight: d loss / d pol_r = coef,
@@ -84,12 +86,16 @@ def train(pairs_path: Path, sft_adapter: Path, out: Path, model_name: str, batch
         data.append(sides)
     print(f"{len(data)} pairs from {pairs_path}, longest sitting {max(len(ids) for d in data for ids, _ in d)} tokens", flush=True)
 
+    # The vocabulary is 262k wide: a float32 copy of a whole sitting's logits, kept for the
+    # backward pass, is most of the memory. Checkpointing recomputes it a chunk at a time.
+    head_nll = mx.checkpoint(lambda logits, targets: nn.losses.cross_entropy(logits.astype(mx.float32), targets, reduction="sum"))
+
     def logp(ids, mask):
         """Sum of the log-probabilities of the sitting's assistant tokens, in float32 (the
         model computes in bf16, too coarse to sum a thousand terms in)."""
         at = mx.array([i for i in range(len(ids) - 1) if mask[i + 1]])
-        logits = model(mx.array([ids[:-1]]))[0][at].astype(mx.float32)
-        return -nn.losses.cross_entropy(logits, mx.array(ids)[at + 1], reduction="sum")
+        logits, targets = model(mx.array([ids[:-1]]))[0], mx.array(ids)[at + 1]
+        return -sum(head_nll(logits[at[s:s + HEAD_CHUNK]], targets[s:s + HEAD_CHUNK]) for s in range(0, len(at), HEAD_CHUNK))
 
     grad_logp = nn.value_and_grad(model, logp)
 
