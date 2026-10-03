@@ -1,0 +1,33 @@
+name: Python tests
+
+# Runs the two offline test suites. Both need no keys and no downloaded data.
+# jaleesweights installs jaleesbench editable from this clone, so its suite also
+# catches a benchmark change that breaks the fine-tuning package.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pytest:
+    name: ${{ matrix.project }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [jaleesbench, jaleesweights]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: ${{ matrix.project }}/uv.lock
+      - run: uv run --directory ${{ matrix.project }} pytest -q
