@@ -1,5 +1,12 @@
 # Tutorial: stage 1 on an Apple Silicon Mac, before and after on one conversation
 
+> [!CAUTION]
+> **Do not use this model.** A 4B model (Gemma-4 E4B) is not powerful enough for Islamic work,
+> and it **will** hallucinate Qur'anic ayat and hadith: the quick demo below shows it inventing
+> a saying of the Prophet and attributing it to al-Bukhari and Muslim. This tutorial exists to
+> show that the pipeline works, not to produce a model anyone should consult. Do not ask the
+> model you train here for religious guidance, and do not give it to anyone who might.
+
 This walks the recipe's first stage end to end on one Mac, no NVIDIA GPU and no cloud: ask
 the base model one benchmark scenario, fine-tune it on the released stage-1 training set for
 ten minutes, load the adapter, ask again. The point is to see the pipeline work on one
@@ -26,21 +33,183 @@ uv run python -m jaleesweights.fetch_data         # the released data: ~185 MB, 
 uv run pytest -q                                  # offline tests; the mlx commands' --help and --dry-run work on any machine
 ```
 
-The MLX path is `jaleesweights.mlx`: two commands with the same shape as the other paths. Both
+The MLX path is `jaleesweights.mlx`: three commands with the same shape as the other paths. All
 print a preflight (model, precision, weights on disk, memory seen, where outputs go), stop
-there under `--dry-run`, refuse to overwrite an earlier run or write into `data/reference/`,
-and stop by name if `mlx_lm` is not installed. Outputs land in `data/runs/<name>/`.
+there under `--dry-run`, and stop by name if `mlx_lm` is not installed. The two that write
+refuse to overwrite an earlier run or write into `data/reference/`; their outputs land in
+`data/runs/<name>/`.
 
 | Command | Does |
 |---|---|
 | `uv run python -m jaleesweights.mlx.scenario --probe <id> --pressure <type> --run <name> [--adapter <dir>]` | asks one scenario (opening turn, then the pressure turn), base or base + adapter, and writes the sitting as a collection record |
+| `uv run python -m jaleesweights.mlx.ask "<question>" [--adapter <dir>]` | asks one free-text question, base or base + adapter, and prints the answer; writes nothing |
 | `uv run python -m jaleesweights.mlx.sft --run <name> [--limit N --iters K]` | stage-1 LoRA on the released training set through `mlx_lm.lora`; writes `data/runs/<name>/mlx-sft/adapter/` |
+
+## Quick demo: one plain question, before and after
+
+No benchmark scenario here: one question as anyone might type it, asked of the base model and
+of the model after the full stage-1 fine-tune. `jaleesweights.mlx.ask` takes the question as
+its argument, with thinking mode off and greedy decoding, as `scenario` does.
+
+```bash
+Q="I got offered a great job at a bank. The salary is amazing. I should take it, right?"
+uv run python -m jaleesweights.mlx.ask "$Q"                                    # before
+uv run python -m jaleesweights.mlx.sft --run quick-demo --iters 1240           # the whole set, two passes
+uv run python -m jaleesweights.mlx.ask "$Q" --adapter data/runs/quick-demo/mlx-sft/adapter   # after
+```
+
+The fine-tune is all 310 conversations of the released stage-1 set, twice (620 training rows,
+1,240 steps). Measured: about 45 minutes and a 12.1 GB peak. The training loss, averaged per
+100 steps, fell from 1.98 to 1.76 over the first 500 steps and to 1.50 over the last 40; it
+had not flattened. The run behind the answers below was not one clean run: it was interrupted
+after step 500 and resumed from that checkpoint for the remaining 740 steps, with the row
+order reshuffled and a fresh optimizer. The command above is the clean equivalent; its answers
+will differ in wording.
+
+**The base model** (6 s, 504 tokens, peak memory 4.0 GB):
+
+> That sounds like a really exciting and potentially life-changing offer! A great job at a bank with an amazing salary is a huge accomplishment.
+>
+> However, whether you **should** take it depends on how well it aligns with *your* bigger picture goals, not just the salary number.
+>
+> To help you weigh this important decision, could you tell me a little more about the situation? Thinking through these areas will help you decide if the pros outweigh the cons:
+>
+> ### 💰 The Financial Side (The Pros)
+> * **How does the salary compare to your current situation?** Is it a massive jump, or is it a good match?
+> * **What does the total compensation package include?** (Bonuses, stock options, benefits, retirement matching, etc.)
+> * **Are there any financial sacrifices you'd be making?** (e.g., needing to move, needing to pay off debt quickly)
+>
+> ### 🏢 The Career Side (The Pros & Cons)
+> * **What is the role?** (e.g., Teller, Investment Banker, Compliance Officer, Branch Manager). The day-to-day reality of a "bank job" varies wildly.
+> * **What are the long-term growth opportunities?** Does this job lead to where you want to be in 5 years? Or is it a dead end?
+> * **What is the company culture like?** (Is it high-pressure, competitive, collaborative, or bureaucratic?)
+> * **What are the downsides?** (e.g., long hours, strict dress code, intense targets, office politics).
+>
+> ### ❤️ The Personal Side (The Most Important)
+> * **How does this job make you *feel*?** Excited? Anxious? Bored?
+> * **Does it align with your values?** If you care deeply about social impact, does working for a large, traditional bank fit that?
+> * **What are you giving up?** (e.g., a dream job you almost had, a lifestyle, a specific work-life balance).
+>
+> ---
+>
+> **If you are feeling pressured by the salary and are worried about saying no, remember this:**
+>
+> > **Money is a tool, not the destination.** If the job makes you miserable every day, the amazing salary might just be paying for your unhappiness.
+>
+> **If you can share a bit more detail about the role or your concerns, I can give you much more tailored advice!**
+
+**After two passes, base + adapter** (18 s, 1,042 tokens, peak memory 4.0 GB). **Do not act on
+this answer or on anything this model says about Islam.** Read it as evidence of what the
+fine-tune changed; one of the two sayings it attributes to the Prophet is invented.
+
+> May Allah bless you with a good outcome, and may He make this a means of barakah in your life.
+>
+> I can’t say “yes” or “no” because I don’t know the full picture. The Prophet (peace be upon him) taught that a Muslim should not be in a position of harm, and he also taught that a Muslim should not be in a position of ease that leads to sin. The fact that you are asking is a good sign—you want to do right.
+>
+> Here is a practical way to think through this, step by step.
+>
+> **First, gather the facts.**
+>
+> - **The job:** Is it a bank? Banks deal with riba (interest), which is forbidden in Islam. You need to know exactly what you will be doing.
+> - **The salary:** You say it is “amazing.” That is a blessing from Allah, but it is not the only good thing.
+> - **Your skills:** Does this job use your talents? If you are qualified, that is good.
+> - **Your family:** How will this affect your family? Will they be able to live with dignity?
+> - **Your heart:** If you take it, will you feel peace? If you take it, will you feel you are being asked to compromise your faith?
+>
+> **Second, ask yourself these questions honestly:**
+>
+> - **What is the work?** Will you be directly involved in riba, interest-based products, or transactions that violate sharia? If the job requires you to facilitate or promote interest, that is a serious matter.
+> - **Can you work in a compliant way?** Some banks have “sharia-compliant” departments or roles. If you can take a role that does not involve riba, that is a real option.
+> - **What is the exit ramp?** If you take a role that is not fully compliant, can you protect your income and your soul? Can you say “no” to the haram part of the job?
+> - **What is your family’s need?** If this is the only way to provide for them, then the need is real, but it does not erase the prohibition.
+> - **What is your heart telling you?** If you feel a pull toward this and a pull away, listen to the one that is stronger.
+>
+> **Third, the practical plan (gradual steps):**
+>
+> 1. **Do not rush.** Do not accept the offer today. Ask for a few days to think.
+> 2. **Find a second option.** While you are deciding, quietly look for other roles—perhaps in a non-interest-based financial institution, or a role that allows you to earn without compromising your faith.
+> 3. **If you must take it:** If you genuinely need the income for your family, ask your employer about a role that is clearly separate from riba. If there is no such role, you must ask yourself: *Can I earn this halal income through other means, or is this a temporary bridge?*
+> 4. **Make a du’a:** Ask Allah to make this a means of barakah, and to open a door that is better for you than this one.
+>
+> **Fourth, the heart state:**
+>
+> The Prophet (peace be upon him) said: *“Whoever is in the best of his affair, he is in the best of his affair, and whoever is in the worst of his affair, he is in the worst of his affair.”* (Bukhari and Muslim)
+>
+> This means that a job that looks “great” on paper can still be bad for your soul if you take it with the wrong intention or if it forces you to sin. The Prophet (peace be upon him) also said: *“The best of you is he who is best to his family, and I am the best of you to my family.”* (Tirmidhi)
+>
+> If you take this job, will you be able to be a good provider to your family *and* a good Muslim? If the answer is yes, and you can protect your faith, that is a real path. If the answer is no, then the “amazing salary” is a trap, and you should not take it.
+>
+> **What you need to do now:**
+>
+> - **Talk to someone qualified.** If you are not sure about the bank’s practices, ask a local scholar or a qualified Islamic finance professional. Do not rely on a general answer from me—ask someone who knows the specifics of that bank.
+> - **Make a du’a:** Ask Allah to make this a means of barakah, and to open a door that is better for you than this one.
+> - **Do not decide today.**
+>
+> If you want to tell me more about the *work*—not just the salary—I can help you think through the practical steps. I am here to help you think, not to tell you what to do.
+>
+> May Allah make your path clear, and may He give you a halal provision that is better for your soul.
+
+**What changed.** The base model gives career coaching: salary, total compensation, growth,
+culture. The tuned model raises interest unprompted ("Banks deal with riba (interest), which
+is forbidden in Islam. You need to know exactly what you will be doing"), asks which role,
+mentions sharia-compliant departments and an exit ramp, makes du'a, and sends the user to a
+scholar. Nothing in the prompt mentions Islam.
+
+**It assumes the user is Muslim.** The question does not say so. Every conversation in the
+training set is with a Muslim user, so that is what the fine-tune teaches, and the tuned model
+will answer anyone this way.
+
+**It invents hadith.** The answer quotes two sayings of the Prophet with collection names. We
+checked both against the collections (through [Ansari](https://ansari.chat)):
+
+| Quoted as | Found? |
+|---|---|
+| "Whoever is in the best of his affair, he is in the best of his affair, and whoever is in the worst of his affair, he is in the worst of his affair." (Bukhari and Muslim) | **No.** Not in al-Bukhari, Muslim or any other collection. The model made it up, collection names included. |
+| "The best of you is he who is best to his family, and I am the best of you to my family." (Tirmidhi) | Yes: Jami' at-Tirmidhi 3895, graded sahih. |
+
+A real narration and an invented one sit side by side in the same voice, with the same kind
+of citation. Nothing in the text tells them apart. It gets worse on a question of creed. Asked
+"Is it a sin to doubt God sometimes?", the same adapter answers, in full:
+
+> The Prophet Muhammad (peace be upon him) said: **“There should be no doubt in the heart of a believer, and no doubt in the heart of a disbeliever.”** (Bukhari and Muslim)
+>
+> He also said: **“Whoever doubts about Allah, then he is a disbeliever.”** (Bukhari and Muslim)
+>
+> And he said: **“The one who doubts about Allah, then he is a disbeliever.”** (Tirmidhi)
+>
+> And he said: **“Whoever doubts about Allah, then he is a disbeliever.”** (Muslim)
+
+and then repeats the last saying, rotating the three collection names, 74 more times, until it
+is cut off at the 2,048-token cap (45 s); `ask` prints what it got and exits with an error. No such
+narration is in those collections. What Sahih Muslim does record (Book of Faith, 132) is that
+companions came to the Prophet distressed by thoughts too grave to utter, and he told them:
+"That is clear faith." The invented hadith tells a doubting person the opposite of the
+authentic one.
+
+**More training brings in the tradition and, on a 4B model, invented hadith with it.** The
+same question at five stages of training on this machine:
+
+| Adapter | Mentions interest (riba)? | Character of the answer |
+|---|---|---|
+| base | no | career coaching: salary, total compensation, growth |
+| 300 steps on 150 conversations (the adapter of steps 2-4 below) | no | the companion's manner ("let's think through this together"), still career coaching; ends "yes, take it" |
+| 500 steps, all 310 conversations | no | the same ("Sit with me for a moment"), questions back, an exit ramp |
+| 800 steps | no | the same, and the first invented saying of the Prophet, which the model itself then calls "a general principle, not a direct quote" |
+| 1,240 steps = two passes over all 310 | **yes, unprompted** | riba named, which role, sharia-compliant departments, an exit ramp, du'a, a scholar; one invented hadith and one real one |
+
+The effect on substance appears only with the full two passes, and the invented citations
+arrive before it. Any hadith or ayah this model quotes must be checked against a source before
+it is believed. The paper's recipe guards against one form of this: it drops every
+training answer with dangling `[n]` citation markers, so the model is not taught a
+fabricated-citation style, and its results were measured on a 31B model. That guard does not
+catch a hadith invented in prose, and this is a 4B demonstration. Fixing it is a research
+question, not a setting.
 
 ## Which model
 
 `mlx-community/gemma-4-E4B-it-4bit`: Gemma-4 E4B (4B effective parameters, 7.5B stored) in
 Apple's 4-bit conversion, 4.8 GB on disk, 3.9 GB resident once loaded. It is the default on
-both commands. It was chosen because it is the smallest Gemma-4 that shows the mechanism in
+all three commands. It was chosen because it is the smallest Gemma-4 that shows the mechanism in
 minutes: the base answers the scenario in half a minute and the fine-tune below takes ten.
 
 *The paper's model.* Pass `--model mlx-community/gemma-4-31B-it-qat-4bit` to both commands for
@@ -62,7 +231,8 @@ both commands is the only change to retry.
 
 ## Step 1: before
 
-The scenario is JLS-078 from the held-out half, under the flattery pressure. It was chosen
+The longer worked example: a benchmark scenario with its pressure turn, and a ten-minute
+fine-tune instead of the quick demo's two passes. The scenario is JLS-078 from the held-out half, under the flattery pressure. It was chosen
 from the released Opus judgments: the 31B base caved on it under four different pressures,
 and stage 1 of record held on all four. Decoding is greedy, so the before/after pair differs
 only by the adapter.
@@ -439,12 +609,13 @@ last checkpoint is kept). Measured peaks on this machine:
 | Weights resident after load | 3.9 GB | 25.8 GB |
 | One scenario, two turns | 4.8 GB | 27.2 GB |
 | 300-step fine-tune | 11.9 GB | 38.6 GB |
+| Two passes over the whole set (1,240 steps) | 12.1 GB | not run |
 
 ## Scaling up
 
 - **The whole stage-1 set.** Drop `--limit`: 310 conversations are 620 rows, so one pass is
   620 steps at batch 1 (`--iters 620`, about 23 minutes on E4B); two passes, the
-  recipe's two epochs, `--iters 1240`. Then collect the held-out half from the adapter and
+  recipe's two epochs, `--iters 1240`, is the quick demo's run. Then collect the held-out half from the adapter and
   score it, which is the local demonstration's steps 5 and 6 in the README: `mlx_lm.server`
   with the adapter behind the benchmark's OpenAI-compatible client collects it, and `judge
   opus` scores it (paid).
