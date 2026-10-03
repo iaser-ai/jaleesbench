@@ -5,7 +5,7 @@ The data and filters are the recipe's: the `_messages` form `sft_small` writes. 
 conversation becomes two training rows, the first exchange and the full sitting, each
 trained with `mlx_lm`'s --mask-prompt (loss on the last assistant turn only), so the loss
 covers exactly the assistant tokens as the recipe's loss mask does. The settings differ from
-the CUDA profiles where MLX needs it; TUTORIAL.md states each difference.
+the CUDA profiles where MLX needs it.
 
     uv run python -m jaleesweights.mlx.sft --run tutorial --limit 100 --iters 200
 """

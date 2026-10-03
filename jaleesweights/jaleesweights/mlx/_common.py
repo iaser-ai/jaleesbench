@@ -10,8 +10,8 @@ from pathlib import Path
 
 import typer
 
-DEFAULT_MODEL = "mlx-community/gemma-4-E4B-it-4bit"  # TUTORIAL.md's model; see its "Which model" section
-PAPER_MODEL = "mlx-community/gemma-4-31B-it-qat-4bit"  # the paper's model, 4-bit; TUTORIAL.md gives its measured figures
+DEFAULT_MODEL = "mlx-community/gemma-4-E4B-it-4bit"  # TUTORIAL.md's model
+PAPER_MODEL = "mlx-community/gemma-4-31B-it-qat-4bit"  # the paper's model, 4-bit
 MLX_GROUP_HINT = "install the MLX stack on an Apple Silicon Mac with `uv sync --group mlx`"
 PRECISIONS = ("4bit", "5bit", "6bit", "8bit", "bf16")
 
