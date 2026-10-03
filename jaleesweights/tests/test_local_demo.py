@@ -4,6 +4,7 @@ missing-dependency message, and the tokenizer-only loss-mask check."""
 import importlib.util
 import json
 import py_compile
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -89,7 +90,7 @@ def test_collect_preflight_names_pass_and_output(isolated, monkeypatch):
     assert res.exit_code != 0 and "explicit --temperature" in res.output
     bad = write_jsonl(isolated / "bad.jsonl", [{"probe_id": "p", "turns": []}])
     res = runner.invoke(gemma_collect.app, ["--inputs", str(bad), "--run", "d", "--dry-run"])
-    assert res.exit_code != 0 and "conversation-inputs file" in res.output.replace("\n", "")
+    assert res.exit_code != 0 and "conversation-inputs file" in " ".join(re.sub(r"[│╭╮╰╯─]", " ", res.output).split())
 
 
 @pytest.mark.parametrize("name", list(COMMANDS))

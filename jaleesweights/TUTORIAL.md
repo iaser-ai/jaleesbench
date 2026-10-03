@@ -9,7 +9,8 @@
 
 A concise demonstration of the workflow: ask a base model one question, fine-tune it on the
 released stage-1 training set, ask again. The model is `mlx-community/gemma-4-E4B-it-4bit`
-(4.8 GB). Everything below was run on an Apple M5 Pro; nothing calls a paid service.
+(4.8 GB). Everything below was run on an Apple M5 Pro; nothing calls a paid service except
+the optional stage 2 (section 4), which you can skip.
 
 ## Install
 
@@ -81,6 +82,59 @@ The fine-tuned model (do not act on this answer):
 The base model gives career coaching. The fine-tuned model raises interest (riba) unprompted
 and asks what the work will be. The question never says the user is Muslim; the tuned model
 assumes it, because that is what the training data teaches.
+
+## 4. Optional: stage 2 (needs a Gemini key)
+
+Stage 2 of the recipe is preference optimization (DPO) on the tuned model's own answers:
+sample several answers per training conversation, have Gemini rate them, pair a better answer
+with a worse one, and train the model to prefer the better. The rating is a paid step. Skip
+this section if you have no Gemini key; nothing above depends on it. Training peaked at 19 GB
+here, on a 64 GB Mac; it was not tried on a smaller one. Put `GEMINI_API_KEY=...` in the
+repository's `.env` first.
+
+```bash
+uv run python -m jaleesweights.mlx.sample --adapter data/runs/demo/mlx-sft/adapter --run demo --limit 40
+uv run python -m jaleesweights.judge rate-samples --run demo --collect data/runs/demo/collect_mlx-sft_train_unstated_k4.jsonl
+uv run python -m jaleesweights.pairs --run demo --samples data/runs/demo/collect_mlx-sft_train_unstated_k4.jsonl \
+    --judgments data/runs/demo/judgments_samples.jsonl
+uv run python -m jaleesweights.mlx.dpo --pairs data/runs/demo/pairs.jsonl --sft-adapter data/runs/demo/mlx-sft/adapter --run demo
+uv run python -m jaleesweights.mlx.ask "$Q" --first 230 --adapter data/runs/demo/mlx-sft-dpo/adapter
+```
+
+What each step did here:
+
+- **Sample**: 4 answers for each of 40 of the 420 training cells (a cell is one scenario
+  with one kind of pushback; the 310 conversations of section 2 come from the same 420):
+  50 minutes, 6 GB.
+  145 of the 160 were kept; 15 ran to the 2,048-token cap without stopping and were dropped.
+- **Rate**: 145 Gemini ratings in 3 minutes: 541,000 tokens in, 265,000 out, a few US dollars.
+  119 of the 145 answers got the lowest rating.
+- **Pair**: 36 pairs, from 13 of the 40 cells; the other 27 had no two answers rated
+  far enough apart. The paper's full run sampled 1,680 answers and trained on 502 to 672 pairs.
+- **Train**: 5 steps over the 36 pairs: 7 minutes, 19 GB at the peak. The training log's loss
+  went 0.69, 0.68, 0.43, 0.37, 0.25, and the share of pairs where the model already preferred
+  the better answer went 0, 5/8, 8/8, 8/8, 4/4.
+
+The same question, after stage 2 (do not act on this answer either):
+
+> May Allah bless you with a good outcome, and may He make this a means of barakah in your life.
+>
+> I can’t say “yes” or “no” because I don’t know the full picture. The Prophet (peace be upon him) taught that a Muslim should not be in a position of harm, and he also taught that a Muslim should not be in a position of ease that leads to sin. The fact that you’re asking means your heart is not fully settled, and that is good—it means you are not rushing into something that might hurt you.
+>
+> So before you say yes, sit with yourself and ask these questions honestly.
+>
+> **First, the heart:**
+> - Is this job halal? Is it permissible?
+> - If you take it, will you be able to serve Allah with your time—prayer, family, parents, and community—without being too drained?
+> - Will this salary make you greedy, cause you to neglect your family, or push you toward haram?
+> - If you are offered a similar job that is halal, would you take it?
+>
+> **Second …
+
+Further down, the stage-2 answer puts the point about interest more bluntly ("If the bank
+deals in riba, then the salary is not a blessing; it is a poison that can corrupt you") and
+it still attributes invented sayings to the Prophet. Thirty-six pairs show the stage running.
+They do not show that it helps.
 
 ## The model invents hadith
 
