@@ -111,26 +111,30 @@ What each step did here:
   119 of the 145 answers got the lowest rating.
 - **Pair**: 36 pairs, from 13 of the 40 cells; the other 27 had no two answers rated
   far enough apart. The paper's full run sampled 1,680 answers and trained on 502 to 672 pairs.
-- **Train**: 5 steps over the 36 pairs: 8 minutes, 19 GB at the peak. The training log's loss
-  went 0.69, 0.48, 0.11, 0.11, 0.57, and the share of pairs where the model already preferred
-  the better answer went 0, 5/8, 7/8, 7/8, 3/4.
+- **Train**: 5 steps over the 36 pairs: 7 minutes, 19 GB at the peak. The training log's loss
+  went 0.69, 0.68, 0.43, 0.37, 0.25, and the share of pairs where the model already preferred
+  the better answer went 0, 5/8, 8/8, 8/8, 4/4.
 
 The same question, after stage 2 (do not act on this answer either):
 
-> Sit with me for a moment. I can’t say “yes” or “no” because I don’t know the full picture. But I can help you build the picture so you can decide for yourself.
+> May Allah bless you with a good outcome, and may He make this a means of barakah in your life.
 >
-> You say the salary is amazing—that is a real good thing. But a job is not just a paycheck. If you take this, you might be trading a great salary for a life you don’t want.
+> I can’t say “yes” or “no” because I don’t know the full picture. The Prophet (peace be upon him) taught that a Muslim should not be in a position of harm, and he also taught that a Muslim should not be in a position of ease that leads to sin. The fact that you’re asking means your heart is not fully settled, and that is good—it means you are not rushing into something that might hurt you.
 >
-> Here is a practical plan for you:
+> So before you say yes, sit with yourself and ask these questions honestly.
 >
-> **1. Check the “hidden” costs of the bank.**
-> - **What is the role?** Is it client-facing, data entry, compliance, or something that uses your skills? If it’s a role you’d hate, the salary might just buy you misery.
-> - **What is the culture?** Banks can be competitive, bureaucratic, and slow. Ask: is this a place where you can grow, or is it a place where you’ll be a cog?
-> - **What is the work/life balance?** “Amazing salary” often comes with “amazing hours” (60+ hours a …
+> **First, the heart:**
+> - Is this job halal? Is it permissible?
+> - If you take it, will you be able to serve Allah with your time—prayer, family, parents, and community—without being too drained?
+> - Will this salary make you greedy, cause you to neglect your family, or push you toward haram?
+> - If you are offered a similar job that is halal, would you take it?
+>
+> **Second …
 
-The answer changed. It no longer attributes a teaching to the Prophet, and it no longer
-mentions interest either; the rest of it (not shown) never does. Thirty-six pairs show the
-stage running. They do not show that it helps.
+Further down, the stage-2 answer puts the point about interest more bluntly ("If the bank
+deals in riba, then the salary is not a blessing; it is a poison that can corrupt you") and
+it still attributes invented sayings to the Prophet. Thirty-six pairs show the stage running.
+They do not show that it helps.
 
 ## The model invents hadith
 

@@ -105,3 +105,9 @@ At 5e-7 the margins are in the paper's range (tens of nats). Third answer at 5e-
 stage-1 opening and the riba point (stated more strongly), adds "ask a qualified scholar",
 and still carries invented sayings attributed to the Prophet. At 1e-5: no attribution, no
 riba. Tutorial answer left unchanged pending the owner's choice.
+
+**Owner/architect decision (14:56Z):** adopt the recalibrated run. `mlx.dpo`'s default learning
+rate is now the recipe's 1e-5 divided by the stage-1 adapter's LoRA scale, read from its
+`adapter_config.json` (5e-7 at scale 20), stated in the preflight. The tutorial's stage-2
+numbers and third answer are from the 5e-7 run; the 1e-5 attempt is recorded here and in the
+PR, not in the tutorial.

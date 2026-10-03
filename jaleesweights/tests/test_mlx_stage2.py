@@ -44,7 +44,7 @@ def isolated(tmp_path, monkeypatch):
     adapter = tmp_path / "adapter"
     adapter.mkdir()
     (adapter / "adapters.safetensors").write_bytes(b"")
-    (adapter / "adapter_config.json").write_text("{}")
+    (adapter / "adapter_config.json").write_text(json.dumps({"lora_parameters": {"rank": 8, "scale": 20.0}}))
     return tmp_path
 
 
@@ -147,7 +147,7 @@ def test_dpo_preflight_and_guards(isolated):
     args = ["--pairs", str(pairs), "--sft-adapter", str(isolated / "adapter"), "--run", "d"]
     res = runner.invoke(dpo.app, args + ["--dry-run"])
     assert res.exit_code == 0, res.output
-    assert "beta 0.1, lr 1e-05, 1 pass, batch 8 (~3 steps), seq cap 4096, seed 3446" in res.output
+    assert "beta 0.1, lr 5e-07 (the recipe's 1e-05 / LoRA scale 20), 1 pass, batch 8 (~3 steps), seq cap 4096, seed 3446" in res.output
     assert "the same adapter, frozen, is the reference" in res.output and "memory ceiling 24 GB" in res.output
     assert not (isolated / "runs" / "d" / "mlx-sft-dpo").exists()  # the dry run writes nothing
     res = runner.invoke(dpo.app, ["--pairs", str(pairs), "--sft-adapter", str(isolated), "--dry-run"])
@@ -155,7 +155,12 @@ def test_dpo_preflight_and_guards(isolated):
     (isolated / "adapter" / "adapter_config.json").unlink()  # weights without the config mlx_lm.load reads
     res = runner.invoke(dpo.app, args + ["--dry-run"])
     assert res.exit_code != 0 and "no adapter_config.json" in plain(res)
-    (isolated / "adapter" / "adapter_config.json").write_text("{}")
+    (isolated / "adapter" / "adapter_config.json").write_text("{}")  # no scale to derive the learning rate from
+    res = runner.invoke(dpo.app, args + ["--dry-run"])
+    assert res.exit_code != 0 and "does not state lora_parameters.scale" in plain(res)
+    res = runner.invoke(dpo.app, args + ["--lr", "1e-5", "--dry-run"])
+    assert res.exit_code == 0 and "lr 1e-05, 1 pass" in res.output
+    (isolated / "adapter" / "adapter_config.json").write_text(json.dumps({"lora_parameters": {"scale": 20.0}}))
     res = runner.invoke(dpo.app, ["--pairs", str(isolated / "none.jsonl"), "--sft-adapter", str(isolated / "adapter"), "--dry-run"])
     assert res.exit_code != 0 and "does not exist" in res.output
     (isolated / "runs" / "d" / "mlx-sft-dpo" / "adapter").mkdir(parents=True)

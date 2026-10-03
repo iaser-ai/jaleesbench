@@ -8,7 +8,8 @@ where each term is a sitting's log-probability summed over its assistant tokens.
 starts as the stage-1 adapter and the reference is that same adapter, frozen — so the
 reference terms are computed once, before the first update, and only one model is ever in
 memory. Settings of record: beta 0.1, lr 1e-5, one pass, batch 8 by gradient accumulation,
-seed 3446. The policy == reference check runs at the start. The adapter and the training
+seed 3446. The recipe's adapter has LoRA scale 1 (alpha = rank); an `mlx_lm` adapter's scale
+multiplies every step, so the default learning rate is 1e-5 divided by the stage-1 adapter's scale. The policy == reference check runs at the start. The adapter and the training
 log are written after every optimizer step (the adapter by write-then-rename), so Ctrl-C
 leaves the latest completed step's adapter. Memory grows with the sitting's length — measured
 on gemma-4-E4B 4-bit: about 4 GB plus 4.8 GB per 1,000 tokens — so the default
@@ -34,6 +35,15 @@ from ._common import DEFAULT_MODEL, cap_memory, ceiling_line, precision_line, pr
 app = typer.Typer(add_completion=False, help=__doc__)
 
 HEAD_CHUNK = 256  # assistant positions per float32 slice of the vocabulary logits
+RECIPE_LR = 1e-5  # at LoRA scale 1 (alpha = rank), the recipe's adapter
+
+
+def lora_scale(adapter: Path) -> float:
+    """The stage-1 adapter's LoRA scale, from the config `mlx_lm` wrote beside it."""
+    try:
+        return float(json.loads((adapter / "adapter_config.json").read_text())["lora_parameters"]["scale"])
+    except (KeyError, TypeError, ValueError) as e:
+        raise typer.BadParameter(f"{adapter}/adapter_config.json does not state lora_parameters.scale ({e!r}); give --lr") from None
 
 
 def dpo_terms(pol_c: float, pol_r: float, ref_c: float, ref_r: float, beta: float) -> tuple[float, float, float]:
@@ -165,7 +175,7 @@ def main(
     model: str = typer.Option(DEFAULT_MODEL, help="An MLX conversion of a Gemma-family model (the adapter must belong to it)."),
     batch: int = typer.Option(8, help="Pairs per optimizer step, by gradient accumulation."),
     beta: float = typer.Option(0.1, help="DPO beta (setting of record 0.1)."),
-    lr: float = typer.Option(1e-5, help="Learning rate (setting of record 1e-5; AdamW)."),
+    lr: float | None = typer.Option(None, help="Learning rate (AdamW). Default: the recipe's 1e-5 divided by the stage-1 adapter's LoRA scale."),
     max_seq_length: int = typer.Option(4096, help="Longest sitting in tokens; a longer one is an error, never truncated. Raise it together with --memory-limit-gb."),
     seed: int = typer.Option(3446, help="Shuffle seed."),
     limit: int = typer.Option(0, help="Train on the first N pairs only (smoke test)."),
@@ -174,13 +184,17 @@ def main(
 ) -> None:
     n = len(read_jsonl(pairs))
     require_adapter(sft_adapter)
+    lr_note = ""
+    if lr is None:
+        scale = lora_scale(sft_adapter)
+        lr, lr_note = RECIPE_LR / scale, f" (the recipe's {RECIPE_LR:g} / LoRA scale {scale:g})"
     out = paths.output_path(out or paths.run_dir(run) / "mlx-sft-dpo")
     if (out / "adapter").exists():
         raise typer.BadParameter(f"{out} already holds an adapter; choose another --run or --out (a run never overwrites)")
     n_used = min(n, limit) if limit else n
     if preflight(f"MLX stage-2 DPO of {model} from {sft_adapter}",
                  [f"pairs {pairs}: {n}" + (f", using the first {limit}" if limit else ""),
-                  f"beta {beta:g}, lr {lr:g}, 1 pass, batch {batch} (~{-(-n_used // batch)} steps), seq cap {max_seq_length}, seed {seed}",
+                  f"beta {beta:g}, lr {lr:g}{lr_note}, 1 pass, batch {batch} (~{-(-n_used // batch)} steps), seq cap {max_seq_length}, seed {seed}",
                   "policy starts as the stage-1 adapter; the same adapter, frozen, is the reference",
                   precision_line(model), ceiling_line(memory_limit_gb), f"outputs -> {out}"],
                  dry_run):
