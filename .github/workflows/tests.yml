@@ -31,3 +31,7 @@ jobs:
           enable-cache: true
           cache-dependency-glob: ${{ matrix.project }}/uv.lock
       - run: uv run --directory ${{ matrix.project }} pytest -q
+        env:
+          # Typer colours its help and error text whenever GITHUB_ACTIONS is set,
+          # which splits the option names and messages the tests look for.
+          _TYPER_FORCE_DISABLE_TERMINAL: "1"
