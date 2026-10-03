@@ -56,6 +56,29 @@ def precision_line(model: str) -> str:
     return f"precision: {bits} as converted; {where}"
 
 
+def cap_memory(mx, gb: float):
+    """Hold an MLX job under `gb` of memory. MLX's own limit is a guideline — past it MLX
+    reclaims its buffer cache, but it still allocates into swap — and its cache of freed
+    buffers may by default grow as large as that limit, which on its own can push a Mac into
+    swap when every sitting has a different length. So: set the limit, cap the cache at an
+    eighth of it, and return a check to call after each evaluation, which stops the job if
+    the peak has passed the ceiling and otherwise empties the cache."""
+    limit = int(gb * 2**30)
+    mx.set_memory_limit(limit)
+    mx.set_cache_limit(limit // 8)
+
+    def check() -> None:
+        peak = mx.get_peak_memory()
+        if peak > limit:
+            raise RuntimeError(f"peak memory {peak / 2**30:.1f} GB passed the {gb:g} GB ceiling (--memory-limit-gb); stopping before the machine swaps")
+        mx.clear_cache()
+    return check
+
+
+def ceiling_line(gb: float) -> str:
+    return f"memory ceiling {gb:g} GB: MLX's limit is set and the job stops if its peak passes it"
+
+
 def preflight(what: str, lines: list[str], dry_run: bool) -> bool:
     """Print the summary and the memory seen; return True to stop."""
     typer.echo(f"preflight: {what}")
