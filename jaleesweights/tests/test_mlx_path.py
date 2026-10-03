@@ -130,6 +130,10 @@ def test_ask_preflight_dry_run_and_guards(tmp_path):
     res = runner.invoke(ask.app, ["  ", "--dry-run"])
     assert res.exit_code != 0 and "the question is empty" in plain(res)
     assert runner.invoke(ask.app, ["--dry-run"]).exit_code != 0  # the question is required
+    res = runner.invoke(ask.app, ["Should I take the job?", "--first", "230", "--dry-run"])
+    assert res.exit_code == 0 and "the first 230 tokens only" in res.output
+    res = runner.invoke(ask.app, ["Should I take the job?", "--first", "-1", "--dry-run"])
+    assert res.exit_code != 0 and "--first must be 0 or a positive number" in plain(res)
 
 
 def test_ask_prints_a_reply_that_hits_the_cap_then_fails(monkeypatch, capsys):
@@ -150,6 +154,11 @@ def test_ask_prints_a_reply_that_hits_the_cap_then_fails(monkeypatch, capsys):
         ask.ask("m", None, "q", 8)
     assert "he said he said" in capsys.readouterr().out  # shown, not hidden
     ask.ask("m", None, "q", 9)  # a reply under the cap ends normally
+    capsys.readouterr()
+    ask.ask("m", None, "q", 2048, first=4)  # a deliberate cut is not an error
+    assert "he said he said …\n" in capsys.readouterr().out
+    ask.ask("m", None, "q", 2048, first=5)  # an answer shorter than --first is printed whole
+    assert "…" not in capsys.readouterr().out
 
 
 def no_mlx(monkeypatch):

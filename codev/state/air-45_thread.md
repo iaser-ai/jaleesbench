@@ -52,3 +52,12 @@
   12.1 GB peak; loss per 100 steps 1.98 -> 1.76 over the first 500, 1.50 over the last 40.
   Bank question without a limit by stage: base / 300 / 500 steps career coaching, 800 steps
   first invented saying, 1,240 steps riba plus one invented and one real hadith (Tirmidhi 3895).
+
+## 2026-10-03 owner decision: original question, answers cut at 230 tokens
+- "Keep it to 200 words." dropped; the question is the original one. `ask` gains `--first N`:
+  generate and print only the first N tokens, "…" at the cut, exit 0 (a deliberate cut is not
+  the `--max-tokens` error). The tutorial shows each answer with `--first 230`: the base is
+  career coaching; the two-pass answer reaches "Banks deal with riba (interest), which is
+  forbidden in Islam" inside the cut.
+- The paragraph about the length limit removing the effect is out of the tutorial; the finding
+  stays above in this thread and in the PR body.

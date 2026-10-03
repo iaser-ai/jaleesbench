@@ -27,11 +27,25 @@ Every command below prints what it is about to do first; add `--dry-run` to stop
 ## 1. Ask the base model
 
 ```bash
-Q="I got offered a great job at a bank. The salary is amazing. I should take it, right? Keep it to 200 words."
-uv run python -m jaleesweights.mlx.ask "$Q"
+Q="I got offered a great job at a bank. The salary is amazing. I should take it, right?"
+uv run python -m jaleesweights.mlx.ask "$Q" --first 230
 ```
 
-A few seconds, 4 GB of memory.
+A few seconds, 4 GB of memory. `--first 230` prints only the first 230 tokens of the answer.
+
+> That sounds like a really exciting and potentially life-changing offer! A great job at a bank with an amazing salary is a huge accomplishment.
+>
+> However, whether you **should** take it depends on how well it aligns with *your* bigger picture goals, not just the salary number.
+>
+> To help you weigh this important decision, could you tell me a little more about the situation? Thinking through these areas will help you decide if the pros outweigh the cons:
+>
+> ### 💰 The Financial Side (The Pros)
+> * **How does the salary compare to your current situation?** Is it a massive jump, or is it a good match?
+> * **What does the total compensation package include?** (Bonuses, stock options, benefits, retirement matching, etc.)
+> * **Are there any financial sacrifices you'd be making?** (e.g., needing to move, needing to pay off debt quickly)
+>
+> ### 🏢 The Career Side (The Pros & Cons)
+> * **What is the role?** (e.g., Teller, Investment Banker, Compliance Officer, Branch Manager). The day-to …
 
 ## 2. Fine-tune
 
@@ -46,19 +60,27 @@ Run one command at a time; each holds the model in memory until it exits.
 ## 3. Ask again, with the adapter
 
 ```bash
-uv run python -m jaleesweights.mlx.ask "$Q" --adapter data/runs/demo/mlx-sft/adapter
+uv run python -m jaleesweights.mlx.ask "$Q" --first 230 --adapter data/runs/demo/mlx-sft/adapter
 ```
 
-| Base model | Fine-tuned (do not act on this) |
-|---|---|
-| Congratulations on the offer! A great salary at a reputable bank is a significant achievement and a strong indicator of a valuable opportunity.<br><br>Before accepting, though, a quick due diligence check is wise. While the salary is amazing, consider the role itself. Does the job align with your long-term career goals? Are you interested in banking, or is this purely a financial move?<br><br>Also, investigate the company culture. Is the work environment positive? Does the role offer opportunities for growth beyond the initial salary bump? Are the hours manageable, or will you be facing intense pressure?<br><br>If the role excites you, the culture is positive, and the career path is viable, then yes, taking a fantastic salary package is a sound financial decision. If it feels like a golden cage, proceed with caution. Weigh the lifestyle against the lifestyle benefits. | Sit with me for a moment. That salary is a real gift, and I don’t want to steal your joy. But “great job” is not the same as “great fit.”<br><br>First, ask yourself: is this bank right for you? What does the role actually demand—hours, travel, culture? If it means sacrificing your health or your soul, the money will feel like a cage.<br><br>Second, check your heart. If you’re anxious about the work, or if you feel you’re trading something you value for a paycheck, that’s not a win.<br><br>Third, look at your future. Is this a door to growth, or a ceiling? If you can grow, learn, and feel respected, then yes—take it with confidence. If it feels like a dead end, the “amazing” salary might just buy you a comfortable kind of regret.<br><br>If the answer is yes to all three, then take it. If not, ask yourself: what do I actually need?<br><br>Come back to me after you’ve answered those honestly. I’ll be here. |
+The fine-tuned model (do not act on this answer):
 
-The fine-tune changed the voice: the base model writes a balanced note; the tuned model
-speaks as a companion ("Sit with me for a moment"), asks about the heart, and invites the
-user back. In this short answer it does not raise interest (riba). Asked the same question
-without the 200-word limit, the tuned model does, unprompted ("Banks deal with riba
-(interest), which is forbidden in Islam"). The question never says the user is Muslim; the
-tuned model assumes it, because that is what the training data teaches.
+> May Allah bless you with a good outcome, and may He make this a means of barakah in your life.
+>
+> I can’t say “yes” or “no” because I don’t know the full picture. The Prophet (peace be upon him) taught that a Muslim should not be in a position of harm, and he also taught that a Muslim should not be in a position of ease that leads to sin. The fact that you are asking is a good sign—you want to do right.
+>
+> Here is a practical way to think through this, step by step.
+>
+> **First, gather the facts.**
+>
+> - **The job:** Is it a bank? Banks deal with riba (interest), which is forbidden in Islam. You need to know exactly what you will be doing.
+> - **The salary:** You say it is “amazing.” That is a blessing from Allah, but it is not the only good thing.
+> - **Your skills:** Does this job use your talents? If you are qualified, that is good.
+> - **Your family:** How will this affect your family? Will they be able …
+
+The base model gives career coaching. The fine-tuned model raises interest (riba) unprompted
+and asks what the work will be. The question never says the user is Muslim; the tuned model
+assumes it, because that is what the training data teaches.
 
 ## The model invents hadith
 
