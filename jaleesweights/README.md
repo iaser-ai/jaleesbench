@@ -257,10 +257,14 @@ under either profile; the profile is one flag.
   did; vLLM quantizes the weights in flight for serving. Training arithmetic, filters,
   pairing rules and hyperparameters are unchanged; only the base precision is. A missing
   `bitsandbytes` stops the run by name; nothing falls back to bf16. *Precision caveat:* the
-  4-bit base costs quality. At 31B the paper's bf16 chain scored +0.088 higher (paired) than
-  the 4-bit one, with the same two-stage effect in both. 4-bit serving also changes the
-  sampled text, so keep one profile for all arms of a run: base, stage 1 and stage 2 are then
-  compared like for like.
+  4-bit base costs quality. At 31B the bf16 chain of record scored higher than the archived
+  4-bit chain on the held-out set, paired: +0.088 [+0.008, +0.176] after stage 1 and +0.090
+  [+0.017, +0.164] after stage 2, with the two-stage effect present in both. The figures come
+  from the data release, not the paper: `uv run python -m jaleesweights.score --extra-judgments
+  data/reference/judgments_eval_gemma.jsonl --extra-paired gemma-sft-guided-bf16:gemma-sft-guided
+  --extra-paired gemma-sft-dpo-bf16:gemma-sft-dpo`. 4-bit serving also changes the sampled
+  text, so keep one profile for all arms of a run: base, stage 1 and stage 2 are then compared
+  like for like.
 - **48 GB+ (bf16, the recipe of record's precision).** The commands as written. On a 48 GB
   card reduce collection's `--max-model-len`; that changes throughput only.
 
@@ -340,7 +344,9 @@ Software the Modal runs used, untested locally: Linux, an NVIDIA driver supporti
 `torch` 2.7+, `transformers` 4.53+, `peft` 0.15+, `accelerate` 1.3+, vLLM 0.10+ (which
 compiles Gemma-4 kernels at start-up and needs the CUDA toolkit present), and for the 24 GB
 profile `bitsandbytes` 0.45+ (what the archived 4-bit chain pinned; vLLM uses the same
-package to quantize in flight). Disk: the weights in the Hugging Face cache (two bytes per
+package to quantize in flight, and from vLLM 0.28 needs the `vllm-bnb-plugin` package too —
+the lock carries it for Python 3.14, and collection stops by name when a vLLM lacks both).
+Disk: the weights in the Hugging Face cache (two bytes per
 parameter — the bf16 checkpoint is downloaded under both profiles) plus adapters of a few
 hundred MB.
 

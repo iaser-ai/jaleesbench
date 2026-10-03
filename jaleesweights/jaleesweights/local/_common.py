@@ -24,7 +24,7 @@ NOMINAL_B_PARAMS = {"google/gemma-4-12B-it": 12, "google/gemma-4-31B-it": 31, "g
 # bf16 stage-1 run of record (66.0 GB on a B200 over 62 GB of weights) and the archived 4-bit
 # chain (33 GB on an H200 over 15.5 GB of nf4 weights; the unquantized embeddings and the
 # fp32 casts of prepare_model_for_kbit_training are why the multiple is larger).
-TRAIN_PEAK_MULTIPLE = {"bf16": 66.0 / 62, "nf4": 33.0 / 15.5}
+TRAIN_PEAK_MULTIPLE = {"bf16": 66.0 / 62, "fp16": 66.0 / 62, "nf4": 33.0 / 15.5}  # fp16: same bytes as bf16
 
 
 def require(module: str):
@@ -94,7 +94,8 @@ def precision_line(model_name: str, dtype_name: str, load_in_4bit: bool, trainin
     weights = b_params * WEIGHT_BYTES[kind]
     est = f"weights ~{weights:.0f} GB"
     if training and kind in TRAIN_PEAK_MULTIPLE:
-        est += f", training peak ~{weights * TRAIN_PEAK_MULTIPLE[kind]:.0f} GB (scaled from the 31B {kind} run)"
+        measured = "bf16" if kind == "fp16" else kind  # the 31B runs were bf16 and nf4
+        est += f", training peak ~{weights * TRAIN_PEAK_MULTIPLE[kind]:.0f} GB (scaled from the 31B {measured} run)"
     elif not training:
         est += " plus the key-value cache"
     return f"precision: {what}; derived: {est}"

@@ -27,18 +27,29 @@ The four passes of the demonstration's run order:
         --subject gemma-demo --run demo --limit 5
 """
 
+import importlib.util
 from datetime import datetime, timezone
 from pathlib import Path
 
 import typer
 
 from .. import paths
-from ._common import DEFAULT_MODEL, count_rows, precision_line, preflight, read_jsonl, require
+from ._common import GPU_GROUP_HINT, DEFAULT_MODEL, count_rows, precision_line, preflight, read_jsonl, require
 
 app = typer.Typer(add_completion=False, help=__doc__)
 
 VLLM_DTYPES = {"bf16": "bfloat16", "bfloat16": "bfloat16", "fp16": "float16", "float16": "float16",
                "fp32": "float32", "float32": "float32"}
+
+
+def require_vllm_bitsandbytes(find_spec=importlib.util.find_spec) -> None:
+    """vLLM up to 0.27 quantizes in flight in tree (nf4 hard-coded in its loader, the matmul
+    in bf16); 0.28 moved that support to the vllm-bnb-plugin package. Stop by name when
+    neither is present — never a silent unquantized load."""
+    if (find_spec("vllm.model_executor.layers.quantization.bitsandbytes") is None
+            and find_spec("vllm_bnb_plugin") is None):
+        raise SystemExit("missing GPU dependency: vllm-bnb-plugin (this vLLM has no in-tree bitsandbytes "
+                         f"support); {GPU_GROUP_HINT}")
 
 
 def collect(rows: list[dict], out_path: Path, model_name: str, dtype: str, load_in_4bit: bool,
@@ -50,6 +61,8 @@ def collect(rows: list[dict], out_path: Path, model_name: str, dtype: str, load_
         require("bitsandbytes")  # first: vLLM's in-flight quantization needs it; no fallback to bf16
     transformers = require("transformers")
     vllm = require("vllm")
+    if load_in_4bit:
+        require_vllm_bitsandbytes()
     lora_request = require("vllm.lora.request")
     AutoTokenizer, GenerationConfig = transformers.AutoTokenizer, transformers.GenerationConfig
     LLM, SamplingParams, LoRARequest = vllm.LLM, vllm.SamplingParams, lora_request.LoRARequest

@@ -148,6 +148,14 @@ def test_4bit_run_without_bitsandbytes_stops_naming_it(isolated, monkeypatch):
     assert res.exit_code != 0 and str(res.exception).startswith("missing GPU dependency: bitsandbytes")
 
 
+def test_collect_4bit_needs_in_tree_or_plugin_bitsandbytes_in_vllm():
+    present = {"vllm.model_executor.layers.quantization.bitsandbytes", "vllm_bnb_plugin"}
+    gemma_collect.require_vllm_bitsandbytes(find_spec=lambda name: object() if name in present else None)
+    gemma_collect.require_vllm_bitsandbytes(find_spec=lambda name: object() if name == "vllm_bnb_plugin" else None)
+    with pytest.raises(SystemExit, match="missing GPU dependency: vllm-bnb-plugin"):
+        gemma_collect.require_vllm_bitsandbytes(find_spec=lambda name: None)
+
+
 def test_outputs_cannot_land_in_reference(isolated):
     (isolated / "reference").mkdir()
     data = write_jsonl(isolated / "sft.jsonl", [{"probe_id": "p", "pressure": "q", "turns": turns()}])
