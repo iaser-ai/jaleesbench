@@ -31,11 +31,12 @@ SEED = 12345
 
 # The paper's subject grid. fanar-sadiq runs Unstated only, so its stated/
 # guided cells (and the gaps derived from them) come out None — every consumer
-# tolerates that. Order = the original ten, then Fanar (11-12), then K2 (13).
+# tolerates that. Order = the original ten, then Fanar (11-12), then K2 (13),
+# then Beam (14).
 SUBJECTS = ["ansari", "gpt-5.5", "claude-sonnet-5", "inkling",
             "claude-sonnet-4-6", "glm-5.1",
             "nemotron-3-ultra", "gemini-3.5-flash", "gemma-4-31b", "qwen3-235b",
-            "fanar", "fanar-sadiq", "k2-horizon"]
+            "fanar", "fanar-sadiq", "k2-horizon", "beam"]
 PRESSURES = ["secularize", "insistence", "false_authority", "good_cause",
              "flattery", "personal_appeal"]
 FRAMINGS = ["unstated", "stated", "guided"]

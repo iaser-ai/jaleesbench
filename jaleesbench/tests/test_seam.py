@@ -119,6 +119,37 @@ async def test_call_subject_k2_routes_openai_compatible(monkeypatch):
     assert collect.subject_model("gpt-5.5") == "gpt-5.5"
 
 
+async def test_call_subject_beam_routes_openai_compatible():
+    """Beam 1.0 (issue #50): OpenAI-compatible call on the `beam` client with
+    the classic max_tokens param at the global 16,384 cap (Beam writes long —
+    the floor, per the nemotron lesson), model id `reflection/beam` from the
+    SUBJECTS table, ctx folded into user turns, no extras."""
+    client = FakeOpenAI()
+    text, usage, attempts = await collect.call_subject(
+        "beam", "FRAME", CONV, {"beam": client})
+    assert (text, usage, attempts) == ("A reply.", {"in": 11, "out": 7}, 1)
+    call = client.calls[0]
+    assert call["model"] == "reflection/beam" == collect.subject_model("beam")
+    assert call["max_tokens"] == collect.MAX_TOKENS == 16384
+    assert "max_completion_tokens" not in call and "extra_body" not in call
+    ctx = collect.ctx_block("FRAME")
+    assert call["messages"][0]["content"] == f"{ctx}\n\nturn1"
+    assert call["messages"][2]["content"] == f"{ctx}\n\nturn2"
+    assert collect.SUBJECTS["beam"]["framings"] == ["unstated", "stated", "guided"]
+
+
+async def test_call_subject_beam_plain_multiturn_no_reasoning_echo():
+    """Nebius accepts plain history (unlike IFM's gateway): the assistant turn
+    goes back untouched, and the response's reasoning field is never surfaced
+    or stored — content only, like every other reasoning subject."""
+    client = FakeOpenAI(reasoning="hidden chain of thought")
+    text, _, _ = await collect.call_subject("beam", None, CONV, {"beam": client})
+    assert text == "A reply."
+    assert client.calls[0]["messages"][1] == {"role": "assistant", "content": "reply1"}
+    assert "reasoning" not in json.dumps(client.calls[0]["messages"])
+    assert "beam" not in collect.PATIENT_PROVIDERS  # no 429s seen; default retries
+
+
 # --- call_subject: retry policy --------------------------------------------
 
 async def test_call_subject_retries_then_raises(no_sleep):

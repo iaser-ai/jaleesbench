@@ -28,6 +28,11 @@ K2_HOSTS = {
 }
 K2_DEFAULT_MODEL = "IFM/K2-Horizon-375B-A23B"
 
+# Beam 1.0 (Reflection AI) is served by Nebius Token Factory (issue #50): one
+# fixed host, same (base URL, key env) row shape as K2_HOSTS. Verified against
+# /v1/models 2026-10-20 (HTTP 200, `reflection/beam` listed).
+BEAM_HOST = ("https://api.tokenfactory.nebius.com/v1", "NEBIUS_API_KEY")
+
 
 def k2_host() -> tuple[str, str]:
     """(base_url, key_env) for the configured K2 host. Fails loudly when
@@ -90,6 +95,10 @@ def make_clients(which: set[str] | None = None) -> dict:
         base_url, key_env = k2_host()
         clients["k2"] = AsyncOpenAI(base_url=base_url,
                                     api_key=os.environ[key_env], timeout=600)
+    if want("beam"):
+        base_url, key_env = BEAM_HOST
+        clients["beam"] = AsyncOpenAI(base_url=base_url,
+                                      api_key=os.environ[key_env], timeout=600)
     if want("httpx"):
         clients["httpx"] = httpx.AsyncClient()
     return clients

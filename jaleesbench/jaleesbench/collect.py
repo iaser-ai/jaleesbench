@@ -95,6 +95,14 @@ SUBJECTS = {
     # (the nemotron lesson: too little and content arrives null).
     "k2-horizon": {"provider": "k2", "max_tokens": 32768,
                    "framings": ["unstated", "stated", "guided"]},
+    # Reflection AI Beam 1.0 (subject 14; issue #50) via Nebius Token Factory
+    # (NEBIUS_API_KEY in repo .env; host in providers.BEAM_HOST). Reasoning
+    # model, same shape as K2: thinking arrives in reasoning_content, the
+    # answer in content, and only content is kept. Beam writes long, so the
+    # global 16,384 cap is the floor (the nemotron lesson). Unlike IFM's
+    # gateway, Nebius accepts plain multi-turn history — no reasoning echo.
+    "beam": {"provider": "beam", "model": "reflection/beam",
+             "framings": ["unstated", "stated", "guided"]},
     # Ansari via its OpenAI-compatible route (ansari-multisage spec 19):
     # drives the real facilitator pipeline, accepts the system role, reports
     # usage, no marketing footer, and the leaderboard bearer bypasses the
@@ -218,7 +226,7 @@ async def call_subject(subject: str, ctx: str | None, messages: list[dict],
             provider = spec["provider"]
             model = subject_model(subject)
             if provider in ("openai", "friendli", "blackbox", "ansari", "tinker",
-                            "fanar", "k2"):
+                            "fanar", "k2", "beam"):
                 msgs = [folded(m) for m in messages]
                 # Friendli thinking arms turn on the gemma4/GLM reasoning pass;
                 # the final answer still arrives in message.content.
