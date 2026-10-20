@@ -27,6 +27,9 @@ PRICES = {
     # pricing, but the key is capped at 20M tokens/DAY (console, 2026-09-09).
     # Budget in tokens, not dollars — see collect --limit/--concurrency pacing.
     "k2-horizon": (0.0, 0.0),
+    # Nebius Token Factory list price for reflection/beam (issue #50,
+    # 2026-10-20); no cached-input tier, so every call pays full prompt price.
+    "beam": (0.25, 1.00),
 }
 
 def usage_cost(model: str, tok: dict) -> float:

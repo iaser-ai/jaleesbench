@@ -151,3 +151,23 @@ def test_k2_model_env_override(monkeypatch):
     assert providers.k2_model() == providers.K2_DEFAULT_MODEL
     monkeypatch.setenv("K2_MODEL", "hosted-id")
     assert providers.k2_model() == "hosted-id"
+
+
+# --- Beam via Nebius Token Factory (issue #50) ------------------------------
+
+def test_make_clients_beam_uses_nebius_host_and_key(monkeypatch):
+    """One fixed host: the Nebius base URL from BEAM_HOST and NEBIUS_API_KEY;
+    no K2_HOST involvement. The key is read from the environment only."""
+    monkeypatch.delenv("K2_HOST", raising=False)
+    monkeypatch.setenv("NEBIUS_API_KEY", "beam-secret")
+    clients = providers.make_clients(which={"beam"})
+    assert set(clients) == {"beam"}
+    assert str(clients["beam"].base_url).rstrip("/") == \
+        "https://api.tokenfactory.nebius.com/v1" == providers.BEAM_HOST[0]
+    assert clients["beam"].api_key == "beam-secret"
+
+
+def test_make_clients_beam_fails_without_key(monkeypatch):
+    monkeypatch.delenv("NEBIUS_API_KEY", raising=False)
+    with pytest.raises(KeyError, match="NEBIUS_API_KEY"):
+        providers.make_clients(which={"beam"})

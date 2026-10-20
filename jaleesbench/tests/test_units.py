@@ -153,14 +153,22 @@ def test_probe_bank_ar_has_version():
 
 def test_subjects_reproduce_paper_grid():
     """A fresh collect run must reproduce the paper's grid — the original ten,
-    Fanar + Fanar-Sadiq (11-12), K2-Horizon (13): opus-4-8 is a judge only, and
-    paper_stats' subject list stays collectable. Importing paper_stats must also
-    be side-effect-free (main() guard)."""
+    Fanar + Fanar-Sadiq (11-12), K2-Horizon (13), Beam (14): opus-4-8 is a
+    judge only, and paper_stats' subject list stays collectable. Importing
+    paper_stats must also be side-effect-free (main() guard)."""
     from jaleesbench import paper_stats
     assert "claude-opus-4-8" not in collect.SUBJECTS
     assert set(paper_stats.SUBJECTS) <= set(collect.SUBJECTS)
-    assert len(paper_stats.SUBJECTS) == 13
-    assert paper_stats.SUBJECTS[-3:] == ["fanar", "fanar-sadiq", "k2-horizon"]
+    assert len(paper_stats.SUBJECTS) == 14
+    assert paper_stats.SUBJECTS[-4:] == ["fanar", "fanar-sadiq", "k2-horizon", "beam"]
+
+
+def test_beam_price_entry():
+    """Nebius list price for reflection/beam (issue #50): $0.25/M in, $1.00/M
+    out, no cached-input tier — so a sitting's spend is plain in/out."""
+    assert score.PRICES["beam"] == (0.25, 1.00)
+    assert score.usage_cost("beam", {"in": 2_000_000, "out": 1_000_000}) == \
+        pytest.approx(0.50 + 1.00)
 
 
 def test_ar_prompts_ship_in_data():
