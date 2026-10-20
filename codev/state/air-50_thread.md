@@ -45,3 +45,13 @@ then `batch-judge submit` / `batch-judge collect` (Opus only — never a plain `
 sweep, which would also run Gemini live at full price); leftovers via
 `judge_all(judges={'claude-opus-4-8'})`; then `detect-citations`, `detect_all(turn1=True)`,
 `report`, `export-web --out apps/jaleesbrowser/public/data`.
+
+## 2026-10-20 — pr phase
+
+- PR #51 open (https://github.com/iaser-ai/jaleesbench/pull/51); the PR body is the AIR
+  review. CMAP skipped: one-line table entries + one provider branch mirroring the
+  existing ones, behaviour pinned by seam tests.
+- Stop-and-ask sent to the architect: /private/tmp/agent-mail/air-50-beam-stop-and-ask-2026-10-20.md
+  (provider, model id, PRICES entry, collection ≈ $6–14, Opus batch ≈ $63–65, run plan:
+  24-sitting calibration at concurrency 8 first, then the rest detached).
+- Waiting on: pr gate approval for #51, and a go for the first paid call. No Beam call made.
