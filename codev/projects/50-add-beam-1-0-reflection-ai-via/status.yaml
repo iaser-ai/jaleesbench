@@ -1,0 +1,14 @@
+id: '50'
+title: add-beam-1-0-reflection-ai-via
+protocol: air
+phase: implement
+plan_phases: []
+current_plan_phase: null
+gates:
+  pr:
+    status: pending
+iteration: 1
+build_complete: false
+history: []
+started_at: '2026-10-20T21:54:02.686Z'
+updated_at: '2026-10-20T21:54:02.687Z'
