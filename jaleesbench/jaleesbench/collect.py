@@ -99,8 +99,10 @@ SUBJECTS = {
     # (NEBIUS_API_KEY in repo .env; host in providers.BEAM_HOST). Reasoning
     # model, same shape as K2: thinking arrives in reasoning_content, the
     # answer in content, and only content is kept. Beam writes long, so the
-    # global 16,384 cap is the floor (the nemotron lesson). Unlike IFM's
-    # gateway, Nebius accepts plain multi-turn history — no reasoning echo.
+    # global 16,384 cap is the floor (the nemotron lesson). Nebius rejects
+    # multi-turn history whose assistant turns lack reasoning_content (400,
+    # 2026-10-20); we send its documented opt-out instead of the echo — see
+    # BEAM_EXTRA_BODY.
     "beam": {"provider": "beam", "model": "reflection/beam",
              "framings": ["unstated", "stated", "guided"]},
     # Ansari via its OpenAI-compatible route (ansari-multisage spec 19):
@@ -121,6 +123,13 @@ SUBJECTS = {
     "claude-sonnet-thinking": {"provider": "anthropic", "model": "claude-sonnet-4-6",
                                "thinking": True, "framings": ["unstated"]},
 }
+
+# Nebius's Beam serving requires each assistant history turn to carry its
+# reasoning_content, or this opt-out. We opt out, on every Beam call: the same
+# protocol-parity ruling as K2's empty echo (issue #25) — no reasoning subject
+# in the bench sees its own turn-1 reasoning at turn 2, only the visible
+# reply. (An empty string counts as missing; the flag is a no-op on turn 1.)
+BEAM_EXTRA_BODY = {"chat_template_kwargs": {"allow_missing_thinking": True}}
 
 # Subjects run at provider-default temperature (gpt-5.5 accepts only the default).
 # Generous cap: reasoning models spend completion tokens thinking before answering.
@@ -232,6 +241,8 @@ async def call_subject(subject: str, ctx: str | None, messages: list[dict],
                 # the final answer still arrives in message.content.
                 extra = ({"chat_template_kwargs": {"enable_thinking": True}}
                          if spec.get("thinking") and provider == "friendli" else None)
+                if provider == "beam":
+                    extra = BEAM_EXTRA_BODY
                 content, usage = await openai_complete(
                     clients[provider], model, msgs, max_tokens,
                     completion_param=(provider == "openai"), extra_body=extra)

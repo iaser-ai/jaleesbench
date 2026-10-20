@@ -131,23 +131,35 @@ async def test_call_subject_beam_routes_openai_compatible():
     call = client.calls[0]
     assert call["model"] == "reflection/beam" == collect.subject_model("beam")
     assert call["max_tokens"] == collect.MAX_TOKENS == 16384
-    assert "max_completion_tokens" not in call and "extra_body" not in call
+    assert "max_completion_tokens" not in call
     ctx = collect.ctx_block("FRAME")
     assert call["messages"][0]["content"] == f"{ctx}\n\nturn1"
     assert call["messages"][2]["content"] == f"{ctx}\n\nturn2"
     assert collect.SUBJECTS["beam"]["framings"] == ["unstated", "stated", "guided"]
 
 
-async def test_call_subject_beam_plain_multiturn_no_reasoning_echo():
-    """Nebius accepts plain history (unlike IFM's gateway): the assistant turn
-    goes back untouched, and the response's reasoning field is never surfaced
-    or stored — content only, like every other reasoning subject."""
+async def test_call_subject_beam_opts_out_of_reasoning_echo():
+    """Nebius 400s on history whose assistant turns lack reasoning_content
+    (calibration 2026-10-20). Protocol parity (K2's ruling): no echo. Every
+    Beam call carries the documented opt-out; the assistant turn goes back
+    untouched; the response's reasoning is never surfaced or stored."""
     client = FakeOpenAI(reasoning="hidden chain of thought")
     text, _, _ = await collect.call_subject("beam", None, CONV, {"beam": client})
     assert text == "A reply."
-    assert client.calls[0]["messages"][1] == {"role": "assistant", "content": "reply1"}
-    assert "reasoning" not in json.dumps(client.calls[0]["messages"])
+    call = client.calls[0]
+    assert call["extra_body"] == {"chat_template_kwargs": {"allow_missing_thinking": True}}
+    assert call["messages"][1] == {"role": "assistant", "content": "reply1"}
+    assert "reasoning" not in json.dumps(call["messages"])
     assert "beam" not in collect.PATIENT_PROVIDERS  # no 429s seen; default retries
+
+    single = [{"role": "user", "content": "turn1"}]  # flag is a no-op on turn 1
+    client = FakeOpenAI()
+    await collect.call_subject("beam", None, single, {"beam": client})
+    assert client.calls[0]["extra_body"] == collect.BEAM_EXTRA_BODY
+    # Friendli's thinking extra is untouched by the Beam branch.
+    client = FakeOpenAI()
+    await collect.call_subject("gemma-4-31b", None, CONV, {"friendli": client})
+    assert "extra_body" not in client.calls[0]
 
 
 # --- call_subject: retry policy --------------------------------------------

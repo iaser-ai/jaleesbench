@@ -55,3 +55,26 @@ sweep, which would also run Gemini live at full price); leftovers via
   (provider, model id, PRICES entry, collection ≈ $6–14, Opus batch ≈ $63–65, run plan:
   24-sitting calibration at concurrency 8 first, then the rest detached).
 - Waiting on: pr gate approval for #51, and a go for the first paid call. No Beam call made.
+
+## 2026-10-20 — PR #51 merged (47ac2e0); calibration run 1 FAILED at turn 2
+
+- Gate approved by Waleed (relayed by architect); merged; main checkout fast-forwarded;
+  `porch done 50 --merged 51`.
+- Calibration (`collect --subject beam --limit 24 --concurrency 8` from main): 0/24.
+  Turn 1 fine (24 paid calls, replies not saved); every turn 2 rejected with a
+  NON-retryable 400: "The assistant turn at messages[1] is missing its reasoning …
+  Send it back in 'reasoning_content', or set allow_missing_thinking=true". The fail-fast
+  path worked — no backoff burned. My reading of the issue's "multi-turn replay to Beam
+  itself is fine" was wrong: it meant the eval program replayed the REAL reasoning.
+- Wire probes (9 tiny calls, max_tokens 64, ≈ $0.0005 total):
+  real `reasoning_content` echo → 200; `""` → 400 (empty counts as missing); `None` → 400;
+  `" "` → 200; `"(omitted)"` → 200; top-level `allow_missing_thinking: true` → 400;
+  `chat_template_kwargs: {allow_missing_thinking: true}` → 200 (and a no-op on turn 1).
+  Response reasoning arrives in `reasoning_content` (confirmed).
+- Spend so far: 24 turn-1 calls (usage unsaved; ≈ $0.05 by comparable turn-1 sizes) +
+  probes ≈ $0.001. Total ≈ $0.05.
+- Fix branch builder/air-50-multiturn (from origin/main): `BEAM_EXTRA_BODY` =
+  `{"chat_template_kwargs": {"allow_missing_thinking": True}}` on every Beam call —
+  the documented opt-out, applying K2's protocol-parity ruling (no subject sees its own
+  turn-1 reasoning). Alternative on the table for the architect: the real echo (Nebius's
+  intended usage; would give Beam an information state no other subject had).
