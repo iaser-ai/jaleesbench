@@ -164,3 +164,66 @@ sweep, which would also run Gemini live at full price); leftovers via
 - Out of scope / handed to the paper lane: paper_stats.json regeneration, figures, tex,
   the Beam note (opt-out flag = parity ruling; delimiter leak ≈ 1/560 calls; Opus-only
   judging and the ranking caveat).
+
+## 2026-10-21 — HOLD on #53, then Waleed's call: (b) add Gemini judging
+
+- Architect reproduced the browser leaderboard from my index.json: the naive mix would
+  rank Beam 2nd of 14 publicly. #53 converted to Draft and held.
+- Waleed chose (b): Gemini judging for Beam so it enters the pooled grid like the other 13.
+  Leaked-delimiter replies judged as-run for now (keep/re-sample still open).
+- Run: `judge_all(collect_path=<beam-only sittings file>, judges={'gemini-3.1-pro-preview'})`
+  — the Beam-only collect file restricts the pass to exactly 5,040 cells (the 6 pre-existing
+  chronic Gemini gaps are left alone). Detached via nohup, pid 62917, concurrency 16.
+  Preflight: sittings=2520 judgments_done=129306 todo=5040.
+  **Gemini judge log:** /private/tmp/agent-mail/air-50-beam-gemini-judge-2026-10-21.log
+- Expected ≈ $140 (K2's live Gemini was $139.82); lane → ≈ $205 of $300.
+- Next on completion: Gemini actual cost + 5,040/5,040 count, Beam's POOLED unstated/full
+  score + rank in the pooled 14-subject table, re-run export-web, update #53's body, take
+  it out of Draft; architect reviews the regenerated export before merge.
+
+## 2026-10-21 — Waleed's call on leaked replies: RE-SAMPLE (after the Gemini run exits)
+
+- Broad pattern (`</?rfl:`, `<|channel|>`, `<|start|>`, `<|message|>`, `<|end|>`) finds
+  **10 / 2,520 Beam sittings** with leaked markup in a stored assistant turn (my earlier
+  "7" missed opening `<rfl:` tags): JLS-003|personal_appeal|unstated, JLS-013|false_authority|
+  stated, JLS-014|good_cause|unstated, JLS-029|personal_appeal|stated, JLS-046|false_authority|
+  guided, JLS-057|insistence|stated, JLS-060|false_authority|guided, JLS-107|false_authority|
+  guided, JLS-120|insistence|guided, JLS-133|false_authority|guided. Matches the architect's
+  scan exactly. No non-Beam row matches the pattern.
+- **Original leak rate for the paper note: 10 stored / 5,040 calls (≈ 1 in 500), plus the 2
+  turn-1 leaks that 400'd during collection and were re-sampled then (12 / 5,044 ≈ 1 in 420
+  overall). The paper reports these as RE-SAMPLED.**
+- Sequence (nothing touches results while pid 62917 writes): backup → remove the 10 sittings'
+  rows from collect / judgments (both judges, both scopes) / both citation files → re-collect
+  (resume-safe) → re-scan, loop until clean → re-judge those 10 with BOTH judges live (≈ $2)
+  → both citation passes for them → export-web → #53 body → un-draft.
+  Script staged: scratchpad/resample_remove.py (refuses to run under a live writer).
+
+## 2026-10-21 — Gemini judged; 10 leaked sittings RE-SAMPLED; pooled scores; lane ≈ $192
+
+- Gemini live judge (pid 62917): **5,040/5,040**, 0 failed, ≈ 1 h 50 min at concurrency 16.
+  Cost from usage **$127.95** (K2's was $139.82).
+- Re-sample, strictly after the writer exited (backup dir
+  `results/backup_resample_20261021T052442Z/`): removed **10** collect rows, **40** judgments
+  (10 × 2 judges × 2 scopes), **10 + 10** citation rows. Re-collected 10/10 (0 failed);
+  re-scan with the broad pattern: **0 leaks** on the first pass. Re-judged the 10 with both
+  judges live (40/40); both citation passes re-run (10 + 10).
+- Final integrity: 2,520 sittings, 10,080 judgments (5,040 Opus + 5,040 Gemini, all unique),
+  citations 2,520 in each file, 0 leaked replies. Backups kept on disk (gitignored).
+- **Paper note:** leak rate as collected 10 stored / 5,040 calls (≈ 1 in 500); plus 2 turn-1
+  leaks that 400'd during collection. All 12 re-sampled; the published Beam rows are clean.
+- **Beam POOLED (both judges), paper_stats method:** unstated/full **+0.188 [+0.109, +0.268]**;
+  turn1 +0.209 [+0.128, +0.290]; steadfastness −0.021 [−0.051, +0.009]; stated +0.694;
+  guided +0.873; recognition gap +0.507; instruction gap +0.685.
+- **Pooled 14-subject ranking (unstated/full), recomputed — the 13 others reproduce the
+  committed paper_stats.json to 3 d.p.:** 1 ansari +0.484 · 2 gpt-5.5 +0.276 · 3 claude-sonnet-5
+  +0.274 · 4 inkling +0.258 · 5 claude-sonnet-4-6 +0.237 · **6 beam +0.188** · 7 glm-5.1 −0.177
+  · 8 nemotron −0.204 · 9 gemini-3.5-flash −0.262 · 10 gemma −0.340 · 11 fanar −0.404
+  · 12 fanar-sadiq −0.426 · 13 k2-horizon −0.448 · 14 qwen3-235b −0.476.
+  Beam is 6th: last of the frontier cluster, CI overlapping sonnet-4-6's, ~0.37 above glm.
+- **Actual lane spend:** collection $9.99 (post re-sample rows) + ≈ $0.05 run-1/probes +
+  Opus $52.51 (batch + 17 live + 20 re-judge) + Gemini $127.95 + citations ≈ $1–2
+  ≈ **$192 of the $300 ceiling**.
+- export-web re-run into this worktree (14 subjects); viewer post-pressure leaderboard
+  (all-framings mean) puts Beam 5th (+0.585), between sonnet-4-6 and ansari. PR #53 updated
+  and un-drafted; architect reviews the export before merge.
