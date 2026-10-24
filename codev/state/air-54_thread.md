@@ -16,3 +16,7 @@ What changed in the tex: header comment; orienting paragraphs for Method and Res
 Rebuilt PDF: 10 pages (one more than before, from the new section), zero LaTeX errors, zero bibtex warnings, zero overfull boxes.
 
 Left for Waleed: the "under $100" cost claim (README puts the 4-bit chain at ~$110 and the bf16 run of record at a $60–80 budget, cost not recorded separately); the floats-at-end layout; whether the mini paper should be rebuilt since it shares the bib entry.
+
+## 2026-10-24 — review fix from architect
+
+§5.2 listed the two seeded paired intervals in the reverse order of §3.1 and without saying which was which. Now: `[+0.210, +0.389]` for Inkling-Small stage 1 over base, then `[+0.144, +0.306]` for Gemma stage 2 over stage 1, matching §3.1's order. The extra words pushed the references onto a new page, so two sentences in the same subsection were shortened (checksums/install, licence notice) to keep the paper at 10 pages. Rebuilt clean. Holding for the pr gate.
