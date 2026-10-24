@@ -39,6 +39,10 @@
 % SFT then DPO. Benchmark machinery, the DPO-failure mechanism study,
 % related work, and future work are cut or reduced to a sentence.
 % The full-length draft is at commit bacc75b. All numbers unchanged.
+% 2026-10-23: JaleesBench cited by arXiv id; availability section added
+% for the released code (jaleesweights/), the jaleesweights-data-v1
+% data release and the MLX tutorial; serving hardware stated; no
+% number changed.
 % ------------------------------------------------------------------
 
 \title{JaleesWeights: Fine-Tuning an Open Model\\
@@ -115,9 +119,13 @@ second stage possible.
 
 \section{Method}\label{sec:method}
 
+This section describes the measurement, the two training stages and
+the two models. The code and data behind each step are released
+(\cref{sec:availability}).
+
 \subsection{Measuring the values}\label{sec:measure}
 
-We measure with JaleesBench: 140 two-turn scenarios in which a user
+We measure with JaleesBench \citep{jaleesbench2026}: 140 two-turn scenarios in which a user
 brings a real decision, receives counsel, then pushes back with one
 of six pressures (insistence, flattery, personal appeal, false
 authority, appeal to a good cause, secularization). A frontier judge
@@ -245,9 +253,10 @@ $1\times10^{-5}$, 1 epoch).
 
 \subsection{Models}\label{sec:models}
 
-Gemma-4-31B (bf16 LoRA on a single B200; the whole pipeline under
-\$100) and Inkling-Small, 266B (LoRA through the Tinker fine-tuning
-API). Gemma was chosen from the bottom of the benchmark pool so the
+Gemma-4-31B (bf16 LoRA, trained on one B200 and served for sampling
+and evaluation from one H200, both rented through Modal; the whole
+pipeline under \$100) and Inkling-Small, 266B (LoRA through the Tinker
+fine-tuning API, which also served it). Gemma was chosen from the bottom of the benchmark pool so the
 headroom is largest; Inkling-Small from near the top of the open
 models, to test whether the recipe still helps a model that already
 does reasonably.
@@ -283,6 +292,10 @@ Opus-judged. Gemma 95\% intervals for the after-pushback column: base
 $[-0.47, -0.20]$; stage 1 $[+0.12, +0.42]$; stage 2 $[+0.35, +0.63]$.}
 \label{tab:main}
 \end{table}
+
+\Cref{tab:main} holds every held-out score; the subsections below
+read it stage by stage, then check that the guide still helps and that
+nothing else got worse.
 
 \subsection{Islamic values out of the box}\label{sec:res-main}
 
@@ -418,6 +431,62 @@ not fully internalized: the guide still adds roughly $+0.3$ on top of
 the tuned weights on both models. Whether the disposition over-applies
 --- volunteering religious counsel to users who did not ask for it ---
 is not yet measured.
+
+\section{Availability}\label{sec:availability}
+
+The code as run, the data every run produced and a tutorial are
+released. No trained weights are; the recipe retrains them.
+
+\subsection{Code}\label{sec:avail-code}
+
+The pipeline is the \texttt{jaleesweights/} folder of
+\href{https://github.com/iaser-ai/jaleesbench}{github.com/iaser-ai/jaleesbench},
+under the Apache License 2.0, with three runnable paths. The first two
+are the runs of record: Gemma-4-31B on Modal and Inkling-Small through
+Tinker, each exactly as run. The third is a local demonstration of the
+same recipe on a smaller Gemma-family model (Gemma-4-12B by default) on
+one GPU a team owns, in two profiles: a 24\,GB card with a 4-bit base
+and LoRA on top, or 48\,GB and up in bf16. That path has been checked
+only as far as its preflights, never executed on a GPU, and its
+numbers are not the paper's. Every paid step prints what it will do
+and bill, and stops there on \texttt{--dry-run}. The dropped
+arms of \cref{sec:res-whynot}, the earlier 4-bit Gemma chain and the
+Inkling-Small dose sweep are kept as run under \texttt{archive/},
+unmaintained.
+
+\subsection{Data}\label{sec:avail-data}
+
+The release \texttt{jaleesweights-data-v1} on the same repository
+(2 October 2026) holds two archives: \texttt{jaleesweights-data.tar.gz}
+(74\,MB), with every collected answer, judgment, training set,
+preference pair, sampled answer and training-run record from the runs
+of record and the archived arms, and
+\texttt{jaleesbench-main-run.tar.gz} (111\,MB), the benchmark's main
+run that the stage-1 training-set builder reads. Both are listed
+member by member and checksummed (SHA-256, in
+\texttt{release/checksums.sha256}), and one command downloads,
+verifies and installs them. The data is released under CC BY 4.0 with
+a notice that the model outputs it contains remain subject to the terms
+of the providers that produced them. With the data installed, the
+free steps rebuild the training sets and pairs byte-for-byte and
+reprint \cref{tab:main} without calling any model. The two paired
+intervals quoted in \cref{sec:res-main} came from an unseeded
+bootstrap; the released step is seeded and gives $[+0.144, +0.306]$
+and $[+0.210, +0.389]$. The base models were
+\texttt{google/gemma-4-31B-it} and
+\texttt{thinkingmachines/Inkling-Small}; the judges of record were
+\texttt{gemini-3.1-pro-preview} for selection and
+\texttt{claude-opus-4-8} for held-out scoring.
+
+\subsection{Tutorial}\label{sec:avail-tutorial}
+
+\texttt{jaleesweights/TUTORIAL.md} walks the recipe on an Apple
+Silicon Mac with MLX: stage 1 on Gemma-4 E4B in 4-bit, one question
+asked before and after, then an optional stage 2 on the model's own
+samples. It shows the workflow only: a model of that size is not
+powerful enough for Islamic work and invents hadith, as its own
+transcript shows, and the tutorial tells the reader not to consult the
+model it produces or give it to anyone.
 
 \section{Conclusion}\label{sec:conclusion}
 
