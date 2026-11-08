@@ -1,7 +1,7 @@
 id: '56'
 title: add-inkling-2-small-thinking-m
 protocol: air
-phase: implement
+phase: pr
 plan_phases: []
 current_plan_phase: null
 gates:
@@ -11,4 +11,4 @@ iteration: 1
 build_complete: false
 history: []
 started_at: '2026-11-08T18:29:01.039Z'
-updated_at: '2026-11-08T18:29:01.040Z'
+updated_at: '2026-11-08T18:31:22.108Z'
