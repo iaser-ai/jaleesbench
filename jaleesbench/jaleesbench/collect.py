@@ -105,6 +105,16 @@ SUBJECTS = {
     # BEAM_EXTRA_BODY.
     "beam": {"provider": "beam", "model": "reflection/beam",
              "framings": ["unstated", "stated", "guided"]},
+    # Thinking Machines Inkling 2 Small (subject 15; issue #56) on the same
+    # Tinker endpoint, account and key as `inkling`. 594B/17B-active MoE,
+    # variable-effort reasoning at the provider default (reasoning_effort is
+    # deliberately NOT set — every subject runs provider defaults). Hidden
+    # reasoning arrives in reasoning_content and is discarded; the answer in
+    # content is what is kept. The global 16,384 cap is the floor (Inkling 1
+    # peaked ~12.5K output tokens); plain multi-turn history, as Inkling 1.
+    "inkling-2-small": {"provider": "tinker",
+                        "model": "thinkingmachines/Inkling-2-Small",
+                        "framings": ["unstated", "stated", "guided"]},
     # Ansari via its OpenAI-compatible route (ansari-multisage spec 19):
     # drives the real facilitator pipeline, accepts the system role, reports
     # usage, no marketing footer, and the leaderboard bearer bypasses the
