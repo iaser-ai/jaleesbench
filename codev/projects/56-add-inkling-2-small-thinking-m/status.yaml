@@ -1,0 +1,14 @@
+id: '56'
+title: add-inkling-2-small-thinking-m
+protocol: air
+phase: implement
+plan_phases: []
+current_plan_phase: null
+gates:
+  pr:
+    status: pending
+iteration: 1
+build_complete: false
+history: []
+started_at: '2026-11-08T18:29:01.039Z'
+updated_at: '2026-11-08T18:29:01.040Z'
