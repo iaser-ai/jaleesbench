@@ -30,6 +30,11 @@ PRICES = {
     # Nebius Token Factory list price for reflection/beam (issue #50,
     # 2026-10-20); no cached-input tier, so every call pays full prompt price.
     "beam": (0.25, 1.00),
+    # Tinker list price for thinkingmachines/Inkling-2-Small (issue #56,
+    # 2026-11-08), no launch discount: $0.30/M prefill, $1.00/M sample. Tinker
+    # bills cached prefill at $0.03/M but the OpenAI-compatible usage block
+    # reports no cache split, so every prompt token is costed at full rate.
+    "inkling-2-small": (0.30, 1.00),
 }
 
 def usage_cost(model: str, tok: dict) -> float:

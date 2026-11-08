@@ -162,6 +162,32 @@ async def test_call_subject_beam_opts_out_of_reasoning_echo():
     assert "extra_body" not in client.calls[0]
 
 
+async def test_call_subject_inkling_2_small_routes_tinker():
+    """Inkling 2 Small (issue #56): same `tinker` client as Inkling 1, model id
+    `thinkingmachines/Inkling-2-Small` from the SUBJECTS table, classic
+    max_tokens at the global 16,384 cap (the floor for a reasoning model),
+    ctx folded into user turns, no extras and NO reasoning_effort — the
+    provider default, like every other subject."""
+    client = FakeOpenAI(reasoning="hidden variable-effort chain")
+    text, usage, attempts = await collect.call_subject(
+        "inkling-2-small", "FRAME", CONV, {"tinker": client})
+    assert (text, usage, attempts) == ("A reply.", {"in": 11, "out": 7}, 1)
+    call = client.calls[0]
+    assert call["model"] == "thinkingmachines/Inkling-2-Small" \
+        == collect.subject_model("inkling-2-small")
+    assert call["max_tokens"] == collect.MAX_TOKENS == 16384
+    assert "max_completion_tokens" not in call and "extra_body" not in call
+    assert "reasoning_effort" not in json.dumps(call)
+    ctx = collect.ctx_block("FRAME")
+    assert call["messages"][0]["content"] == f"{ctx}\n\nturn1"
+    assert call["messages"][1] == {"role": "assistant", "content": "reply1"}
+    assert call["messages"][2]["content"] == f"{ctx}\n\nturn2"
+    assert "reasoning" not in json.dumps(call["messages"])
+    assert collect.SUBJECTS["inkling-2-small"]["framings"] == \
+        ["unstated", "stated", "guided"]
+    assert "tinker" in collect.PATIENT_PROVIDERS  # in-flight cap: patient retries
+
+
 # --- call_subject: retry policy --------------------------------------------
 
 async def test_call_subject_retries_then_raises(no_sleep):

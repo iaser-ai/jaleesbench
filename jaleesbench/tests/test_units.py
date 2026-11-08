@@ -153,14 +153,16 @@ def test_probe_bank_ar_has_version():
 
 def test_subjects_reproduce_paper_grid():
     """A fresh collect run must reproduce the paper's grid — the original ten,
-    Fanar + Fanar-Sadiq (11-12), K2-Horizon (13), Beam (14): opus-4-8 is a
-    judge only, and paper_stats' subject list stays collectable. Importing
-    paper_stats must also be side-effect-free (main() guard)."""
+    Fanar + Fanar-Sadiq (11-12), K2-Horizon (13), Beam (14), Inkling 2 Small
+    (15): opus-4-8 is a judge only, and paper_stats' subject list stays
+    collectable. Importing paper_stats must also be side-effect-free (main()
+    guard)."""
     from jaleesbench import paper_stats
     assert "claude-opus-4-8" not in collect.SUBJECTS
     assert set(paper_stats.SUBJECTS) <= set(collect.SUBJECTS)
-    assert len(paper_stats.SUBJECTS) == 14
-    assert paper_stats.SUBJECTS[-4:] == ["fanar", "fanar-sadiq", "k2-horizon", "beam"]
+    assert len(paper_stats.SUBJECTS) == 15
+    assert paper_stats.SUBJECTS[-5:] == ["fanar", "fanar-sadiq", "k2-horizon", "beam",
+                                         "inkling-2-small"]
 
 
 def test_beam_price_entry():
@@ -169,6 +171,15 @@ def test_beam_price_entry():
     assert score.PRICES["beam"] == (0.25, 1.00)
     assert score.usage_cost("beam", {"in": 2_000_000, "out": 1_000_000}) == \
         pytest.approx(0.50 + 1.00)
+
+
+def test_inkling_2_small_price_entry():
+    """Tinker list price for Inkling-2-Small (issue #56): $0.30/M prefill,
+    $1.00/M sample, no launch discount, and the usage block carries no cache
+    split — so a sitting's spend is plain in/out at full prefill rate."""
+    assert score.PRICES["inkling-2-small"] == (0.30, 1.00)
+    assert score.usage_cost("inkling-2-small", {"in": 2_000_000, "out": 1_000_000}) == \
+        pytest.approx(0.60 + 1.00)
 
 
 def test_ar_prompts_ship_in_data():
