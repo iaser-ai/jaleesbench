@@ -281,6 +281,8 @@ added nothing over stage 1 on this model.
 5. **Inkling-Small. DECIDED (owner, 2026-11-09):** not run.
 6. **Budget. DECIDED (owner, 2026-11-09):** ceiling $160 in total; pause and report if GPU
    spend passes $100.
+   **Budget change after launch (owner, 2026-11-09, during collection):** ceiling raised to
+   $250 in total, GPU pause point to $150. A change of budget only; the design is untouched.
 
 All six decisions are made. The design above is frozen as of this commit; no data exists yet.
 

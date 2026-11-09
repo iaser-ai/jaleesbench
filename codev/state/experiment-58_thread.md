@@ -44,3 +44,12 @@
 - Smoke passed: 24 sittings incl. 64k, 24 judgments, clean records. Prefix cache hit ~95%.
   Surprise: my memory estimate was ~4x too high; the H200 would likely have fit.
 - Smoke cost $2.81. Full-run projection about $87. STOPPED; waiting for the word.
+
+## 2026-11-09 15:19 PST — full run launched
+
+- GO received. Collection running detached from this worktree, outputs and log in the main
+  checkout's `jaleesweights/data/runs/fading-58/` (`collect.log`). Resumable: re-run the same
+  command. A watcher stops it if today's GPU bill for the app passes $95.
+- 15:36 PST: budget raised after launch to $250 total, GPU pause $150. Watcher restarted with
+  the new stop (the watcher is a separate process; the collection was not touched). First
+  group ran at 2,924 sittings/hour.
