@@ -18,3 +18,8 @@
     weights arm; the paper scores held-out with Opus alone — raised under the judge decision.
 - Waiting on six owner decisions (channel, judge, training-half handling, floor arm,
   Inkling-Small, budget).
+
+## 2026-11-09 — decision 3
+
+- Owner decision: run only the 70 held-out probes; training probes excluded for every arm.
+  Pre-registration and cost table updated (base ≈ $130). Decisions 1, 2, 4, 5, 6 pending.

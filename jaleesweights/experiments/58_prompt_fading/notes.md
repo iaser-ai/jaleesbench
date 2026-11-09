@@ -98,11 +98,10 @@ and every exchange is read once. The bank is fixed before the smoke and not edit
 
 ### Scenarios, pressures, scope
 
-- The 140 JaleesBench probes × the six authored pressures.
-- The JaleesWeights adapters were trained on 70 of those probes
-  (`jaleesweights/split_70_70.json`); the other 70 are held out. So on the training half the
-  weights arm is being tested on scenarios it was tuned on. How this is handled is an open
-  decision below; the analysis reports the two halves separately in every case.
+- The **70 held-out probes** of `jaleesweights/split_70_70.json` (the `test` list) × the six
+  authored pressures. The JaleesWeights adapters were trained on the other 70; those are
+  excluded entirely, for every arm, so nothing is tested on training data (owner decision,
+  2026-11-09). This is the scenario set of the paper's own results table.
 - After-pushback scope only (the whole four-turn exchange): one judgment per sitting.
 
 ### Sampling
@@ -122,7 +121,7 @@ else in this repository.
 
 | | 78 | here |
 |---|---|---|
-| Scenarios | 519, seven traditions | 140 JaleesBench probes |
+| Scenarios | 519, seven traditions (Sunni Islam 140) | the 70 held-out JaleesBench probes |
 | Guide | per-tradition guide | the JaleesBench guide |
 | Weights model | MultiWeights adapter | JaleesWeights Gemma stage 2 |
 | Ramp | 4 levels to 12k | 6 levels to ≥ 64k |
@@ -169,7 +168,9 @@ against τ.
    replication check.
 4. Slopes per pressure, per arm (the small-multiples figure). Descriptive.
 5. Slopes against log10(1 + measured filler tokens) as a robustness check on the ordinal axis.
-6. Training half and held-out half separately, for every estimand above.
+
+**Power.** With 70 probes the intervals are wider than experiment 78's Sunni Islam ones
+(n = 140, half-width about ±0.018 on the prompted slope); roughly ±0.025 is to be expected.
 
 **Cost actuals** are reconciled from usage (judge tokens × price; `modal billing report`)
 and reported before any conclusion, at the smoke and again after the full run.
@@ -178,8 +179,8 @@ and reported before any conclusion, at the smoke and again after the full run.
 
 Figures are estimates for the decision; the smoke replaces them with measured ones.
 
-**Grid.** 140 probes × 6 pressures × 6 levels = 5,040 sittings per arm. Two arms: 10,080.
-Arm F (L0 only): 840. Each sitting is two generations and one judgment.
+**Grid.** 70 probes × 6 pressures × 6 levels = 2,520 sittings per arm. Two arms: 5,040.
+Arm F (L0 only): 420. Each sitting is two generations and one judgment.
 
 **Judge, per judgment, after-pushback scope** (measured from this repository's existing
 judgments of Gemma transcripts, at current list prices):
@@ -201,11 +202,12 @@ identical for every sitting at a level, and collection is ordered by arm and lev
 resident). These memory figures are derived, not measured; the smoke's 64k sitting is the
 proof.
 
-Estimate for 10,080 sittings: L0–L3 about 4 GPU-hours (78's measured 2,540 sittings/hour,
-scaled for longer replies); L4–L5 about 6–12 GPU-hours (long-context decoding, limited
-concurrency); about $7 per B200-hour all-in. **≈ $115, range $70–190.** The top of the range
-is the case where prefix sharing does not work and ~380M filler tokens are prefilled in full.
-All levels are served by the same deployment so that hardware is not confounded with level.
+Estimate for 5,040 sittings: L0–L3 about 2 GPU-hours (78's measured 2,540 sittings/hour,
+scaled for longer replies); L4–L5 about 3–6 GPU-hours (long-context decoding, limited
+concurrency); about $7 per B200-hour all-in, plus cold starts. **≈ $60, range $40–100.** The
+top of the range is the case where prefix sharing does not work and ~190M filler tokens are
+prefilled in full. All levels are served by the same deployment so that hardware is not
+confounded with level.
 
 **Filler bank.** Written in the builder session and screened; no API spend.
 
@@ -213,28 +215,29 @@ All levels are served by the same deployment so that hardware is not confounded 
 
 ### Totals by option
 
-Base configuration: both arms + arm F, 140 probes, one delivery channel, Opus batch judge.
+Base configuration: both arms + arm F, the 70 held-out probes, one delivery channel, Opus
+batch judge.
 
 | Configuration | Sittings | Judge | Serve | Total |
 |---|---:|---:|---:|---:|
-| **Base** (140 probes, one channel, Opus batch) | 10,920 | $120 | ≈ $125 | **≈ $250** (range $200–$330) |
-| Held-out 70 probes only | 5,460 | $60 | ≈ $65 | ≈ $130 (range $105–$170) |
-| Both channels (two P arms + two W arms) | 21,000 | $231 | ≈ $240 | ≈ $475 (range $380–$630) |
+| **Base** (one channel, Opus batch, with arm F) | 5,460 | $60 | ≈ $65 | **≈ $130** (range $105–$170) |
+| Base without arm F | 5,040 | $55 | ≈ $60 | ≈ $120 (range $100–$160) |
+| Both channels (two P arms + two W arms, with arm F) | 10,500 | $116 | ≈ $120 | ≈ $240 (range $190–$320) |
 
 | Judge alternative, change to the base total | |
 |---|---:|
-| Opus live instead of batch (results in minutes, not hours) | + $120 |
-| Gemini Flash via OpenRouter (the 78 judge) instead of Opus | + $22, plus a small judge adapter |
-| Opus + Gemini 3.1 Pro, after-pushback scope | + $295 |
-| Opus + Gemini 3.1 Pro, both scopes | + $630 |
+| Opus live instead of batch (results in minutes, not hours) | + $60 |
+| Gemini Flash via OpenRouter (the 78 judge) instead of Opus | + $11, plus a small judge adapter |
+| Opus + Gemini 3.1 Pro, after-pushback scope | + $147 |
+| Opus + Gemini 3.1 Pro, both scopes | + $315 |
 
 | Separate line | |
 |---|---:|
-| Inkling-Small as a second pair | + ≈ $150–$400, feasibility not yet established |
+| Inkling-Small as a second pair | + ≈ $75–$200, feasibility not yet established |
 
-Inkling-Small: 10,080 more sittings on the Tinker API. Judge $111 (Opus batch). Generation
-is the unknown: about 390M prompt tokens, whose cost depends on whether Tinker bills repeated
-prefixes at its cached rate (about $40 total if so, about $150–$280 if not; the current
+Inkling-Small: 5,040 more sittings on the Tinker API. Judge $55 (Opus batch). Generation is
+the unknown: about 195M prompt tokens, whose cost depends on whether Tinker bills repeated
+prefixes at its cached rate (about $20 total if so, about $75–$140 if not; the current
 Inkling-Small price needs to be read off Tinker's price list). Two things must be confirmed
 free of charge before it could run: that Tinker serves Inkling-Small with a window of at
 least 70k tokens, and that the stage-2 adapter is still retrievable. In the paper stage 2
@@ -254,16 +257,13 @@ suggestion and nothing more.
 2. **Judge.** Opus only; the 78 Flash judge; or Opus + Gemini 3.1 Pro. One fact that bears on
    it: Gemini 3.1 Pro selected the JaleesWeights training data, which is why the paper scores
    held-out results with Opus alone. *Builder's suggestion: Opus only, batch.*
-3. **Training-half contamination.** (a) run all 140, primary analysis on all 140, halves
-   reported separately; (b) run all 140, primary analysis on the 70 held-out probes, all-140
-   secondary; (c) run the 70 held-out probes only, at half the cost. *Builder's suggestion:
-   (b): the weights arm's flatness on scenarios it was tuned on is not clean evidence, and
-   the paper's table is held-out.*
-4. **Arm F** (840 sittings, ≈ $15): keep or drop. Without it the L0 check uses the paper's
-   existing base-model number, which covers the held-out half only.
+3. **Training-half contamination. DECIDED (owner, 2026-11-09):** run only the 70 held-out
+   probes; the 70 training probes are excluded entirely, for every arm.
+4. **Arm F** (420 sittings, ≈ $10): keep or drop. Without it the L0 check uses the paper's
+   existing base-model number (same probes, same serving stack and judge, an earlier run).
 5. **Inkling-Small** as a second pair: yes or no (see the separate line above).
 6. **Budget ceiling**, and a Modal tripwire. *Builder's suggestion for the base
-   configuration: ceiling $330, pause and reconcile if Modal passes $200.*
+   configuration: ceiling $170, pause and reconcile if Modal passes $100.*
 
 ## Binding sequence
 
@@ -297,4 +297,4 @@ None yet.
 
 ## Next Steps
 
-Owner decisions 1–6.
+Owner decisions 1, 2, 4, 5, 6 (decision 3 is made).
