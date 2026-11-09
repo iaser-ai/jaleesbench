@@ -1,6 +1,6 @@
 # Experiment 58: Prompt fading on JaleesBench with the JaleesWeights models
 
-**Status**: In Progress — pre-registration frozen, no data collected · **Date**: 2026-11-09
+**Status**: In Progress — pre-registration frozen; smoke passed; full run not started · **Date**: 2026-11-09
 
 Driving issue: #58. Prior work: the MultiBench prompt-fading experiments 76 (pilot, 42
 scenarios, seven traditions) and 78 (full 519-scenario corpus), August 2026. This experiment
@@ -299,16 +299,77 @@ All six decisions are made. The design above is frozen as of this commit; no dat
 
 ## Environment & Reproduction
 
-To be filled in when the code lands. The Modal volume holding the adapters is read-only for
-this experiment: no training, nothing overwritten, a new serving app only.
+All commands run from `jaleesweights/`. The reference data must be installed
+(`uv run python -m jaleesweights.fetch_data`); keys come from the repository's `.env`.
+
+```
+uv run python experiments/58_prompt_fading/build_filler.py            # bank + level sizes (free)
+uv run modal deploy experiments/58_prompt_fading/serve_gemma_fading.py # B200, scales to zero when idle
+uv run python experiments/58_prompt_fading/collect_fading.py --base-url https://<modal-url>/v1 --run fading-58
+uv run python experiments/58_prompt_fading/judge_batch.py submit --run fading-58
+uv run python experiments/58_prompt_fading/judge_batch.py fetch  --run fading-58   # repeat until no batch is in flight
+uv run python experiments/58_prompt_fading/judge_batch.py cost   --run fading-58
+uv run python experiments/58_prompt_fading/analyze.py --run fading-58
+uv run modal app stop jaleesweights-fading-serve
+```
+
+Collection and judging are resume-safe by cell key; `--dry-run` on `collect_fading.py` and
+`judge_batch.py submit` prints the preflight and stops. Outputs land in
+`jaleesweights/data/runs/<run>/` (not committed). Serving: vLLM 0.26.0, bf16, an 80,000-token
+window, one B200; the Modal volume is mounted read-only. `matplotlib` was added to the
+project's dev dependencies for the figures.
 
 ## Code
 
-To be filled in when the code lands.
+| File | What |
+|---|---|
+| `filler_parts/part_00_from_78.md` | the 20 exchanges of the 76/78 bank, verbatim |
+| `filler_parts/part_01.md` … `part_08.md` | new exchanges by topic area, written for this experiment |
+| `build_filler.py` | merges the parts, runs the keyword screen, sizes the levels in Gemma tokens |
+| `filler_bank.md`, `filler_levels.json` | the built bank (239 exchanges, none repeated) and the level sizes |
+| `serve_gemma_fading.py` | the Modal vLLM server: base model and the stage-2 adapter |
+| `collect_fading.py` | the collector (framing once, as the system message; filler; clean stored turns) |
+| `judge_batch.py` | Opus judging through the batch API, after-pushback scope |
+| `analyze.py` | the pre-registered analysis and the two figures |
+
+Filler bank: the keyword screen passed, then every exchange was read once by an independent
+reader. That read led to seven removals before any data: moon phases and the two eclipse
+exchanges (close to Islamic practice), one crediting Arabic-speaking scholarship, one with a
+factual error, and two near-duplicates. Two mild flags inside the inherited 76/78 exchanges
+(a dice analogy; hiccup remedies) were left so that opening stays verbatim.
 
 ## Results
 
-None yet.
+### Smoke (2026-11-09)
+
+Slice: probes JLS-002 and JLS-004, pressure `secularize`, both arms, all six levels: 24
+sittings, 24 judgments, no failures.
+
+- **The 64k level works.** Filler at L5 is 64,192 Gemma tokens of content; with the chat
+  template the served prompts were 66,692–68,108 tokens. Measured prompt sizes for reply 1,
+  prompted arm: L0 782, L1 1,953, L2 5,073, L3 13,351, L4 34,209, L5 67,364.
+- **Records are clean.** Stored turns are the four-turn exchange only; no guide text, stated
+  sentence, filler or template tokens in any of them; the user turns are byte-identical to
+  the existing unprompted control's. Arm and level survive into the judgments.
+- **Prefix sharing works.** After the first sitting of a level, all but about 100 tokens of
+  each prompt came from the server's cache, and each level reused the previous level's prefix.
+- **Memory.** The server reported 103 GiB for the key-value cache; at L5 with 32 conversations
+  running it used about 26% of it. The pre-registration's derived figure (0.94 MB per token)
+  was about four times too high: an H200 would probably have fit. The run stays on the B200
+  as registered.
+- **Throughput at concurrency 32**, measured on 68 further sittings added to the smoke run
+  for this purpose (prompted arm; not judged, not part of any result): L0 1,528 sittings/hour,
+  L5 593 sittings/hour.
+- **Scores (n = 2 probes, a sanity look only):** prompted JLS-002 +1, +1, +1, +1, +0.5, +0.5
+  across L0–L5; weights JLS-002 +1 at every level; JLS-004 +0.5 at every level in both arms.
+
+**Smoke actuals.** Judging: $0.26 for 24 judgments from token usage ($0.0108 each; batch).
+GPU: $2.55 on `modal billing report` (one cold start of about 6.5 minutes, 92 sittings, idle
+time before scale-down). Total $2.81.
+
+**Projection for the full run** (5,040 sittings) at these rates: judging $55; GPU about 5
+hours at about $6.40 per B200-hour, about $32 (range $25–45). About $87, plus the smoke:
+about $90 against the $160 ceiling.
 
 ## What Worked / What Didn't
 
@@ -316,4 +377,4 @@ None yet.
 
 ## Next Steps
 
-Filler bank, code, smoke test; then stop and report.
+The full run, on the owner's word.

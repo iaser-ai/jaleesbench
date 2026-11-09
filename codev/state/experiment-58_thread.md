@@ -34,3 +34,13 @@
   this experiment: offline engine vs server, vLLM version, H200 vs B200, random stream.
   Reply cap raised from my 4,096 to 8,192 to match. Told the architect.
 - Decisions 2, 5, 6 pending.
+
+## 2026-11-09 — GO, filler, code, smoke
+
+- Final decisions: Opus batch; no Inkling-Small; ceiling $160, pause at $100 GPU. Frozen.
+- Filler bank built by eight parallel writers by topic, keyword-screened, then read in full by
+  an independent reader; seven exchanges removed on that read. 239 exchanges, 64,192 tokens.
+- Deployed `jaleesweights-fading-serve` (B200, vLLM 0.26.0, 80k window, volume read-only).
+- Smoke passed: 24 sittings incl. 64k, 24 judgments, clean records. Prefix cache hit ~95%.
+  Surprise: my memory estimate was ~4x too high; the H200 would likely have fit.
+- Smoke cost $2.81. Full-run projection about $87. STOPPED; waiting for the word.
