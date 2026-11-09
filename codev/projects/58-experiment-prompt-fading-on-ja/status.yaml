@@ -1,0 +1,14 @@
+id: '58'
+title: experiment-prompt-fading-on-ja
+protocol: experiment
+phase: hypothesis
+plan_phases: []
+current_plan_phase: null
+gates:
+  experiment-complete:
+    status: pending
+iteration: 1
+build_complete: false
+history: []
+started_at: '2026-11-09T22:07:40.426Z'
+updated_at: '2026-11-09T22:07:40.427Z'
