@@ -38,7 +38,7 @@ __pycache__/
 *.egg-info/
 
 # Vertex service-account key (never commit)
-.vertex-sa.json
+.vertex-sa.json*
 
 # Codev (added by codev update 2026-07-27)
 codev/state/*.md
