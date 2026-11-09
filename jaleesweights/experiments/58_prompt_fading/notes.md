@@ -39,7 +39,7 @@ Inherited from experiment 78 unless listed under "What changes".
 ### Conversation shape
 
 ```
-[framing, delivered ONCE]            guide (prompted arm) or stated sentence (weights arm)
+SYSTEM:    framing, delivered ONCE   guide (prompted arm) or stated sentence (weights arm)
 [filler user/assistant exchanges]    pre-filled history; none at L0
 USER:      probe turn 1              clean
 ASSISTANT: reply 1                   generated
@@ -63,12 +63,40 @@ not the benchmark's "guided" condition, because the pressure turn carries no gui
 |---|---|---|---|
 | **P** prompted | base `google/gemma-4-31B-it` | the JaleesBench guide (`jaleesbench.prompts.GUIDE`) | expected to fade (H1) |
 | **W** weights | base + adapter `gemma-sft-dpo-bf16` (stage 2) | the stated sentence (`jaleesbench.prompts.STATED`) | expected flat (H2) |
-| **F** floor | base, no framing, **L0 only** | none | in-run floor for the L0 check |
+
+The framing is the opening **system message** for both arms (owner decision, 2026-11-09): the
+channel experiment 78 ran. Gemma-4's chat template has a real system turn. The benchmark
+itself delivers framing in the user turn, so these numbers are not the benchmark's
+"guided" condition.
 
 Both strings are imported from the benchmark, never retyped. Both arms run on one serving
-endpoint, the same base weights, the same sampling. The delivery channel (system message or
-first-user-turn prefix) is an open decision below; whichever is chosen, P and W use the same
-one.
+endpoint, the same base weights, the same sampling.
+
+**Unprompted floor: reused, not re-run** (owner decision, 2026-11-09). The L0 check uses the
+existing same-stack control, `data/reference/collect_eval_basevllm.jsonl` (subject
+`gemma-base-vllm`, no framing, 420 sittings = these same 70 probes × 6 pressures, collected
+2026-08-04), with its Opus after-pushback judgments in
+`data/reference/judgments_eval_gemma.jsonl` (mean −0.335, the paper's base figure). How its
+settings compare with what this experiment serves:
+
+| Setting | Existing control | This experiment |
+|---|---|---|
+| Model, precision | `google/gemma-4-31B-it`, bf16, no adapter | same |
+| Sampling | model defaults: temperature 1.0, top-p 0.95, top-k 64 | same, sent explicitly |
+| Reply cap | 8,192 tokens | 8,192 tokens |
+| Chat template | the model's own, via the tokenizer | the model's own, via the vLLM server |
+| Probes, pressures, turn texts | held-out 70 × 6 | same |
+| Judge | Opus, benchmark rubric | depends on the judge decision |
+| vLLM | offline batch engine, version of August 2026 (unpinned `vllm>=0.10`) | OpenAI-compatible server, current version |
+| GPU, window | H200, 32,768 | B200, ~80,000 |
+| Seed | 3446, one batch stream | 3446, per request |
+
+The first five rows match. The last three do not: engine mode, vLLM version, GPU and random
+stream differ. None changes the prompt or the sampling distribution, so the control is a
+cross-run anchor on the same instrument, not an in-run arm, and is reported as such. If the
+judge is not Opus, the control has no matching judgments and its 420 sittings would need
+judging by the chosen judge.
+
 
 ### Separation ramp
 
@@ -108,8 +136,8 @@ and every exchange is read once. The bank is fixed before the smoke and not edit
 
 The benchmark's convention: the model's own generation defaults (temperature 1.0, top-p 0.95,
 top-k 64), one sample per cell, seed 3446 sent with every request. This differs from 76/78
-(temperature 0). Reply cap 4,096 tokens (the longest reply in the reference collections is
-1,183); a reply that hits the cap fails the sitting loudly instead of being stored.
+(temperature 0). Reply cap 8,192 tokens, as in the JaleesWeights collections (their longest reply is 1,183);
+a reply that hits the cap fails the sitting loudly instead of being stored.
 
 ### Judge
 
@@ -128,7 +156,8 @@ else in this repository.
 | Filler | 5k bank, cycled | non-repeating bank |
 | Sampling | temperature 0 | model defaults, seeded |
 | Judge | one Gemini Flash judge | open |
-| Floor for the L0 check | another run | arm F, in-run |
+| Floor for the L0 check | another run, other scenarios | the paper's same-stack control, same probes |
+| Framing channel | system message | system message |
 
 ## Pre-registered analysis
 
@@ -147,7 +176,7 @@ against τ.
 
 **Decision rules.** Locked; no re-scoring and no change of threshold after data.
 
-- **L0 check** (must pass for H1 to mean anything): P at L0 is at least 0.15 above F at L0.
+- **L0 check** (must pass for H1 to mean anything): P at L0 is at least 0.15 above the reused unprompted control (paired by probe).
   If not, H1 is reported as not testable.
 - **H1 confirmed**: slope_P interval excludes 0, slope is negative, and −5 × slope_P ≥ 0.15.
   Interval excludes 0 but the total is under 0.15: reported as "fade present, below the
@@ -180,7 +209,7 @@ and reported before any conclusion, at the smoke and again after the full run.
 Figures are estimates for the decision; the smoke replaces them with measured ones.
 
 **Grid.** 70 probes × 6 pressures × 6 levels = 2,520 sittings per arm. Two arms: 5,040.
-Arm F (L0 only): 420. Each sitting is two generations and one judgment.
+No floor arm is run. Each sitting is two generations and one judgment.
 
 **Judge, per judgment, after-pushback scope** (measured from this repository's existing
 judgments of Gemma transcripts, at current list prices):
@@ -194,7 +223,7 @@ judgments of Gemma transcripts, at current list prices):
 
 **Serving.** Gemma-4-31B's native window is 262,144 tokens, so 64k is inside it. The cost is
 memory: the key-value cache is about 0.94 MB per token (60 layers × 16 KV heads × 256 × 2 ×
-2 bytes), so one 70k-token conversation needs about 66 GB on top of 62 GB of weights. An
+2 bytes), so one 70k-token conversation needs about 66 GB (up to 75 GB at the 80k window) on top of 62 GB of weights. An
 H200 (141 GB) at the current 92% setting leaves about 65 GB, which does not fit. A single
 B200 (~180 GB) leaves about 100 GB: one shared 65k filler prefix plus roughly 16 concurrent
 conversations, provided vLLM's prefix cache shares the filler across requests (the filler is
@@ -215,21 +244,18 @@ confounded with level.
 
 ### Totals by option
 
-Base configuration: both arms + arm F, the 70 held-out probes, one delivery channel, Opus
-batch judge.
+Base configuration: two arms, the 70 held-out probes, system channel, Opus batch judge.
 
 | Configuration | Sittings | Judge | Serve | Total |
 |---|---:|---:|---:|---:|
-| **Base** (one channel, Opus batch, with arm F) | 5,460 | $60 | ≈ $65 | **≈ $130** (range $105–$170) |
-| Base without arm F | 5,040 | $55 | ≈ $60 | ≈ $120 (range $100–$160) |
-| Both channels (two P arms + two W arms, with arm F) | 10,500 | $116 | ≈ $120 | ≈ $240 (range $190–$320) |
+| **Base** | 5,040 | $55 | ≈ $60 | **≈ $120** (range $100–$160), smoke included |
 
 | Judge alternative, change to the base total | |
 |---|---:|
-| Opus live instead of batch (results in minutes, not hours) | + $60 |
-| Gemini Flash via OpenRouter (the 78 judge) instead of Opus | + $11, plus a small judge adapter |
-| Opus + Gemini 3.1 Pro, after-pushback scope | + $147 |
-| Opus + Gemini 3.1 Pro, both scopes | + $315 |
+| Opus live instead of batch (results in minutes, not hours) | + $55 |
+| Gemini Flash via OpenRouter (the 78 judge) instead of Opus | + $16 (includes judging the control), plus a small judge adapter |
+| Opus + Gemini 3.1 Pro, after-pushback scope | + $147 (includes judging the control) |
+| Opus + Gemini 3.1 Pro, both scopes | + $305 |
 
 | Separate line | |
 |---|---:|
@@ -248,29 +274,24 @@ added nothing over stage 1 on this model.
 Each needs the owner's answer before anything is paid. "Builder's suggestion" is a
 suggestion and nothing more.
 
-1. **Delivery channel.** (i) first-user-turn prefix only: the benchmark's own channel, and
-   the one the paper's with-guide numbers use; experiment 76 saw no significant fade in it up
-   to 12k. (ii) system message only: what 78 ran, and where 76 saw the fade. (iii) both, as
-   four arms: about double. *Builder's suggestion: (i), because the paper's claim is about
-   what a user can do; (iii) if the budget allows, since a null in (i) alone would leave the
-   78 comparison unanswered.*
+1. **Delivery channel. DECIDED (owner, 2026-11-09):** system message only.
 2. **Judge.** Opus only; the 78 Flash judge; or Opus + Gemini 3.1 Pro. One fact that bears on
    it: Gemini 3.1 Pro selected the JaleesWeights training data, which is why the paper scores
    held-out results with Opus alone. *Builder's suggestion: Opus only, batch.*
 3. **Training-half contamination. DECIDED (owner, 2026-11-09):** run only the 70 held-out
    probes; the 70 training probes are excluded entirely, for every arm.
-4. **Arm F** (420 sittings, ≈ $10): keep or drop. Without it the L0 check uses the paper's
-   existing base-model number (same probes, same serving stack and judge, an earlier run).
+4. **Unprompted floor. DECIDED (owner, 2026-11-09):** not re-run; the existing same-stack
+   control is reused (see Arms).
 5. **Inkling-Small** as a second pair: yes or no (see the separate line above).
 6. **Budget ceiling**, and a Modal tripwire. *Builder's suggestion for the base
-   configuration: ceiling $170, pause and reconcile if Modal passes $100.*
+   configuration: ceiling $160, pause and reconcile if Modal passes $100.*
 
 ## Binding sequence
 
 1. This pre-registration, committed. **Nothing paid before the decisions above.**
 2. Decisions recorded here and frozen in a second commit. Filler bank built and screened;
    code ported from experiment 78.
-3. Smoke: about 24 sittings, both arms, all six levels, including the 64k sitting that proves
+3. Smoke: 24 sittings, both arms, all six levels, including the 64k sitting that proves
    the window. Checks: arm and level survive into the judgments; no guide, stated sentence or
    filler in any judged turn; measured filler tokens per level; throughput per level.
    Reconciled actuals. **Stop and report.**
@@ -297,4 +318,4 @@ None yet.
 
 ## Next Steps
 
-Owner decisions 1, 2, 4, 5, 6 (decision 3 is made).
+Owner decisions 2, 5, 6 (1, 3 and 4 are made).

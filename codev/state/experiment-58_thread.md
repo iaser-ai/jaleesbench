@@ -23,3 +23,14 @@
 
 - Owner decision: run only the 70 held-out probes; training probes excluded for every arm.
   Pre-registration and cost table updated (base ≈ $130). Decisions 1, 2, 4, 5, 6 pending.
+
+## 2026-11-09 — decisions 1 and 4
+
+- Owner decisions: system message only; unprompted floor not re-run, the existing same-stack
+  control is reused. Grid is 70 × 6 × 6 × 2 = 5,040 sittings; base ≈ $120.
+- Checked the control: 420 sittings, exactly the held-out 70 × 6, bf16, model-default
+  sampling, 8,192 cap, the model's own chat template. Its Opus judgments are in
+  `judgments_eval_gemma.jsonl` (not `judgments_eval.jsonl`); mean −0.335. Differences from
+  this experiment: offline engine vs server, vLLM version, H200 vs B200, random stream.
+  Reply cap raised from my 4,096 to 8,192 to match. Told the architect.
+- Decisions 2, 5, 6 pending.
