@@ -1,6 +1,6 @@
 # Experiment 58: Prompt fading on JaleesBench with the JaleesWeights models
 
-**Status**: In Progress — pre-registration written, no data collected, nothing paid · **Date**: 2026-11-09
+**Status**: In Progress — pre-registration frozen, no data collected · **Date**: 2026-11-09
 
 Driving issue: #58. Prior work: the MultiBench prompt-fading experiments 76 (pilot, 42
 scenarios, seven traditions) and 78 (full 519-scenario corpus), August 2026. This experiment
@@ -141,9 +141,10 @@ a reply that hits the cap fails the sitting loudly instead of being stored.
 
 ### Judge
 
-Open decision below. Whichever is chosen: the JaleesBench rubric and per-probe proof texts
-(`jaleesbench.prompts.judge_blocks`), bands −2…+2, reported halved on −1…+1 as everywhere
-else in this repository.
+Claude Opus (`claude-opus-4-8`) alone, through the batch API (owner decision, 2026-11-09):
+the judge the JaleesWeights paper uses for held-out results. The JaleesBench rubric and
+per-probe proof texts (`jaleesbench.prompts.judge_blocks`), bands −2…+2, reported halved on
+−1…+1 as everywhere else in this repository.
 
 ### What changes from experiment 78
 
@@ -155,7 +156,7 @@ else in this repository.
 | Ramp | 4 levels to 12k | 6 levels to ≥ 64k |
 | Filler | 5k bank, cycled | non-repeating bank |
 | Sampling | temperature 0 | model defaults, seeded |
-| Judge | one Gemini Flash judge | open |
+| Judge | one Gemini Flash judge | Opus, batch |
 | Floor for the L0 check | another run, other scenarios | the paper's same-stack control, same probes |
 | Framing channel | system message | system message |
 
@@ -269,22 +270,19 @@ free of charge before it could run: that Tinker serves Inkling-Small with a wind
 least 70k tokens, and that the stage-2 adapter is still retrievable. In the paper stage 2
 added nothing over stage 1 on this model.
 
-## Open decisions
-
-Each needs the owner's answer before anything is paid. "Builder's suggestion" is a
-suggestion and nothing more.
+## Decisions
 
 1. **Delivery channel. DECIDED (owner, 2026-11-09):** system message only.
-2. **Judge.** Opus only; the 78 Flash judge; or Opus + Gemini 3.1 Pro. One fact that bears on
-   it: Gemini 3.1 Pro selected the JaleesWeights training data, which is why the paper scores
-   held-out results with Opus alone. *Builder's suggestion: Opus only, batch.*
+2. **Judge. DECIDED (owner, 2026-11-09):** Opus only, batch pricing.
 3. **Training-half contamination. DECIDED (owner, 2026-11-09):** run only the 70 held-out
    probes; the 70 training probes are excluded entirely, for every arm.
 4. **Unprompted floor. DECIDED (owner, 2026-11-09):** not re-run; the existing same-stack
    control is reused (see Arms).
-5. **Inkling-Small** as a second pair: yes or no (see the separate line above).
-6. **Budget ceiling**, and a Modal tripwire. *Builder's suggestion for the base
-   configuration: ceiling $160, pause and reconcile if Modal passes $100.*
+5. **Inkling-Small. DECIDED (owner, 2026-11-09):** not run.
+6. **Budget. DECIDED (owner, 2026-11-09):** ceiling $160 in total; pause and report if GPU
+   spend passes $100.
+
+All six decisions are made. The design above is frozen as of this commit; no data exists yet.
 
 ## Binding sequence
 
@@ -318,4 +316,4 @@ None yet.
 
 ## Next Steps
 
-Owner decisions 2, 5, 6 (1, 3 and 4 are made).
+Filler bank, code, smoke test; then stop and report.
