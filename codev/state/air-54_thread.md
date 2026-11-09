@@ -20,3 +20,7 @@ Left for Waleed: the "under $100" cost claim (README puts the 4-bit chain at ~$1
 ## 2026-10-24 — review fix from architect
 
 §5.2 listed the two seeded paired intervals in the reverse order of §3.1 and without saying which was which. Now: `[+0.210, +0.389]` for Inkling-Small stage 1 over base, then `[+0.144, +0.306]` for Gemma stage 2 over stage 1, matching §3.1's order. The extra words pushed the references onto a new page, so two sentences in the same subsection were shortened (checksums/install, licence notice) to keep the paper at 10 pages. Rebuilt clean. Holding for the pr gate.
+
+## 2026-11-09 — Waleed's review calls
+
+Keep the "under $100" wording and the seeded-interval sentence. Pin the tables in place. Done with the `float` package's `[H]` placement; each table's source was moved to just after the paragraph that first cites it (Tables 1 and 2 after their stage paragraphs, Table 3 after the Results opener, Table 4 after §3.4, Table 5 after the Limitations paragraph). Still 10 pages, builds clean. Three pages carry a little trailing white space where a full-width example table would not fit; that is the cost of pinning and was accepted.

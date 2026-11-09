@@ -10,6 +10,7 @@
 \usepackage{array}
 \usepackage{graphicx}
 \usepackage{placeins}
+\usepackage{float}
 \setlength{\emergencystretch}{3em}
 
 \input{preamble}
@@ -147,7 +148,22 @@ $0.06$; checkpoint-vs-checkpoint claims use paired per-cell tests with
 95\% bootstrap intervals.
 
 \subsection{Stage 1: filtered context distillation}\label{sec:stage1}
-\begin{table}[t]
+
+\Cref{tab:pledge} shows what the guide changes: the same model, on
+the same conversation, caves without it and holds with it. We take the
+model's answers generated with the one-page guide in context and keep
+those the selection judge rates as good both before and after
+pushback, screening out any answer that mentions the guide
+or contains a dangling citation: 316 conversations for Gemma, 310 for
+Inkling-Small. Because the guide sits outside the conversation turns,
+removing it is exact --- the training input is precisely what a bare
+user would send, paired with what the model itself said when guided.
+This is context distillation \citep{askell2021general} with a judge
+filter in front of it. Training is standard supervised fine-tuning on
+the assistant turns (LoRA \citep{hu2022lora}, rank 32, lr
+$5\times10^{-5}$, 2 epochs).
+
+\begin{table}[H]
 \centering
 \small
 \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.475\linewidth}@{\hspace{0.05\linewidth}}>{\raggedright\arraybackslash}p{0.475\linewidth}@{}}
@@ -186,23 +202,16 @@ into the weights.}
 \label{tab:pledge}
 \end{table}
 
-
-\Cref{tab:pledge} shows what the guide changes: the same model, on
-the same conversation, caves without it and holds with it. We take the
-model's answers generated with the one-page guide in context and keep
-those the selection judge rates as good both before and after
-pushback, screening out any answer that mentions the guide
-or contains a dangling citation: 316 conversations for Gemma, 310 for
-Inkling-Small. Because the guide sits outside the conversation turns,
-removing it is exact --- the training input is precisely what a bare
-user would send, paired with what the model itself said when guided.
-This is context distillation \citep{askell2021general} with a judge
-filter in front of it. Training is standard supervised fine-tuning on
-the assistant turns (LoRA \citep{hu2022lora}, rank 32, lr
-$5\times10^{-5}$, 2 epochs).
-
 \subsection{Stage 2: preference optimization on the fine-tuned model}\label{sec:stage2}
-\begin{table}[t]
+
+From the stage-1 model we draw four answers per training scenario, have
+the selection judge rate them all, and pair each answer with the
+most-differently-rated answer to the same prompt: 502 pairs for Gemma,
+672 for Inkling-Small. \Cref{tab:pair} shows one such pair. We train with DPO \citep{rafailov2023direct}
+using the stage-1 model as the reference ($\beta$ 0.1, lr
+$1\times10^{-5}$, 1 epoch).
+
+\begin{table}[H]
 \centering
 \small
 \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.475\linewidth}@{\hspace{0.05\linewidth}}>{\raggedright\arraybackslash}p{0.475\linewidth}@{}}
@@ -243,14 +252,6 @@ base model, 317 of 420 cells produced no good draw at all.}
 \label{tab:pair}
 \end{table}
 
-
-From the stage-1 model we draw four answers per training scenario, have
-the selection judge rate them all, and pair each answer with the
-most-differently-rated answer to the same prompt: 502 pairs for Gemma,
-672 for Inkling-Small. \Cref{tab:pair} shows one such pair. We train with DPO \citep{rafailov2023direct}
-using the stage-1 model as the reference ($\beta$ 0.1, lr
-$1\times10^{-5}$, 1 epoch).
-
 \subsection{Models}\label{sec:models}
 
 Gemma-4-31B (bf16 LoRA, trained on one B200 and served for sampling
@@ -263,7 +264,11 @@ does reasonably.
 
 \section{Results}\label{sec:results}
 
-\begin{table}[t]
+\Cref{tab:main} holds every held-out score; the subsections below
+read it stage by stage, then check that the guide still helps and that
+nothing else got worse.
+
+\begin{table}[H]
 \centering
 \small
 \begin{tabular}{@{}lrrr@{}}
@@ -292,10 +297,6 @@ Opus-judged. Gemma 95\% intervals for the after-pushback column: base
 $[-0.47, -0.20]$; stage 1 $[+0.12, +0.42]$; stage 2 $[+0.35, +0.63]$.}
 \label{tab:main}
 \end{table}
-
-\Cref{tab:main} holds every held-out score; the subsections below
-read it stage by stage, then check that the guide still helps and that
-nothing else got worse.
 
 \subsection{Islamic values out of the box}\label{sec:res-main}
 
@@ -365,7 +366,7 @@ A capability panel on Gemma --- MMLU, GSM8K, IFEval, run identically on
 all three checkpoints --- shows no regression at either stage
 (\cref{tab:capability}).
 
-\begin{table}[t]
+\begin{table}[H]
 \centering
 \small
 \begin{tabular}{@{}lrrr@{}}
@@ -384,7 +385,24 @@ for all three checkpoints.}
 \end{table}
 
 \section{Limitations}\label{sec:limitations}
-\begin{table}[t]
+
+Filtered distillation can only teach what the guided model got right.
+Of Gemma's 840 scenario--pressure cells, the guide improved the score
+in 649, left it unchanged in 159, and lowered it in 32; the unchanged
+cells include scenarios where the model lacks or rejects the relevant
+ruling, and a companionship guide cannot supply knowledge the model
+does not have (\cref{tab:sherwani}). Those cells produce no training
+example and stay wrong after tuning. Stage 2's positive result is one
+model deep, though its null on the second family is now a swept,
+well-fit null rather than a single run. Training is LoRA-only.
+Evaluation is on held-out scenarios from the benchmark's own
+distribution, in English only. The tuned models are substantially but
+not fully internalized: the guide still adds roughly $+0.3$ on top of
+the tuned weights on both models. Whether the disposition over-applies
+--- volunteering religious counsel to users who did not ask for it ---
+is not yet measured.
+
+\begin{table}[H]
 \centering
 \small
 \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.475\linewidth}@{\hspace{0.05\linewidth}}>{\raggedright\arraybackslash}p{0.475\linewidth}@{}}
@@ -415,22 +433,6 @@ Because filtered distillation trains only on the guided answers a
 judge approved, no training example exists for cells like this one.}
 \label{tab:sherwani}
 \end{table}
-
-Filtered distillation can only teach what the guided model got right.
-Of Gemma's 840 scenario--pressure cells, the guide improved the score
-in 649, left it unchanged in 159, and lowered it in 32; the unchanged
-cells include scenarios where the model lacks or rejects the relevant
-ruling, and a companionship guide cannot supply knowledge the model
-does not have (\cref{tab:sherwani}). Those cells produce no training
-example and stay wrong after tuning. Stage 2's positive result is one
-model deep, though its null on the second family is now a swept,
-well-fit null rather than a single run. Training is LoRA-only.
-Evaluation is on held-out scenarios from the benchmark's own
-distribution, in English only. The tuned models are substantially but
-not fully internalized: the guide still adds roughly $+0.3$ on top of
-the tuned weights on both models. Whether the disposition over-applies
---- volunteering religious counsel to users who did not ask for it ---
-is not yet measured.
 
 \section{Availability}\label{sec:availability}
 
