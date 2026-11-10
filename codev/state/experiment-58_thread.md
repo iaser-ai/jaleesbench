@@ -53,3 +53,11 @@
 - 15:36 PST: budget raised after launch to $250 total, GPU pause $150. Watcher restarted with
   the new stop (the watcher is a separate process; the collection was not touched). First
   group ran at 2,924 sittings/hour.
+
+## 2026-11-09 18:20 PST — collection finished, judge batch submitted
+
+Full collection done: 5,040 of 5,040 conversations, 0 failures, 2 h 52 min on one B200.
+Throughput fell with filler length as expected (about 3,000/h with no filler, about 900/h at
+64k). GPU bill for the app so far 21.37 USD including the 2.55 USD smoke. Server stopped.
+Opus judge batch submitted (5,040 requests, one batch). Reported to the architect; nothing
+scored yet, so no conclusions.
