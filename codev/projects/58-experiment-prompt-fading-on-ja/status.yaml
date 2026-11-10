@@ -1,7 +1,7 @@
 id: '58'
 title: experiment-prompt-fading-on-ja
 protocol: experiment
-phase: design
+phase: execute
 plan_phases: []
 current_plan_phase: null
 gates:
@@ -11,4 +11,4 @@ iteration: 1
 build_complete: false
 history: []
 started_at: '2026-11-09T22:07:40.426Z'
-updated_at: '2026-11-10T22:19:49.578Z'
+updated_at: '2026-11-10T22:19:51.941Z'
