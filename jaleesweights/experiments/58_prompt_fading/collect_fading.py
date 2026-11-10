@@ -10,6 +10,8 @@ code scores them unchanged and never sees the framing or the filler.
 Arms (stored as `subject`), levels (stored as `framing`):
   fading-P  base google/gemma-4-31B-it + the JaleesBench guide as the system message
   fading-W  JaleesWeights stage 2 (served as "stage2") + the stated sentence as the system message
+  fading-B0 base model, no system message          (follow-up arm; pass --arms to collect)
+  fading-W0 JaleesWeights stage 2, no system message (follow-up arm; pass --arms to collect)
   L0..L5    0, ~1k, ~4k, ~12k, ~32k, >=64k Gemma tokens of filler (see filler_levels.json)
 
 Scenarios: the 70 held-out probes x 6 pressures, read from the reference inputs file the
@@ -41,7 +43,12 @@ BASE_MODEL = "google/gemma-4-31B-it"
 ARMS = {
     "fading-P": {"model": BASE_MODEL, "framing_source": "guide", "system": GUIDE},
     "fading-W": {"model": "stage2", "framing_source": "stated", "system": STATED},
+    # Follow-up arms (registered after the first result, before their own data): no framing
+    # at all, so the conversation opens with the filler, or with the dilemma at L0.
+    "fading-B0": {"model": BASE_MODEL, "framing_source": "none", "system": None},
+    "fading-W0": {"model": "stage2", "framing_source": "none", "system": None},
 }
+DEFAULT_ARMS = "fading-P,fading-W"
 LEVELS = ["L0", "L1", "L2", "L3", "L4", "L5"]
 
 # The model's generation_config.json (temperature 1.0, top-p 0.95, top-k 64): what the
@@ -110,7 +117,7 @@ def make_caller(base_url: str, retries: int):
 
 def run_cell(arm: str, level: str, row: dict, filler: list[dict], filler_tokens: int, call) -> dict:
     spec = ARMS[arm]
-    head = [{"role": "system", "content": spec["system"]}] + filler
+    head = ([{"role": "system", "content": spec["system"]}] if spec["system"] else []) + filler
     turn1, push = row["turn1"], row["pressure_text"]
     t0 = time.time()
     reply1, u1 = call(spec["model"], head + [{"role": "user", "content": turn1}])
@@ -127,7 +134,7 @@ def run_cell(arm: str, level: str, row: dict, filler: list[dict], filler_tokens:
                   {"role": "user", "content": push}, {"role": "assistant", "content": reply2}],
         # experiment audit, ignored by the judge
         "arm": arm, "level": level, "framing_source": spec["framing_source"],
-        "framing_channel": "system", "filler_tokens": filler_tokens,
+        "framing_channel": "system" if spec["system"] else None, "filler_tokens": filler_tokens,
         "filler_turns": len(filler), "sampling": {**SAMPLING, **EXTRA_BODY},
         "seconds": round(time.time() - t0, 1),
     }
@@ -138,7 +145,7 @@ def main(
     base_url: str = typer.Option(..., help="The served endpoint, ending in /v1."),
     run: str = typer.Option("fading-58", help="Run directory name under data/runs/."),
     inputs: Path | None = typer.Option(None, help="Held-out inputs (default: the reference eval_inputs_gemma.jsonl)."),
-    arms: str = typer.Option(",".join(ARMS)),
+    arms: str = typer.Option(DEFAULT_ARMS),
     levels: str = typer.Option(",".join(LEVELS)),
     pressures: str = typer.Option("", help="Comma list (default: all six)."),
     probes_limit: int = typer.Option(0, help="If >0, the first N probes only (smoke)."),

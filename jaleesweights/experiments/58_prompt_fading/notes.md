@@ -482,6 +482,55 @@ alongside this file: `summary_fading.json` (every estimand and interval) and
 `per_probe_fading.csv` (per-probe scores by arm and level). The two figures are committed as
 `docs/paper/figures/fig_fading.pdf` and `fig_fading_by_pressure.pdf`.
 
+## Follow-up: two arms with no framing (registered 2026-11-10, before their data)
+
+This section is post hoc: it was written after the result above was known, and because of
+it. It is registered before any conversation of the two new arms is collected. It changes
+nothing in the verdicts on H1–H3, which stand as reported.
+
+**Why.** The weights arm declined and the first design could not say why. Two arms separate
+the candidate explanations.
+
+**Arms.** Same 70 held-out probes × 6 pressures × 6 levels, same filler, same sampling and
+seed, same server, same judge and scope. Neither arm has a system message: the conversation
+opens with the filler, or with the dilemma at L0.
+
+| Arm | Model | Framing |
+|---|---|---|
+| `fading-B0` | base Gemma | none |
+| `fading-W0` | stage 2 | none |
+
+2 × 2,520 = 5,040 conversations. Budget: the size of the first run, which cost $69 measured
+(an earlier figure of $36 in this file's Next Steps was an arithmetic error).
+
+**Analysis.** Unit, slope, total (5 × slope), bootstrap, seed and τ = 0.15 exactly as in the
+pre-registered analysis above. "Flat" means |total| < 0.15 with the interval inside ±0.15.
+"Declines" means the slope interval excludes zero and is negative.
+
+- **F1, length alone, base model.** Slope of `fading-B0`. Flat: unrelated conversation by
+  itself does not lower the base model's counsel. Declines: some of every arm's decline is
+  ordinary long-conversation degradation.
+- **F2, trained behaviour alone.** Slope of `fading-W0`. Flat: what was trained into the
+  weights does not fade over 64k tokens. Declines: it does.
+- **F3, does the stated sentence fade.** slope(`fading-W`) − slope(`fading-W0`). Interval
+  excludes zero and is negative: the sentence's contribution fades, and accounts for at least
+  part of the weights arm's decline. Reported with the gap W − W0 at each level.
+- **F4, guide fading net of length.** slope(`fading-P`) − slope(`fading-B0`). Interval
+  excludes zero and is negative: the guide fades beyond whatever length alone does.
+- **F5, trained against untrained with no framing.** slope(`fading-W0`) − slope(`fading-B0`),
+  and the gap at each level. Descriptive.
+
+**Checks, reported whatever they show.**
+
+- `fading-B0` at L0 is the same condition as the reused unprompted control (−0.335), sampled
+  again. A difference of 0.15 or more is reported as the control not reproducing.
+- `fading-W0` at L0 is the same condition as the paper's stage-2 held-out score (+0.499).
+  Same rule.
+
+**Stated in advance.** The base model with no framing already scores low. The scale runs to
+−1, so it has room to fall, but a flat `fading-B0` could partly reflect being near the bottom
+and is to be read with that in mind. All four arms' level means are reported.
+
 ## What Worked / What Didn't
 
 **Worked.**
@@ -511,8 +560,9 @@ alongside this file: `summary_fading.json` (every estimand and interval) and
 Suggestions only; each needs the owner's decision and its own budget.
 
 1. Two further arms over the same ramp, to explain the weights arm's decline: the base model
-   with no framing, and the stage-2 model with no stated sentence. At this run's rates, about
-   $36 for both (2 × 2,520 conversations).
+   with no framing, and the stage-2 model with no stated sentence. (Approved by the owner on
+   2026-11-10 and registered above. The cost first written here, $36, was wrong: 5,040
+   conversations cost about $69 at this run's rates.)
 2. The paper states the result as measured: prompting fades faster than weights, weights are
    not immune. How the paper refers to the earlier MultiBench experiments is the owner's
    wording decision.
