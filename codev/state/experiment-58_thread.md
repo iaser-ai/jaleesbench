@@ -81,3 +81,17 @@ Paper: motivation paragraph in the introduction, new results subsection with the
 figure, one limitation. Written to say what was measured, including the failed hypothesis.
 Open wording question for the owner at the PR gate: how to refer to the earlier unpublished
 MultiBench experiments (currently "earlier unpublished experiments on MultiBench").
+
+## 2026-11-10 — owner's decisions on PR #61; follow-up arms registered
+
+Decisions relayed by the architect: (1) run two more arms over the same ramp, fine-tuned model
+with no stated sentence and base model with no framing; (2) remove every MultiBench reference
+from the paper; (3) do not say or imply the trained model solves fading; split the figure in
+two: figure one the prompted arm alone, WITHOUT the no-guide floor line (floor may be stated in
+text), figure two the comparison with the fine-tuned model, stated as measured; (4) per-pressure
+figure stays out of the paper; the thread file stays in the commit. Paper text held until the
+new arms are judged.
+
+My 36 USD estimate for the two arms was an arithmetic error: 5,040 conversations is the size of
+the first run, 69 USD measured. Told the architect and am holding all paid steps until the
+corrected figure is confirmed. Follow-up registered in notes.md before its data (d528170).
