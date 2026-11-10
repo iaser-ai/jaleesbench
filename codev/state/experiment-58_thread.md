@@ -122,3 +122,11 @@ and the numbers to the existing "why not preference optimization alone" subsecti
 already had that subsection, without the absolute scores). Limits kept: one model, one run per
 stage, one filler, DPO-alone and base-no-guide not run over the ramp, mechanism unexplained,
 Inkling-Small untested. No reference to earlier experiments.
+
+## 2026-11-10 — merged main (PR #55) into the branch
+
+Conflict in the paper's limitations/availability region. Kept everything from main (availability
+section, citation, orienting paragraphs, tables pinned with [H]); re-attached my limitation
+sentence to the limitations paragraph where main moved it; pinned the two new figures with [H]
+to match; added the long-conversation subsection to the results orienting sentence. PDF rebuilt
+from the merged source: 12 pages. No history rewrite.
