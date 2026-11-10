@@ -16,6 +16,7 @@ Stop:    uv run modal app stop jaleesweights-fading-serve
 The printed URL + "/v1" is the --base-url of collect_fading.py. Scales to zero when idle.
 """
 
+import os
 import subprocess
 
 import modal
@@ -31,7 +32,11 @@ MAX_MODEL_LEN = 80_000
 VLLM_PORT = 8000
 MINUTES = 60
 
-app = modal.App("jaleesweights-fading-serve")
+# A second copy of the server (to collect two arms at once) is deployed under another name:
+#   FADING_APP_NAME=jaleesweights-fading-serve-b uv run modal deploy <this file>
+# The name is baked into the image's environment so the container sees the same one.
+APP_NAME = os.environ.get("FADING_APP_NAME", "jaleesweights-fading-serve")
+app = modal.App(APP_NAME)
 
 # The volume holds the cached base weights and the adapters. It is mounted read-only: this
 # experiment trains nothing and overwrites nothing. The cache is complete, so the hub is not
@@ -40,7 +45,8 @@ image = (
     modal.Image.from_registry("nvidia/cuda:12.8.1-devel-ubuntu24.04", add_python="3.12")
     .pip_install("vllm>=0.10", "hf_transfer")
     .env({"HF_HUB_ENABLE_HF_TRANSFER": "1", "HF_HOME": "/vol/hf-cache",
-          "VLLM_WORKER_MULTIPROC_METHOD": "spawn", "HF_HUB_OFFLINE": "1"})
+          "VLLM_WORKER_MULTIPROC_METHOD": "spawn", "HF_HUB_OFFLINE": "1",
+          "FADING_APP_NAME": APP_NAME})
 )
 
 
