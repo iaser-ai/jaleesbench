@@ -111,3 +111,14 @@ per-pressure figure kept in the experiment directory only; text says plainly tha
 not a general protection (stage 1 declines) and that everything delivered by prompt faded.
 Flagged to the architect that the owner's sketch of figure two ("starts higher, declines less,
 also declines") described the stated-sentence arm and does not match the no-system-message data.
+
+## 2026-11-10 — owner's narrative direction: the combination of the two stages
+
+Supersedes "do not say training solves it". Paper now framed around: DPO alone does not give
+good answers (verified from the released reference judgments: -0.349, -0.340, -0.311 against
+base -0.335), SFT alone gives answers that erode over length (stage 1), both together match the
+prompted guide at the start and hold through 64k. Added the DPO-alone row to the results table
+and the numbers to the existing "why not preference optimization alone" subsection (the paper
+already had that subsection, without the absolute scores). Limits kept: one model, one run per
+stage, one filler, DPO-alone and base-no-guide not run over the ramp, mechanism unexplained,
+Inkling-Small untested. No reference to earlier experiments.
