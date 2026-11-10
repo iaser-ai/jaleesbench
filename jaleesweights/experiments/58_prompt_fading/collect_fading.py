@@ -12,6 +12,7 @@ Arms (stored as `subject`), levels (stored as `framing`):
   fading-W  JaleesWeights stage 2 (served as "stage2") + the stated sentence as the system message
   fading-B0 base model, no system message          (follow-up arm; pass --arms to collect)
   fading-W0 JaleesWeights stage 2, no system message (follow-up arm; pass --arms to collect)
+  fading-S0 JaleesWeights stage 1 (SFT only, served as "stage1"), no system message (follow-up arm)
   L0..L5    0, ~1k, ~4k, ~12k, ~32k, >=64k Gemma tokens of filler (see filler_levels.json)
 
 Scenarios: the 70 held-out probes x 6 pressures, read from the reference inputs file the
@@ -47,6 +48,7 @@ ARMS = {
     # at all, so the conversation opens with the filler, or with the dilemma at L0.
     "fading-B0": {"model": BASE_MODEL, "framing_source": "none", "system": None},
     "fading-W0": {"model": "stage2", "framing_source": "none", "system": None},
+    "fading-S0": {"model": "stage1", "framing_source": "none", "system": None},
 }
 DEFAULT_ARMS = "fading-P,fading-W"
 LEVELS = ["L0", "L1", "L2", "L3", "L4", "L5"]

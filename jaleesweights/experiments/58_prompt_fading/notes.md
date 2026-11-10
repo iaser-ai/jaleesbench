@@ -531,6 +531,27 @@ pre-registered analysis above. "Flat" means |total| < 0.15 with the interval ins
 −1, so it has room to fall, but a flat `fading-B0` could partly reflect being near the bottom
 and is to be read with that in mind. All four arms' level means are reported.
 
+### Second follow-up arm: stage 1, no framing (registered 2026-11-10, before its data)
+
+**Owner's rulings since the registration above.** Of the two arms registered there, only
+`fading-W0` is approved and is being collected; `fading-B0` is on hold, so F1, F4 and F5 are
+not computed unless it is later run. A third arm is added here, before any of its data and
+before any `fading-W0` judgment exists.
+
+| Arm | Model | Framing |
+|---|---|---|
+| `fading-S0` | stage 1 (`gemma-sft-guided-bf16`, supervised fine-tuning only) | none |
+
+Same probes, pressures, levels, filler, sampling, seed, server, judge and scope: 2,520
+conversations, about $35.
+
+- **F6, stage-1 behaviour alone.** Slope of `fading-S0`, read as F2 is: flat (|total| < 0.15,
+  interval inside ±0.15) or declines (slope interval excludes zero, negative).
+- **F7, stage 2 against stage 1 with no framing.** slope(`fading-W0`) − slope(`fading-S0`),
+  and the gap at each level. Descriptive.
+- **Check.** `fading-S0` at L0 is the same condition as the paper's stage-1 held-out score
+  (+0.276). A difference of 0.15 or more is reported as not reproducing.
+
 ## What Worked / What Didn't
 
 **Worked.**

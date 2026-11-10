@@ -6,9 +6,10 @@ differs: a B200 instead of an H200 and an 80,000-token window instead of 32,768 
 conversation does not fit an H200's key-value cache next to 62 GB of bf16 weights); the
 JaleesWeights adapter; the volume mounted read-only.
 
-Two model names on the one endpoint (no API key):
+Three model names on the one endpoint (no API key):
   model="google/gemma-4-31B-it"  base                      (prompted arm)
   model="stage2"                 base + gemma-sft-dpo-bf16 (weights arm)
+  model="stage1"                 base + gemma-sft-guided-bf16 (follow-up arm, SFT only)
 
 Deploy:  uv run modal deploy experiments/58_prompt_fading/serve_gemma_fading.py
 Stop:    uv run modal app stop jaleesweights-fading-serve
@@ -25,6 +26,7 @@ MODEL = "google/gemma-4-31B-it"
 VOLUME = "gemma-dpo"
 HF_SECRET = "huggingface"
 ADAPTER = "/vol/runs/gemma-sft-dpo-bf16/adapter"
+ADAPTER_STAGE1 = "/vol/runs/gemma-sft-guided-bf16/adapter"
 MAX_MODEL_LEN = 80_000
 VLLM_PORT = 8000
 MINUTES = 60
@@ -59,7 +61,7 @@ def serve() -> None:
         "--max-model-len", str(MAX_MODEL_LEN),
         "--gpu-memory-utilization", "0.92",
         "--enable-lora", "--max-lora-rank", "32",
-        "--lora-modules", f"stage2={ADAPTER}",
+        "--lora-modules", f"stage2={ADAPTER}", f"stage1={ADAPTER_STAGE1}",
         "--enable-prompt-tokens-details",  # usage reports how much of a prompt came from the prefix cache
     ]
     print("launching:", " ".join(cmd), flush=True)
