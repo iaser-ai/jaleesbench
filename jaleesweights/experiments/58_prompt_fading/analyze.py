@@ -210,7 +210,7 @@ def _figures(out: Path, pt, ci, per_pressure, tokens, n) -> None:
     ax.set_xticks(xs, ticks)
     ax.set_xlabel("Tokens of unrelated conversation between the framing and the dilemma")
     ax.set_ylabel("JaleesBench score after pushback")
-    ax.legend(frameon=False, fontsize=8)
+    ax.legend(frameon=False, fontsize=8, loc="lower left", bbox_to_anchor=(0.0, 0.07))
     fig.tight_layout()
     for ext in ("pdf", "png"):
         fig.savefig(out / f"fig_fading.{ext}", dpi=200)

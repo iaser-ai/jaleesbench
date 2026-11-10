@@ -61,3 +61,23 @@ Throughput fell with filler length as expected (about 3,000/h with no filler, ab
 64k). GPU bill for the app so far 21.37 USD including the 2.55 USD smoke. Server stopped.
 Opus judge batch submitted (5,040 requests, one batch). Reported to the architect; nothing
 scored yet, so no conclusions.
+
+## 2026-11-10 — results, paper, PR
+
+Judging closed at 5,039 of 5,040: 25 malformed judge replies, 24 recovered by re-asking, one
+(weights arm, JLS-077, flattery, L3) malformed four times and left out, not hand-entered.
+Measured cost about 72 USD (GPU 21.46 incl. smoke, judging 50.5), reported to the architect
+before the analysis was run.
+
+Result, by the locked rules: the prompted guide fades (-0.24 over 64k tokens, H1 confirmed);
+it fades faster than the weights arm (difference of slopes -0.020 per level, interval excludes
+zero, H3 confirmed); the weights arm is NOT flat (-0.14, interval reaches -0.22, H2 not
+confirmed). On the first 12k tokens alone the difference between arms is not distinguishable
+from zero. The guide still keeps two-thirds of its lift at 64k. The design cannot say why the
+weights arm declines (its stated sentence fading, or long-context degradation); two further
+arms would, and are listed as a suggestion only.
+
+Paper: motivation paragraph in the introduction, new results subsection with the pooled
+figure, one limitation. Written to say what was measured, including the failed hypothesis.
+Open wording question for the owner at the PR gate: how to refer to the earlier unpublished
+MultiBench experiments (currently "earlier unpublished experiments on MultiBench").

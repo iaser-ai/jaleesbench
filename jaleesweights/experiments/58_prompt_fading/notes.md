@@ -1,6 +1,8 @@
 # Experiment 58: Prompt fading on JaleesBench with the JaleesWeights models
 
-**Status**: In Progress — pre-registration frozen; smoke passed; full run not started · **Date**: 2026-11-09
+**Status**: Complete (2026-11-10). The prompted guide fades (H1 confirmed) and fades faster
+than the weights arm (H3 confirmed); the weights arm is **not** flat (H2 not confirmed). Total
+spend about $72 of the $250 ceiling. · **Date**: 2026-11-09 (pre-registration), 2026-11-10 (results)
 
 Driving issue: #58. Prior work: the MultiBench prompt-fading experiments 76 (pilot, 42
 scenarios, seven traditions) and 78 (full 519-scenario corpus), August 2026. This experiment
@@ -373,10 +375,144 @@ time before scale-down). Total $2.81.
 hours at about $6.40 per B200-hour, about $32 (range $25–45). About $87, plus the smoke:
 about $90 against the $160 ceiling.
 
+### Full run (2026-11-09 to 2026-11-10)
+
+**What was run.** 5,040 conversations (70 held-out probes × 6 pressures × 6 levels × 2 arms),
+collected in 2 h 52 min on one B200 with no failures and no empty replies. Measured prompt
+sizes in front of the final reply: 67,000–68,500 tokens at L5 in both arms.
+
+**Deviation: one judgment is missing.** 25 of the judge's 5,040 replies were malformed (broken
+JSON or a missing field), spread over both arms and all levels. Re-asking, which is what the
+benchmark's own judging does, recovered 24. The last (weights arm, JLS-077, flattery, L3) was
+malformed four times in a row and was left out; it was not entered by hand. The analysis runs
+on 5,039 judgments, and that probe's L3 score in the weights arm is the mean of five pressures.
+In each malformed reply the judge's band for that cell was −1; entering it would lower the
+weights arm's L3 mean by about 0.003, and changes no verdict.
+
+**Level means** (score after pushback, −1 to +1; 95% intervals from the scenario bootstrap):
+
+| Level | Filler tokens | Guide in the prompt (base) | Values in the weights (stage 2) |
+|---|---|---|---|
+| L0 | 0 | +0.429 [+0.28, +0.57] | +0.708 [+0.60, +0.81] |
+| L1 | 1,111 | +0.385 [+0.23, +0.53] | +0.650 [+0.51, +0.77] |
+| L2 | 4,081 | +0.286 [+0.13, +0.44] | +0.592 [+0.46, +0.71] |
+| L3 | 12,069 | +0.268 [+0.11, +0.43] | +0.597 [+0.46, +0.73] |
+| L4 | 32,197 | +0.233 [+0.08, +0.38] | +0.561 [+0.42, +0.69] |
+| L5 | 64,192 | +0.187 [+0.03, +0.34] | +0.568 [+0.44, +0.69] |
+
+Unprompted base model, reused control: −0.335.
+
+**Pre-registered estimands and verdicts** (τ = 0.15, rules as locked):
+
+| Estimand | Value [95% interval] | Verdict |
+|---|---|---|
+| L0 check: prompted L0 minus unprompted control | +0.763 [+0.642, +0.891] | **Pass** |
+| Prompted slope per level | −0.0480 [−0.0636, −0.0337] | |
+| Prompted total over the ramp (5 × slope) | −0.240 [−0.318, −0.168] | **H1 confirmed** |
+| Weights slope per level | −0.0276 [−0.0445, −0.0141] | |
+| Weights total over the ramp | −0.138 [−0.222, −0.071] | **H2 not confirmed** |
+| Difference of slopes, prompted minus weights | −0.0204 [−0.0367, −0.0040] | **H3 confirmed** |
+
+- **H1.** The guide, given once, loses 0.24 of score over 64k tokens of unrelated
+  conversation. The interval excludes zero and the whole interval is past the 0.15 floor.
+- **H2.** The weights arm is not flat. Its slope interval excludes zero. Its total, −0.138,
+  is just under the 0.15 floor, so the "fades materially" rule is not triggered, but the
+  interval runs to −0.22, so equivalence fails. The honest statement is: the weights arm
+  also declines, by roughly half to three-fifths as much as the prompted arm.
+- **H3.** The prompted arm fades faster: 1.74 times the weights arm's slope, a difference of
+  0.10 over the ramp. The interval excludes zero but its near end is close to it (−0.004 per
+  level).
+
+**Secondary analyses, all as pre-registered.**
+
+1. *Curve.* `fig_fading.pdf`. Both arms fall most between L0 and L2 (0 to 4k tokens). After
+   that the weights arm is level (+0.59, +0.60, +0.56, +0.57) while the prompted arm keeps
+   falling (+0.29, +0.27, +0.23, +0.19). There is no cliff at 32k or 64k in either arm.
+2. *End points, L5 − L0.* Prompted −0.242 [−0.333, −0.156]; weights −0.141 [−0.217, −0.075];
+   difference −0.101 [−0.192, −0.015]. Agrees with the slopes.
+3. *L0–L3 only, the ramp 76/78 ran.* Prompted slope −0.058 [−0.084, −0.036] (total −0.174);
+   weights −0.039 [−0.074, −0.008] (total −0.118); difference −0.019 [−0.049, +0.013]. On the
+   12k ramp both arms fade and the difference between them is **not** distinguishable from
+   zero at 70 probes. The differential becomes detectable only with the longer ramp.
+4. *Per pressure.* `fig_fading_by_pressure.pdf`. The prompted slope is negative with an
+   interval excluding zero under all six pressures, steepest under insistence (−0.069 per
+   level) and personal appeal (−0.053). The weights slope is negative under all six, with the
+   interval excluding zero in five (good cause touches zero). The weights arm is above the
+   prompted arm at every level under every pressure.
+5. *Log-token axis.* Slope against log10(1 + tokens): prompted −0.047 [−0.065, −0.031],
+   weights −0.031 [−0.049, −0.016]. Same picture.
+
+**Things the numbers do not show, stated so they are not over-read.**
+
+- The guide does not stop working. At 64k tokens the prompted base model scores +0.19,
+  still 0.52 above the unprompted model; it keeps about two-thirds of its lift.
+- The weights arm is not immune to distance. This design cannot say why it declines. The
+  weights arm also carries one stated sentence in the system message, and that sentence can
+  fade like any prompt; alternatively the model's counsel may simply degrade in long
+  contexts. A base-model arm with no framing across the ramp, and a weights arm with no
+  stated sentence, would separate these. Neither was run.
+- An observation, not a tested claim: the same stage-2 model with no stated sentence and no
+  filler scored +0.499 on these 70 probes in the paper's evaluation. The weights arm here
+  ends at +0.57, so its whole decline (0.14) is smaller than what the stated sentence added
+  at L0 (0.21). That is consistent with the sentence fading and the trained behaviour
+  staying, but the comparison crosses two collections and was not pre-registered.
+- The prompted arm's L0 (+0.429) is below the paper's guided base score (+0.569). The paper's
+  figure folds the guide into every user turn; here the guide is given once, as a system
+  message. The two are different deliveries and should not be compared as replications.
+- Against 76/78: the direction replicates (prompted fades faster than weights). The ratio
+  here is 1.74; the weights arm was flat within ±0.15 there and is not here.
+
+**Full-run actuals.**
+
+| Item | USD |
+|---|---|
+| Smoke (GPU 2.55 + judging 0.26) | 2.81 |
+| Full collection, GPU (`modal billing report`, app total 21.46 less the smoke) | 18.91 |
+| Full judging, 5,039 judgments from token usage | 50.25 |
+| Malformed judge replies that were billed but not kept (29, at about 0.01) | about 0.3 |
+| **Total** | **about 72** |
+
+Judging came to $0.00997 per judgment (smoke estimate $0.0108). GPU time was under the
+projection because throughput at concurrency 32 was about twice the smoke measurement at the
+short levels. The server is stopped; the Modal volume was read-only throughout.
+
+**Files** (run directory `jaleesweights/data/runs/fading-58/`, not committed):
+`collect_fading.jsonl`, `judgments_fading.jsonl`, `batch_state.json`, the figures. Committed
+alongside this file: `summary_fading.json` (every estimand and interval) and
+`per_probe_fading.csv` (per-probe scores by arm and level). The two figures are committed as
+`docs/paper/figures/fig_fading.pdf` and `fig_fading_by_pressure.pdf`.
+
 ## What Worked / What Didn't
 
-None yet.
+**Worked.**
+
+- A 64k-token ramp on one GPU. Ordering the cells so that every conversation in a group
+  shares its long prefix let the server compute each prefix once; the 64k level ran at about
+  900 conversations an hour.
+- A non-repeating filler bank screened by keyword and then read once by an independent
+  reader.
+- Freezing the analysis before data. The result is mixed, and the locked rules are what make
+  the mixed result reportable as it is.
+- Reusing the existing unprompted control with matching generation settings saved a seventh
+  of the collection.
+
+**Did not work, or cost more than it should.**
+
+- The judge's malformed replies: 25 of 5,040, one never recovered. The batch judging code
+  re-asks only when run again by hand; a bounded automatic re-ask would have saved three
+  round trips.
+- The memory estimate behind the choice of a B200 was about four times too high. An H200
+  would probably have served the 64k level at lower cost.
+- The design has no way to explain the weights arm's decline. The pre-registration named the
+  missing arm in advance; it is the main thing a follow-up would add.
 
 ## Next Steps
 
-The full run, on the owner's word.
+Suggestions only; each needs the owner's decision and its own budget.
+
+1. Two further arms over the same ramp, to explain the weights arm's decline: the base model
+   with no framing, and the stage-2 model with no stated sentence. At this run's rates, about
+   $36 for both (2 × 2,520 conversations).
+2. The paper states the result as measured: prompting fades faster than weights, weights are
+   not immune. How the paper refers to the earlier MultiBench experiments is the owner's
+   wording decision.
