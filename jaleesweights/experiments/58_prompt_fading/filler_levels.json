@@ -1,0 +1,35 @@
+{
+ "tokenizer": "google/gemma-4-31B-it",
+ "levels": {
+  "L0": {
+   "exchanges": 0,
+   "tokens": 0,
+   "target": 0
+  },
+  "L1": {
+   "exchanges": 6,
+   "tokens": 1111,
+   "target": 1000
+  },
+  "L2": {
+   "exchanges": 21,
+   "tokens": 4081,
+   "target": 4000
+  },
+  "L3": {
+   "exchanges": 50,
+   "tokens": 12069,
+   "target": 12000
+  },
+  "L4": {
+   "exchanges": 123,
+   "tokens": 32197,
+   "target": 32000
+  },
+  "L5": {
+   "exchanges": 239,
+   "tokens": 64192,
+   "target": 64000
+  }
+ }
+}
