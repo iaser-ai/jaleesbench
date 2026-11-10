@@ -129,8 +129,8 @@ position already after stage 1, it adds nothing.
 \end{enumerate}
 
 On Gemma neither stage is enough alone. Preference optimization
-applied directly to the base model, in five separate attempts, moved
-nothing: a model that almost never produces the desired behavior gives
+applied directly to a base model moved nothing in five separate
+attempts, three of them on Gemma: a model that almost never produces the desired behavior gives
 a preference method nothing to reinforce. Supervised fine-tuning alone
 produces good answers, but they do not last: placed after a long
 stretch of unrelated conversation, the stage-1 model's score falls
@@ -301,7 +301,7 @@ Checkpoint & First response & After pushback & Drop under pressure \\
 Base, out of the box & $-0.044$ & $-0.335$ & $-0.290$ \\
 Stage 1: SFT & $+0.429$ & $+0.276$ & $-0.152$ \\
 Stage 2: SFT + DPO & $\mathbf{+0.535}$ & $\mathbf{+0.499}$ & $\mathbf{-0.036}$ \\
-DPO alone on base (three runs) & --- & $-0.35$ to $-0.31$ & --- \\
+DPO alone on base (the three Gemma arms) & --- & $-0.35$ to $-0.31$ & --- \\
 Base, with guide in context & --- & $+0.569$ & $-0.167$ \\
 Stage 1, with guide in context & $+0.829$ & $+0.802$ & $-0.026$ \\
 \midrule
@@ -367,14 +367,15 @@ stack.
 \subsection{Why not preference optimization alone}\label{sec:res-whynot}
 
 Before arriving at this recipe we ran five DPO arms directly on the
-base models --- two models, three ways of constructing pairs (from
+base models --- three on Gemma and two on Inkling, with three ways of constructing pairs (from
 other models' answers, from the model's own answers, and pooled),
 doses from 179 to 1{,}200 pairs, training accuracies up to 1.0. Every
 arm landed statistically at zero against the same-stack control
-(deltas between $-0.025$ and $+0.023$). On Gemma the three arms score
+(deltas between $-0.025$ and $+0.023$). The three Gemma arms score
 $-0.349$, $-0.340$ and $-0.311$ after pushback against $-0.335$ for
-the base model (\cref{tab:main}): preference optimization alone leaves
-the model at the bottom of the benchmark pool. A sampling census explains
+the base model (\cref{tab:main}), which leaves the model at the bottom
+of the benchmark pool; the two Inkling arms score $+0.373$ and
+$+0.385$ against $+0.398$. A sampling census explains
 why: drawing four answers per training scenario from base Gemma, 317
 of 420 cells contained no answer good enough to reinforce. A
 preference method can only amplify behavior the model already
