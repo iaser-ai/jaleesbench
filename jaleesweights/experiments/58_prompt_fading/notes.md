@@ -1,8 +1,11 @@
 # Experiment 58: Prompt fading on JaleesBench with the JaleesWeights models
 
-**Status**: Complete (2026-11-10). The prompted guide fades (H1 confirmed) and fades faster
-than the weights arm (H3 confirmed); the weights arm is **not** flat (H2 not confirmed). Total
-spend about $72 of the $250 ceiling. · **Date**: 2026-11-09 (pre-registration), 2026-11-10 (results)
+**Status**: Complete (2026-11-10). First run: the prompted guide fades (H1 confirmed) and
+fades faster than the fine-tuned model given a stated sentence (H3 confirmed); that arm is not
+flat (H2 not confirmed). Follow-up arms: stage 2 with no system message is flat; stage 1 with
+no system message declines; the stated sentence is what faded. The base no-framing arm was
+not run. Total spend about $139 of the $250 ceiling. · **Date**: 2026-11-09 (pre-registration),
+2026-11-10 (results)
 
 Driving issue: #58. Prior work: the MultiBench prompt-fading experiments 76 (pilot, 42
 scenarios, seven traditions) and 78 (full 519-scenario corpus), August 2026. This experiment
@@ -479,8 +482,7 @@ short levels. The server is stopped; the Modal volume was read-only throughout.
 **Files** (run directory `jaleesweights/data/runs/fading-58/`, not committed):
 `collect_fading.jsonl`, `judgments_fading.jsonl`, `batch_state.json`, the figures. Committed
 alongside this file: `summary_fading.json` (every estimand and interval) and
-`per_probe_fading.csv` (per-probe scores by arm and level). The two figures are committed as
-`docs/paper/figures/fig_fading.pdf` and `fig_fading_by_pressure.pdf`.
+`per_probe_fading.csv` (per-probe scores by arm and level).
 
 ## Follow-up: two arms with no framing (registered 2026-11-10, before their data)
 
@@ -551,6 +553,67 @@ conversations, about $35.
   and the gap at each level. Descriptive.
 - **Check.** `fading-S0` at L0 is the same condition as the paper's stage-1 held-out score
   (+0.276). A difference of 0.15 or more is reported as not reproducing.
+
+### Follow-up results (2026-11-10)
+
+Both arms: 2,520 conversations and 2,520 judgments each, none missing. Malformed judge
+replies were re-asked until none remained. The re-asks also recovered the one judgment
+missing from the first run, so the first two arms are complete at 5,040; the weights arm's
+L3 mean moved from +0.597 to +0.595, its total from −0.1379 to −0.1381, and no verdict
+changed. The numbers in the tables above are as first reported; `summary_fading.json` holds
+the values on the complete data. `fading-S0` was collected on a second copy of the server
+into its own run directory (`fading-58-s0`); 29 of its conversations failed on a Modal
+request expiry in the first pass and were collected by the automatic second pass.
+
+| Level | `fading-P` (base + guide) | `fading-W` (stage 2 + stated) | `fading-W0` (stage 2, none) | `fading-S0` (stage 1, none) |
+|---|---|---|---|---|
+| L0 | +0.429 | +0.708 | +0.444 | +0.302 |
+| L1 | +0.385 | +0.650 | +0.404 | +0.232 |
+| L2 | +0.286 | +0.592 | +0.440 | +0.227 |
+| L3 | +0.268 | +0.595 | +0.435 | +0.240 |
+| L4 | +0.233 | +0.561 | +0.395 | +0.168 |
+| L5 | +0.187 | +0.568 | +0.405 | +0.142 |
+| Total (5 × slope) | −0.240 [−0.318, −0.168] | −0.138 [−0.223, −0.071] | −0.033 [−0.094, +0.028] | −0.141 [−0.227, −0.069] |
+
+- **Checks.** `fading-W0` at L0 is +0.444 [+0.298, +0.591] against +0.499: reproduces (0.055
+  lower). `fading-S0` at L0 is +0.302 [+0.155, +0.446] against +0.276: reproduces.
+- **F2: flat.** Stage 2 with no framing changes by −0.033 and the interval is inside ±0.15.
+- **F6: declines.** Stage 1 with no framing changes by −0.141; the slope interval excludes
+  zero (−0.0281 per level [−0.0454, −0.0138]).
+- **F3: the stated sentence fades.** slope(`fading-W`) − slope(`fading-W0`) = −0.0211
+  [−0.0397, −0.0046]. Gap W − W0 by level: +0.264, +0.246, +0.151, +0.161, +0.165, +0.163.
+  This accounts for the weights arm's decline in the first run.
+- **F7: stage 2 against stage 1.** slope(`fading-W0`) − slope(`fading-S0`) = +0.0216
+  [+0.0062, +0.0378]. Gap by level: +0.142, +0.171, +0.213, +0.194, +0.227, +0.263.
+- **Not registered, reported because the paper's second figure shows it:**
+  slope(`fading-P`) − slope(`fading-W0`) = −0.0415 [−0.0601, −0.0230]; the two start level
+  (+0.429, +0.444) and are 0.218 apart at L5. slope(`fading-P`) − slope(`fading-S0`) =
+  −0.0199 [−0.0391, −0.0007]; the prompted arm is above stage 1 at every level.
+- **F1, F4, F5** need `fading-B0`, which was not run.
+
+**How to read it.** Stage 2 with no framing has no prompt to lose; the flat line says that
+long unrelated conversation did not by itself lower its score. It did lower stage 1's, so
+training as such is not protection against length, and one run per stage cannot say why the
+stages differ. Both things delivered in the prompt, the guide and the stated sentence, faded.
+
+**Follow-up actuals.** `fading-W0`: GPU $9.41, judging $23.61. `fading-S0`: GPU $9.99,
+judging $23.25. Malformed judge replies billed but not kept, whole experiment: about $0.8.
+Experiment total about $139 (GPU $40.86 on `modal billing report` for both apps; judging
+$97.4 from token usage including the smoke).
+
+**Reproduction of the follow-up.**
+
+```
+uv run python experiments/58_prompt_fading/collect_fading.py --base-url https://<modal-url>/v1 --run fading-58 --arms fading-W0
+FADING_APP_NAME=jaleesweights-fading-serve-b uv run modal deploy experiments/58_prompt_fading/serve_gemma_fading.py
+uv run python experiments/58_prompt_fading/collect_fading.py --base-url https://<second-url>/v1 --run fading-58-s0 --arms fading-S0
+uv run python experiments/58_prompt_fading/judge_batch.py submit --run fading-58-s0   # and fetch, as above
+uv run python experiments/58_prompt_fading/analyze.py --run fading-58 --extra-runs fading-58-s0
+```
+
+Paper figures: `docs/paper/figures/fig_fading_prompt.pdf` (prompted arm alone) and
+`fig_fading_compare.pdf` (prompted arm against the two no-framing tuned arms). The
+per-pressure figure stays here as `fig_fading_by_pressure.pdf`.
 
 ## What Worked / What Didn't
 

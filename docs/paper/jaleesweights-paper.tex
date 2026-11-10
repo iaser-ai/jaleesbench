@@ -85,18 +85,11 @@ Muslim family can run locally, scored at the bottom.
 
 Supplying the guide as a prompt is the obvious remedy, and it has a
 weakness beyond the fact that most users never write one: a prompt
-given once wears off as the conversation moves on. In earlier
-unpublished experiments on MultiBench, a sibling benchmark spanning
-seven traditions, we found that a guide delivered once at the start of
-a conversation lost effect as unrelated conversation accumulated
-before the dilemma, and lost it faster than values trained into the
-weights. We repeated that experiment on JaleesBench with the models of
-this paper and a longer conversation, up to 64{,}000 tokens
-(\cref{sec:res-fading}). The guided base model loses $0.24$ of its
-score over that distance; the tuned model stays above it at every
-distance and declines more slowly, though it is not immune. A
-disposition that has to survive a long conversation is better placed
-in the weights.
+given once wears off as the conversation moves on. When we place
+unrelated conversation between the guide and the dilemma, the guided
+base model loses $0.24$ of its score by 64{,}000 tokens
+(\cref{sec:res-fading}). Guidance that has to last through a long
+conversation cannot rest on a prompt alone.
 
 This paper closes that gap in the weights. We fine-tune two open
 models --- Gemma-4-31B and Inkling-Small --- so that the values the
@@ -390,62 +383,77 @@ for all three checkpoints.}
 \subsection{A guide in the prompt fades with distance}\label{sec:res-fading}
 
 The results so far place the dilemma at the very start of a
-conversation. Real conversations are long, and whatever framing an
+conversation. Real conversations are long, and whatever guidance an
 assistant was given may lie far behind the moment that tests it. This
-experiment measures what distance does to a prompt and to the tuned
-weights. Its design, hypotheses and decision rules were fixed before
-any data was collected.
+experiment measures what that distance does, first to a prompt and
+then to the tuned models. Its design and decision rules for the
+prompted model were fixed before any data was collected; the tuned
+models with no system message were added afterwards, each registered
+before its own data.
 
-We compare two Gemma arms on the 70 held-out scenarios under all six
-pressures. The \emph{prompted} arm is the base model given the
-companionship guide once, as the system message. The \emph{weights}
-arm is the stage-2 model given one sentence stating the user's faith
-in the same place, so that both arms know whom they serve and differ
-in where the guidance lives. Between the system message and the
+We use the 70 held-out scenarios under all six pressures. Before the
 dilemma we insert pre-written, value-neutral exchanges (cooking,
 geography, how machines work) at six lengths: none, and about 1k, 4k,
 12k, 32k and 64k tokens. The judge sees only the dilemma, the answer,
 the pushback and the final answer, exactly as in the main evaluation.
-That is $5{,}040$ conversations; one of the $5{,}040$ judgments could
-not be obtained and is omitted.
+Each model is run on all $2{,}520$ combinations.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.8\linewidth]{figures/fig_fading}
-\caption{Score after pushback against the amount of unrelated
-conversation separating the framing from the dilemma (70 held-out
-scenarios, six pressures, Opus-judged; bands are scenario-bootstrap
-95\% intervals). The dashed line is the base model with no guide and
-no filler.}
-\label{fig:fading}
+\includegraphics[width=0.72\linewidth]{figures/fig_fading_prompt}
+\caption{The base model with the companionship guide given once, as
+the system message: score after pushback against the amount of
+unrelated conversation between the guide and the dilemma (70 held-out
+scenarios, six pressures, Opus-judged; band is the scenario-bootstrap
+95\% interval).}
+\label{fig:fading-prompt}
 \end{figure}
 
-\Cref{fig:fading} shows the result. The prompted arm falls from
-$+0.43$ with no filler to $+0.19$ at 64k tokens. Fitted across the six
-lengths its total decline is $-0.24$ (95\% CI $[-0.32, -0.17]$), and
-the decline appears under each of the six pressures, most steeply
-under insistence. The weights arm falls from $+0.71$ to $+0.57$, a
-total decline of $-0.14$ (CI $[-0.22, -0.07]$). The prompted arm
-declines faster: the difference between the two slopes is $-0.020$ per
-length step (CI $[-0.037, -0.004]$), or $0.10$ over the whole
-distance. The two arms also differ in shape. Both lose ground over the
-first 4k tokens; beyond that the weights arm is level ($+0.59$,
-$+0.60$, $+0.56$, $+0.57$) while the prompted arm keeps falling
-($+0.29$, $+0.27$, $+0.23$, $+0.19$).
+\Cref{fig:fading-prompt} shows the base model given the guide once, as
+the system message. Its score falls from $+0.43$ with no filler to
+$+0.19$ at 64k tokens. Fitted across the six lengths the decline is
+$-0.24$ (95\% CI $[-0.32, -0.17]$), and it appears under each of the
+six pressures, most steeply under insistence. The guide does not stop
+working: the same model with no guide scores $-0.34$, so at 64k tokens
+about two-thirds of the guide's benefit remains. But a third of it is
+gone, most of that within the first 4k tokens, and the decline has not
+levelled off by the end of the range we measured. Fading is a real
+cost of relying on a prompt.
 
-Two of our three pre-registered hypotheses held: the prompt fades, and
-it fades faster than the weights. The third, that the weights arm
-would be flat to within $\pm 0.15$, did not: its decline is smaller
-than the prompted arm's but its interval is not inside that margin.
-The difference between the arms is also modest and needed the long
-conversation to show; over the first 12k tokens alone it is not
-distinguishable from zero (CI $[-0.049, +0.013]$ per step). And the
-guide does not stop working: at 64k tokens the prompted model is still
-$0.52$ above the unprompted one. What the experiment supports is a
-comparison, not an absolute: at every distance and under every
-pressure the tuned model scores higher than the prompted base model,
-and the gap widens from $0.28$ to $0.38$ as the conversation
-lengthens.
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.72\linewidth]{figures/fig_fading_compare}
+\caption{The prompted base model of \cref{fig:fading-prompt} against
+the two tuned models with no system message at all, on the same
+scenarios and filler. Bands are 95\% intervals over scenarios and
+overlap because scenarios differ in difficulty; the comparisons in the
+text are paired by scenario.}
+\label{fig:fading-compare}
+\end{figure}
+
+\Cref{fig:fading-compare} adds the two tuned models, run with no
+system message, so that nothing in the conversation tells them what to
+do. The stage-2 model starts level with the prompted base model
+($+0.44$ against $+0.43$) and shows no measurable change with length:
+$-0.03$ over the range (CI $[-0.09, +0.03]$). By 64k tokens it is
+$0.22$ above the prompted model, and the difference between the two
+slopes is clear (CI $[-0.060, -0.023]$ per length step). The stage-1
+model is a different story. It starts lower ($+0.30$) and declines by
+$-0.14$ (CI $[-0.23, -0.07]$), ending at $+0.14$, below the prompted
+model at every length.
+
+These results should be read narrowly. The stage-2 model has no prompt
+to lose, so what the flat line shows is that a long stretch of
+unrelated conversation did not by itself degrade its counsel. Training
+is not a general protection against length: the stage-1 model was
+trained too, and it declined by more than half as much as the prompted
+model. We have one model and one run at each stage and
+do not know why the second stage holds where the first does not. Nor
+does tuning rescue a prompt. In a further arm we gave the stage-2
+model a one-sentence system message stating the user's faith; the
+sentence raised its score by $0.26$ with no filler and by $0.16$ from
+4k tokens onward, fading as the guide did. Anything delivered in the
+prompt faded in this experiment, whichever model received it.
 
 \section{Limitations}\label{sec:limitations}
 \begin{table}[t]
@@ -494,11 +502,11 @@ distribution, in English only. The tuned models are substantially but
 not fully internalized: the guide still adds roughly $+0.3$ on top of
 the tuned weights on both models. Whether the disposition over-applies
 --- volunteering religious counsel to users who did not ask for it ---
-is not yet measured. The tuned model's score also declines over a long
-conversation (\cref{sec:res-fading}), and that experiment cannot say
-why: its weights arm carried a one-sentence statement of the user's
-faith, which may itself fade, and it included no unprompted arm that
-would show how much any model's counsel degrades with length alone.
+is not yet measured. The long-conversation experiment
+(\cref{sec:res-fading}) used one kind of filler, lengths up to 64k
+tokens, and one run per model; it did not include the base model with
+no guide, so how much the untuned model's counsel degrades with length
+alone is unmeasured, and the stage-1 model's decline is unexplained.
 
 \section{Conclusion}\label{sec:conclusion}
 

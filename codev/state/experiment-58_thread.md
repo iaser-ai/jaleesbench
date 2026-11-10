@@ -95,3 +95,19 @@ new arms are judged.
 My 36 USD estimate for the two arms was an arithmetic error: 5,040 conversations is the size of
 the first run, 69 USD measured. Told the architect and am holding all paid steps until the
 corrected figure is confirmed. Follow-up registered in notes.md before its data (d528170).
+
+## 2026-11-10 — follow-up arms done; paper rewritten
+
+Owner narrowed the follow-up to stage 2 with no system message, then added stage 1 with no
+system message; base no-framing stays on hold. Ran the two in parallel on two B200 servers.
+Results: stage 2 no framing is flat over 64k (-0.03, inside the margin); stage 1 no framing
+declines (-0.14); the stated sentence fades (+0.26 at no filler, +0.16 from 4k on), which
+explains the first run's weights-arm decline. Level-0 checks reproduce the paper (+0.444 vs
++0.499; +0.302 vs +0.276). Experiment total about 139 USD.
+
+Paper per the owner's decisions: no reference to any earlier experiment; two figures (prompted
+arm alone with no floor line; prompted arm against the two tuned arms with no system message);
+per-pressure figure kept in the experiment directory only; text says plainly that training is
+not a general protection (stage 1 declines) and that everything delivered by prompt faded.
+Flagged to the architect that the owner's sketch of figure two ("starts higher, declines less,
+also declines") described the stated-sentence arm and does not match the no-system-message data.

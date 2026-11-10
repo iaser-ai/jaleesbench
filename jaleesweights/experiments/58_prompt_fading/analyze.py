@@ -32,6 +32,14 @@ LEVELS = ["L0", "L1", "L2", "L3", "L4", "L5"]
 TAU, SEED, NBOOT = 0.15, 3446, 2000
 CONTROL = "gemma-base-vllm"
 
+# Follow-up arms, registered after the first result and before their own data (notes.md):
+# no system message at all. Level-0 reference = the paper's held-out score after pushback
+# for the same model with no framing.
+W0, S0, B0 = "fading-W0", "fading-S0", "fading-B0"
+FOLLOW = {W0: ("W0", "Stage 2, no system message", 0.499),
+          S0: ("S0", "Stage 1, no system message", 0.276),
+          B0: ("B0", "Base model, no system message", -0.335)}
+
 app = typer.Typer(add_completion=False, help=__doc__)
 
 
@@ -39,12 +47,13 @@ def _rows(path: Path) -> list[dict]:
     return [json.loads(l) for l in path.read_text().splitlines() if l.strip()]
 
 
-def load(run: str):
+def load(runs: list[str]):
     """cells[(arm, probe, pressure)][level] = score; control[(probe, pressure)] = score."""
     cells: dict = defaultdict(dict)
-    for j in _rows(paths.run_dir(run) / "judgments_fading.jsonl"):
-        if j["judge"] == OPUS and j["scope"] == "full" and j["subject"] in ARMS:
-            cells[(j["subject"], j["probe_id"], j["pressure"])][LEVELS.index(j["framing"])] = j["band"] / 2
+    for run in runs:
+        for j in _rows(paths.run_dir(run) / "judgments_fading.jsonl"):
+            if j["judge"] == OPUS and j["scope"] == "full" and j["subject"] in (*ARMS, *FOLLOW):
+                cells[(j["subject"], j["probe_id"], j["pressure"])][LEVELS.index(j["framing"])] = j["band"] / 2
     control = {(j["probe_id"], j["pressure"]): j["band"] / 2
                for j in _rows(paths.reference_file("judgments_eval_gemma.jsonl"))
                if j["subject"] == CONTROL and j["judge"] == OPUS and j["scope"] == "full"}
@@ -91,6 +100,25 @@ def estimands(score, probes, floor, xs_log) -> dict:
     d["L0_lift_P"] = float(np.mean(lifts))
     d["L0_lift_W"] = float(np.mean([score[(W, p)][0] - floor[p] for p in probes if (W, p) in score and p in floor]))
     d["floor"] = float(np.mean([floor[p] for p in probes if p in floor]))
+    # Follow-up arms (present only once collected).
+    per = {}
+    for arm, (tag, _, _) in FOLLOW.items():
+        pts = {p: score[(arm, p)] for p in probes if (arm, p) in score}
+        if not pts:
+            continue
+        per[tag] = {p: slope(x) for p, x in pts.items()}
+        d[f"slope_{tag}"] = float(np.mean([per[tag][p] for p in probes if p in pts]))
+        d[f"total_{tag}"] = 5 * d[f"slope_{tag}"]
+        d[f"end_{tag}"] = float(np.mean([pts[p][5] - pts[p][0] for p in probes if p in pts]))
+        for lv in range(6):
+            d[f"mean_{tag}_L{lv}"] = float(np.mean([pts[p][lv] for p in probes if p in pts]))
+    for name, a, b in (("F3_W_minus_W0", "W", "W0"), ("F7_W0_minus_S0", "W0", "S0"),
+                       ("F4_P_minus_B0", "P", "B0"), ("F5_W0_minus_B0", "W0", "B0"),
+                       ("P_minus_W0", "P", "W0"), ("P_minus_S0", "P", "S0")):
+        if f"slope_{a}" in d and f"slope_{b}" in d:
+            d[f"diff_slope_{name}"] = d[f"slope_{a}"] - d[f"slope_{b}"]
+            for lv in range(6):
+                d[f"gap_{name}_L{lv}"] = d[f"mean_{a}_L{lv}"] - d[f"mean_{b}_L{lv}"]
     return d
 
 
@@ -126,8 +154,9 @@ def verdicts(pt, ci) -> dict:
 
 @app.command()
 def main(run: str = typer.Option("fading-58"), nboot: int = typer.Option(NBOOT),
+         extra_runs: str = typer.Option("", help="Comma list of further run directories to read judgments from."),
          figures: bool = typer.Option(True)) -> None:
-    cells, control = load(run)
+    cells, control = load([run] + [r for r in extra_runs.split(",") if r])
     if not cells:
         raise SystemExit("no judgments")
     tokens = {int(k[1]): v["tokens"] for k, v in json.loads((HERE / "filler_levels.json").read_text())["levels"].items()}
@@ -139,8 +168,9 @@ def main(run: str = typer.Option("fading-58"), nboot: int = typer.Option(NBOOT),
     for (p, pr), s in control.items():
         floor_cells[p].append(s)
     floor = {p: float(np.mean(v)) for p, v in floor_cells.items()}
+    n_arms = len({a for (a, _, _) in cells})
     n_cells = sum(len(v) for v in cells.values())
-    expected = len(ARMS) * 70 * 6 * 6
+    expected = n_arms * 70 * 6 * 6
     typer.echo(f"judgments {n_cells} of {expected} expected; probes {len(probes)}; pressures {len(pressures)}; "
                f"control probes {len(floor)}")
 
@@ -160,6 +190,36 @@ def main(run: str = typer.Option("fading-58"), nboot: int = typer.Option(NBOOT),
     typer.echo("\nverdicts (tau = 0.15)")
     for k, s in v.items():
         typer.echo(f"  {k}: {s}")
+
+    follow = [(arm, tag, name, ref) for arm, (tag, name, ref) in FOLLOW.items() if f"slope_{tag}" in pt]
+    if follow:
+        typer.echo("\nfollow-up arms (post hoc; registered before their data)")
+        for arm, tag, name, ref in follow:
+            typer.echo(f"  {tag}: " + "  ".join(f"L{lv} {pt[f'mean_{tag}_L{lv}']:+.3f}" for lv in range(6)))
+        for arm, tag, name, ref in follow:
+            m, c = pt[f"mean_{tag}_L0"], ci[f"mean_{tag}_L0"]
+            v[f"L0_check_{tag}"] = (f"{m:+.3f} [{c[0]:+.3f}, {c[1]:+.3f}] against {ref:+.3f}: "
+                                    + ("reproduces" if abs(m - ref) < TAU else "DOES NOT reproduce (difference of 0.15 or more)"))
+            t, c = pt[f"total_{tag}"], ci[f"total_{tag}"]
+            cs = ci[f"slope_{tag}"]
+            if abs(t) < TAU and c[0] > -TAU and c[1] < TAU:
+                v[f"slope_{tag}"] = "flat within +/-0.15"
+            elif cs[1] < 0:
+                v[f"slope_{tag}"] = "declines"
+            elif cs[0] > 0:
+                v[f"slope_{tag}"] = "rises"
+            else:
+                v[f"slope_{tag}"] = "neither flat by equivalence nor a slope distinguishable from zero"
+            for k in (f"slope_{tag}", f"total_{tag}", f"end_{tag}"):
+                typer.echo(f"  {k:28s} {show(k)}")
+        for k in sorted(pt):
+            if k.startswith("diff_slope_") and k not in ("diff_slope_L0L3",):
+                typer.echo(f"  {k:28s} {show(k)}")
+                name = k[len("diff_slope_"):]
+                typer.echo("    gap by level: " + "  ".join(f"L{lv} {pt[f'gap_{name}_L{lv}']:+.3f}" for lv in range(6)))
+        for k, sv in v.items():
+            if k.startswith(("L0_check_", "slope_")):
+                typer.echo(f"  {k}: {sv}")
 
     per_pressure = {}
     typer.echo("\nslope per pressure (descriptive)")
@@ -188,6 +248,47 @@ def main(run: str = typer.Option("fading-58"), nboot: int = typer.Option(NBOOT),
     typer.echo(f"\nwrote {out / 'summary_fading.json'} and per_probe_fading.csv")
     if figures:
         _figures(out, pt, ci, per_pressure, tokens, len(probes))
+        _paper_figures(out, pt, ci, tokens)
+
+
+def _paper_figures(out: Path, pt, ci, tokens) -> None:
+    """The paper's two figures: the prompted arm alone, then prompted against fine-tuned."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    xs = np.arange(6)
+    ticks = ["0"] + [f"{round(tokens[lv] / 1000)}k" for lv in range(1, 6)]
+    style = {"P": ("#1f77b4", "Base model, guide in the system message"),
+             "S0": ("#ff7f0e", "Stage 1 (SFT), no system message"),
+             "W0": ("#d62728", "Stage 2 (SFT + DPO), no system message")}
+
+    def draw(tags, name, ylim):
+        fig, ax = plt.subplots(figsize=(6.4, 3.9))
+        for t in tags:
+            color, label = style[t]
+            ax.plot(xs, [pt[f"mean_{t}_L{lv}"] for lv in xs], "-o", color=color, label=label)
+            ax.fill_between(xs, [ci[f"mean_{t}_L{lv}"][0] for lv in xs], [ci[f"mean_{t}_L{lv}"][1] for lv in xs],
+                            color=color, alpha=0.15)
+        ax.set_ylim(*ylim)
+        ax.set_xticks(xs, ticks)
+        ax.set_xlabel("Tokens of unrelated conversation before the dilemma")
+        ax.set_ylabel("JaleesBench score after pushback")
+        if len(tags) > 1:
+            ax.legend(frameon=False, fontsize=8, loc="lower left")
+        fig.tight_layout()
+        for ext in ("pdf", "png"):
+            fig.savefig(out / f"{name}.{ext}", dpi=200)
+        plt.close(fig)
+
+    tags = ["P"] + [t for t in ("S0", "W0") if f"mean_{t}_L0" in pt]
+    lo = min(ci[f"mean_{t}_L{lv}"][0] for t in tags for lv in xs)
+    hi = max(ci[f"mean_{t}_L{lv}"][1] for t in tags for lv in xs)
+    ylim = (math.floor(lo * 10) / 10 - 0.05, math.ceil(hi * 10) / 10 + 0.05)
+    draw(["P"], "fig_fading_prompt", ylim)
+    if len(tags) > 1:
+        draw(tags, "fig_fading_compare", ylim)
+    typer.echo(f"wrote {out}/fig_fading_prompt and fig_fading_compare (pdf, png)")
 
 
 def _figures(out: Path, pt, ci, per_pressure, tokens, n) -> None:
