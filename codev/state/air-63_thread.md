@@ -70,3 +70,9 @@ which still prints the second model's rows. Listed in the PR.
 
 Checks: `uv run --directory jaleesbench pytest -q` 119 passed, 1 skipped;
 `uv run --directory jaleesweights pytest -q` 114 passed, 1 skipped.
+
+## 2026-11-11 — PR #64 open, waiting at the pr gate
+
+PR #64 opened with the full list of cuts and six decisions for the owner in its body. The
+optional three-way review was skipped: a document change, with each number checked against
+the committed summary. Waiting for a human decision on the pr gate.
