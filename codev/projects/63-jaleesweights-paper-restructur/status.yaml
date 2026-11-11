@@ -1,0 +1,14 @@
+id: '63'
+title: jaleesweights-paper-restructur
+protocol: air
+phase: implement
+plan_phases: []
+current_plan_phase: null
+gates:
+  pr:
+    status: pending
+iteration: 1
+build_complete: false
+history: []
+started_at: '2026-11-11T17:15:08.542Z'
+updated_at: '2026-11-11T17:15:08.543Z'
