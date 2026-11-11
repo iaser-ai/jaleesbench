@@ -7,7 +7,7 @@ packaged so a team can run it from a fresh clone with their own accounts.
 Three paths:
 
 1. **Gemma-4-31B on Modal** — the paper's Gemma result, exactly as run.
-2. **Inkling-Small through the Tinker API** — the paper's second model, exactly as run.
+2. **Inkling-Small through the Tinker API** — a second model, exactly as run; the paper does not report it.
 3. **A local demonstration** — the same recipe on a smaller Gemma-family model on one GPU
    you own. Its numbers are not the paper's and are not expected to match them.
 4. **An Apple Silicon tutorial** — stage 1 on a Mac with MLX, one question asked before and

@@ -46,6 +46,12 @@
 % for the released code (jaleesweights/), the jaleesweights-data-v1
 % data release and the MLX tutorial; serving hardware stated; no
 % number changed.
+% 2026-11-11: restructured around prompt fading. Order: a guide steers
+% a model; a prompt given once fades (figure, early); the fix is two
+% stages of fine-tuning, both needed; the trained model holds (figure).
+% Gemma-4-31B only, and the trained model is reported with no guide.
+% No new experiment: every number is from the earlier text, the data
+% release, or jaleesweights/experiments/58_prompt_fading/.
 % ------------------------------------------------------------------
 
 \title{JaleesWeights: Fine-Tuning an Open Model\\
@@ -60,90 +66,110 @@ for Islamic Values Out of the Box}
 \maketitle
 
 \begin{abstract}
-We present the first open-weight language models fine-tuned so that
-Islamic values --- counsel that is warm, anchored in the Qur'an and
-Sunnah, and steadfast when the user pushes back --- are how the model
-behaves by default, with no system prompt. The recipe has two stages.
-First, \emph{filtered context distillation}: we prompt the model with
-a one-page companionship guide, keep only the answers a judge rates as
-genuinely good, strip the guide, and fine-tune the model to give those
-answers bare --- context distillation, but from the model's best
-examples only. Second, direct preference optimization on the
-fine-tuned model's own samples, to push it a bit further under
-pressure. On Gemma-4-31B the two stages move
-out-of-the-box performance on JaleesBench from $-0.34$ (the bottom of
-the benchmark pool) to $+0.50$, past the best open base model; on
-Inkling-Small (266B) from $+0.25$ to $+0.57$. Both models also score
-\emph{higher} with the guide in context after tuning than before, and a
-capability panel (MMLU, GSM8K, IFEval) shows no regression. On Gemma
-it is the combination that produces the result: preference
-optimization alone leaves the base model where it started, supervised
-fine-tuning alone gives good answers that erode over a long
-conversation, and the two together match the prompted guide at the
-start of a conversation and hold steady through 64{,}000 tokens of
-unrelated talk, over which the guide itself loses a third of its
-benefit. The Gemma pipeline cost under \$100 on one GPU.
+A one-page guide in the prompt can make a language model good
+spiritual company for a Muslim user: warm, anchored in the Qur'an and
+Sunnah, and steadfast when the user pushes back. But a prompt given
+once wears off. With unrelated conversation between the guide and the
+user's dilemma, the score of Gemma-4-31B on JaleesBench falls from
+$+0.43$ to $+0.19$ over 64{,}000 tokens, a third of the guide's
+benefit. We show that fine-tuning fixes this and that it takes two
+stages, both necessary. The first, \emph{filtered context
+distillation}, makes the model answer without the guide the way it
+answers with it: we generate answers with the guide in context, keep
+only those a judge rates as genuinely good, strip the guide, and
+fine-tune the model to give those answers bare. The second, direct
+preference optimization on the fine-tuned model's own samples,
+entrenches the behavior. With no system prompt at all, the two-stage
+model starts level with the prompted guide ($+0.44$) and holds steady
+through the same 64{,}000 tokens. Neither stage does this alone:
+preference optimization alone leaves the base model where it started,
+and supervised fine-tuning alone gives good answers that erode over a
+long conversation. At the start of a conversation the two stages move
+out-of-the-box performance from $-0.34$ to $+0.50$, a capability panel
+(MMLU, GSM8K, IFEval) shows no regression, and the pipeline cost under
+\$100 on one GPU.
 \end{abstract}
 
 \section{Introduction}\label{sec:intro}
 
 Millions of Muslims bring real decisions to AI assistants. JaleesBench
-\citep{jaleesbench2026} showed that today's models can be good
-spiritual company when given a one-page guide, but that bare --- with
-no prompt, which is how most people actually use them --- most models
-are middling and some are harmful. Open-weight models, the ones a
-Muslim family can run locally, scored at the bottom.
+\citep{jaleesbench2026} showed that a one-page guide, placed in the
+prompt, steers today's models into good spiritual company: a model
+that caves when the user pushes back holds its ground, warmly, once it
+has the guide (\cref{tab:pledge}). Bare --- with no prompt, which is
+how most people actually use them --- most models are middling and
+some are harmful, and the open-weight models, the ones a Muslim family
+can run locally, mostly sit in the bottom half.
 
-Supplying the guide as a prompt is the obvious remedy, and it has a
-weakness beyond the fact that most users never write one: a prompt
-given once wears off as the conversation moves on. When we place
-unrelated conversation between the guide and the dilemma, the guided
-base model loses $0.24$ of its score by 64{,}000 tokens
-(\cref{sec:res-fading}). Guidance that has to last through a long
-conversation cannot rest on a prompt alone.
+Supplying the guide is the obvious remedy. The problem is that a
+prompt fades. A guide is given once, at the start; the conversation
+moves on, and the dilemma that tests the model may arrive many
+thousands of tokens later. \Cref{fig:fading-prompt} shows what that
+distance does. We give Gemma-4-31B the guide as its system message,
+place unrelated conversation between the guide and the dilemma, and
+score the model's counsel after the user pushes back. With nothing in
+between, the guided model scores $+0.43$. After 64{,}000 tokens of
+talk about cooking, geography and how machines work, it scores
+$+0.19$.
 
-This paper closes that gap in the weights. We fine-tune two open
-models --- Gemma-4-31B and Inkling-Small --- so that the values the
-guide supplies externally become the model's own default behavior. To
-our knowledge these are the first open models trained toward a
-positive Islamic disposition, as opposed to Islamic knowledge or
-professed values, and evaluated on what their counsel does for the
-user.
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.72\linewidth]{figures/fig_fading_prompt}
+\caption{Prompt fading. The base model with the companionship guide
+given once, as the system message: score after pushback against the
+amount of unrelated conversation between the guide and the dilemma
+(70 held-out scenarios, six pressures, Opus-judged; band is the
+scenario-bootstrap 95\% interval).}
+\label{fig:fading-prompt}
+\end{figure}
 
-The recipe is two stages, in this order:
+The guide has not stopped working by then, but a third of its benefit
+is gone, most of that within the first 4{,}000 tokens, and the decline
+has not levelled off where our measurement ends (\cref{sec:fading}).
+Guidance that has to last through a long conversation cannot rest on a
+prompt. It has to be in the weights, and that takes a fine-tuned
+model.
+
+This paper fine-tunes Gemma-4-31B so that what the guide supplies from
+outside becomes the model's own default behavior. It takes two stages,
+in this order, and both are needed:
 
 \begin{enumerate}\tightlist
-\item \textbf{Filtered context distillation.} Generate answers with
-the guide in context, keep only those a judge rates as genuinely good,
-remove the guide, and fine-tune the model to produce those answers
-without it --- context distillation \citep{askell2021general} from the
-model's best examples only. This does almost all the work: it
-moves Gemma from $-0.335$ to $+0.276$ and Inkling-Small from $+0.252$
-to $+0.550$ out of the box.
-\item \textbf{Direct preference optimization to improve a bit further.}
-Sample the fine-tuned model several times per prompt, have the judge
-rank the samples, and train on best-versus-worst pairs. On Gemma this
-adds a further $+0.22$, almost entirely by making the model hold its
-position when the user pushes back; on Inkling-Small, which held its
-position already after stage 1, it adds nothing.
+\item Stage 1, \emph{filtered context distillation}, makes the model
+sound without the guide the way it sounds with it. We generate answers
+with the guide in context, keep only those a judge rates as genuinely
+good, remove the guide, and fine-tune the model to produce those
+answers without it --- context distillation \citep{askell2021general}
+from the model's best examples only. Out of the box, this moves Gemma
+from $-0.335$ to $+0.276$.
+\item Stage 2, direct preference optimization, entrenches it. We
+sample the fine-tuned model several times per prompt, have the judge
+rank the samples, and train on best-versus-worst pairs. This adds a
+further $+0.22$, almost entirely by making the model hold its position
+when the user pushes back.
 \end{enumerate}
 
-On Gemma neither stage is enough alone. Preference optimization
-applied directly to a base model moved nothing in five separate
-attempts, three of them on Gemma: a model that almost never produces the desired behavior gives
-a preference method nothing to reinforce. Supervised fine-tuning alone
-produces good answers, but they do not last: placed after a long
-stretch of unrelated conversation, the stage-1 model's score falls
-from $+0.30$ to $+0.14$. The two stages together give both. With no
-system message at all, the stage-2 model starts level with the base
-model given the guide and stays there through 64{,}000 tokens, while
-the guide's own effect fades (\cref{sec:res-fading}).
+It works (\cref{fig:fading-compare}). With no system message at all,
+the two-stage model starts level with the base model given the guide,
+and stays there through 64{,}000 tokens while the guide's effect
+fades. Neither stage gets there alone. Preference optimization applied
+directly to the base model moved nothing in three separate attempts: a
+model that almost never produces the desired behavior gives a
+preference method nothing to reinforce. Supervised fine-tuning alone
+produces good answers, but they do not last: over the same long
+conversation the stage-1 model's score falls from $+0.30$ to $+0.14$.
 
-\section{Method}\label{sec:method}
+To our knowledge this is the first open model trained toward a
+positive Islamic disposition, as opposed to Islamic knowledge or
+professed values, and evaluated on what its counsel does for the user.
+The whole pipeline cost under \$100 on one GPU, and the code and data
+are released (\cref{sec:availability}).
 
-This section describes the measurement, the two training stages and
-the two models. The code and data behind each step are released
-(\cref{sec:availability}).
+\section{The problem: a prompt fades}\label{sec:fading}
+
+This section describes how we measure a model's counsel, and then what
+happens to a guided model as the conversation grows. The measurement
+is the same throughout the paper.
 
 \subsection{Measuring the values}\label{sec:measure}
 
@@ -168,6 +194,52 @@ checkpoint, since serving infrastructure alone shifts scores by up to
 $0.06$; checkpoint-vs-checkpoint claims use paired per-cell tests with
 95\% bootstrap intervals.
 
+\subsection{A guide given once, in a long conversation}\label{sec:fading-design}
+
+The benchmark places the dilemma at the very start of a conversation,
+and its guided condition repeats the guide with every user turn, so
+the guide is always next to the dilemma. Real conversations are long,
+and whatever guidance an assistant was given may lie far behind the
+moment that tests it. To measure what that distance does, we give the
+base model the guide once, as its system message, and insert
+pre-written, value-neutral exchanges (cooking, geography, how machines
+work) before the dilemma at six lengths: none, and about 1k, 4k, 12k,
+32k and 64k tokens. We use the 70 held-out scenarios under all six
+pressures, which makes $2{,}520$ conversations. The judge sees only
+the dilemma, the answer, the pushback and the final answer, exactly as
+in the main evaluation. The design and the decision rules for this
+prompted model were fixed before any data was collected.
+
+\subsection{The guide wears off}\label{sec:fading-result}
+
+\Cref{fig:fading-prompt} shows the result. The score falls from
+$+0.43$ with no filler to $+0.19$ at 64k tokens. Fitted across the six
+lengths the decline is $-0.24$ (95\% CI $[-0.32, -0.17]$), and it
+appears under each of the six pressures, most steeply under
+insistence. The guide does not stop working: the same model with no
+guide scores $-0.34$, so at 64k tokens about two-thirds of the guide's
+benefit remains. But a third of it is gone, most of that within the
+first 4k tokens, and the decline has not levelled off by the end of
+the range we measured.
+
+The starting point is itself below the benchmark's guided score for
+this model, $+0.569$ (\cref{tab:main}). The two are different
+deliveries of the guide, not repeated measurements of one thing: the
+benchmark repeats the guide with every user turn, and here it is given
+once.
+
+Fading is a real cost of relying on a prompt. A model that is to keep
+its values through a long conversation has to carry them itself.
+
+\section{The fix: fine-tuning in two stages}\label{sec:method}
+
+If the guidance cannot stay in the prompt, it has to go into the
+weights. This section describes the two training stages and the model
+they were applied to. The first stage makes the model sound, with no
+guide, the way it sounds with one; the second entrenches that
+behavior. The code and data behind each step are released
+(\cref{sec:availability}).
+
 \subsection{Stage 1: filtered context distillation}\label{sec:stage1}
 
 \Cref{tab:pledge} shows what the guide changes: the same model, on
@@ -175,8 +247,8 @@ the same conversation, caves without it and holds with it. We take the
 model's answers generated with the one-page guide in context and keep
 those the selection judge rates as good both before and after
 pushback, screening out any answer that mentions the guide
-or contains a dangling citation: 316 conversations for Gemma, 310 for
-Inkling-Small. Because the guide sits outside the conversation turns,
+or contains a dangling citation: 316 conversations. Because the guide
+sits outside the conversation turns,
 removing it is exact --- the training input is precisely what a bare
 user would send, paired with what the model itself said when guided.
 This is context distillation \citep{askell2021general} with a judge
@@ -225,12 +297,14 @@ into the weights.}
 
 \subsection{Stage 2: preference optimization on the fine-tuned model}\label{sec:stage2}
 
-From the stage-1 model we draw four answers per training scenario, have
-the selection judge rate them all, and pair each answer with the
-most-differently-rated answer to the same prompt: 502 pairs for Gemma,
-672 for Inkling-Small. \Cref{tab:pair} shows one such pair. We train with DPO \citep{rafailov2023direct}
-using the stage-1 model as the reference ($\beta$ 0.1, lr
-$1\times10^{-5}$, 1 epoch).
+Stage 1 leaves a model that holds its position in most draws and
+still caves in some. Stage 2 trains it to prefer its own good answers
+to its own bad ones. From the stage-1 model we draw four
+answers per training scenario, have the selection judge rate them all,
+and pair each answer with the most-differently-rated answer to the
+same prompt: 502 pairs. \Cref{tab:pair} shows one such pair. We train
+with DPO \citep{rafailov2023direct} using the stage-1 model as the
+reference ($\beta$ 0.1, lr $1\times10^{-5}$, 1 epoch).
 
 \begin{table}[H]
 \centering
@@ -273,22 +347,65 @@ base model, 317 of 420 cells produced no good draw at all.}
 \label{tab:pair}
 \end{table}
 
-\subsection{Models}\label{sec:models}
+\subsection{Model and training}\label{sec:models}
 
-Gemma-4-31B (bf16 LoRA, trained on one B200 and served for sampling
-and evaluation from one H200, both rented through Modal; the whole
-pipeline under \$100) and Inkling-Small, 266B (LoRA through the Tinker
-fine-tuning API, which also served it). Gemma was chosen from the bottom of the benchmark pool so the
-headroom is largest; Inkling-Small from near the top of the open
-models, to test whether the recipe still helps a model that already
-does reasonably.
+The model is Gemma-4-31B, trained as a bf16 LoRA on one B200 and
+served for sampling and evaluation from one H200, both rented through
+Modal; the whole pipeline cost under \$100. We chose it from near
+the bottom of the benchmark pool, where the headroom is largest.
 
 \section{Results}\label{sec:results}
 
-\Cref{tab:main} holds every held-out score; the subsections below
-read it stage by stage, then check that the guide still helps and that
-nothing else got worse, and finally follow the models through a long
-conversation.
+The trained model is evaluated with no system message, so nothing in
+the conversation tells it what to do. The subsections below follow it
+through the long conversation that wore the guide down, read its
+scores at the start of a conversation stage by stage, show that
+neither stage is enough alone, and check that nothing else got worse.
+
+\subsection{The trained model holds over a long conversation}\label{sec:res-fading}
+
+We run the two tuned models on the same scenarios, pressures and
+filler as \cref{sec:fading-design}, with no system message at all.
+These runs were added after the prompted model's result was known,
+each registered before its own data.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.72\linewidth]{figures/fig_fading_compare}
+\caption{The prompted base model of \cref{fig:fading-prompt} against
+the two tuned models with no system message at all, on the same
+scenarios and filler. Bands are 95\% intervals over scenarios and
+overlap because scenarios differ in difficulty; the comparisons in the
+text are paired by scenario.}
+\label{fig:fading-compare}
+\end{figure}
+
+\Cref{fig:fading-compare} sets them against the prompted base model.
+The stage-2 model holds. It starts level with the prompted base
+model ($+0.44$ against $+0.43$) and stays there: its change over the
+whole range is $-0.03$ (CI $[-0.09, +0.03]$), inside the $\pm 0.15$
+margin we set in advance for calling a curve flat. By 64k tokens it
+is $0.22$ above the prompted model, and the difference between the two
+slopes is clear (CI $[-0.060, -0.023]$ per length step). Trained with
+both stages, the model gives without any prompt what the guide gives
+at its best, and keeps giving it.
+
+A prompt does not gain this steadiness from the tuned weights. In a
+further arm we gave the stage-2 model a one-sentence system message
+stating the user's faith; the sentence raised its score by $0.26$ with
+no filler and by $0.16$ from 4k tokens onward, fading as the guide
+did. What was delivered in the prompt faded in this experiment,
+whichever model received it; what the two stages put in the weights
+did not.
+
+\subsection{At the start of a conversation}\label{sec:res-main}
+
+\Cref{tab:main} holds the held-out scores with the dilemma at the very
+start of the conversation, the benchmark's own setting. The no-filler
+points of the long-conversation experiment repeat these conditions on
+a different server and sampling stream, and agree with the table
+within the $0.15$ we set in advance: $+0.44$ against $+0.499$ for
+stage 2, and $+0.30$ against $+0.276$ for stage 1.
 
 \begin{table}[H]
 \centering
@@ -297,91 +414,68 @@ conversation.
 \toprule
 Checkpoint & First response & After pushback & Drop under pressure \\
 \midrule
-\multicolumn{4}{@{}l}{\emph{Gemma-4-31B}} \\
 Base, out of the box & $-0.044$ & $-0.335$ & $-0.290$ \\
+DPO alone on base (three attempts) & --- & $-0.35$ to $-0.31$ & --- \\
 Stage 1: SFT & $+0.429$ & $+0.276$ & $-0.152$ \\
 Stage 2: SFT + DPO & $\mathbf{+0.535}$ & $\mathbf{+0.499}$ & $\mathbf{-0.036}$ \\
-DPO alone on base (the three Gemma arms) & --- & $-0.35$ to $-0.31$ & --- \\
-Base, with guide in context & --- & $+0.569$ & $-0.167$ \\
-Stage 1, with guide in context & $+0.829$ & $+0.802$ & $-0.026$ \\
 \midrule
-\multicolumn{4}{@{}l}{\emph{Inkling-Small (266B)}} \\
-Base, out of the box & $+0.394$ & $+0.252$ & $-0.142$ \\
-Stage 1: SFT & $+0.524$ & $+0.550$ & $+0.026$ \\
-Stage 2: SFT + DPO & --- & $\mathbf{+0.569}$ & --- \\
-Base, with guide in context & --- & $+0.817$ & $-0.004$ \\
-Stage 1, with guide in context & --- & $+0.885$ & --- \\
-\midrule
-\emph{Reference:} Inkling, best open base model bare & $+0.468$ & $+0.398$ & $-0.070$ \\
+\emph{Reference:} base, guide at every user turn & --- & $+0.569$ & $-0.167$ \\
 \bottomrule
 \end{tabular}
-\caption{JaleesBench held-out scores ($-1$ to $+1$), faith unstated,
-Opus-judged. Gemma 95\% intervals for the after-pushback column: base
-$[-0.47, -0.20]$; stage 1 $[+0.12, +0.42]$; stage 2 $[+0.35, +0.63]$.}
+\caption{JaleesBench held-out scores ($-1$ to $+1$) for Gemma-4-31B
+with the dilemma at the start of the conversation, faith unstated,
+Opus-judged. The tuned checkpoints have no guide and no system
+message. 95\% intervals for the after-pushback column: base
+$[-0.47, -0.20]$; stage 1 $[+0.12, +0.42]$; stage 2 $[+0.35, +0.63]$.
+The reference row is the benchmark's guided condition.}
 \label{tab:main}
 \end{table}
 
-\subsection{Islamic values out of the box}\label{sec:res-main}
-
-Stage 1 does most of the work. On Gemma, supervised fine-tuning on the
-model's own guided answers moves the out-of-the-box score after
-pushback from $-0.335$ to $+0.276$, with non-overlapping intervals; its
-first response, at $+0.429$, is now statistically level with the best
-open base model in the pool (Inkling, $+0.468$). On Inkling-Small the
-gain is larger: $+0.252 \to +0.550$ after pushback (paired per-cell
-$+0.298$, 95\% CI $[+0.206, +0.392]$; 154 scenario--pressure cells
-improved, 37 worsened), and $+0.394 \to +0.524$ on the first response.
-
-Stage 2 then improves Gemma a bit further, from $+0.276$ to $+0.499$
-(paired per-cell $+0.223$, 95\% CI $[+0.144, +0.304]$; 120 cells up,
-34 down). Almost all of that gain is steadfastness: the drop between
-the first response and the response after pushback shrinks from
-$-0.152$ to $-0.036$, the same as the model shows with the guide in
-context. The final Gemma checkpoint scores $+0.499$ out of the box,
-above the best open base model bare ($+0.398$). An independent
-end-to-end rerun of the Gemma pipeline reproduced the stage-2 gain
+Stage 1 moves the out-of-the-box score after pushback from $-0.335$ to
+$+0.276$, with non-overlapping intervals, and the first response from
+$-0.044$ to $+0.429$. Stage 2 then takes the score after pushback from
+$+0.276$ to $+0.499$ (paired per-cell $+0.223$, 95\% CI
+$[+0.144, +0.304]$; 120 cells up, 34 down). Almost all of that gain is
+steadfastness: the drop between the first response and the response
+after pushback shrinks from $-0.152$ to $-0.036$. An independent
+end-to-end rerun of the pipeline reproduced the stage-2 gain
 ($+0.220$).
 
-On Inkling-Small, stage 1 alone already eliminated the drop under
-pressure ($-0.142 \to +0.026$: the tuned model scores as well after
-pushback as before it), and stage 2 adds nothing measurable ($+0.550
-\to +0.569$, paired $+0.019$, CI spanning zero). Because that run
-under-fit its pairs (training preference accuracy 0.75), we re-ran
-stage 2 as a seven-arm dose sweep --- learning rates $10^{-5}$ to
-$3\times10^{-4}$, one and three epochs, training accuracy up to 1.00
-and reward margins up to 13.6 --- and every arm lands within
-$\pm 0.025$ of the stage-1 model, every interval spanning zero, with
-no trend in dose: the null is not an artifact of under-training, and
-even the most heavily sharpened checkpoint neither gains nor loses.
-We read this as one mechanism: DPO buys down whatever drop under pressure SFT leaves
-behind, and its value tracks the size of that drop.
+\subsection{Neither stage is enough alone}\label{sec:res-whynot}
 
-\subsection{The guide still helps --- more than before}\label{sec:res-guide}
+Each stage was also run without the other, and each falls short in its
+own way.
 
-Internalizing the values does not damage the model for users who do
-supply the guide. The opposite: with the guide in context, tuned Gemma
-scores $+0.802$ after pushback against $+0.569$ for base, and tuned
-Inkling-Small scores $+0.885$ against $+0.817$. Weights and prompt
-stack.
+Supervised fine-tuning alone does not last. In
+\cref{fig:fading-compare} the stage-1 model starts lower than the
+prompted model ($+0.30$) and declines by $-0.14$ (CI
+$[-0.23, -0.07]$), ending at $+0.14$, below the prompted model at
+every length. The difference between the two stages' slopes excludes
+zero (CI $[+0.006, +0.038]$ per step). Stage 1 gives the model the
+guided voice, and without stage 2 that voice erodes as the
+conversation grows.
 
-\subsection{Why not preference optimization alone}\label{sec:res-whynot}
-
-Before arriving at this recipe we ran five DPO arms directly on the
-base models --- three on Gemma and two on Inkling, with three ways of constructing pairs (from
-other models' answers, from the model's own answers, and pooled),
-doses from 179 to 1{,}200 pairs, training accuracies up to 1.0. Every
-arm landed statistically at zero against the same-stack control
-(deltas between $-0.025$ and $+0.023$). The three Gemma arms score
+Preference optimization alone does not produce good answers in the
+first place. Before arriving at this recipe we ran three DPO arms
+directly on the base model, with three ways of constructing pairs
+(from other models' answers, from the model's own answers, and
+pooled) and doses from 179 to 516 pairs. Every arm landed
+statistically at zero against the same-stack control: they score
 $-0.349$, $-0.340$ and $-0.311$ after pushback against $-0.335$ for
-the base model (\cref{tab:main}), which leaves the model at the bottom
-of the benchmark pool; the two Inkling arms score $+0.373$ and
-$+0.385$ against $+0.398$. A sampling census explains
-why: drawing four answers per training scenario from base Gemma, 317
+the base model (\cref{tab:main}; paired differences between $-0.014$
+and $+0.024$, every interval spanning zero), which leaves the model near
+the bottom of the benchmark pool. A sampling census explains why:
+drawing four answers per training scenario from the base model, 317
 of 420 cells contained no answer good enough to reinforce. A
 preference method can only amplify behavior the model already
 produces; supervised fine-tuning first is what creates it. After stage
 1, the same census finds the model holding its position in the
 majority of draws, and the same DPO procedure then works.
+
+This is the case for the combination: preference optimization alone
+does not produce good answers, supervised fine-tuning alone produces
+answers that do not last, and the two in sequence produce answers that
+are good and stay good.
 
 \subsection{Nothing else got worse}\label{sec:res-capability}
 
@@ -411,97 +505,10 @@ for all three checkpoints.}
 \label{tab:capability}
 \end{table}
 
-\subsection{Over a long conversation, it takes both stages}\label{sec:res-fading}
-
-The results so far place the dilemma at the very start of a
-conversation. Real conversations are long, and whatever guidance an
-assistant was given may lie far behind the moment that tests it. This
-experiment measures what that distance does, first to a prompt and
-then to the tuned models, and it is where the two stages of the recipe
-come apart. Its design and decision rules for the prompted model were
-fixed before any data was collected; the tuned models with no system
-message were added afterwards, each registered before its own data.
-
-We use the 70 held-out scenarios under all six pressures. Before the
-dilemma we insert pre-written, value-neutral exchanges (cooking,
-geography, how machines work) at six lengths: none, and about 1k, 4k,
-12k, 32k and 64k tokens. The judge sees only the dilemma, the answer,
-the pushback and the final answer, exactly as in the main evaluation.
-Each model is run on all $2{,}520$ combinations.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.72\linewidth]{figures/fig_fading_prompt}
-\caption{The base model with the companionship guide given once, as
-the system message: score after pushback against the amount of
-unrelated conversation between the guide and the dilemma (70 held-out
-scenarios, six pressures, Opus-judged; band is the scenario-bootstrap
-95\% interval).}
-\label{fig:fading-prompt}
-\end{figure}
-
-\Cref{fig:fading-prompt} shows the base model given the guide once, as
-the system message. Its score falls from $+0.43$ with no filler to
-$+0.19$ at 64k tokens. Fitted across the six lengths the decline is
-$-0.24$ (95\% CI $[-0.32, -0.17]$), and it appears under each of the
-six pressures, most steeply under insistence. The guide does not stop
-working: the same model with no guide scores $-0.34$, so at 64k tokens
-about two-thirds of the guide's benefit remains. But a third of it is
-gone, most of that within the first 4k tokens, and the decline has not
-levelled off by the end of the range we measured. Fading is a real
-cost of relying on a prompt.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.72\linewidth]{figures/fig_fading_compare}
-\caption{The prompted base model of \cref{fig:fading-prompt} against
-the two tuned models with no system message at all, on the same
-scenarios and filler. Bands are 95\% intervals over scenarios and
-overlap because scenarios differ in difficulty; the comparisons in the
-text are paired by scenario.}
-\label{fig:fading-compare}
-\end{figure}
-
-\Cref{fig:fading-compare} adds the two tuned models, run with no
-system message, so that nothing in the conversation tells them what to
-do. The stage-2 model holds. It starts level with the prompted base
-model ($+0.44$ against $+0.43$) and stays there: its change over the
-whole range is $-0.03$ (CI $[-0.09, +0.03]$), inside the $\pm 0.15$
-margin we set in advance for calling a curve flat. By 64k tokens it
-is $0.22$ above the prompted model, and the difference between the two
-slopes is clear (CI $[-0.060, -0.023]$ per length step). Trained with
-both stages, the model gives without any prompt what the guide gives
-at its best, and keeps giving it.
-
-The stage-1 model does not. It starts lower ($+0.30$) and declines by
-$-0.14$ (CI $[-0.23, -0.07]$), ending at $+0.14$, below the prompted
-model at every length. Supervised fine-tuning alone produces good
-answers that erode as the conversation grows; the difference between
-the two stages' slopes excludes zero (CI $[+0.006, +0.038]$ per step).
-Together with \cref{sec:res-whynot}, this is the case for the
-combination on Gemma: preference optimization alone does not produce
-good answers, supervised fine-tuning alone produces answers that do
-not last, and the two in sequence produce answers that are good and
-stay good.
-
-A prompt does not gain this steadiness from the tuned weights. In a
-further arm we gave the stage-2 model a one-sentence system message
-stating the user's faith; the sentence raised its score by $0.26$ with
-no filler and by $0.16$ from 4k tokens onward, fading as the guide
-did. What was delivered in the prompt faded in this experiment,
-whichever model received it; what the two stages put in the weights
-did not.
-
-The limits of this evidence are plain. It is one model, with one
-trained checkpoint and one run at each stage, on one kind of filler up
-to 64k tokens. The preference-only models were not run over the range
-of lengths, and neither was the base model with no guide. And we do
-not know why the second stage holds where the first does not; that
-preference optimization on Gemma works chiefly by making the model
-hold its position under pushback (\cref{sec:res-main}) is suggestive,
-not an explanation.
-
 \section{Limitations}\label{sec:limitations}
+
+The result has limits of three kinds: what the recipe can teach, how
+much evidence stands behind it, and what was not measured.
 
 Filtered distillation can only teach what the guided model got right.
 Of Gemma's 840 scenario--pressure cells, the guide improved the score
@@ -509,21 +516,24 @@ in 649, left it unchanged in 159, and lowered it in 32; the unchanged
 cells include scenarios where the model lacks or rejects the relevant
 ruling, and a companionship guide cannot supply knowledge the model
 does not have (\cref{tab:sherwani}). Those cells produce no training
-example and stay wrong after tuning. Stage 2's positive result is one
-model deep, though its null on the second family is now a swept,
-well-fit null rather than a single run. Training is LoRA-only.
-Evaluation is on held-out scenarios from the benchmark's own
-distribution, in English only. The tuned models are substantially but
-not fully internalized: the guide still adds roughly $+0.3$ on top of
-the tuned weights on both models. Whether the disposition over-applies
---- volunteering religious counsel to users who did not ask for it ---
-is not yet measured. The long-conversation experiment
-(\cref{sec:res-fading}) rests on one model, one run per stage and one
-kind of filler up to 64k tokens; it did not include the
-preference-only models or the base model with no guide, and it does
-not explain why the stage-2 model holds its score where the stage-1
-model does not. Whether the same holds on Inkling-Small, where stage 2
-added nothing at the start of a conversation, is untested.
+example and stay wrong after tuning.
+
+The evidence is from one model. The long-conversation result rests on
+one trained checkpoint and one run at each stage, on one kind of
+filler up to 64k tokens. The preference-only models were not run over
+the range of lengths, and neither was the base model with no guide.
+And we do not know why the second stage holds where the first does
+not; that preference optimization works chiefly by making the model
+hold its position under pushback (\cref{sec:res-main}) is suggestive,
+not an explanation.
+
+Training is LoRA-only. Evaluation is on held-out scenarios from the
+benchmark's own distribution, in English only. At the start of a
+conversation the trained model with no prompt ($+0.499$) does not
+exceed the base model with the guide repeated at every user turn
+($+0.569$). Whether the disposition over-applies --- volunteering
+religious counsel to users who did not ask for it --- is not yet
+measured.
 
 \begin{table}[H]
 \centering
@@ -559,25 +569,29 @@ judge approved, no training example exists for cells like this one.}
 
 \section{Availability}\label{sec:availability}
 
-The code as run, the data every run produced and a tutorial are
-released. No trained weights are; the recipe retrains them.
+The code as run, the data the training and evaluation runs produced,
+and a tutorial are released. No trained weights are; the recipe
+retrains them.
 
 \subsection{Code}\label{sec:avail-code}
 
 The pipeline is the \texttt{jaleesweights/} folder of
 \href{https://github.com/iaser-ai/jaleesbench}{github.com/iaser-ai/jaleesbench},
-under the Apache License 2.0, with three runnable paths. The first two
-are the runs of record: Gemma-4-31B on Modal and Inkling-Small through
-Tinker, each exactly as run. The third is a local demonstration of the
+under the Apache License 2.0. The run of record is Gemma-4-31B on
+Modal, exactly as run. Beside it is a local demonstration of the
 same recipe on a smaller Gemma-family model (Gemma-4-12B by default) on
 one GPU a team owns, in two profiles: a 24\,GB card with a 4-bit base
 and LoRA on top, or 48\,GB and up in bf16. That path has been checked
 only as far as its preflights, never executed on a GPU, and its
 numbers are not the paper's. Every paid step prints what it will do
-and bill, and stops there on \texttt{--dry-run}. The dropped
-arms of \cref{sec:res-whynot}, the earlier 4-bit Gemma chain and the
-Inkling-Small dose sweep are kept as run under \texttt{archive/},
-unmaintained.
+and bill, and stops there on \texttt{--dry-run}. The preference-only
+arms of \cref{sec:res-whynot} and the earlier 4-bit Gemma chain are
+kept as run under \texttt{archive/}, unmaintained. The
+long-conversation experiment --- its registration, collector, filler,
+analysis, per-scenario scores and every estimate with its interval ---
+is under \texttt{experiments/58\_prompt\_fading/}. The repository and
+the data release also hold runs on a second model family, Inkling,
+which this paper does not report.
 
 \subsection{Data}\label{sec:avail-data}
 
@@ -593,14 +607,14 @@ member, and installed by one command. The data is released under
 CC BY 4.0 with a notice that the model outputs it contains remain
 subject to their providers' terms. With the data installed, the
 free steps rebuild the training sets and pairs byte-for-byte and
-reprint \cref{tab:main} without calling any model. The two paired
-intervals quoted in \cref{sec:res-main} came from an unseeded
-bootstrap; the released step is seeded and gives $[+0.210, +0.389]$
-for Inkling-Small stage 1 over base and $[+0.144, +0.306]$ for Gemma
-stage 2 over stage 1. The base models were
-\texttt{google/gemma-4-31B-it} and
-\texttt{thinkingmachines/Inkling-Small}; the judges of record were
-\texttt{gemini-3.1-pro-preview} for selection and
+reprint the scores of \cref{tab:main} without calling any model. The
+paired interval quoted in \cref{sec:res-main} came from an unseeded
+bootstrap; the released step is seeded and gives $[+0.144, +0.306]$.
+The release predates the long-conversation experiment and does not
+hold its conversations or judgments; that experiment's per-scenario
+scores and summary are in the repository (\cref{sec:avail-code}). The
+base model was \texttt{google/gemma-4-31B-it}; the judges of record
+were \texttt{gemini-3.1-pro-preview} for selection and
 \texttt{claude-opus-4-8} for held-out scoring.
 
 \subsection{Tutorial}\label{sec:avail-tutorial}
@@ -615,15 +629,16 @@ model it produces or give it to anyone.
 
 \section{Conclusion}\label{sec:conclusion}
 
-An open model can be fine-tuned so that Islamic values are its default
-behavior, not something a user has to prompt for. Supervised
-fine-tuning on the model's own judge-selected guided answers does most
-of the work; preference optimization on the fine-tuned model's own
-samples improves it a bit further where a drop under pressure remains,
-and on Gemma it is what makes the behavior last: over 64{,}000 tokens
-of unrelated conversation the two-stage model holds its score, while
-the model with supervised fine-tuning alone, and the base model with
-the guide in its prompt, both decline.
+A guide in the prompt steers a model, and then wears off as the
+conversation grows. Fine-tuning puts the same behavior in the weights,
+where 64{,}000 tokens of unrelated conversation did not wear it away,
+and it takes two stages to do so. Supervised fine-tuning on the
+model's own judge-selected guided answers makes the model answer, with
+no guide, the way it answers with one; preference optimization on the
+fine-tuned model's own samples entrenches that behavior. Over the long
+conversation the two-stage model holds its score, while the model with
+supervised fine-tuning alone, and the base model with the guide in its
+prompt, both decline.
 The pipeline costs under \$100, uses no data beyond what the benchmark
 itself produces, and applies in principle to any tradition the
 benchmark family instantiates.
@@ -635,7 +650,8 @@ benchmark family instantiates.
 \section{The companionship guide}\label{sec:guide}
 
 The following is the complete system prompt used for the guided
-condition in JaleesBench and as the teacher context for stage 1. It is
+condition in JaleesBench, as the teacher context for stage 1, and as
+the system message of the long-conversation experiment. It is
 reproduced verbatim.
 
 \begin{quote}\small
