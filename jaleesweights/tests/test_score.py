@@ -55,8 +55,11 @@ from jaleesweights import paths
 @pytest.mark.skipif(not (paths.REFERENCE / "judgments_eval_gemma.jsonl").exists()
                     or not (paths.BENCH_RESULTS / "judgments.jsonl").exists(),
                     reason="reference data not installed")
-def test_score_reproduces_the_papers_main_table():
-    """The paper's Table 1 as printed: scores and drops exact, Gemma after-pushback
+def test_score_reproduces_the_released_results_table():
+    """The table `score` prints from the released data. The paper's results table is a
+    subset of it (Gemma base, stage 1, stage 2, and base with the guide); the other rows
+    pinned here (Gemma stage 1 with the guide, Inkling-Small, the Inkling reference) are in
+    the data release and not in the paper. Scores and drops exact, Gemma after-pushback
     intervals exact (the paper prints them to two decimals; these are the three-decimal
     values they round from), paired point estimates exact and interval ends within 0.01."""
     out = CliRunner().invoke(score.app, []).output
@@ -71,13 +74,14 @@ def test_score_reproduces_the_papers_main_table():
         c = cells[label][i]
         return c["t1"], c["full"], c["drop"]
 
-    # Gemma (first occurrence of the shared labels), as the paper prints them
+    # Gemma (first occurrence of the shared labels); the paper prints these four rows
     assert row("Base, out of the box (same-stack control)") == ("-0.044", "-0.335", "-0.290")
     assert row("Stage 1: SFT") == ("+0.429", "+0.276", "-0.152")
     assert row("Stage 2: SFT + DPO") == ("+0.535", "+0.499", "-0.036")
     assert row("Base, with guide in context (main run)")[1:] == ("+0.569", "-0.167")
+    # in the data release, not in the paper: Gemma stage 1 with the guide
     assert row("Stage 1, with guide in context") == ("+0.829", "+0.802", "-0.026")
-    # Inkling-Small (second occurrence)
+    # in the data release, not in the paper: Inkling-Small (second occurrence) and Inkling
     assert row("Base, out of the box") == ("+0.394", "+0.252", "-0.142")
     assert row("Stage 1: SFT", 1) == ("+0.524", "+0.550", "+0.026")
     assert row("Stage 2: SFT + DPO", 1)[1] == "+0.569"
@@ -93,7 +97,7 @@ def test_score_reproduces_the_papers_main_table():
         i = out.index(title)
         return re.search(r"full\s+([+-]\d\.\d{3}) \[([+-]\d\.\d{3}),([+-]\d\.\d{3})\]\s+\(n=420; (\d+) cells up, (\d+) down\)", out[i:]).groups()
 
-    g = paired_line("Gemma stage 2 vs stage 1")
+    g = paired_line("Gemma stage 2 vs stage 1")  # the one paired comparison the paper prints
     assert g[0] == "+0.223" and abs(float(g[1]) - 0.144) <= 0.01 and abs(float(g[2]) - 0.304) <= 0.01 and g[3:] == ("120", "34")
     s1 = paired_line("Inkling-Small stage 1 vs base")
     assert s1[0] == "+0.298" and abs(float(s1[1]) - 0.206) <= 0.01 and abs(float(s1[2]) - 0.392) <= 0.01 and s1[3:] == ("154", "37")

@@ -357,14 +357,16 @@ the bottom of the benchmark pool, where the headroom is largest.
 \section{Results}\label{sec:results}
 
 The trained model is evaluated with no system message, so nothing in
-the conversation tells it what to do. The subsections below follow it
+the conversation tells it what to do; the one exception is a single
+paragraph in \cref{sec:res-fading}, marked where it appears. The
+subsections below follow the model
 through the long conversation that wore the guide down, read its
 scores at the start of a conversation stage by stage, show that
 neither stage is enough alone, and check that nothing else got worse.
 
 \subsection{The trained model holds over a long conversation}\label{sec:res-fading}
 
-We run the two tuned models on the same scenarios, pressures and
+We run the two tuned checkpoints on the same scenarios, pressures and
 filler as \cref{sec:fading-design}, with no system message at all.
 These runs were added after the prompted model's result was known,
 each registered before its own data.
@@ -373,7 +375,7 @@ each registered before its own data.
 \centering
 \includegraphics[width=0.72\linewidth]{figures/fig_fading_compare}
 \caption{The prompted base model of \cref{fig:fading-prompt} against
-the two tuned models with no system message at all, on the same
+the two tuned checkpoints with no system message at all, on the same
 scenarios and filler. Bands are 95\% intervals over scenarios and
 overlap because scenarios differ in difficulty; the comparisons in the
 text are paired by scenario.}
@@ -391,7 +393,8 @@ both stages, the model gives without any prompt what the guide gives
 at its best, and keeps giving it.
 
 A prompt does not gain this steadiness from the tuned weights. In a
-further arm we gave the stage-2 model a one-sentence system message
+further arm, the only one in which a tuned checkpoint has a system
+message, we gave the stage-2 model a one-sentence system message
 stating the user's faith; the sentence raised its score by $0.26$ with
 no filler and by $0.16$ from 4k tokens onward, fading as the guide
 did. What was delivered in the prompt faded in this experiment,
@@ -569,9 +572,11 @@ judge approved, no training example exists for cells like this one.}
 
 \section{Availability}\label{sec:availability}
 
-The code as run, the data the training and evaluation runs produced,
-and a tutorial are released. No trained weights are; the recipe
-retrains them.
+The code as run, the data behind the training runs and the scores of
+\cref{tab:main}, and a tutorial are released. The conversations and
+judgments of the long-conversation experiment are not in the data
+release; its per-scenario scores and summary are in the repository. No
+trained weights are released; the recipe retrains them.
 
 \subsection{Code}\label{sec:avail-code}
 

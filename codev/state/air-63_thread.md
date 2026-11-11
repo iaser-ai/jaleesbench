@@ -76,3 +76,30 @@ Checks: `uv run --directory jaleesbench pytest -q` 119 passed, 1 skipped;
 PR #64 opened with the full list of cuts and six decisions for the owner in its body. The
 optional three-way review was skipped: a document change, with each number checked against
 the committed summary. Waiting for a human decision on the pr gate.
+
+## 2026-11-11 — architect's integration review: five fixes
+
+Review feedback on PR #64, not a gate approval. All five done, nothing paid:
+
+1. "the two tuned models" → "the two tuned checkpoints" (first Results subsection and the
+   Figure 2 caption).
+2. Results intro now says the one exception to "no system message" is a single paragraph,
+   and that paragraph says it is the only place a tuned checkpoint has a system message. Still
+   pending the owner's decision on whether the paragraph stays.
+3. Availability opener now agrees with the later caveat: the data behind the training runs and
+   the table are released; the long-conversation conversations and judgments are not.
+4. `jaleesweights/archive/README.md`: the paper cross-references now match the paper (three
+   preference-only arms on Gemma; the Inkling arms and the Inkling-Small sweep marked as not in
+   the paper), and a new table records the three Gemma arms' pair counts (249, 179, 516),
+   scores and paired differences with intervals, with the free command that reprints them. I
+   ran that command against the installed data and the output matches the table.
+5. `test_score.py`: the test is renamed `test_score_reproduces_the_released_results_table` and
+   its docstring and comments say which rows the paper prints and which are only in the data
+   release. No asserted number changed. `jaleesweights/README.md` now describes the scoring
+   output and the test the same way.
+
+Checks: paper rebuilt, no errors, undefined references, overfull boxes or bibtex warnings, 13
+pages. `jaleesbench` 119 passed, 1 skipped; `jaleesweights` 114 passed, 1 skipped (the
+table test, which needs the data). Run with the installed data from the main checkout
+(read-only, through the `JW_REFERENCE` and `JW_BENCH_RESULTS` variables) the renamed test
+passes.
