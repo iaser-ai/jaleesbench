@@ -281,7 +281,14 @@ def _paper_figures(out: Path, pt, ci, tokens) -> None:
             if starts[i][0] - starts[i - 1][0] < 0.05:
                 starts[i - 1][0] -= 0.012
                 starts[i][0] = starts[i - 1][0] + 0.05
-        for y, v in starts:
+        if len(tags) == 1:
+            ys = [pt[f"mean_{tags[0]}_L{lv}"] for lv in xs]
+            for k in (0, 5):
+                ax.annotate(f"{ys[k]:+.2f}", (xs[k], ys[k]), textcoords="offset points", xytext=(0, 9),
+                            ha="center", color=ink, fontsize=11, fontweight="bold")
+            ax.text(3.5, ys[3] + 0.04, "Guide given once, as the system message", ha="center", va="bottom",
+                    color=muted, fontsize=10)
+        for y, v in starts if len(tags) > 1 else []:
             ax.text(-0.16, y, f"{v:+.2f}", ha="right", va="center", color=ink, fontsize=10.5, fontweight="bold")
         # right-hand labels: end value, series name, change over the range with its interval; nudged apart
         ends.sort()
@@ -289,21 +296,22 @@ def _paper_figures(out: Path, pt, ci, tokens) -> None:
         for i in range(1, len(ends)):
             if ends[i][0] - ends[i - 1][0] < gap:
                 ends[i][0] = ends[i - 1][0] + gap
-        for y, t, color, label in ends:
+        for y, t, color, label in ends if len(tags) > 1 else []:
             lo, hi = ci[f"total_{t}"]
             ax.text(5.14, y + 0.012, f"{pt[f'mean_{t}_L5']:+.2f}", ha="left", va="center", color=ink,
                     fontsize=10.5, fontweight="bold")
-            if len(tags) > 1:
+            if True:
                 ax.text(6.3, y + 0.012, label, ha="left", va="center", color=ink, fontsize=10.5, fontweight="bold")
                 ax.text(6.3, y - 0.03, f"change {pt[f'total_{t}']:+.2f}  [{lo:+.2f}, {hi:+.2f}]",
                         ha="left", va="center", color=muted, fontsize=9.5)
-        ax.set_xlim(-1.0, 5.6 if len(tags) == 1 else 9.9)
-        ax.set_ylim(0.0, 0.62)
-        ax.set_yticks([0, .1, .2, .3, .4, .5, .6], ["0", "+0.1", "+0.2", "+0.3", "+0.4", "+0.5", "+0.6"])
+        ax.set_xlim(-0.35 if len(tags) == 1 else -1.0, 5.4 if len(tags) == 1 else 9.9)
+        ax.set_ylim(0.0, 0.56 if len(tags) == 1 else 0.62)
+        yt = [0, .1, .2, .3, .4, .5] + ([.6] if len(tags) > 1 else [])
+        ax.set_yticks(yt, ["0"] + [f"+{v:.1f}" for v in yt[1:]])
         ax.set_xticks(xs, ticks)
         ax.set_xlabel("Tokens of unrelated conversation before the dilemma", color=muted, fontsize=10.5, x=0.29 if len(tags) > 1 else 0.5)
         ax.set_ylabel("Score after pushback", color=muted, fontsize=10.5)
-        ax.hlines([0, .1, .2, .3, .4, .5, .6], -1.0, 5.5, color=grid, lw=0.8, zorder=0)
+        ax.hlines(yt, -0.35 if len(tags) == 1 else -1.0, 5.4 if len(tags) == 1 else 5.5, color=grid, lw=0.8, zorder=0)
         for s in ("top", "right", "left"):
             ax.spines[s].set_visible(False)
         ax.spines["bottom"].set_visible(False)
@@ -314,7 +322,7 @@ def _paper_figures(out: Path, pt, ci, tokens) -> None:
         plt.close(fig)
 
     tags = ["P"] + [t for t in ("S0", "W0") if f"mean_{t}_L0" in pt]
-    draw(["P"], "fig_fading_prompt", band=True)
+    draw(["P"], "fig_fading_prompt", band=False)
     if len(tags) > 1:
         draw(tags, "fig_fading_compare", band=False)
 
