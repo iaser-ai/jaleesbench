@@ -113,18 +113,22 @@ the guide as its system message, place unrelated conversation between
 the guide and the dilemma, and score the model's counsel after the
 user pushes back. With nothing in between, the guided model scores
 $+0.43$; after 64{,}000 tokens of talk about cooking, geography and
-how machines work, it scores $+0.19$ (\cref{fig:fading-prompt}).
+how machines work, it scores $+0.19$ (the base model's line in
+\cref{fig:fading}; the other two lines are the post-trained model,
+introduced below).
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.75\linewidth]{figures/fig_fading_prompt}
-\caption{Prompt fading. The base model with the companionship guide
-given once, as the system message: score after pushback against the
-amount of unrelated conversation between the guide and the dilemma
-(70 held-out scenarios, six pressures, 420 conversations per point,
-judged by Claude Opus). The fitted decline over the range is $-0.24$,
-95\% interval $[-0.32, -0.17]$.}
-\label{fig:fading-prompt}
+\includegraphics[width=0.98\linewidth]{figures/fig_fading_compare}
+\caption{Prompt fading, and the post-trained model over the same long
+conversation. Score after pushback against the amount of unrelated
+conversation before the dilemma, for the base model with the
+companionship guide given once as its system message and for the two
+post-trained checkpoints with no system message (70 held-out
+scenarios, six pressures, 420 conversations per point, judged by
+Claude Opus). Each label gives the score at 64k tokens and the fitted
+change over the whole range with a 95\% interval.}
+\label{fig:fading}
 \end{figure}
 
 The guide has not stopped working by then, but a third of its benefit
@@ -153,7 +157,7 @@ further $+0.22$, almost entirely by making the model hold its position
 when the user pushes back.
 \end{enumerate}
 
-It works (\cref{fig:fading-compare}). With no system message at all,
+It works (\cref{fig:fading}). With no system message at all,
 the two-stage model starts level with the base model given the guide
 once, and stays there through 64{,}000 tokens while the guide's effect
 fades. Neither stage gets there alone. Preference optimization applied
@@ -260,7 +264,7 @@ prompted model were fixed before any data was collected.
 \subsection{Results for the prompted base model}\label{sec:fading-result}
 
 The score falls from $+0.43$ with no filler to $+0.19$ at 64k tokens
-(\cref{fig:fading-prompt}). Fitted across the six
+(\cref{fig:fading}). Fitted across the six
 lengths the decline is $-0.24$ (95\% CI $[-0.32, -0.17]$), and it
 appears under each of the six pressures, most steeply under
 insistence. The guide does not stop working: the same model with no
@@ -383,19 +387,9 @@ filler as \cref{sec:fading-design}, with no system message at all.
 These runs were added after the prompted model's result was known,
 each registered before its own data.
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.98\linewidth]{figures/fig_fading_compare}
-\caption{The prompted base model of \cref{fig:fading-prompt} against
-the two post-trained checkpoints with no system message at all, on the
-same
-scenarios and filler. Each label gives the model's score at 64k tokens
-and its fitted change over the whole range with a 95\% interval.}
-\label{fig:fading-compare}
-\end{figure}
 
-\Cref{fig:fading-compare} sets them against the prompted base model.
-The stage-2 model holds. It starts level with the prompted base
+\Cref{fig:fading} sets them against the prompted base model. The
+stage-2 model holds. It starts level with the prompted base
 model ($+0.44$ against $+0.43$) and stays there: its change over the
 whole range is $-0.03$ (CI $[-0.09, +0.03]$), inside the $\pm 0.15$
 margin we set in advance for calling a curve flat. By 64k tokens it
@@ -505,7 +499,7 @@ pipeline reproduced the stage-2 gain ($+0.22$).
 Each stage was also run without the other.
 
 Supervised fine-tuning alone does not last. In
-\cref{fig:fading-compare} the stage-1 model starts lower than the
+\cref{fig:fading} the stage-1 model starts lower than the
 prompted model ($+0.30$) and declines by $-0.14$ (CI
 $[-0.23, -0.07]$), ending at $+0.14$, below the prompted model at
 every length. The difference between the two stages' slopes excludes
