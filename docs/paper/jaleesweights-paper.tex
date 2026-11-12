@@ -106,16 +106,13 @@ how most people actually use them --- most models are middling and
 some are harmful, and the open-weight models, the ones a Muslim family
 can run locally, mostly sit in the bottom half.
 
-Supplying the guide is the obvious remedy. The problem is that a
-prompt fades. A guide is given once, at the start; the conversation
-moves on, and the dilemma that tests the model may arrive many
-thousands of tokens later. \Cref{fig:fading-prompt} shows what that
-distance does. We give Gemma-4-31B the guide as its system message,
-place unrelated conversation between the guide and the dilemma, and
-score the model's counsel after the user pushes back. With nothing in
-between, the guided model scores $+0.43$. After 64{,}000 tokens of
-talk about cooking, geography and how machines work, it scores
-$+0.19$.
+A guide in the prompt is given once, at the start of a conversation,
+and its effect declines as the conversation grows. We give Gemma-4-31B
+the guide as its system message, place unrelated conversation between
+the guide and the dilemma, and score the model's counsel after the
+user pushes back. With nothing in between, the guided model scores
+$+0.43$; after 64{,}000 tokens of talk about cooking, geography and
+how machines work, it scores $+0.19$ (\cref{fig:fading-prompt}).
 
 \begin{figure}[H]
 \centering
@@ -131,9 +128,8 @@ scenario-bootstrap 95\% interval).}
 The guide has not stopped working by then, but a third of its benefit
 is gone, most of that within the first 4{,}000 tokens, and the decline
 has not levelled off where our measurement ends (\cref{sec:fading}).
-Guidance that has to last through a long conversation cannot rest on a
-prompt. It has to be in the weights, and that takes a fine-tuned
-model.
+Guidance that has to last through a long conversation therefore has
+to be trained into the model's weights.
 
 This paper fine-tunes Gemma-4-31B so that what the guide supplies from
 outside becomes the model's own default behavior. It takes two stages,
@@ -242,10 +238,10 @@ $0.06$; checkpoint-vs-checkpoint claims use paired per-cell tests with
 
 The benchmark places the dilemma at the very start of a conversation,
 and its guided condition repeats the guide with every user turn, so
-the guide is always next to the dilemma. Real conversations are long,
-and whatever guidance an assistant was given may lie far behind the
-moment that tests it. To measure what that distance does, we give the
-base model the guide once, as its system message, and insert
+the guide is always next to the dilemma. In a real conversation the guide
+is given once and the dilemma may come much later. To measure how the
+guide's effect changes with the amount of conversation in between, we
+give the base model the guide once, as its system message, and insert
 pre-written, value-neutral exchanges (cooking, geography, how machines
 work) before the dilemma at six lengths: none, and about 1k, 4k, 12k,
 32k and 64k tokens. We use the 70 held-out scenarios under all six
@@ -256,8 +252,8 @@ prompted model were fixed before any data was collected.
 
 \subsection{The guide wears off}\label{sec:fading-result}
 
-\Cref{fig:fading-prompt} shows the result. The score falls from
-$+0.43$ with no filler to $+0.19$ at 64k tokens. Fitted across the six
+The score falls from $+0.43$ with no filler to $+0.19$ at 64k tokens
+(\cref{fig:fading-prompt}). Fitted across the six
 lengths the decline is $-0.24$ (95\% CI $[-0.32, -0.17]$), and it
 appears under each of the six pressures, most steeply under
 insistence. The guide does not stop working: the same model with no
@@ -272,16 +268,13 @@ deliveries of the guide, not repeated measurements of one thing: the
 benchmark repeats the guide with every user turn, and here it is given
 once.
 
-Fading is a real cost of relying on a prompt. A model that is to keep
-its values through a long conversation has to carry them itself.
-
 \section{The fix: fine-tuning in two stages}\label{sec:method}
 
-If the guidance cannot stay in the prompt, it has to go into the
-weights. This section describes the two training stages and the model
-they were applied to. The first stage makes the model sound, with no
-guide, the way it sounds with one; the second entrenches that
-behavior. The code and data behind each step are released
+This section describes the two training stages and the model they
+were applied to. The first stage trains the model on its own guided
+answers with the guide removed; the second trains it to prefer its own
+good answers to its own bad ones. The code and data behind each step
+are released
 (\cref{sec:availability}).
 
 \subsection{Stage 1: filtered context distillation}\label{sec:stage1}
@@ -364,10 +357,9 @@ the bottom of the benchmark pool, where the headroom is largest.
 The trained model is evaluated with no system message, so nothing in
 the conversation tells it what to do; the one exception is a single
 paragraph in \cref{sec:res-fading}, marked where it appears. The
-subsections below follow the model
-through the long conversation that wore the guide down, read its
-scores at the start of a conversation stage by stage, show that
-neither stage is enough alone, and check that nothing else got worse.
+subsections below give the long-conversation result, the scores at the
+start of a conversation, the result for each stage alone, and the
+checks that nothing else got worse.
 
 \subsection{The trained model holds over a long conversation}\label{sec:res-fading}
 
@@ -393,18 +385,17 @@ model ($+0.44$ against $+0.43$) and stays there: its change over the
 whole range is $-0.03$ (CI $[-0.09, +0.03]$), inside the $\pm 0.15$
 margin we set in advance for calling a curve flat. By 64k tokens it
 is $0.22$ above the prompted model, and the difference between the two
-slopes is clear (CI $[-0.060, -0.023]$ per length step). Trained with
-both stages, the model gives without any prompt what the guide gives
-at its best, and keeps giving it.
+slopes is clear (CI $[-0.060, -0.023]$ per length step). With no
+prompt, the model trained with both stages scores level with the guide
+given once, and its score is flat over the whole range.
 
-A prompt does not gain this steadiness from the tuned weights. In a
+A system message given to the tuned checkpoint also fades. In a
 further arm, the only one in which a tuned checkpoint has a system
 message, we gave the stage-2 model a one-sentence system message
 stating the user's faith; the sentence raised its score by $0.26$ with
-no filler and by $0.16$ from 4k tokens onward, fading as the guide
-did. What was delivered in the prompt faded in this experiment,
-whichever model received it; what the two stages put in the weights
-did not.
+no filler and by $0.16$ from 4k tokens onward. In this experiment both
+prompts faded, the guide on the base model and the sentence on the
+stage-2 model; the stage-2 model's score with no prompt did not.
 
 \subsection{At the start of a conversation}\label{sec:res-main}
 
@@ -451,17 +442,14 @@ end-to-end rerun of the pipeline reproduced the stage-2 gain
 
 \subsection{Neither stage is enough alone}\label{sec:res-whynot}
 
-Each stage was also run without the other, and each falls short in its
-own way.
+Each stage was also run without the other.
 
 Supervised fine-tuning alone does not last. In
 \cref{fig:fading-compare} the stage-1 model starts lower than the
 prompted model ($+0.30$) and declines by $-0.14$ (CI
 $[-0.23, -0.07]$), ending at $+0.14$, below the prompted model at
 every length. The difference between the two stages' slopes excludes
-zero (CI $[+0.006, +0.038]$ per step). Stage 1 gives the model the
-guided voice, and without stage 2 that voice erodes as the
-conversation grows.
+zero (CI $[+0.006, +0.038]$ per step).
 
 Preference optimization alone does not produce good answers in the
 first place. Before arriving at this recipe we ran three DPO arms
@@ -479,11 +467,6 @@ preference method can only amplify behavior the model already
 produces; supervised fine-tuning first is what creates it. After stage
 1, the same census finds the model holding its position in the
 majority of draws, and the same DPO procedure then works.
-
-This is the case for the combination: preference optimization alone
-does not produce good answers, supervised fine-tuning alone produces
-answers that do not last, and the two in sequence produce answers that
-are good and stay good.
 
 \subsection{Nothing else got worse}\label{sec:res-capability}
 
@@ -530,10 +513,10 @@ The evidence is from one model. The long-conversation result rests on
 one trained checkpoint and one run at each stage, on one kind of
 filler up to 64k tokens. The preference-only models were not run over
 the range of lengths, and neither was the base model with no guide.
-And we do not know why the second stage holds where the first does
-not; that preference optimization works chiefly by making the model
-hold its position under pushback (\cref{sec:res-main}) is suggestive,
-not an explanation.
+We do not know why the second stage holds where the first does not.
+Preference optimization works chiefly by making the model hold its
+position under pushback (\cref{sec:res-main}), which may be related;
+we have not tested it.
 
 Training is LoRA-only. Evaluation is on held-out scenarios from the
 benchmark's own distribution, in English only. At the start of a
@@ -639,16 +622,15 @@ model it produces or give it to anyone.
 
 \section{Conclusion}\label{sec:conclusion}
 
-A guide in the prompt steers a model, and then wears off as the
-conversation grows. Fine-tuning puts the same behavior in the weights,
-where 64{,}000 tokens of unrelated conversation did not wear it away,
-and it takes two stages to do so. Supervised fine-tuning on the
-model's own judge-selected guided answers makes the model answer, with
-no guide, the way it answers with one; preference optimization on the
-fine-tuned model's own samples entrenches that behavior. Over the long
-conversation the two-stage model holds its score, while the model with
-supervised fine-tuning alone, and the base model with the guide in its
-prompt, both decline.
+A guide in the prompt steers a model, and its effect declines as the
+conversation grows. A model fine-tuned in two stages shows the same
+behavior with no prompt, and its score held over 64{,}000 tokens of
+unrelated conversation. The first stage is supervised fine-tuning on
+the model's own judge-selected guided answers, with the guide removed;
+the second is preference optimization on the fine-tuned model's own
+samples. Over the same conversation the model with supervised
+fine-tuning alone, and the base model with the guide in its prompt,
+both declined.
 The pipeline costs under \$100, uses no data beyond what the benchmark
 itself produces, and applies in principle to any tradition the
 benchmark family instantiates.

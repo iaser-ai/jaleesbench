@@ -134,3 +134,14 @@ Islam-related messages about what is permitted and forbidden or the rules of rit
 footnote on that sentence, with the citation. The rest of the introduction is as it was before
 the citation change, apart from "spiritual counsel". Table 1 is still on page 3 and Figure 1
 on page 2. Build clean, 13 pages. Not a gate approval.
+
+## 2026-11-12 — prose check from the architect, at the owner's request
+
+Applied all 15 numbered items and the two repeated lines. The test: a sentence stays if it
+states a fact, a method or a result. No number changed. One claim changed (item 8): "what the
+guide gives at its best" was wrong, because the guide repeated with every turn scores +0.569,
+above the trained model; the sentence now says level with the guide given once, and flat.
+The "it has to be in the weights" line now appears once (introduction). "The way it
+sounds/answers with it" stays in the abstract and the introduction's list only. The closing
+paragraph of "Neither stage is enough alone" is cut. The paper is back to 12 pages; Table 1
+still on page 3, Figure 1 on page 2. Before and after for every item are in a PR comment.
