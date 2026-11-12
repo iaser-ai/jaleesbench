@@ -79,9 +79,10 @@ distillation}, makes the model answer without the guide the way it
 answers with it: we generate answers with the guide in context, keep
 only those a judge rates as good, remove the guide, and train the
 model by supervised fine-tuning to give those answers with no prompt.
-The second, direct preference optimization on the stage-1 model's own
-samples,
-entrenches the behavior. In the same long-conversation experiment the
+This moves the model's own answers into the distribution of answers we
+want. The second, direct preference optimization, then works inside
+that distribution: it trains on pairs of the stage-1 model's own
+samples, a good answer against a bad one, and entrenches the behavior. In the same long-conversation experiment the
 two-stage model, with no system prompt at all, starts level with the
 prompted base model ($+0.44$ against $+0.43$) and holds steady through
 64{,}000 tokens. Neither stage does this alone: preference
@@ -148,11 +149,16 @@ sound without the guide the way it sounds with it. We generate answers
 with the guide in context, keep only those a judge rates as genuinely
 good, remove the guide, and train the model by supervised fine-tuning
 to produce those answers without it --- context distillation \citep{askell2021general}
-from the model's best examples only. With no prompt, this moves Gemma's
-score after pushback from $-0.33$ to $+0.28$.
-\item Stage 2, direct preference optimization, entrenches it. We
-sample the stage-1 model several times per prompt, have the judge
-rank the samples, and train on best-versus-worst pairs. This adds a
+from the model's best examples only. Its job is to change what kind of answer the model
+produces: after stage 1 the model's own answers, with no prompt, come
+from the distribution of answers we want, though not yet reliably.
+With no prompt, this moves Gemma's score after pushback from $-0.33$
+to $+0.28$.
+\item Stage 2, direct preference optimization, entrenches it. Because
+stage 1 has put the model's answers in the right distribution, the
+preference pairs can come from the model itself: we sample the stage-1
+model several times per prompt, have the judge rank the samples, and
+train on best-versus-worst pairs. This adds a
 further $+0.22$, almost entirely by making the model hold its position
 when the user pushes back.
 \end{enumerate}
@@ -161,9 +167,10 @@ It works (\cref{fig:fading}). With no system message at all,
 the two-stage model starts level with the base model given the guide
 once, and stays there through 64{,}000 tokens while the guide's effect
 fades. Neither stage gets there alone. Preference optimization applied
-directly to the base model moved nothing in three separate attempts: a
-model that almost never produces the desired behavior gives a
-preference method nothing to reinforce. Supervised fine-tuning alone
+directly to the base model moved nothing in three separate attempts: the
+base model's own answers contain almost no good ones to prefer, and a
+good answer borrowed from another model is not one the base model
+produces. Supervised fine-tuning alone
 produces good answers, but they do not last: over the same long
 conversation the stage-1 model's score falls from $+0.30$ to $+0.14$.
 
@@ -293,7 +300,10 @@ once.
 This section describes the two training stages and the model they
 were applied to. The first stage trains the model on its own guided
 answers with the guide removed; the second trains it to prefer its own
-good answers to its own bad ones. The code and data behind each step
+good answers to its own bad ones. The order matters. Stage 1 moves the
+model's answers into the distribution of the answers we want, and
+stage 2 then chooses within that distribution, so that both members of
+every preference pair are answers the model itself produces. The code and data behind each step
 are released
 (\cref{sec:availability}).
 
@@ -520,11 +530,14 @@ differences between $-0.01$ and $+0.02$, every interval spanning
 zero), which leaves the model near the bottom of the benchmark pool. A
 count of sampled answers explains why: sampling four answers per
 training cell from the base model, 317 of 420 cells contained no
-answer good enough to reinforce. A preference method can only amplify
-behavior the model already produces; supervised fine-tuning first is
-what creates it. After stage 1, the same count finds the model holding
-its position in the majority of sampled answers, and the same
-procedure then works.
+answer good enough to reinforce. We read this as a matter of distribution. Preference
+optimization shifts the model between answers it already produces. The
+base model's own samples almost never include a good answer, and a
+good answer taken from another model lies outside what the base model
+produces, so neither source gives it a usable pair. Stage 1 changes
+the distribution itself: after it, the same count finds the model
+holding its position in the majority of sampled answers, good and bad
+answers both come from the model, and the same procedure then works.
 
 \subsection{Capability and other checks}\label{sec:res-capability}
 
