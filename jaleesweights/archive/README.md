@@ -11,13 +11,34 @@ for what was done; use `../jaleesweights/` to run anything.
 
 Their data files are in the reference data download (`jaleesweights/data/reference/`),
 alongside the data of record; the index below names them. The paper (`docs/paper/
-jaleesweights-paper.tex`) reports these arms as supporting evidence, not as the recipe.
+jaleesweights-paper.tex`) is about Gemma-4-31B only. It reports the three preference-only arms
+on base Gemma and the earlier 4-bit chain as supporting evidence, not as the recipe; it does
+not report the arms on Inkling or the Inkling-Small dose sweep.
+
+## The three preference-only arms on base Gemma, as the paper reports them
+
+The paper's subsection "Each stage alone" gives these three arms as one range.
+Per arm, on the held-out 70 scenarios, Opus-judged, score after pushback; the base model on
+the same serving stack scores −0.335:
+
+| Arm (subject in `judgments_eval_gemma.jsonl`) | Pairs trained on | Score after pushback | Paired difference from base [95% interval] |
+|---|---:|---:|---|
+| Other models' answers (`gemma-dpo-r1`) | 249 | −0.349 | −0.014 [−0.056, +0.026] |
+| The model's own samples (`gemma-dpo-onpol`) | 179 | −0.311 | +0.024 [−0.013, +0.060] |
+| Pooled "max-gap" (`gemma-dpo-maxgap`) | 516 | −0.340 | −0.006 [−0.045, +0.030] |
+
+From the data release, free: `uv run python -m jaleesweights.score --extra-judgments
+data/reference/judgments_eval_gemma.jsonl --extra-subject gemma-dpo-r1 --extra-subject
+gemma-dpo-onpol --extra-subject gemma-dpo-maxgap --extra-paired gemma-dpo-r1:gemma-base-vllm
+--extra-paired gemma-dpo-onpol:gemma-base-vllm --extra-paired gemma-dpo-maxgap:gemma-base-vllm`.
+The pair counts are the line counts of `pairs_train70_gemma-4-31b.jsonl`,
+`pairs_train70_gemma_onpol_all.jsonl` and `pairs_train70_gemma_maxgap.jsonl`.
 
 ## First preference-optimization rounds on base Inkling
 
 Pairs built from the benchmark main run: the chosen side is another model's answer, the
-rejected side Inkling's own where it qualified. Both arms flat. Paper: "Why not preference
-optimization alone" — two of the five flat arms.
+rejected side Inkling's own where it qualified. Both arms flat. Not in the
+paper, which reports Gemma only.
 
 | File | What |
 |---|---|
@@ -30,7 +51,8 @@ optimization alone" — two of the five flat arms.
 ## First preference-optimization round on base Gemma
 
 The same construction aimed at Gemma, trained on Modal with a 4-bit base. Flat. Paper: the
-third flat arm. The expanded Gemma pair set (1,570 pairs) was built but never trained on.
+first of the three preference-only arms in "Each stage alone". The expanded Gemma pair set
+(1,570 pairs) was built but never trained on.
 
 | File | What |
 |---|---|
@@ -41,7 +63,7 @@ third flat arm. The expanded Gemma pair set (1,570 pairs) was built but never tr
 ## Pairs from base Gemma's own samples
 
 Four answers per training cell sampled from the base model at temperature 1.3, rated by
-Gemini, paired within the cell. Flat. Paper: the fourth flat arm, and the source of the
+Gemini, paired within the cell. Flat. Paper: the second of the three preference-only arms, and the source of the
 "317 of 420 cells produced no good draw" figure (the script prints it as `no-chosen`).
 
 | File | What |
@@ -57,7 +79,7 @@ The base-model sampling itself used the Modal sampler that is now
 
 Every existing Gemma answer for a training cell — the main-run answer plus the four samples
 — anchored to its most-differently-rated counterpart in both directions. Flat. Paper: the
-fifth flat arm.
+third of the three preference-only arms.
 
 | File | What |
 |---|---|
@@ -82,8 +104,8 @@ Gemma pipeline" that reproduced the stage-2 gain (+0.220).
 ## The Inkling-Small dose sweep
 
 Stage 2 re-run at six more learning-rate / epoch settings (the run of record is lr 1e-5,
-one epoch). Every arm lands within ±0.025 of stage 1. Paper: "we re-ran stage 2 as a
-seven-arm dose sweep".
+one epoch). Every arm lands within ±0.025 of stage 1. Not in the paper, which
+reports Gemma only.
 
 | File | What |
 |---|---|

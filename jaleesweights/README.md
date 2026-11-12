@@ -7,7 +7,7 @@ packaged so a team can run it from a fresh clone with their own accounts.
 Three paths:
 
 1. **Gemma-4-31B on Modal** — the paper's Gemma result, exactly as run.
-2. **Inkling-Small through the Tinker API** — the paper's second model, exactly as run.
+2. **Inkling-Small through the Tinker API** — a second model, exactly as run; the paper does not report it.
 3. **A local demonstration** — the same recipe on a smaller Gemma-family model on one GPU
    you own. Its numbers are not the paper's and are not expected to match them.
 4. **An Apple Silicon tutorial** — stage 1 on a Mac with MLX, one question asked before and
@@ -128,20 +128,24 @@ The eight files these commands write are byte-identical to the released copies:
 | `pairs_train70_small_sft2.jsonl` (672) | `pairs` | Inkling-Small stage-2 pairs |
 | `comparisons_train_small_sft2.jsonl` | `comparisons` | the same pairs in the Tinker trainer's format |
 
-`score` prints the paper's main results table — every score, drop and interval as printed —
-and the paired per-cell comparisons. Three notes:
+`score` prints the results table of the released data and the paired per-cell comparisons.
+The paper's results table is a subset of it: the Gemma rows for base, stage 1 and stage 2,
+and base with the guide, every score, drop and interval as printed. The other rows (Gemma
+stage 1 with the guide, Inkling-Small, the Inkling reference) are in the data release and
+not in the paper. Three notes:
 
-- The two **paired** intervals the paper prints (Gemma stage 2 vs stage 1, `[+0.144, +0.304]`;
-  Inkling-Small stage 1 vs base, `[+0.206, +0.392]`) came from code whose bootstrap order was
-  not repeatable. This step is repeatable and gives `[+0.144, +0.306]` and `[+0.210, +0.389]`;
-  the point estimates and cell counts are identical. The paper is unchanged.
+- The **paired** interval the paper prints (Gemma stage 2 vs stage 1, `[+0.144, +0.304]`)
+  came from code whose bootstrap order was not repeatable. This step is repeatable and gives
+  `[+0.144, +0.306]`; the point estimate and cell counts are identical. The same holds for
+  Inkling-Small stage 1 vs base, which an earlier version of the paper printed as
+  `[+0.206, +0.392]` and this step gives as `[+0.210, +0.389]`.
 - `score` reads the benchmark's base `judgments.jsonl`, as the original scoring did; the
   benchmark's own tools overlay `judgments_v2.jsonl` (282 re-judged cells), so a benchmark
   number for the two main-run rows can differ from this table by a few thousandths.
 - The table prints every cell; the paper leaves some first-response and drop cells blank.
 
-`uv run pytest -q` includes a test that checks this table against the paper once the data is
-installed (it is skipped before).
+`uv run pytest -q` includes a test that pins every row of this table, the paper's rows among
+them, once the data is installed (it is skipped before).
 
 ## Run orders
 
@@ -426,8 +430,8 @@ Not verified here, because it cannot be:
 `archive/` holds the scripts of the approaches that were tried and dropped, the earlier 4-bit
 Gemma chain, and the Inkling-Small dose sweep, exactly as they ran (one exception: comments
 that named a third party were reworded). They are **not maintained** and do not run from
-their new location; `archive/README.md` says what each file was for and which paper claim it
-supports. Their data is in the reference archive alongside the data of record.
+their new location; `archive/README.md` says what each file was for and which paper claim, if
+any, it supports. Their data is in the reference archive alongside the data of record.
 
 ## Licence
 
