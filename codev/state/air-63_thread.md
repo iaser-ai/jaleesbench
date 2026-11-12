@@ -103,3 +103,24 @@ pages. `jaleesbench` 119 passed, 1 skipped; `jaleesweights` 114 passed, 1 skippe
 table test, which needs the data). Run with the installed data from the main checkout
 (read-only, through the `JW_REFERENCE` and `JW_BENCH_RESULTS` variables) the renamed test
 passes.
+
+## 2026-11-12 — three changes from the owner (not a gate approval)
+
+1. First sentence now cites the OpenAI report "Faith, Community & AI: How people use ChatGPT
+   for everyday religious observance" (October 2026, no named authors, cited as OpenAI). I read
+   the PDF itself. It supports the figures used: more than 70 million weekly requests primarily
+   about religion (August to September 2026); roughly 45% of religion-related requests concern
+   Islam, the largest share (September 2025 to September 2026); 39% of Islam-related messages
+   are about what is permitted and forbidden or the rules of ritual. The report counts
+   requests, not people, and requests about Islam, not requests from Muslims, so the old
+   sentence "Millions of Muslims bring real decisions to AI assistants" was replaced by what
+   the report says. The two periods differ, so no product of 70 million and 45% is stated.
+2. Table 1 (the pledge example) moved from the stage-1 subsection to the end of the
+   Introduction. It is now on page 3; Figure 1 is still on page 2.
+3. "spiritual company" → "spiritual counsel" in the abstract and the introduction, the only
+   two places. Left as they are: "companionship guide" (Figure 1 caption, Limitations, appendix
+   heading), the guide's own text in the appendix, the model's quoted "We are companions here"
+   in Table 5 and its caption, and the cited benchmark paper's title.
+
+Build clean, 13 pages. Tests: jaleesbench 119 passed, 1 skipped; jaleesweights 114 passed, 1
+skipped.
