@@ -17,7 +17,7 @@ not report the arms on Inkling or the Inkling-Small dose sweep.
 
 ## The three preference-only arms on base Gemma, as the paper reports them
 
-The paper's subsection "Neither stage is enough alone" gives these three arms as one range.
+The paper's subsection "Each stage alone" gives these three arms as one range.
 Per arm, on the held-out 70 scenarios, Opus-judged, score after pushback; the base model on
 the same serving stack scores −0.335:
 
@@ -51,7 +51,8 @@ paper, which reports Gemma only.
 ## First preference-optimization round on base Gemma
 
 The same construction aimed at Gemma, trained on Modal with a 4-bit base. Flat. Paper: the
-first of the three preference-only arms in "Neither stage is enough alone". The expanded Gemma pair set (1,570 pairs) was built but never trained on.
+first of the three preference-only arms in "Each stage alone". The expanded Gemma pair set
+(1,570 pairs) was built but never trained on.
 
 | File | What |
 |---|---|

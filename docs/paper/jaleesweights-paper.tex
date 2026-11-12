@@ -205,7 +205,7 @@ into the weights.}
 \label{tab:pledge}
 \end{table}
 
-\section{The problem: a prompt fades}\label{sec:fading}
+\section{The prompted guide in a long conversation}\label{sec:fading}
 
 This section describes how we measure a model's counsel, and then what
 happens to a guided model as the conversation grows. The measurement
@@ -234,7 +234,7 @@ checkpoint, since serving infrastructure alone shifts scores by up to
 $0.06$; checkpoint-vs-checkpoint claims use paired per-cell tests with
 95\% bootstrap intervals.
 
-\subsection{A guide given once, in a long conversation}\label{sec:fading-design}
+\subsection{The long-conversation experiment}\label{sec:fading-design}
 
 The benchmark places the dilemma at the very start of a conversation,
 and its guided condition repeats the guide with every user turn, so
@@ -250,7 +250,7 @@ the dilemma, the answer, the pushback and the final answer, exactly as
 in the main evaluation. The design and the decision rules for this
 prompted model were fixed before any data was collected.
 
-\subsection{The guide wears off}\label{sec:fading-result}
+\subsection{Results for the prompted base model}\label{sec:fading-result}
 
 The score falls from $+0.43$ with no filler to $+0.19$ at 64k tokens
 (\cref{fig:fading-prompt}). Fitted across the six
@@ -268,7 +268,7 @@ deliveries of the guide, not repeated measurements of one thing: the
 benchmark repeats the guide with every user turn, and here it is given
 once.
 
-\section{The fix: fine-tuning in two stages}\label{sec:method}
+\section{Fine-tuning in two stages}\label{sec:method}
 
 This section describes the two training stages and the model they
 were applied to. The first stage trains the model on its own guided
@@ -361,7 +361,7 @@ subsections below give the long-conversation result, the scores at the
 start of a conversation, the result for each stage alone, and the
 checks that nothing else got worse.
 
-\subsection{The trained model holds over a long conversation}\label{sec:res-fading}
+\subsection{The tuned checkpoints in a long conversation}\label{sec:res-fading}
 
 We run the two tuned checkpoints on the same scenarios, pressures and
 filler as \cref{sec:fading-design}, with no system message at all.
@@ -397,7 +397,7 @@ no filler and by $0.16$ from 4k tokens onward. In this experiment both
 prompts faded, the guide on the base model and the sentence on the
 stage-2 model; the stage-2 model's score with no prompt did not.
 
-\subsection{At the start of a conversation}\label{sec:res-main}
+\subsection{Scores at the start of a conversation}\label{sec:res-main}
 
 \Cref{tab:main} holds the held-out scores with the dilemma at the very
 start of the conversation, the benchmark's own setting. The no-filler
@@ -440,7 +440,7 @@ after pushback shrinks from $-0.152$ to $-0.036$. An independent
 end-to-end rerun of the pipeline reproduced the stage-2 gain
 ($+0.220$).
 
-\subsection{Neither stage is enough alone}\label{sec:res-whynot}
+\subsection{Each stage alone}\label{sec:res-whynot}
 
 Each stage was also run without the other.
 
@@ -468,7 +468,7 @@ produces; supervised fine-tuning first is what creates it. After stage
 1, the same census finds the model holding its position in the
 majority of draws, and the same DPO procedure then works.
 
-\subsection{Nothing else got worse}\label{sec:res-capability}
+\subsection{Capability and other checks}\label{sec:res-capability}
 
 Across all held-out conversations of each tuned checkpoint there are
 zero fabricated citation markers and no change in answer length

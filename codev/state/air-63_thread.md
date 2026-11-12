@@ -145,3 +145,20 @@ The "it has to be in the weights" line now appears once (introduction). "The way
 sounds/answers with it" stays in the abstract and the introduction's list only. The closing
 paragraph of "Neither stage is enough alone" is cut. The paper is back to 12 pages; Table 1
 still on page 3, Figure 1 on page 2. Before and after for every item are in a PR comment.
+
+## 2026-11-12 — owner: headings name the material, not the conclusion
+
+Retitled eight headings (old → new):
+
+- The problem: a prompt fades → The prompted guide in a long conversation
+- A guide given once, in a long conversation → The long-conversation experiment
+- The guide wears off → Results for the prompted base model
+- The fix: fine-tuning in two stages → Fine-tuning in two stages
+- The trained model holds over a long conversation → The tuned checkpoints in a long conversation
+- At the start of a conversation → Scores at the start of a conversation
+- Neither stage is enough alone → Each stage alone
+- Nothing else got worse → Capability and other checks
+
+The other headings already named their material and are unchanged. Captions were out of scope
+and are untouched. `jaleesweights/archive/README.md` cited "Neither stage is enough alone" by
+name in two places; both now say "Each stage alone". Build clean, 12 pages, Table 1 on page 3.
