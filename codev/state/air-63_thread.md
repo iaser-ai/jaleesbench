@@ -124,3 +124,13 @@ passes.
 
 Build clean, 13 pages. Tests: jaleesbench 119 passed, 1 skipped; jaleesweights 114 passed, 1
 skipped.
+
+## 2026-11-12 — owner: restore the opening sentence, report data to a footnote
+
+The opening sentence is back to "Millions of Muslims bring real decisions to AI assistants."
+exactly. The OpenAI report's figures (more than 70 million weekly requests primarily about
+religion; roughly 45% of religion-related requests concern Islam, the largest share; 39% of
+Islam-related messages about what is permitted and forbidden or the rules of ritual) are now a
+footnote on that sentence, with the citation. The rest of the introduction is as it was before
+the citation change, apart from "spiritual counsel". Table 1 is still on page 3 and Figure 1
+on page 2. Build clean, 13 pages. Not a gate approval.
