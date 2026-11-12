@@ -38,7 +38,7 @@
 % ------------------------------------------------------------------
 % JaleesWeights — companion paper to JaleesBench.
 % Status: SHORT FORM (2026-08-25), refocused on the headline: the first
-% open model fine-tuned to carry Islamic values out of the box, via
+% open model post-trained to carry Islamic values out of the box, via
 % SFT then DPO. Benchmark machinery, the DPO-failure mechanism study,
 % related work, and future work are cut or reduced to a sentence.
 % The full-length draft is at commit bacc75b. All numbers unchanged.
@@ -48,7 +48,7 @@
 % number changed.
 % 2026-11-11: restructured around prompt fading. Order: a guide steers
 % a model; a prompt given once fades (figure, early); the fix is two
-% stages of fine-tuning, both needed; the trained model holds (figure).
+% stages of post-training, both needed; the trained model holds (figure).
 % Gemma-4-31B only, and the trained model is reported with no guide.
 % No new experiment: every number is from the earlier text, the data
 % release, or jaleesweights/experiments/58_prompt_fading/.
@@ -73,13 +73,14 @@ prompt given once wears off. With unrelated conversation between the
 guide and the user's dilemma, the score of Gemma-4-31B on JaleesBench
 falls from $+0.43$ to $+0.19$ over 64{,}000 tokens, a third of the
 guide's benefit, and the share of answers scored as harmful rises from
-28\% to 40\%. We show that fine-tuning fixes this and that it takes two
+28\% to 40\%. We show that post-training the model fixes this and that it takes two
 stages, both necessary. The first, \emph{filtered context
 distillation}, makes the model answer without the guide the way it
 answers with it: we generate answers with the guide in context, keep
-only those a judge rates as good, remove the guide, and fine-tune the
-model to give those answers with no prompt. The second, direct
-preference optimization on the fine-tuned model's own samples,
+only those a judge rates as good, remove the guide, and train the
+model by supervised fine-tuning to give those answers with no prompt.
+The second, direct preference optimization on the stage-1 model's own
+samples,
 entrenches the behavior. In the same long-conversation experiment the
 two-stage model, with no system prompt at all, starts level with the
 prompted base model ($+0.44$ against $+0.43$) and holds steady through
@@ -131,20 +132,21 @@ has not levelled off where our measurement ends (\cref{sec:fading}).
 Guidance that has to last through a long conversation therefore has
 to be trained into the model's weights.
 
-This paper fine-tunes Gemma-4-31B so that what the guide supplies from
-outside becomes the model's own default behavior. It takes two stages,
-in this order, and both are needed:
+This paper post-trains Gemma-4-31B: it trains the released model
+further, to shape how it behaves, so that what the guide supplies from
+outside becomes the model's own default behavior. The post-training
+has two stages, in this order, and both are needed:
 
 \begin{enumerate}\tightlist
 \item Stage 1, \emph{filtered context distillation}, makes the model
 sound without the guide the way it sounds with it. We generate answers
 with the guide in context, keep only those a judge rates as genuinely
-good, remove the guide, and fine-tune the model to produce those
-answers without it --- context distillation \citep{askell2021general}
+good, remove the guide, and train the model by supervised fine-tuning
+to produce those answers without it --- context distillation \citep{askell2021general}
 from the model's best examples only. With no prompt, this moves Gemma's
 score after pushback from $-0.33$ to $+0.28$.
 \item Stage 2, direct preference optimization, entrenches it. We
-sample the fine-tuned model several times per prompt, have the judge
+sample the stage-1 model several times per prompt, have the judge
 rank the samples, and train on best-versus-worst pairs. This adds a
 further $+0.22$, almost entirely by making the model hold its position
 when the user pushes back.
@@ -231,9 +233,9 @@ The scenarios are split 70/70; all training data comes from the
 training half and all reported numbers are on the held-out half, which
 has 420 cells. Two judges are kept separate: Gemini 3.1 Pro selects
 training data, and Claude Opus 4.8 scores every held-out result and
-never touches selection, so a model tuned on one judge's taste is
+never touches selection, so a model trained on one judge's taste is
 evaluated by the other. Every comparison is against the base model
-served through the same software and hardware as the tuned checkpoint,
+served through the same software and hardware as the post-trained checkpoint,
 since serving alone shifts scores by up to $0.06$; comparisons between
 checkpoints are paired by cell and carry 95\% bootstrap intervals.
 Scores are given to two decimals.
@@ -277,7 +279,7 @@ deliveries of the guide, not repeated measurements of one thing: the
 benchmark repeats the guide with every user turn, and here it is given
 once.
 
-\section{Fine-tuning in two stages}\label{sec:method}
+\section{Post-training in two stages}\label{sec:method}
 
 This section describes the two training stages and the model they
 were applied to. The first stage trains the model on its own guided
@@ -303,7 +305,7 @@ filter in front of it. Training is standard supervised fine-tuning on
 the assistant turns (LoRA \citep{hu2022lora}, rank 32, lr
 $5\times10^{-5}$, 2 epochs).
 
-\subsection{Stage 2: preference optimization on the fine-tuned model}\label{sec:stage2}
+\subsection{Stage 2: preference optimization on the stage-1 model}\label{sec:stage2}
 
 Stage 1 leaves a model that holds its position in most sampled answers
 and still caves in some. Stage 2 trains it to prefer its own good answers
@@ -373,9 +375,9 @@ subsections below give the long-conversation result, the scores at the
 start of a conversation, the result for each stage alone, and the
 checks that nothing else got worse.
 
-\subsection{The tuned checkpoints in a long conversation}\label{sec:res-fading}
+\subsection{The post-trained checkpoints in a long conversation}\label{sec:res-fading}
 
-We run the two tuned checkpoints on the same scenarios, pressures and
+We run the two post-trained checkpoints on the same scenarios, pressures and
 filler as \cref{sec:fading-design}, with no system message at all.
 These runs were added after the prompted model's result was known,
 each registered before its own data.
@@ -384,7 +386,8 @@ each registered before its own data.
 \centering
 \includegraphics[width=0.98\linewidth]{figures/fig_fading_compare}
 \caption{The prompted base model of \cref{fig:fading-prompt} against
-the two tuned checkpoints with no system message at all, on the same
+the two post-trained checkpoints with no system message at all, on the
+same
 scenarios and filler. Each label gives the model's score at 64k tokens
 and its fitted change over the whole range with a 95\% interval.}
 \label{fig:fading-compare}
@@ -402,8 +405,8 @@ given once, and its score is flat over the whole range. Its share of
 answers scored below zero is 24\% with no filler and 25\% at 64k
 tokens, against 28\% and 40\% for the prompted model.
 
-A system message given to the tuned checkpoint also fades. In a
-further run, the only one in which a tuned checkpoint has a system
+A system message given to the post-trained checkpoint also fades. In a
+further run, the only one in which a post-trained checkpoint has a system
 message, we gave the stage-2 model a one-sentence system message
 stating the user's faith; the sentence raised its score by $0.26$ with
 no filler and by $0.16$ from 4k tokens onward. In this experiment both
@@ -480,7 +483,7 @@ Stage 2: SFT + DPO & $\mathbf{+0.53}$ & $\mathbf{+0.50}$ & $\mathbf{-0.04}$ \\
 \end{tabular}
 \caption{JaleesBench held-out scores ($-1$ to $+1$) for Gemma-4-31B
 with the dilemma at the start of the conversation, faith unstated,
-judged by Claude Opus. The tuned checkpoints have no guide and no
+judged by Claude Opus. The post-trained checkpoints have no guide and no
 system message. Drops are computed before rounding. 95\% intervals for the after-pushback column: base
 $[-0.47, -0.20]$; stage 1 $[+0.12, +0.42]$; stage 2 $[+0.35, +0.63]$.
 The reference row is the benchmark's guided condition.}
@@ -526,7 +529,7 @@ procedure then works.
 
 \subsection{Capability and other checks}\label{sec:res-capability}
 
-Across all held-out conversations of each tuned checkpoint there are
+Across all held-out conversations of each post-trained checkpoint there are
 zero fabricated citation markers and no change in answer length
 (median 5.8k characters vs.\ 5.6k for base); scenarios where base Gemma
 alternated between caving and curt refusal now hold in a warm register.
@@ -605,7 +608,7 @@ in 649, left it unchanged in 159, and lowered it in 32; the unchanged
 cells include scenarios where the model lacks or rejects the relevant
 ruling, and a companionship guide cannot supply knowledge the model
 does not have (\cref{tab:sherwani}). Those cells produce no training
-example and stay wrong after tuning.
+example and stay wrong after post-training.
 
 The evidence is from one model. The long-conversation result rests on
 one trained checkpoint and one run at each stage, on one kind of
@@ -683,11 +686,11 @@ second model family, Inkling, which this paper does not report.
 \section{Conclusion}\label{sec:conclusion}
 
 A guide in the prompt steers a model, and its effect declines as the
-conversation grows. A model fine-tuned in two stages shows the same
+conversation grows. A model post-trained in two stages shows the same
 behavior with no prompt, and its score held over 64{,}000 tokens of
 unrelated conversation. The first stage is supervised fine-tuning on
 the model's own judge-selected guided answers, with the guide removed;
-the second is preference optimization on the fine-tuned model's own
+the second is preference optimization on the stage-1 model's own
 samples. Over the same conversation the model with supervised
 fine-tuning alone, and the base model with the guide in its prompt,
 both declined.
