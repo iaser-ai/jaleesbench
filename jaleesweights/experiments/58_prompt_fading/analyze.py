@@ -259,36 +259,64 @@ def _paper_figures(out: Path, pt, ci, tokens) -> None:
 
     xs = np.arange(6)
     ticks = ["0"] + [f"{round(tokens[lv] / 1000)}k" for lv in range(1, 6)]
-    style = {"P": ("#1f77b4", "Base model, guide in the system message"),
-             "S0": ("#ff7f0e", "Stage 1 (SFT), no system message"),
-             "W0": ("#d62728", "Stage 2 (SFT + DPO), no system message")}
+    ink, muted, grid = "#0b0b0b", "#52514e", "#e4e3df"
+    style = {"W0": ("#1baf7a", "Stage 2 (SFT + DPO), no system message"),
+             "P": ("#2a78d6", "Base model, guide as system message"),
+             "S0": ("#eb6834", "Stage 1 (SFT only), no system message")}
 
-    def draw(tags, name, ylim):
-        fig, ax = plt.subplots(figsize=(6.4, 3.9))
+    def draw(tags, name, band):
+        fig, ax = plt.subplots(figsize=(6.2, 3.5) if len(tags) == 1 else (8.2, 3.7))
+        ends, starts = [], []
         for t in tags:
             color, label = style[t]
-            ax.plot(xs, [pt[f"mean_{t}_L{lv}"] for lv in xs], "-o", color=color, label=label)
-            ax.fill_between(xs, [ci[f"mean_{t}_L{lv}"][0] for lv in xs], [ci[f"mean_{t}_L{lv}"][1] for lv in xs],
-                            color=color, alpha=0.15)
-        ax.set_ylim(*ylim)
+            ys = [pt[f"mean_{t}_L{lv}"] for lv in xs]
+            if band:
+                ax.fill_between(xs, [ci[f"mean_{t}_L{lv}"][0] for lv in xs],
+                                [ci[f"mean_{t}_L{lv}"][1] for lv in xs], color=color, alpha=0.13, lw=0)
+            ax.plot(xs, ys, "-o", color=color, lw=2, ms=6.5, mec="white", mew=1.5, zorder=3)
+            starts.append([ys[0], ys[0]])
+            ends.append([ys[-1], t, color, label])
+        starts.sort()
+        for i in range(1, len(starts)):
+            if starts[i][0] - starts[i - 1][0] < 0.05:
+                starts[i - 1][0] -= 0.012
+                starts[i][0] = starts[i - 1][0] + 0.05
+        for y, v in starts:
+            ax.text(-0.16, y, f"{v:+.2f}", ha="right", va="center", color=ink, fontsize=10.5, fontweight="bold")
+        # right-hand labels: end value, series name, change over the range with its interval; nudged apart
+        ends.sort()
+        gap = 0.095
+        for i in range(1, len(ends)):
+            if ends[i][0] - ends[i - 1][0] < gap:
+                ends[i][0] = ends[i - 1][0] + gap
+        for y, t, color, label in ends:
+            lo, hi = ci[f"total_{t}"]
+            ax.text(5.14, y + 0.012, f"{pt[f'mean_{t}_L5']:+.2f}", ha="left", va="center", color=ink,
+                    fontsize=10.5, fontweight="bold")
+            if len(tags) > 1:
+                ax.text(6.3, y + 0.012, label, ha="left", va="center", color=ink, fontsize=10.5, fontweight="bold")
+                ax.text(6.3, y - 0.03, f"change {pt[f'total_{t}']:+.2f}  [{lo:+.2f}, {hi:+.2f}]",
+                        ha="left", va="center", color=muted, fontsize=9.5)
+        ax.set_xlim(-1.0, 5.6 if len(tags) == 1 else 9.9)
+        ax.set_ylim(0.0, 0.62)
+        ax.set_yticks([0, .1, .2, .3, .4, .5, .6], ["0", "+0.1", "+0.2", "+0.3", "+0.4", "+0.5", "+0.6"])
         ax.set_xticks(xs, ticks)
-        ax.set_xlabel("Tokens of unrelated conversation before the dilemma")
-        ax.set_ylabel("JaleesBench score after pushback")
-        if len(tags) > 1:
-            ax.legend(frameon=False, fontsize=8, loc="lower left")
+        ax.set_xlabel("Tokens of unrelated conversation before the dilemma", color=muted, fontsize=10.5, x=0.29 if len(tags) > 1 else 0.5)
+        ax.set_ylabel("Score after pushback", color=muted, fontsize=10.5)
+        ax.hlines([0, .1, .2, .3, .4, .5, .6], -1.0, 5.5, color=grid, lw=0.8, zorder=0)
+        for s in ("top", "right", "left"):
+            ax.spines[s].set_visible(False)
+        ax.spines["bottom"].set_visible(False)
+        ax.tick_params(colors=muted, length=0, labelsize=10)
         fig.tight_layout()
         for ext in ("pdf", "png"):
             fig.savefig(out / f"{name}.{ext}", dpi=200)
         plt.close(fig)
 
     tags = ["P"] + [t for t in ("S0", "W0") if f"mean_{t}_L0" in pt]
-    lo = min(ci[f"mean_{t}_L{lv}"][0] for t in tags for lv in xs)
-    hi = max(ci[f"mean_{t}_L{lv}"][1] for t in tags for lv in xs)
-    ylim = (math.floor(lo * 10) / 10 - 0.05, math.ceil(hi * 10) / 10 + 0.05)
-    draw(["P"], "fig_fading_prompt", ylim)
+    draw(["P"], "fig_fading_prompt", band=True)
     if len(tags) > 1:
-        draw(tags, "fig_fading_compare", ylim)
-    typer.echo(f"wrote {out}/fig_fading_prompt and fig_fading_compare (pdf, png)")
+        draw(tags, "fig_fading_compare", band=False)
 
 
 def _figures(out: Path, pt, ci, per_pressure, tokens, n) -> None:
